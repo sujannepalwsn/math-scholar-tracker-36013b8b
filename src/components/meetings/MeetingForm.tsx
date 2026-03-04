@@ -205,7 +205,8 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         meeting_type: meetingType,
         status,
         agenda: `[Category: ${agendaCategory}] ${description || ''}`,
-      }).select().single();
+        related_meeting_id: relatedMeetingId,
+      } as any).select().single();
       if (error) throw error;
       return data;
     },
