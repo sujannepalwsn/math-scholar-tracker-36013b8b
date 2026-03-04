@@ -1438,6 +1438,36 @@ export type Database = {
           },
         ]
       }
+      results: {
+        Row: {
+          center_id: number | null
+          created_at: string
+          exam_name: string | null
+          grade_id: string | null
+          grading_scale: Json | null
+          id: number
+          subjects: Json | null
+        }
+        Insert: {
+          center_id?: number | null
+          created_at?: string
+          exam_name?: string | null
+          grade_id?: string | null
+          grading_scale?: Json | null
+          id?: number
+          subjects?: Json | null
+        }
+        Update: {
+          center_id?: number | null
+          created_at?: string
+          exam_name?: string | null
+          grade_id?: string | null
+          grading_scale?: Json | null
+          id?: number
+          subjects?: Json | null
+        }
+        Relationships: []
+      }
       student_activities: {
         Row: {
           activity_id: string | null
@@ -1630,6 +1660,38 @@ export type Database = {
           },
         ]
       }
+      student_results: {
+        Row: {
+          created_at: string
+          id: number
+          marks: Json | null
+          result_id: number | null
+          student_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          marks?: Json | null
+          result_id?: number | null
+          student_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          marks?: Json | null
+          result_id?: number | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_results_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           address: string | null
@@ -1748,46 +1810,79 @@ export type Database = {
       }
       teacher_feature_permissions: {
         Row: {
+          activities: boolean | null
+          ai_insights: boolean | null
+          attendance_summary: boolean | null
+          calendar_events: boolean | null
+          chapter_performance: boolean | null
+          class_routine: boolean | null
           created_at: string
           discipline_issues: boolean | null
+          finance: boolean | null
           homework_management: boolean | null
           id: string
+          lesson_plans: boolean | null
           lesson_tracking: boolean | null
           meetings_management: boolean | null
+          messaging: boolean | null
           preschool_activities: boolean | null
           student_report_access: boolean | null
+          summary: boolean | null
           take_attendance: boolean | null
           teacher_id: string
           test_management: boolean | null
           updated_at: string
+          view_records: boolean | null
         }
         Insert: {
+          activities?: boolean | null
+          ai_insights?: boolean | null
+          attendance_summary?: boolean | null
+          calendar_events?: boolean | null
+          chapter_performance?: boolean | null
+          class_routine?: boolean | null
           created_at?: string
           discipline_issues?: boolean | null
+          finance?: boolean | null
           homework_management?: boolean | null
           id?: string
+          lesson_plans?: boolean | null
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
+          messaging?: boolean | null
           preschool_activities?: boolean | null
           student_report_access?: boolean | null
+          summary?: boolean | null
           take_attendance?: boolean | null
           teacher_id: string
           test_management?: boolean | null
           updated_at?: string
+          view_records?: boolean | null
         }
         Update: {
+          activities?: boolean | null
+          ai_insights?: boolean | null
+          attendance_summary?: boolean | null
+          calendar_events?: boolean | null
+          chapter_performance?: boolean | null
+          class_routine?: boolean | null
           created_at?: string
           discipline_issues?: boolean | null
+          finance?: boolean | null
           homework_management?: boolean | null
           id?: string
+          lesson_plans?: boolean | null
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
+          messaging?: boolean | null
           preschool_activities?: boolean | null
           student_report_access?: boolean | null
+          summary?: boolean | null
           take_attendance?: boolean | null
           teacher_id?: string
           test_management?: boolean | null
           updated_at?: string
+          view_records?: boolean | null
         }
         Relationships: [
           {
@@ -1916,6 +2011,7 @@ export type Database = {
           date_taken: string | null
           grade_earned: string | null
           id: string
+          marks: Json | null
           marks_obtained: number | null
           percentage: number | null
           question_marks: Json | null
@@ -1927,6 +2023,7 @@ export type Database = {
           date_taken?: string | null
           grade_earned?: string | null
           id?: string
+          marks?: Json | null
           marks_obtained?: number | null
           percentage?: number | null
           question_marks?: Json | null
@@ -1938,6 +2035,7 @@ export type Database = {
           date_taken?: string | null
           grade_earned?: string | null
           id?: string
+          marks?: Json | null
           marks_obtained?: number | null
           percentage?: number | null
           question_marks?: Json | null
@@ -1972,11 +2070,14 @@ export type Database = {
           lesson_plan_id: string | null
           max_marks: number | null
           name: string
+          published: boolean | null
           questions: Json | null
           section: string | null
-          subject: string
+          subject: string | null
+          subjects: Json | null
           test_date: string | null
           total_marks: number
+          type: string | null
           updated_at: string
         }
         Insert: {
@@ -1989,11 +2090,14 @@ export type Database = {
           lesson_plan_id?: string | null
           max_marks?: number | null
           name: string
+          published?: boolean | null
           questions?: Json | null
           section?: string | null
-          subject: string
+          subject?: string | null
+          subjects?: Json | null
           test_date?: string | null
           total_marks: number
+          type?: string | null
           updated_at?: string
         }
         Update: {
@@ -2006,11 +2110,14 @@ export type Database = {
           lesson_plan_id?: string | null
           max_marks?: number | null
           name?: string
+          published?: boolean | null
           questions?: Json | null
           section?: string | null
-          subject?: string
+          subject?: string | null
+          subjects?: Json | null
           test_date?: string | null
           total_marks?: number
+          type?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2106,6 +2213,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_center_manage_parent_student_link: {
+        Args: { p_parent_user_id: string; p_student_id: string }
+        Returns: boolean
+      }
       get_user_center_id: { Args: { user_id: string }; Returns: string }
       get_user_role: { Args: { user_id: string }; Returns: string }
       is_same_center: { Args: { target_center_id: string }; Returns: boolean }
