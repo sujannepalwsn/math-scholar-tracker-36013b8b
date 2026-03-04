@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, subMonths, addMonths, isValid } from 'date-fns';
-import { CalendarIcon, CheckCircle2, XCircle, MinusCircle, Download, Printer, User, X, TrendingUp, Clock } from 'lucide-react';
+import { CalendarIcon, Check, CheckCircle2, Clock, Download, MinusCircle, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
 import { cn, safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
 import { Tables, Database } from '@/integrations/supabase/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';

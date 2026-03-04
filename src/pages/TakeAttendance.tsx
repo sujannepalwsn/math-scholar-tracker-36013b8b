@@ -17,7 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
-import { CalendarIcon, ChevronDown } from "lucide-react";
+import { CalendarIcon, ChevronDown, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Student {

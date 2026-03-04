@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 

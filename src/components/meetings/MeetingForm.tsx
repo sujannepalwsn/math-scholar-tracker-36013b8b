@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Users } from "lucide-react";
+import { User, Users } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 
 interface MeetingFormProps {

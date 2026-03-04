@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Check, X, UserPlus, Settings, Upload, DollarSign, Clock } from 'lucide-react';
+import { Check, Clock, DollarSign, Edit, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { format } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
 import * as bcrypt from 'bcryptjs';
