@@ -72,8 +72,7 @@ export default function CenterSettings() {
           cardBackground: savedTheme.cardBackground || "#ffffff",
           mutedForeground: savedTheme.mutedForeground || "#64748b",
         });
-        // Apply theme to CSS variables
-        applyTheme(savedTheme);
+        // Do NOT apply theme here - it should only be applied on Save
       }
     }
   }, [center]);
