@@ -33,6 +33,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
   const [meetingType, setMeetingType] = useState("general");
   const [status, setStatus] = useState("scheduled");
   const [agendaCategory, setAgendaCategory] = useState("general");
+  const [relatedMeetingId, setRelatedMeetingId] = useState<string | null>(null);
   
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
