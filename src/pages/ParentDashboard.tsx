@@ -9,7 +9,7 @@ import { User, Calendar as CalendarIcon, BookOpen, FileText, LogOut, DollarSign,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
 import { Input } from '@/components/ui/input'; // Import Input component
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isPast, isToday } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isPast, isToday, isFuture } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
 import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
 import ParentChapterPerformanceTable from '@/components/parent/ParentChapterPerformanceTable'; // NEW
