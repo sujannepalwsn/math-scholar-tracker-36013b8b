@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, CheckSquare, BookOpen, Book, Paintbrush, AlertTriangle, FileText, ClipboardCheck, User, LogOut, KeyRound, Video, MessageSquare, Calendar, Clock, TrendingUp, Brain, DollarSign, BarChart3, LayoutList, CalendarDays } from "lucide-react";
+import { Home, CheckSquare, BookOpen, Book, Paintbrush, AlertTriangle, FileText, ClipboardCheck, User, LogOut, KeyRound, Video, MessageSquare, Calendar, Clock, TrendingUp, Brain, DollarSign, BarChart3, LayoutList, CalendarDays, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -76,7 +77,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     refetchInterval: 10000,
   });
 
-  const updatedNavItems = navItems.map(item => 
+  const updatedNavItems = navItems.map(item =>
     item.to === "/teacher-messages" ? { ...item, unreadCount: unreadMessageCount } : item
   );
 
@@ -85,7 +86,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   );
 
   const footerContent = (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 text-sm">
         <User className="h-4 w-4 text-muted-foreground" />
         <span className="text-muted-foreground">{user?.username}</span>
@@ -105,18 +106,50 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   });
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="fixed top-0 left-0 h-screen z-10">
+    <div className="flex min-h-screen bg-background flex-col md:flex-row">
+      {/* Desktop Sidebar */}
+      <div className="fixed top-0 left-0 h-screen z-10 hidden md:block">
         <Sidebar
           navItems={filteredTeacherNavItems}
           headerContent={headerContent}
           footerContent={footerContent}
           onCollapseChange={setSidebarCollapsed}
+          isMobileOpen={mobileMenuOpen}
+          onMobileOpenChange={setMobileMenuOpen}
         />
       </div>
+
+      {/* Mobile Sidebar */}
+      <Sidebar
+        navItems={filteredTeacherNavItems}
+        headerContent={headerContent}
+        footerContent={footerContent}
+        isMobileOpen={mobileMenuOpen}
+        onMobileOpenChange={setMobileMenuOpen}
+      />
+
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background border-b z-20 flex items-center justify-between px-4">
+        <div className="flex-1">
+          <CenterLogo size="sm" showName={false} />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Main Content */}
       <main className={cn(
-        "flex-1 p-6 overflow-y-auto h-screen transition-all duration-300",
-        sidebarCollapsed ? "ml-20" : "ml-64"
+        "flex-1 overflow-y-auto bg-background",
+        "md:h-screen md:p-6",
+        "pt-20 md:pt-0",
+        "p-4 md:p-6",
+        sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {children}
       </main>
