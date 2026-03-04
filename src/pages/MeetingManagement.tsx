@@ -217,13 +217,14 @@ export default function MeetingManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Conclusion</TableHead>
-                    <TableHead>Actions</TableHead>
+                     <TableHead>Title</TableHead>
+                     <TableHead>Date</TableHead>
+                     <TableHead>Time</TableHead>
+                     <TableHead>Type</TableHead>
+                     <TableHead>Status</TableHead>
+                     <TableHead>Follow-up</TableHead>
+                     <TableHead>Conclusion</TableHead>
+                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
