@@ -158,6 +158,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
       setMeetingType("general");
       setStatus("scheduled");
       setAgendaCategory("general");
+      setRelatedMeetingId(null);
       setSelectedStudentIds([]);
       setSelectedTeacherIds([]);
     }
