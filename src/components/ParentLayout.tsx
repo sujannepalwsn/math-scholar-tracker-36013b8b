@@ -7,13 +7,14 @@ import Sidebar from "./Sidebar";
 import CenterLogo from "./CenterLogo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const navItems: Array<{
   to: string;
   label: string;
   icon: React.ElementType;
   role?: 'admin' | 'center' | 'parent' | 'teacher';
-  unreadCount?: number; // Added unreadCount
+  unreadCount?: number;
 }> = [
   { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
   { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const },
@@ -32,13 +33,13 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login-parent');
   };
 
-  // Fetch unread message count for parent
   const { data: unreadMessageCount = 0 } = useQuery({
     queryKey: ["unread-messages-parent", user?.id],
     queryFn: async () => {
@@ -48,26 +49,19 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         .select('id')
         .eq('parent_user_id', user.id)
         .maybeSingle();
-      
-      if (convError || !conversation) {
-        // console.log("No conversation found for parent:", user.id, convError);
-        return 0;
-      }
+      if (convError || !conversation) return 0;
 
       const { count, error } = await supabase
         .from('chat_messages')
         .select('id', { count: 'exact' })
         .eq('conversation_id', conversation.id)
         .eq('is_read', false)
-        .neq('sender_user_id', user.id); // Messages NOT sent by the current parent user
-      if (error) {
-        console.error("Error fetching unread messages for parent:", error);
-        return 0;
-      }
+        .neq('sender_user_id', user.id);
+      if (error) return 0;
       return count || 0;
     },
     enabled: !!user?.id,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 10000,
   });
 
   const updatedNavItems = navItems.map(item => 
@@ -92,17 +86,18 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Fixed Sidebar */}
       <div className="fixed top-0 left-0 h-screen z-10">
         <Sidebar
           navItems={updatedNavItems}
           headerContent={headerContent}
           footerContent={footerContent}
+          onCollapseChange={setSidebarCollapsed}
         />
       </div>
-
-      {/* Main Content - Scrollable */}
-      <main className="flex-1 p-6 overflow-y-auto h-screen ml-64">
+      <main className={cn(
+        "flex-1 p-6 overflow-y-auto h-screen transition-all duration-300",
+        sidebarCollapsed ? "ml-20" : "ml-64"
+      )}>
         {children}
       </main>
     </div>

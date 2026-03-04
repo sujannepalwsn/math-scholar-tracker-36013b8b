@@ -7,6 +7,7 @@ import Sidebar from "./Sidebar";
 import CenterLogo from "./CenterLogo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const navItems: Array<{
   to: string;
@@ -14,7 +15,7 @@ const navItems: Array<{
   icon: React.ElementType;
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
-  unreadCount?: number; // Added unreadCount
+  unreadCount?: number;
 }> = [
   { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const },
   { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance' },
@@ -43,45 +44,36 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate('/login'); // Teachers also log in via the main login page
+    navigate('/login');
   };
 
-  // Fetch unread message count for teacher
   const { data: unreadMessageCount = 0 } = useQuery({
     queryKey: ["unread-messages-teacher", user?.id, user?.center_id],
     queryFn: async () => {
       if (!user?.id || !user?.center_id) return 0;
-      // Find conversation where this teacher's user ID is the 'parent_user_id' and center is their center
-      // This is a workaround given the current schema, treating teacher's user as a 'parent' in a conversation with the center.
       const { data: conversation, error: convError } = await supabase
         .from('chat_conversations')
         .select('id')
         .eq('parent_user_id', user.id)
         .eq('center_id', user.center_id)
         .maybeSingle();
-      
-      if (convError || !conversation) {
-        // console.log("No conversation found for teacher with center:", user.id, convError);
-        return 0;
-      }
+      if (convError || !conversation) return 0;
 
       const { count, error } = await supabase
         .from('chat_messages')
         .select('id', { count: 'exact' })
         .eq('conversation_id', conversation.id)
         .eq('is_read', false)
-        .neq('sender_user_id', user.id); // Messages NOT sent by the current teacher user
-      if (error) {
-        console.error("Error fetching unread messages for teacher:", error);
-        return 0;
-      }
+        .neq('sender_user_id', user.id);
+      if (error) return 0;
       return count || 0;
     },
     enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 10000,
   });
 
   const updatedNavItems = navItems.map(item => 
@@ -104,29 +96,28 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     </div>
   );
 
-  // Filter nav items based on teacher's specific permissions
   const filteredTeacherNavItems = updatedNavItems.filter(item => {
     if (item.featureName && user?.teacherPermissions) {
-      // Default to true if permission is not explicitly set to false
       const permission = user.teacherPermissions[item.featureName];
-      return permission !== false; // Show if true or undefined
+      return permission !== false;
     }
-    return true; // Always show items without a specific featureName (like Dashboard, Change Password)
+    return true;
   });
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Fixed Sidebar */}
       <div className="fixed top-0 left-0 h-screen z-10">
         <Sidebar
           navItems={filteredTeacherNavItems}
           headerContent={headerContent}
           footerContent={footerContent}
+          onCollapseChange={setSidebarCollapsed}
         />
       </div>
-
-      {/* Main Content - Scrollable */}
-      <main className="flex-1 p-6 overflow-y-auto h-screen ml-64">
+      <main className={cn(
+        "flex-1 p-6 overflow-y-auto h-screen transition-all duration-300",
+        sidebarCollapsed ? "ml-20" : "ml-64"
+      )}>
         {children}
       </main>
     </div>
