@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Printer, DollarSign, BookOpen, Book, Paintbrush, AlertTriangle, FileText, CheckCircle, XCircle, Clock, Star, User, ClipboardCheck } from "lucide-react";
+import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, User, Video, XCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subYears, isPast } from "date-fns"; // Added subYears, isPast
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { format, parseISO, isWithinInterval, differenceInMinutes, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
-import { CalendarIcon, Download, Printer, User, Clock, TrendingUp, TrendingDown, X } from "lucide-react";
+import { CalendarIcon, Clock, Download, Printer, TrendingDown, TrendingUp, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StudentAttendanceRecord {

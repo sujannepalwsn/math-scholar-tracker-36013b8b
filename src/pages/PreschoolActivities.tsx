@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Camera, Video, Star, Settings } from "lucide-react";
+import { CalendarIcon, Camera, Edit, Plus, Settings, Star, Trash2, Video } from "lucide-react";
 import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component

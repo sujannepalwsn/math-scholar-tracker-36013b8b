@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Star, BookOpen, User, FileText } from "lucide-react"; // Added FileText for tests
+import { BookOpen, Check, FileText, Star, User } from "lucide-react"; // Added FileText for tests
 import { Tables } from "@/integrations/supabase/types";
 import { safeFormatDate } from '@/lib/utils';
 

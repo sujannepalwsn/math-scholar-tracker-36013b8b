@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Clock } from "lucide-react";
+import { CalendarIcon, Clock, Edit, Plus, Trash2 } from "lucide-react";
 
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },

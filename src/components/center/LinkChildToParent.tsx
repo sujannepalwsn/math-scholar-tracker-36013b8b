@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { UserPlus, Users } from "lucide-react";
+import { Check, UserPlus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface LinkChildToParentProps {

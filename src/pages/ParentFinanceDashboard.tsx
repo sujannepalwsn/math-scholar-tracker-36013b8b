@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Invoice, Payment } from '@/integrations/supabase/finance-types';
-import { AlertCircle, Download, Eye, ArrowLeft, CreditCard } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, CreditCard, DollarSign, Download, Eye, FileText, TrendingUp } from "lucide-react";
 import { isPast } from 'date-fns';
 import { cn } from "@/lib/utils";
 
