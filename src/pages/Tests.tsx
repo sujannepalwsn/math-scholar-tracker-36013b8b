@@ -19,6 +19,7 @@ import BulkMarksEntry from "@/components/BulkMarksEntry";
 import QuestionPaperViewer from "@/components/QuestionPaperViewer";
 import { Tables } from "@/integrations/supabase/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"; // Import Table components
+import { cn } from "@/lib/utils";
 
 type Test = Tables<'tests'>;
 type TestResult = Tables<'test_results'>;

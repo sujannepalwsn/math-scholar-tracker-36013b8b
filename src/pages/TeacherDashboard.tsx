@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Home, BookOpen, CheckSquare, Users, CalendarDays, MessageSquare, Bell, Clock, AlertTriangle, Video } from 'lucide-react';
 import { format, isToday, isFuture, startOfDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { cn } from "@/lib/utils";
 
 export default function TeacherDashboard() {
   const { user } = useAuth();

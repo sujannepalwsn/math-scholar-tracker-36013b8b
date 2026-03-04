@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Invoice, Payment } from '@/integrations/supabase/finance-types';
 import { AlertCircle, Download, Eye, ArrowLeft, CreditCard } from 'lucide-react';
 import { isPast } from 'date-fns';
+import { cn } from "@/lib/utils";
 
 const ParentFinanceDashboard = () => {
   const { user } = useAuth();

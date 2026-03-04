@@ -14,6 +14,7 @@ import { Plus, Edit, Trash2, AlertTriangle, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
 import DisciplineCategoryManagement from "@/components/center/DisciplineCategoryManagement"; // Import the new component
+import { cn } from "@/lib/utils";
 
 type DisciplineIssue = Tables<'discipline_issues'>;
 type Student = Tables<'students'>;
