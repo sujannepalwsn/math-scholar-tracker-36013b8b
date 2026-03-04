@@ -87,6 +87,23 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
     enabled: !!user?.center_id,
   });
 
+  // Fetch previous meetings for "follow-up" linking
+  const { data: previousMeetings = [] } = useQuery({
+    queryKey: ["previous-meetings-for-linking", user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase
+        .from("meetings")
+        .select("id, title, meeting_date, meeting_type")
+        .eq("center_id", user.center_id)
+        .order("meeting_date", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id,
+  });
+
   // Filter students based on search input
   const filteredStudents = allStudents.filter(student =>
     student.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
