@@ -294,7 +294,7 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Fetch all lesson plans for the center (explicitly for chapterPerformanceData and missed chapters)
+  // Fetch all lesson plans for the center
   const { data: allLessonPlans = [] } = useQuery({
     queryKey: ["all-lesson-plans-for-report", user?.center_id],
     queryFn: async () => {
@@ -302,12 +302,35 @@ const ParentDashboardContent = () => {
       const { data, error } = await supabase
         .from("lesson_plans")
         .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url")
-        .eq("center_id", user.center_id) // Filter by center_id
+        .eq("center_id", user.center_id)
         .order("lesson_date", { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!user?.center_id,
+  });
+
+  // Fetch upcoming meetings for parent
+  const { data: upcomingMeetings = [] } = useQuery({
+    queryKey: ['parent-upcoming-meetings', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('meeting_attendees')
+        .select(`
+          *,
+          meetings(id, title, meeting_date, meeting_type, status, location, agenda)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).filter((att: any) => {
+        if (!att.meetings?.meeting_date) return false;
+        const meetingDate = new Date(att.meetings.meeting_date);
+        return isFuture(meetingDate) || isToday(meetingDate);
+      }).slice(0, 5);
+    },
+    enabled: !!user?.id,
   });
 
   // Calculate summary - handle null paid_amount
