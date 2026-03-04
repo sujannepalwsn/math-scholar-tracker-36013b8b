@@ -337,10 +337,13 @@ export default function LessonTracking() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700">
       {/* HEADER + MODAL */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Lesson Tracking</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Curriculum Tracker</h1>
+          <p className="text-muted-foreground text-lg">Monitor lesson completion and student comprehension levels.</p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Record Lesson</Button>
@@ -440,10 +443,10 @@ export default function LessonTracking() {
       </div>
 
       {/* LESSON RECORDS LIST */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Student Lesson Records</CardTitle>
-          <div className="flex gap-4 mt-4">
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4 border-b">
+          <CardTitle className="text-xl">Instructional History</CardTitle>
+          <div className="flex flex-wrap gap-4 mt-4">
             {/* Filters */}
             <div className="flex-1">
               <Label>Filter by Subject</Label>

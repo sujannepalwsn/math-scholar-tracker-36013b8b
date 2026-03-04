@@ -46,16 +46,19 @@ export default function ParentLessonTracking() {
   }, [lessonRecords]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Lessons Studied</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Learning Journey</h1>
+          <p className="text-muted-foreground text-lg">Track completed modules and instructional milestones for your child.</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="border-none shadow-soft overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" /> Lessons Studied
+            <CardTitle className="text-xl flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" /> Educational Log
             </CardTitle>
             <Select value={subjectFilter} onValueChange={setSubjectFilter}>
               <SelectTrigger className="w-[150px]">

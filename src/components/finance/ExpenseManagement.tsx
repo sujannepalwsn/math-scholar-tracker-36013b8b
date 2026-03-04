@@ -109,7 +109,7 @@ const ExpenseManagement = () => {
                       id="category"
                       value={expenseForm.category}
                       onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md"
+                      className="w-full px-3 py-2 border rounded-xl"
                     >
                       {EXPENSE_CATEGORIES.map(cat => (
                         <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>

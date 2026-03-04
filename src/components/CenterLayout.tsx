@@ -132,7 +132,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
       />
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background border-b z-20 flex items-center justify-between px-4">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
         <div className="flex-1">
           <CenterLogo size="sm" showName={false} />
         </div>
@@ -140,18 +140,18 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
           variant="ghost"
           size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden"
+          className="md:hidden hover:bg-muted"
         >
           <Menu className="h-5 w-5" />
         </Button>
-      </div>
+      </header>
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-y-auto bg-background",
-        "md:h-screen md:p-6",
+        "flex-1 overflow-y-auto bg-background transition-all duration-300",
+        "md:h-screen",
         "pt-20 md:pt-0",
-        "p-4 md:p-6",
+        "px-4 pb-8 md:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {children}

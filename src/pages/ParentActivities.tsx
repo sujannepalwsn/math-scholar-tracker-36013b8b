@@ -38,15 +38,18 @@ export default function ParentActivities() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">My Child's Activities</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Activity Gallery</h1>
+          <p className="text-muted-foreground text-lg">Visual memories of your child's creative journey and engagement.</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Paintbrush className="h-5 w-5" /> Activity Gallery
+      <Card className="border-none shadow-soft overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Paintbrush className="h-5 w-5 text-primary" /> Visual Log
           </CardTitle>
         </CardHeader>
         <CardContent>

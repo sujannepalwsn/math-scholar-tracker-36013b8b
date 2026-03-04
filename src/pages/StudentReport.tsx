@@ -555,16 +555,19 @@ export default function StudentReport() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header and Print/Export */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Student Report</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Academic Profile</h1>
+          <p className="text-muted-foreground text-lg">Comprehensive view of student performance and engagement.</p>
+        </div>
         {selectedStudentId !== "none" && ( // Only show if a student is selected
-          <div className="flex gap-2">
-            <Button onClick={exportToCSV} variant="outline">
+          <div className="flex gap-3">
+            <Button onClick={exportToCSV} variant="outline" className="rounded-xl border-2">
               <Download className="mr-2 h-4 w-4" /> Export CSV
             </Button>
-            <Button onClick={handlePrint} variant="outline">
+            <Button onClick={handlePrint} variant="outline" className="rounded-xl border-2">
               <Printer className="mr-2 h-4 w-4" /> Print
             </Button>
           </div>
@@ -572,7 +575,8 @@ export default function StudentReport() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 items-end">
+      <Card className="border-none shadow-soft p-6 overflow-hidden">
+        <div className="flex flex-wrap gap-4 items-end">
         <Select value={gradeFilter} onValueChange={setGradeFilter}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Grade" />
@@ -622,14 +626,15 @@ export default function StudentReport() {
           </SelectContent>
         </Select>
       </div>
+      </Card>
 
       {selectedStudentId !== "none" && selectedStudent && ( // Only render report if a student is selected
-        <div id="printable-report" className="space-y-6">
+        <div id="printable-report" className="space-y-8">
           {/* Finance Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" /> Finance Summary
+          <Card className="border-none shadow-medium overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4 border-b">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-primary" /> Financial Overview
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -669,9 +674,9 @@ export default function StudentReport() {
           </Card>
 
           {/* Attendance Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Attendance Overview</CardTitle>
+          <Card className="border-none shadow-medium overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4 border-b">
+              <CardTitle className="text-xl">Attendance Analytics</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-4 mb-4">
@@ -706,10 +711,10 @@ export default function StudentReport() {
           </Card>
 
           {/* Chapter-wise Performance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" /> Chapter-wise Performance
+          <Card className="border-none shadow-medium overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4 border-b">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" /> Curricular Milestones
               </CardTitle>
             </CardHeader>
             <CardContent>

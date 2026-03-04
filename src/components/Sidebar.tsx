@@ -99,39 +99,39 @@ export default function Sidebar({
       <div
         className={cn(
           "hidden md:flex flex-col h-full border-r transition-all duration-300",
-          "bg-sidebar text-sidebar-foreground",
+          "bg-card text-card-foreground shadow-soft",
           isCollapsed ? "w-20" : "w-64"
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b">
-          {!isCollapsed && <div className="flex-1">{headerContent}</div>}
+        <div className="flex items-center justify-between h-20 px-4">
+          {!isCollapsed && <div className="flex-1 animate-in fade-in slide-in-from-left-4">{headerContent}</div>}
           <Button
             variant="ghost"
             size="icon"
             onClick={handleCollapseToggle}
-            className="h-8 w-8"
+            className="h-8 w-8 hover:bg-muted"
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.to;
             return (
-              <Tooltip key={item.to}>
+              <Tooltip key={item.to} delayDuration={0}>
                 <TooltipTrigger asChild>
                   <Link
                     to={item.to}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                       isActive
-                        ? "bg-primary text-primary-foreground hover:text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-primary",
-                      isCollapsed ? "justify-center" : ""
+                        ? "bg-primary text-primary-foreground shadow-medium scale-[1.02]"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:scale-[1.02]",
+                      isCollapsed ? "justify-center px-0" : ""
                     )}
                   >
                     <Icon className="h-5 w-5" />
@@ -165,8 +165,8 @@ export default function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="border-t p-4">
-          {!isCollapsed && <div className="text-sm text-muted-foreground">{footerContent}</div>}
+        <div className="mt-auto p-4 bg-muted/30">
+          {!isCollapsed && <div className="text-sm text-muted-foreground animate-in fade-in">{footerContent}</div>}
           {isCollapsed && (
             <div className="flex justify-center">
               {footerContent}
@@ -181,33 +181,33 @@ export default function Sidebar({
   const mobileSidebar = (
     <div
       className={cn(
-        "fixed inset-0 z-40 md:hidden",
-        isMobileOpen ? "bg-black/50" : "pointer-events-none bg-black/0"
+        "fixed inset-0 z-40 md:hidden transition-all duration-300",
+        isMobileOpen ? "bg-black/60 backdrop-blur-sm" : "pointer-events-none bg-black/0"
       )}
       onClick={handleMobileClose}
     >
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r flex flex-col transition-transform duration-300 z-50",
+          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-strong flex flex-col transition-transform duration-500 ease-out z-50",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b">
+        <div className="flex items-center justify-between h-20 px-6">
           <div className="flex-1">{headerContent}</div>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleMobileClose}
-            className="h-8 w-8"
+            className="h-10 w-10 rounded-full hover:bg-muted"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.to;
@@ -217,10 +217,10 @@ export default function Sidebar({
                 to={item.to}
                 onClick={handleMobileClose}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors mx-2",
+                  "flex items-center gap-4 rounded-xl px-4 py-3 text-base font-medium transition-all duration-200",
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-primary"
+                    ? "bg-primary text-primary-foreground shadow-medium"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
                 <Icon className="h-5 w-5" />

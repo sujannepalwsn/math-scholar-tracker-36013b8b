@@ -271,9 +271,12 @@ export default function PreschoolActivities() {
   // Filtering is now handled by the useQuery hook
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Preschool Activities</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Preschool Journal</h1>
+          <p className="text-muted-foreground text-lg">Document and share student engagement and creative milestones.</p>
+        </div>
         <div className="flex gap-2 items-center">
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
             <SelectTrigger className="w-[150px]">
@@ -401,55 +404,77 @@ export default function PreschoolActivities() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Preschool Activities</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Activity Log</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
-            <p>Loading activities...</p>
+            <div className="flex justify-center py-12"><Star className="h-8 w-8 animate-spin text-primary" /></div>
           ) : activities.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No preschool activities found for the selected grade.</p>
+            <p className="text-muted-foreground text-center py-12 italic">No activities recorded for the current selection.</p>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {activities.map((activity: any) => (
-                <div key={activity.id} className="border rounded-lg p-4 flex items-start justify-between">
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-lg">{activity.students?.name} - {activity.activities?.title || 'Activity'}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Date: {activity.date ? format(new Date(activity.date), "PPP") : (activity.activities?.activity_date ? format(new Date(activity.activities.activity_date), "PPP") : 'N/A')}
-                      {activity.activity_types?.name && ` (Type: ${activity.activity_types.name})`}
-                    </p>
-                    <p className="text-sm">{activity.activities?.description || 'No description'}</p>
-                    {activity.involvement_score && (
-                      <p className="text-sm flex items-center gap-1">
-                        Involvement: {getRatingStars(activity.involvement_score)}
-                      </p>
-                    )}
-                    <div className="flex gap-2 mt-2">
+                <div key={activity.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft hover:shadow-medium transition-all group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft" onClick={() => handleEditClick(activity)}>
+                      <Edit className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                       <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                          <Camera className="h-6 w-6" />
+                       </div>
+                       <div>
+                          <h3 className="font-bold text-xl leading-tight">{activity.students?.name}</h3>
+                          <div className="flex gap-2 mt-1">
+                             <Badge variant="outline" className="text-[10px]">{activity.activity_types?.name || 'Activity'}</Badge>
+                             <Badge className="text-[10px] bg-primary/10 text-primary border-none">{activity.students?.grade}</Badge>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground">{activity.activities?.title}</h4>
+                        <p className="text-sm text-muted-foreground line-clamp-3 mt-1">{activity.activities?.description || 'No description'}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-tighter">
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          {format(new Date(activity.activities?.activity_date || activity.created_at), "PPP")}
+                        </div>
+                        {activity.involvement_score && (
+                          <div className="flex items-center gap-1 text-xs font-bold text-orange-500 uppercase tracking-tighter">
+                            <Star className="h-3.5 w-3.5 fill-current" />
+                            Engagement: {activity.involvement_score}/5
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
                       {activity.activities?.photo_url && (
-                        <Button variant="outline" size="sm" asChild>
+                        <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2" asChild>
                           <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Camera className="h-4 w-4 mr-1" /> Photo
+                            <Camera className="h-4 w-4 mr-2" /> Photo
                           </a>
                         </Button>
                       )}
                       {activity.activities?.video_url && (
-                        <Button variant="outline" size="sm" asChild>
+                        <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2" asChild>
                           <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Video className="h-4 w-4 mr-1" /> Video
+                            <Video className="h-4 w-4 mr-2" /> Video
                           </a>
                         </Button>
                       )}
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(activity)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => deleteActivityMutation.mutate(activity.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               ))}

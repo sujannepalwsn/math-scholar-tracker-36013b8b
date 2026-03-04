@@ -177,9 +177,12 @@ export default function MeetingManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Meeting Management</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Meeting Center</h1>
+          <p className="text-muted-foreground text-lg">Organize and track consultations with parents and staff.</p>
+        </div>
         <Dialog open={showMeetingFormDialog} onOpenChange={(open) => {
           setShowMeetingFormDialog(open);
           if (!open) setEditingMeeting(null);
@@ -203,15 +206,15 @@ export default function MeetingManagement() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Meetings</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Scheduled Assemblies</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <p>Loading meetings...</p>
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : meetings.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No meetings scheduled yet.</p>
+            <p className="text-muted-foreground text-center py-12 italic">No meetings scheduled yet.</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>

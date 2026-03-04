@@ -337,14 +337,20 @@ export default function TeacherManagement() {
   const totalMonthlySalary = teachers.reduce((sum, t: any) => sum + (t.monthly_salary || 0), 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Teacher Management</h1>
-          <p className="text-muted-foreground flex items-center gap-2 mt-1">
-            <DollarSign className="h-4 w-4" />
-            Total Monthly Salary: ₹{totalMonthlySalary.toLocaleString()}
-          </p>
+          <h1 className="text-4xl font-extrabold tracking-tight">Faculty Directory</h1>
+          <div className="flex flex-wrap gap-4 mt-2">
+             <div className="bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20 flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-primary" />
+                <span className="font-bold text-primary text-sm">Monthly Payroll: ₹{totalMonthlySalary.toLocaleString()}</span>
+             </div>
+             <div className="bg-muted px-3 py-1.5 rounded-xl border flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="font-bold text-muted-foreground text-sm">{teachers.length} Active Staff</span>
+             </div>
+          </div>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -548,15 +554,15 @@ Jane Smith, jane@example.com, 9876543211, 30000, 08:30, 16:30
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Teachers ({teachers.length})</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Staff Roster</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <p>Loading teachers...</p>
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : teachers.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No teachers registered yet.</p>
+            <p className="text-muted-foreground text-center py-12 italic">No teachers registered yet.</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>

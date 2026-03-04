@@ -271,8 +271,13 @@ export default function Messaging() {
   const uniqueGrades = Array.from(new Set(studentsWithParents.map(s => s.grade))).sort();
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Messages</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Communication Center</h1>
+          <p className="text-muted-foreground text-lg">Stay connected with parents and teachers.</p>
+        </div>
+      </div>
 
       <Tabs defaultValue="direct" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -283,12 +288,12 @@ export default function Messaging() {
         </TabsList>
 
         <TabsContent value="direct">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[700px]">
             {/* Conversations List */}
-            <Card className="md:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5" /> Conversations
+            <Card className="md:col-span-1 border-none shadow-medium overflow-hidden flex flex-col">
+              <CardHeader className="bg-muted/30 pb-4 border-b">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" /> Conversations
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2">
@@ -370,10 +375,12 @@ export default function Messaging() {
             </Card>
 
             {/* Messages Area */}
-            <Card className="md:col-span-2">
-              <CardHeader className="pb-2 border-b">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
+            <Card className="md:col-span-2 border-none shadow-strong overflow-hidden flex flex-col">
+              <CardHeader className="bg-primary text-primary-foreground pb-4 shadow-soft relative z-10">
+                <CardTitle className="text-xl flex items-center gap-3">
+                  <div className="bg-white/20 p-2 rounded-xl">
+                    <MessageSquare className="h-5 w-5 text-white" />
+                  </div>
                   {selectedConversation
                     ? user?.role === "parent"
                       ? selectedConversation.centers?.name

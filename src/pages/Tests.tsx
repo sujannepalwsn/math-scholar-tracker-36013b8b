@@ -422,32 +422,33 @@ export default function Tests() {
     : students;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700">
       {testsWithFiles.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+        <Card className="border-none shadow-medium overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-4">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
               Available Question Papers
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {testsWithFiles.map((test) => (
                 <div
                   key={test.id}
-                  className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                  className="rounded-2xl border-2 border-primary/5 p-5 hover:bg-primary/5 transition-all hover:shadow-soft"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-sm line-clamp-2">{test.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {test.subject} • {test.date ? format(new Date(test.date), "MMM d, yyyy") : 'No date'}
-                        </p>
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
+                      <FileText className="h-6 w-6" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-base leading-tight">{test.name}</h3>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="outline" className="text-[10px]">{test.subject}</Badge>
+                        <Badge className="text-[10px] bg-primary/10 text-primary border-none">
+                          {test.date ? format(new Date(test.date), "MMM d") : 'No date'}
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -458,9 +459,12 @@ export default function Tests() {
         </Card>
       )}
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Test Management</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+           <h1 className="text-4xl font-extrabold tracking-tight">Assessment Center</h1>
+           <p className="text-muted-foreground text-lg">Create tests, manage question papers, and track student results.</p>
+        </div>
+        <div className="flex gap-3">
           <Button variant="outline" onClick={() => setShowOCRModal(true)}>
             <FileUp className="mr-2 h-4 w-4" />
             Upload Test Paper (OCR)
@@ -604,7 +608,7 @@ export default function Tests() {
                 {/* DEBUG: Display current number of questions */}
                 <p className="text-sm text-muted-foreground">Current questions: {questions.length}</p>
                 {questions.map((q, index) => (
-                  <div key={q.id} className="flex flex-col gap-2 border p-3 rounded-md bg-muted/20">
+                  <div key={q.id} className="flex flex-col gap-2 border p-3 rounded-xl bg-muted/20">
                     <div className="flex justify-between items-center">
                       <Label>Question {index + 1}</Label>
                       <Button variant="ghost" size="sm" onClick={() => removeQuestion(q.id)}>
@@ -649,42 +653,48 @@ export default function Tests() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>All Tests</CardTitle>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card className="border-none shadow-medium overflow-hidden h-fit">
+          <CardHeader className="bg-muted/30 pb-4">
+            <CardTitle className="text-xl">Evaluation Catalog</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+          <CardContent className="pt-6">
+            <div className="space-y-3">
               {tests.map((test) => (
                 <div
                   key={test.id}
-                  className={`flex items-center gap-2 ${
-                    selectedTest === test.id ? "" : ""
-                  }`}
+                  className="group flex items-center gap-2"
                 >
                   <button
                     onClick={() => setSelectedTest(test.id)}
-                    className={`flex-1 text-left p-4 border rounded-lg transition-colors ${
+                    className={cn(
+                      "flex-1 text-left p-5 rounded-2xl border-2 transition-all duration-300",
                       selectedTest === test.id
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
-                    }`}
+                        ? "bg-primary text-primary-foreground border-primary shadow-medium scale-[1.02]"
+                        : "bg-card border-primary/5 hover:border-primary/20 hover:bg-primary/5"
+                    )}
                   >
-                    <div className="font-medium">{test.name}</div>
-                    <div className="text-sm opacity-80">
-                      {test.subject} • {format(new Date(test.date), "PPP")} • {test.total_marks} marks
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-bold text-lg leading-tight">{test.name}</div>
+                      <Badge className={cn("text-[10px] font-black border-none", selectedTest === test.id ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
+                         {test.total_marks} PTS
+                      </Badge>
+                    </div>
+                    <div className={cn("text-xs flex flex-wrap gap-x-3 gap-y-2 font-medium uppercase tracking-wider", selectedTest === test.id ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                      <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {test.subject}</span>
+                      <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> {format(new Date(test.date), "MMM d, yyyy")}</span>
+
                       {test.questions && (test.questions as unknown as Question[]).length > 0 && (
-                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-primary-foreground text-primary">
-                          {(test.questions as unknown as Question[]).length} Questions
-                        </span>
-                      )}
-                      {(test as any).lesson_plans?.chapter && (
-                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-primary-foreground text-primary">
-                          Linked to: {(test as any).lesson_plans.subject}: {(test as any).lesson_plans.chapter}
-                        </span>
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(test.questions as unknown as Question[]).length} Qs</span>
                       )}
                     </div>
+
+                    {(test as any).lesson_plans?.chapter && (
+                      <div className={cn("mt-3 p-2 rounded-xl text-[10px] font-bold inline-flex items-center gap-1.5", selectedTest === test.id ? "bg-white/10 text-white" : "bg-primary/5 text-primary")}>
+                         <FileText className="h-3 w-3" />
+                         Chapter: {(test as any).lesson_plans.chapter}
+                      </div>
+                    )}
                   </button>
                   <Button
                     variant="ghost"
@@ -710,10 +720,13 @@ export default function Tests() {
         </Card>
 
         {selectedTest && selectedTestData && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Enter Marks - {selectedTestData.name}</CardTitle>
+          <Card className="border-none shadow-strong overflow-hidden animate-in slide-in-from-right-4 duration-500">
+            <CardHeader className="bg-primary text-primary-foreground pb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-2xl font-black">Performance Entry</CardTitle>
+                  <CardDescription className="text-primary-foreground/80 font-medium">Recording results for {selectedTestData.name}</CardDescription>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"

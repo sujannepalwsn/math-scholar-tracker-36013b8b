@@ -74,12 +74,15 @@ export default function ParentChapterRating() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Chapter Rating Report</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Skill Matrix</h1>
+          <p className="text-muted-foreground text-lg">Visual breakdown of your child's understanding across different subjects.</p>
+        </div>
       </div>
 
-      <Card>
+      <Card className="border-none shadow-soft overflow-hidden">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -104,15 +107,18 @@ export default function ParentChapterRating() {
           ) : (
             <div className="space-y-6">
               {/* Accumulated Subject-wise Rating */}
-              <h3 className="font-semibold text-lg mb-2">Subject-wise Average Ratings</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <h3 className="font-bold text-xl mb-4">Subject Proficiency</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {chapterRatingsBySubject.map((subjectData) => (
-                  <Card key={subjectData.subject} className="p-4">
-                    <h4 className="font-medium text-md">{subjectData.subject}</h4>
-                    <p className="text-2xl font-bold flex items-center gap-1">
-                      {subjectData.averageRating} <span className="text-yellow-500">⭐</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">{subjectData.chapters.length} chapters rated</p>
+                  <Card key={subjectData.subject} className="border-2 border-primary/5 bg-muted/30 p-5 rounded-2xl shadow-soft hover:shadow-medium transition-all group">
+                    <h4 className="font-bold text-lg text-muted-foreground group-hover:text-primary transition-colors">{subjectData.subject}</h4>
+                    <div className="flex items-baseline gap-2 mt-2">
+                       <p className="text-4xl font-black tracking-tighter text-primary">
+                        {subjectData.averageRating}
+                      </p>
+                      <Star className="h-6 w-6 text-yellow-500 fill-current" />
+                    </div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">{subjectData.chapters.length} Modules Analyzed</p>
                   </Card>
                 ))}
               </div>

@@ -208,19 +208,22 @@ export default function ViewRecords() {
   }, [studentDetailAttendance]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Attendance Records</h2>
-          <p className="text-muted-foreground">
-            View daily attendance records. For monthly summaries, please visit the{" "}
-            <a href="/attendance-summary" className="text-primary hover:underline">Attendance Summary</a> page.
+          <h1 className="text-4xl font-extrabold tracking-tight">Attendance Archive</h1>
+          <p className="text-muted-foreground text-lg">
+            Comprehensive history of student presence and punctuality.
           </p>
+        </div>
+        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
+          <CalendarIcon className="h-5 w-5 text-primary" />
+          <span className="font-semibold text-primary">{format(selectedDate, 'MMMM d, yyyy')}</span>
         </div>
       </div>
 
       {/* Filters Row */}
-      <Card className="p-4">
+      <Card className="p-6 border-none shadow-soft overflow-hidden">
         <div className="flex flex-col md:flex-row gap-4 md:items-center">
           {/* Grade Filter */}
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
@@ -273,13 +276,14 @@ export default function ViewRecords() {
       </Card>
 
       {/* Attendance Table */}
-      <Card>
-        <CardHeader>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-6">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Attendance for {format(selectedDate, "MMMM d, yyyy")}</CardTitle>
-              <CardDescription>
-                {presentCount} Present • {absentCount} Absent
+              <CardTitle className="text-xl">Daily Log: {format(selectedDate, "MMMM d")}</CardTitle>
+              <CardDescription className="flex gap-3 mt-1">
+                <Badge className="bg-green-500/10 text-green-600 border-none">{presentCount} Present</Badge>
+                <Badge variant="destructive" className="bg-red-500/10 text-red-600 border-none">{absentCount} Absent</Badge>
               </CardDescription>
             </div>
           </div>

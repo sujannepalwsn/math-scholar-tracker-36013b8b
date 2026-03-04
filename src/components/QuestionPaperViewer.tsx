@@ -119,7 +119,7 @@ export default function QuestionPaperViewer({
           )}
 
           {!isLoading && fileUrl && !error && (
-            <div className="flex-1 overflow-auto bg-gray-50 rounded-lg border">
+            <div className="flex-1 overflow-auto bg-slate-50/50/50 rounded-lg border">
               {fileType === 'pdf' && (
                 <div className="w-full h-full flex items-center justify-center p-4">
                   <iframe

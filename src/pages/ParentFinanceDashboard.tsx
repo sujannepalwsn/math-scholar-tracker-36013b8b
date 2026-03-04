@@ -131,17 +131,22 @@ const ParentFinanceDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Finance & Invoices</h1>
-            <p className="text-muted-foreground">
-              Student: <span className="font-semibold">{student?.name}</span>
-            </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary/10 p-3 rounded-2xl shadow-soft">
+              <DollarSign className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-extrabold tracking-tight">Financial Ledger</h1>
+              <p className="text-muted-foreground text-lg">
+                Student: <span className="font-bold text-foreground">{student?.name}</span>
+              </p>
+            </div>
           </div>
-          <Button variant="outline" onClick={() => navigate('/parent-dashboard')}>
+          <Button variant="outline" onClick={() => navigate('/parent-dashboard')} className="rounded-2xl border-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
@@ -165,57 +170,25 @@ const ParentFinanceDashboard = () => {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Invoiced
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(summary.total_invoiced)}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Paid
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(summary.total_paid)}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Outstanding
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${summary.total_outstanding > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                {formatCurrency(summary.total_outstanding)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Collection Rate
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {summary.total_invoiced > 0 
-                  ? `${Math.round((summary.total_paid / summary.total_invoiced) * 100)}%`
-                  : 'N/A'
-                }
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { title: "Total Invoiced", value: formatCurrency(summary.total_invoiced), icon: FileText, color: "text-blue-600", bgColor: "bg-blue-100" },
+            { title: "Total Paid", value: formatCurrency(summary.total_paid), icon: TrendingUp, color: "text-green-600", bgColor: "bg-green-100", valueClass: "text-green-600" },
+            { title: "Outstanding", value: formatCurrency(summary.total_outstanding), icon: AlertCircle, color: "text-orange-600", bgColor: "bg-orange-100", valueClass: summary.total_outstanding > 0 ? 'text-orange-600' : 'text-green-600' },
+            { title: "Collection Rate", value: summary.total_invoiced > 0 ? `${Math.round((summary.total_paid / summary.total_invoiced) * 100)}%` : 'N/A', icon: CreditCard, color: "text-purple-600", bgColor: "bg-purple-100" },
+          ].map((stat) => (
+            <Card key={stat.title} className="border-none shadow-soft hover:shadow-medium transition-all duration-300 group">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
+                <div className={cn("p-2 rounded-xl transition-transform group-hover:rotate-12", stat.bgColor)}>
+                  <stat.icon className={cn("h-4 w-4", stat.color)} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className={cn("text-2xl font-bold tracking-tight", stat.valueClass)}>{stat.value}</div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Tabs */}

@@ -42,15 +42,18 @@ export default function ParentDiscipline() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Discipline Alerts</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Conduct Report</h1>
+          <p className="text-muted-foreground text-lg">Monitor behavioral alerts and resolution status for your child.</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" /> My Child's Discipline Issues
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-primary" /> Incident History
           </CardTitle>
         </CardHeader>
         <CardContent>

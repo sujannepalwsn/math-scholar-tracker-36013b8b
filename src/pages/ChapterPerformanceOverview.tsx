@@ -225,16 +225,19 @@ export default function ChapterPerformanceOverview() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Chapter Performance Overview</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Academic Progress</h1>
+          <p className="text-muted-foreground text-lg">Detailed breakdown of student performance across all chapters.</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4 border-b">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" /> All Chapter Evaluations
+            <CardTitle className="text-xl flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" /> Evaluation Archive
             </CardTitle>
             <div className="flex gap-2">
               <Select value={subjectFilter} onValueChange={setSubjectFilter}>

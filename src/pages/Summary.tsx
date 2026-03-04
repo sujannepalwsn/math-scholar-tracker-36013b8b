@@ -119,14 +119,20 @@ export default function Summary() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Attendance Summary</h2>
-        <p className="text-muted-foreground">View detailed attendance statistics</p>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Attendance Summary</h1>
+          <p className="text-muted-foreground text-lg">View detailed attendance statistics and student trends.</p>
+        </div>
+        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
+           <Download className="h-5 w-5 text-primary" />
+           <span className="font-semibold text-primary">Report Ready</span>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="border-none shadow-soft overflow-hidden">
         <CardHeader className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
           <div className="flex flex-col md:flex-row gap-2 md:items-center">
             <CardTitle>Filters</CardTitle>
@@ -155,15 +161,15 @@ export default function Summary() {
             type="month"
             value={monthFilter}
             onChange={(e) => setMonthFilter(e.target.value)}
-            className="w-36 px-2 py-1 border rounded-md"
+            className="w-36 px-2 py-1 border rounded-xl"
           />
         </CardContent>
       </Card>
 
       {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Student Statistics</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Student Statistics</CardTitle>
           <CardDescription>Detailed attendance breakdown per student</CardDescription>
         </CardHeader>
         <CardContent>

@@ -73,15 +73,18 @@ export default function ParentMeetings() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">My Meetings</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Meeting Schedule</h1>
+          <p className="text-muted-foreground text-lg">Stay informed about upcoming consultations and parent-teacher sessions.</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" /> Scheduled Meetings
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-primary" /> Personalized Agenda
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -128,12 +128,12 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="h-8 w-8 text-destructive" />
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-extrabold tracking-tight">System Administration</h1>
+            <p className="text-muted-foreground text-lg">Manage centers, user permissions and system status.</p>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -195,9 +195,14 @@ const AdminDashboard = () => {
           </DialogContent>
         </Dialog>
 
-        <Card>
-          <CardHeader><CardTitle>All Centers</CardTitle></CardHeader>
-          <CardContent>
+        <Card className="border-none shadow-medium overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-4">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Registered Tuition Centers
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
             {isLoading ? <p>Loading...</p> : centers.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No centers registered yet</p>
             ) : (
@@ -223,7 +228,10 @@ const AdminDashboard = () => {
                         <TableCell>{center.phone || '-'}</TableCell>
                         <TableCell>{centerUser?.username || '-'}</TableCell>
                         <TableCell>
-                          {centerUser?.is_active ? <span className="text-green-600">Active</span> : <span className="text-red-600">Inactive</span>}
+                          {centerUser?.is_active ?
+                            <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-none">Active</Badge> :
+                            <Badge variant="destructive" className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-none">Inactive</Badge>
+                          }
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">

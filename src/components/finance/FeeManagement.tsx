@@ -198,7 +198,7 @@ const FeeManagement = () => {
                     <select
                       value={structureForm.fee_heading_id}
                       onChange={(e) => setStructureForm({ ...structureForm, fee_heading_id: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md"
+                      className="w-full px-3 py-2 border rounded-xl"
                     >
                       <option value="">Select Heading</option>
                       {headings.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -214,7 +214,7 @@ const FeeManagement = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>Frequency</Label>
-                    <select value={structureForm.frequency} onChange={(e) => setStructureForm({ ...structureForm, frequency: e.target.value })} className="w-full px-3 py-2 border rounded-md">
+                    <select value={structureForm.frequency} onChange={(e) => setStructureForm({ ...structureForm, frequency: e.target.value })} className="w-full px-3 py-2 border rounded-xl">
                       <option value="monthly">Monthly</option>
                       <option value="quarterly">Quarterly</option>
                       <option value="yearly">Yearly</option>

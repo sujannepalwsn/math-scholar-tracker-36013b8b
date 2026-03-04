@@ -54,9 +54,12 @@ export default function ParentHomework() {
   const overdueHomework = homeworkStatus.filter((hs: any) => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && hs.status !== 'completed');
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">My Homework</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Homework Tracker</h1>
+          <p className="text-muted-foreground text-lg">Stay updated with assignments and submission statuses.</p>
+        </div>
       </div>
 
       <Tabs defaultValue="today" className="space-y-6">
@@ -68,9 +71,9 @@ export default function ParentHomework() {
         </TabsList>
 
         <TabsContent value="today">
-          <Card>
-            <CardHeader>
-              <CardTitle>Today's Homework</CardTitle>
+          <Card className="border-none shadow-medium overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4">
+              <CardTitle className="text-xl">Due Today</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -118,9 +121,9 @@ export default function ParentHomework() {
         </TabsContent>
 
         <TabsContent value="upcoming">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Homework</CardTitle>
+          <Card className="border-none shadow-medium overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4">
+              <CardTitle className="text-xl">Future Assignments</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -168,9 +171,9 @@ export default function ParentHomework() {
         </TabsContent>
 
         <TabsContent value="completed">
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Homework</CardTitle>
+          <Card className="border-none shadow-medium overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4">
+              <CardTitle className="text-xl">Finished Tasks</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -218,9 +221,9 @@ export default function ParentHomework() {
         </TabsContent>
 
         <TabsContent value="overdue">
-          <Card>
-            <CardHeader>
-              <CardTitle>Overdue Homework</CardTitle>
+          <Card className="border-none shadow-medium overflow-hidden">
+            <CardHeader className="bg-muted/30 pb-4">
+              <CardTitle className="text-xl text-destructive">Pending Past Due</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
