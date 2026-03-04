@@ -231,7 +231,8 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         meeting_type: meetingType,
         status,
         agenda: `[Category: ${agendaCategory}] ${description || ''}`,
-      }).eq("id", meeting.id).select().single();
+        related_meeting_id: relatedMeetingId,
+      } as any).eq("id", meeting.id).select().single();
       if (error) throw error;
       return data;
     },
