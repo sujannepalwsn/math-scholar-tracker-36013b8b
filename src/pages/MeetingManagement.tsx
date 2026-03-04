@@ -39,7 +39,7 @@ export default function MeetingManagement() {
       if (!user?.center_id) return [];
       const { data, error } = await supabase
         .from("meetings")
-        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees(student_id, user_id, teacher_id)") // Fetch attendees too
+        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees(student_id, user_id, teacher_id), related_meeting:related_meeting_id(id, title, meeting_date)")
         .eq("center_id", user.center_id)
         .order("meeting_date", { ascending: false });
       if (error) throw error;
