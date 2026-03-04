@@ -311,6 +311,25 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         </div>
       </div>
 
+      {/* Follow-up from previous meeting */}
+      <div className="space-y-2">
+        <Label>Follow-up from Previous Meeting (Optional)</Label>
+        <Select value={relatedMeetingId || "none"} onValueChange={(v) => setRelatedMeetingId(v === "none" ? null : v)}>
+          <SelectTrigger><SelectValue placeholder="Select a previous meeting..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">— None (New Topic) —</SelectItem>
+            {previousMeetings
+              .filter(m => m.id !== meeting?.id) // Don't link to self
+              .map(m => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.title} ({format(new Date(m.meeting_date), 'MMM d, yyyy')})
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Link this meeting as a follow-up to a previous one</p>
+      </div>
+
       {meetingType === "parents" && (
         <div className="space-y-3 border p-4 rounded-lg">
           <h3 className="font-semibold text-lg flex items-center gap-2">
