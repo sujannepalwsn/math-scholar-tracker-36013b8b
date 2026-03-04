@@ -422,12 +422,19 @@ export default function Messaging() {
                       )}
                     </ScrollArea>
 
-                    <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2">
-                      <Input
+                    <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2 items-end">
+                      <Textarea
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className="flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (newMessage.trim()) sendMessageMutation.mutate();
+                          }
+                        }}
+                        placeholder="Type a message... (Shift+Enter for new line)"
+                        className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+                        rows={1}
                       />
                       <Button type="submit" disabled={!newMessage.trim() || sendMessageMutation.isPending}>
                         <Send className="h-4 w-4" />

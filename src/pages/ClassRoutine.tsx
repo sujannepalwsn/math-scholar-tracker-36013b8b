@@ -492,7 +492,7 @@ export default function ClassRoutine() {
                   )}
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
-                    <Button type="submit" disabled={!scheduleGrade || !schedulePeriodId || !scheduleDay || !scheduleSubject}>
+                    <Button type="submit" disabled={!scheduleGrade || !schedulePeriodId || !isValidDay || !scheduleSubject}>
                       {editingSchedule ? "Update" : scheduleDay === "weekdays" ? "Create for All Weekdays" : "Create"}
                     </Button>
                   </div>

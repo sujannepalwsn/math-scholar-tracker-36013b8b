@@ -457,7 +457,26 @@ export default function CenterSettings() {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => {
+            const defaultTheme: CenterTheme = {
+              primary: "#6366f1",
+              background: "#ffffff",
+              sidebar: "#1e293b",
+              foreground: "#1e293b",
+              cardBackground: "#ffffff",
+              mutedForeground: "#64748b",
+            };
+            setTheme(defaultTheme);
+            applyTheme(defaultTheme);
+            toast.success("Default theme applied. Click Save to persist.");
+          }}
+        >
+          Reset to Default Theme
+        </Button>
         <Button
           onClick={() => updateCenterMutation.mutate()}
           disabled={!name || updateCenterMutation.isPending}

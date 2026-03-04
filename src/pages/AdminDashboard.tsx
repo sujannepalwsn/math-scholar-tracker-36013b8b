@@ -201,6 +201,7 @@ const AdminDashboard = () => {
             {isLoading ? <p>Loading...</p> : centers.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No centers registered yet</p>
             ) : (
+              <div className="overflow-auto max-h-[400px]">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -239,6 +240,7 @@ const AdminDashboard = () => {
                   })}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
