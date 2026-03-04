@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 const FEATURES = [
   { name: 'register_student', label: 'Register Student' },
   { name: 'take_attendance', label: 'Take Attendance' },
+  { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'view_records', label: 'View Records' },
   { name: 'lesson_plans', label: 'Lesson Plans' },
   { name: 'lesson_tracking', label: 'Lesson Tracking' },
@@ -16,6 +17,7 @@ const FEATURES = [
   { name: 'discipline_issues', label: 'Discipline Issues' },
   { name: 'teacher_management', label: 'Teacher Management' },
   { name: 'test_management', label: 'Test Management' },
+  { name: 'student_report', label: 'Student Report' },
   { name: 'summary', label: 'Summary' },
   { name: 'finance', label: 'Finance Management' },
   { name: 'ai_insights', label: 'AI Insights' },
