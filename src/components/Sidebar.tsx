@@ -48,12 +48,19 @@ interface SidebarProps {
   navItems: NavItem[];
   headerContent: React.ReactNode;
   footerContent: React.ReactNode;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
-export default function Sidebar({ navItems, headerContent, footerContent }: SidebarProps) {
+export default function Sidebar({ navItems, headerContent, footerContent, onCollapseChange }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { user } = useAuth(); // Get user from AuthContext
+  const { user } = useAuth();
+
+  const handleCollapseToggle = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    onCollapseChange?.(newState);
+  };
 
   const filteredNavItems = navItems.filter(item => {
     // Filter by role
@@ -90,7 +97,7 @@ export default function Sidebar({ navItems, headerContent, footerContent }: Side
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={handleCollapseToggle}
             className="h-8 w-8"
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}

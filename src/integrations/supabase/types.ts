@@ -1205,6 +1205,7 @@ export type Database = {
           meeting_date: string
           meeting_time: string | null
           meeting_type: string | null
+          related_meeting_id: string | null
           status: string | null
           title: string
           updated_at: string
@@ -1220,6 +1221,7 @@ export type Database = {
           meeting_date: string
           meeting_time?: string | null
           meeting_type?: string | null
+          related_meeting_id?: string | null
           status?: string | null
           title: string
           updated_at?: string
@@ -1235,6 +1237,7 @@ export type Database = {
           meeting_date?: string
           meeting_time?: string | null
           meeting_type?: string | null
+          related_meeting_id?: string | null
           status?: string | null
           title?: string
           updated_at?: string
@@ -1252,6 +1255,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_related_meeting_id_fkey"
+            columns: ["related_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
             referencedColumns: ["id"]
           },
         ]

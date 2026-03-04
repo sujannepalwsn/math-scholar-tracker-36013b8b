@@ -5,11 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { User, Calendar as CalendarIcon, BookOpen, FileText, LogOut, DollarSign, Book, Paintbrush, AlertTriangle, CheckCircle, XCircle, Clock, Star, MessageSquare, Radio, ClipboardCheck } from 'lucide-react';
+import { User, Calendar as CalendarIcon, BookOpen, FileText, LogOut, DollarSign, Book, Paintbrush, AlertTriangle, CheckCircle, XCircle, Clock, Star, MessageSquare, Radio, ClipboardCheck, Video } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
 import { Input } from '@/components/ui/input'; // Import Input component
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isPast, isToday } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isPast, isToday, isFuture } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
 import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
 import ParentChapterPerformanceTable from '@/components/parent/ParentChapterPerformanceTable'; // NEW
@@ -294,7 +295,7 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Fetch all lesson plans for the center (explicitly for chapterPerformanceData and missed chapters)
+  // Fetch all lesson plans for the center
   const { data: allLessonPlans = [] } = useQuery({
     queryKey: ["all-lesson-plans-for-report", user?.center_id],
     queryFn: async () => {
@@ -302,12 +303,35 @@ const ParentDashboardContent = () => {
       const { data, error } = await supabase
         .from("lesson_plans")
         .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url")
-        .eq("center_id", user.center_id) // Filter by center_id
+        .eq("center_id", user.center_id)
         .order("lesson_date", { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!user?.center_id,
+  });
+
+  // Fetch upcoming meetings for parent
+  const { data: upcomingMeetings = [] } = useQuery({
+    queryKey: ['parent-upcoming-meetings', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('meeting_attendees')
+        .select(`
+          *,
+          meetings(id, title, meeting_date, meeting_type, status, location, agenda)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).filter((att: any) => {
+        if (!att.meetings?.meeting_date) return false;
+        const meetingDate = new Date(att.meetings.meeting_date);
+        return isFuture(meetingDate) || isToday(meetingDate);
+      }).slice(0, 5);
+    },
+    enabled: !!user?.id,
   });
 
   // Calculate summary - handle null paid_amount
@@ -716,6 +740,70 @@ const ParentDashboardContent = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Upcoming Meetings Notification */}
+        {upcomingMeetings.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Video className="h-5 w-5 text-blue-600" /> Upcoming Meetings
+                <Badge variant="secondary">{upcomingMeetings.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingMeetings.map((att: any) => (
+                  <div key={att.id} className={`p-3 rounded-lg border ${isToday(new Date(att.meetings?.meeting_date)) ? 'bg-blue-100 border-blue-300' : 'bg-background'}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{att.meetings?.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {att.meetings?.meeting_type?.charAt(0).toUpperCase() + att.meetings?.meeting_type?.slice(1)} Meeting
+                          {att.meetings?.location && ` • ${att.meetings.location}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{format(new Date(att.meetings?.meeting_date), 'PPP')}</p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(att.meetings?.meeting_date), 'p')}</p>
+                        {isToday(new Date(att.meetings?.meeting_date)) && <Badge className="mt-1">Today</Badge>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Upcoming Events */}
+        {upcomingEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CalendarIcon className="h-5 w-5" /> Upcoming Events
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingEvents.map((event: any) => (
+                  <div key={event.id} className={`p-3 rounded-lg border ${event.is_holiday ? 'bg-red-50 border-red-200' : 'bg-muted/50'}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{event.title}</h4>
+                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
+                        {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
+                        {isToday(new Date(event.event_date)) && <Badge className="ml-2">Today</Badge>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Attendance Toggle and Mini Calendar */}
         <div className="flex justify-between items-center gap-2">

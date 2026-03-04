@@ -33,6 +33,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
   const [meetingType, setMeetingType] = useState("general");
   const [status, setStatus] = useState("scheduled");
   const [agendaCategory, setAgendaCategory] = useState("general");
+  const [relatedMeetingId, setRelatedMeetingId] = useState<string | null>(null);
   
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
@@ -86,6 +87,23 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
     enabled: !!user?.center_id,
   });
 
+  // Fetch previous meetings for "follow-up" linking
+  const { data: previousMeetings = [] } = useQuery({
+    queryKey: ["previous-meetings-for-linking", user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase
+        .from("meetings")
+        .select("id, title, meeting_date, meeting_type")
+        .eq("center_id", user.center_id)
+        .order("meeting_date", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id,
+  });
+
   // Filter students based on search input
   const filteredStudents = allStudents.filter(student =>
     student.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -111,6 +129,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
       // Extract agenda category from description if present
       const agendaMatch = meeting.agenda?.match(/\[Category: (\w+)\]/);
       setAgendaCategory(agendaMatch ? agendaMatch[1] : "general");
+      setRelatedMeetingId((meeting as any).related_meeting_id || null);
       
       if (meeting.meeting_attendees) {
         const initialSelectedStudentIds: string[] = [];
@@ -139,6 +158,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
       setMeetingType("general");
       setStatus("scheduled");
       setAgendaCategory("general");
+      setRelatedMeetingId(null);
       setSelectedStudentIds([]);
       setSelectedTeacherIds([]);
     }
@@ -185,7 +205,8 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         meeting_type: meetingType,
         status,
         agenda: `[Category: ${agendaCategory}] ${description || ''}`,
-      }).select().single();
+        related_meeting_id: relatedMeetingId,
+      } as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -210,7 +231,8 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         meeting_type: meetingType,
         status,
         agenda: `[Category: ${agendaCategory}] ${description || ''}`,
-      }).eq("id", meeting.id).select().single();
+        related_meeting_id: relatedMeetingId,
+      } as any).eq("id", meeting.id).select().single();
       if (error) throw error;
       return data;
     },
@@ -287,6 +309,25 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Follow-up from previous meeting */}
+      <div className="space-y-2">
+        <Label>Follow-up from Previous Meeting (Optional)</Label>
+        <Select value={relatedMeetingId || "none"} onValueChange={(v) => setRelatedMeetingId(v === "none" ? null : v)}>
+          <SelectTrigger><SelectValue placeholder="Select a previous meeting..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">— None (New Topic) —</SelectItem>
+            {previousMeetings
+              .filter(m => m.id !== meeting?.id) // Don't link to self
+              .map(m => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.title} ({format(new Date(m.meeting_date), 'MMM d, yyyy')})
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Link this meeting as a follow-up to a previous one</p>
       </div>
 
       {meetingType === "parents" && (

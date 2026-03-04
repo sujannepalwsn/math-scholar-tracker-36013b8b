@@ -39,7 +39,7 @@ export default function MeetingManagement() {
       if (!user?.center_id) return [];
       const { data, error } = await supabase
         .from("meetings")
-        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees(student_id, user_id, teacher_id)") // Fetch attendees too
+        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees(student_id, user_id, teacher_id), related_meeting:related_meeting_id(id, title, meeting_date)")
         .eq("center_id", user.center_id)
         .order("meeting_date", { ascending: false });
       if (error) throw error;
@@ -217,13 +217,14 @@ export default function MeetingManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Conclusion</TableHead>
-                    <TableHead>Actions</TableHead>
+                     <TableHead>Title</TableHead>
+                     <TableHead>Date</TableHead>
+                     <TableHead>Time</TableHead>
+                     <TableHead>Type</TableHead>
+                     <TableHead>Status</TableHead>
+                     <TableHead>Follow-up</TableHead>
+                     <TableHead>Conclusion</TableHead>
+                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -237,6 +238,15 @@ export default function MeetingManagement() {
                         <span className={`font-semibold ${getStatusColor(meeting.status)}`}>
                           {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {meeting.related_meeting ? (
+                          <span className="text-xs text-blue-600 font-medium">
+                            ↩ {meeting.related_meeting.title}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                       {meeting.meeting_conclusions && meeting.meeting_conclusions.length > 0 ? (

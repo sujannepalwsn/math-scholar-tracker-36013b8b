@@ -72,8 +72,7 @@ export default function CenterSettings() {
           cardBackground: savedTheme.cardBackground || "#ffffff",
           mutedForeground: savedTheme.mutedForeground || "#64748b",
         });
-        // Apply theme to CSS variables
-        applyTheme(savedTheme);
+        // Do NOT apply theme here - it should only be applied on Save
       }
     }
   }, [center]);
@@ -471,8 +470,16 @@ export default function CenterSettings() {
               mutedForeground: "#64748b",
             };
             setTheme(defaultTheme);
-            applyTheme(defaultTheme);
-            toast.success("Default theme applied. Click Save to persist.");
+            // Remove all inline CSS overrides to restore stylesheet defaults
+            const root = document.documentElement;
+            root.style.removeProperty('--primary');
+            root.style.removeProperty('--background');
+            root.style.removeProperty('--sidebar-background');
+            root.style.removeProperty('--sidebar-foreground');
+            root.style.removeProperty('--foreground');
+            root.style.removeProperty('--card');
+            root.style.removeProperty('--muted-foreground');
+            toast.success("Default theme restored. Click Save to persist.");
           }}
         >
           Reset to Default Theme

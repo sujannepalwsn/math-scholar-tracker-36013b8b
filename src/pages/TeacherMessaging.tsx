@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Send, MessageSquare } from "lucide-react";
@@ -174,7 +174,7 @@ export default function TeacherMessaging() {
                             : "bg-muted"
                         }`}
                       >
-                        <p className="text-sm">{msg.message_text}</p>
+                        <p className="text-sm whitespace-pre-wrap">{msg.message_text}</p>
                         <p className={`text-xs mt-1 ${isOwnMessage ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                           {format(new Date(msg.sent_at), "MMM d, h:mm a")}
                         </p>
@@ -188,11 +188,18 @@ export default function TeacherMessaging() {
           </ScrollArea>
 
           <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2">
-            <Input
+            <Textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (newMessage.trim()) sendMessageMutation.mutate();
+                }
+              }}
+              placeholder="Type a message... (Shift+Enter for new line)"
+              className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+              rows={1}
             />
             <Button type="submit" disabled={!newMessage.trim() || sendMessageMutation.isPending}>
               <Send className="h-4 w-4" />

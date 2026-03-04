@@ -7,6 +7,7 @@ import Sidebar from "./Sidebar";
 import CenterLogo from "./CenterLogo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const navItems: Array<{
   to: string;
@@ -46,6 +47,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -61,10 +63,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         .from('chat_conversations')
         .select('id')
         .eq('center_id', user.center_id);
-      if (convError) {
-        console.error("Error fetching center conversations:", convError);
-        return 0;
-      }
+      if (convError) return 0;
       const conversationIds = conversations.map(c => c.id);
       if (conversationIds.length === 0) return 0;
 
@@ -73,15 +72,12 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         .select('id', { count: 'exact' })
         .in('conversation_id', conversationIds)
         .eq('is_read', false)
-        .neq('sender_user_id', user.id); // Messages NOT sent by the current center user
-      if (error) {
-        console.error("Error fetching unread messages for center:", error);
-        return 0;
-      }
+        .neq('sender_user_id', user.id);
+      if (error) return 0;
       return count || 0;
     },
     enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 10000,
   });
 
   const updatedNavItems = navItems.map(item => 
@@ -104,7 +100,6 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     </div>
   );
 
-  // Filter nav items based on center's permissions
   const filteredNavItems = updatedNavItems.filter(item => {
     if (item.featureName && user?.centerPermissions) {
       return user.centerPermissions[item.featureName] !== false;
@@ -114,17 +109,18 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Fixed Sidebar */}
       <div className="fixed top-0 left-0 h-screen z-10">
         <Sidebar
           navItems={filteredNavItems}
           headerContent={headerContent}
           footerContent={footerContent}
+          onCollapseChange={setSidebarCollapsed}
         />
       </div>
-
-      {/* Main Content - Scrollable */}
-      <main className="flex-1 p-6 overflow-y-auto h-screen ml-64">
+      <main className={cn(
+        "flex-1 p-6 overflow-y-auto h-screen transition-all duration-300",
+        sidebarCollapsed ? "ml-20" : "ml-64"
+      )}>
         {children}
       </main>
     </div>
