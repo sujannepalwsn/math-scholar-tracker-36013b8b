@@ -1,23 +1,19 @@
+import { CalendarIcon, ChevronDown, Settings, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
-import { CalendarIcon, ChevronDown, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Student {
@@ -52,9 +48,6 @@ export default function TakeAttendance() {
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
-  /* --------------------------------------------------------------------------
-    1️⃣ FETCH STUDENTS (CENTER FILTER ALREADY BUILT-IN)
-  -------------------------------------------------------------------------- */
   const { data: students } = useQuery({
     queryKey: ["students", user?.center_id],
     queryFn: async () => {
@@ -70,9 +63,6 @@ export default function TakeAttendance() {
 
   const centerStudentIds = students?.map((s) => s.id) || [];
 
-  /* --------------------------------------------------------------------------
-    2️⃣ FETCH ATTENDANCE — ISOLATED BY CENTER STUDENT IDS
-  -------------------------------------------------------------------------- */
   const { data: existingAttendance } = useQuery({
     queryKey: ["attendance", dateStr, centerStudentIds.join(",")],
     queryFn: async () => {
@@ -88,9 +78,6 @@ export default function TakeAttendance() {
     enabled: !!dateStr && centerStudentIds.length > 0,
   });
 
-  /* --------------------------------------------------------------------------
-    3️⃣ FETCH ALL ATTENDANCE DATES (CENTER-ONLY)
-  -------------------------------------------------------------------------- */
   useEffect(() => {
     async function fetchAttendanceDates() {
       if (!centerStudentIds.length) return;
@@ -107,16 +94,13 @@ export default function TakeAttendance() {
     fetchAttendanceDates();
   }, [centerStudentIds.join(",")]);
 
-  /* --------------------------------------------------------------------------
-    4️⃣ INITIALIZE ATTENDANCE UI STATE
-  -------------------------------------------------------------------------- */
   useEffect(() => {
     if (students) {
       const newAttendance: Record<string, AttendanceRecord> = {};
       students.forEach((student) => {
         const record = existingAttendance?.find((a) => a.student_id === student.id);
         newAttendance[student.id] = {
-          present: record?.status === "present", // Changed to lowercase
+          present: record?.status === "present",
           timeIn: record?.time_in || "",
           timeOut: record?.time_out || "",
           studentId: student.id,
@@ -126,15 +110,8 @@ export default function TakeAttendance() {
     }
   }, [students, existingAttendance]);
 
-  /* --------------------------------------------------------------------------
-    5️⃣ FILTER STUDENTS BY GRADE
-  -------------------------------------------------------------------------- */
-  const filteredStudents =
-    gradeFilter === "all" ? students : students?.filter((s) => s.grade === gradeFilter);
+  const filteredStudents = gradeFilter === "all" ? students : students?.filter((s) => s.grade === gradeFilter);
 
-  /* --------------------------------------------------------------------------
-    6️⃣ AUTO-UPDATE CHECKBOXES WHEN GRADE CHANGES
-  -------------------------------------------------------------------------- */
   useEffect(() => {
     if (!filteredStudents) return;
     const updated: Record<string, AttendanceRecord> = { ...attendance };
@@ -146,9 +123,6 @@ export default function TakeAttendance() {
     setAttendance(updated);
   }, [gradeFilter, students]);
 
-  /* --------------------------------------------------------------------------
-    7️⃣ UI HELPERS
-  -------------------------------------------------------------------------- */
   const handleToggle = (studentId: string) => {
     setAttendance((prev) => ({
       ...prev,
@@ -181,34 +155,19 @@ export default function TakeAttendance() {
     setAttendance(updated);
   };
 
-  /* --------------------------------------------------------------------------
-    8️⃣ SAVE ATTENDANCE (CENTER-SAFE & GRADE-SAFE & STUDENT-SAFE)
-  -------------------------------------------------------------------------- */
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!students || !filteredStudents) return;
-
-      const studentsToSave = filteredStudents.filter(
-        (s) => attendance[s.id]?.present !== undefined
-      );
-
-      // Delete only attendance of these students for selected date
-      await supabase
-        .from("attendance")
-        .delete()
-        .eq("date", dateStr)
-        .in("student_id", studentsToSave.map((s) => s.id));
-
-      // Insert new attendance
+      const studentsToSave = filteredStudents.filter((s) => attendance[s.id]?.present !== undefined);
+      await supabase.from("attendance").delete().eq("date", dateStr).in("student_id", studentsToSave.map((s) => s.id));
       const records = studentsToSave.map((student) => ({
         student_id: student.id,
         center_id: user.center_id!,
         date: dateStr,
-        status: attendance[student.id]?.present ? "present" : "absent", // Changed to lowercase
+        status: attendance[student.id]?.present ? "present" : "absent",
         time_in: attendance[student.id]?.timeIn || null,
         time_out: attendance[student.id]?.timeOut || null,
       }));
-
       const { error } = await supabase.from("attendance").insert(records);
       if (error) throw error;
     },
@@ -224,44 +183,24 @@ export default function TakeAttendance() {
     saveMutation.mutate();
   };
 
-  /* --------------------------------------------------------------------------
-    9️⃣ MINI CALENDAR (UNCHANGED)
-  -------------------------------------------------------------------------- */
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(miniCalendarMonth),
-    end: endOfMonth(miniCalendarMonth),
-  });
+  const daysInMonth = eachDayOfInterval({ start: startOfMonth(miniCalendarMonth), end: endOfMonth(miniCalendarMonth) });
 
   const toggleMiniHoliday = (date: string) => {
     setMiniCalendar((prev) => ({
       ...prev,
-      [date]: {
-        holiday: !prev[date]?.holiday,
-        note: prev[date]?.note || "",
-      },
+      [date]: { holiday: !prev[date]?.holiday, note: prev[date]?.note || "" },
     }));
   };
 
   const updateMiniNote = (date: string, note: string) => {
     setMiniCalendar((prev) => ({
       ...prev,
-      [date]: {
-        holiday: prev[date]?.holiday || false,
-        note,
-      },
+      [date]: { holiday: prev[date]?.holiday || false, note },
     }));
   };
 
-  /* --------------------------------------------------------------------------
-    🔟 COUNT SELECTED STUDENTS FOR SAVE BUTTON (VISIBLE ONLY)
-  -------------------------------------------------------------------------- */
-  const selectedStudentsCount = filteredStudents
-    ? filteredStudents.filter((s) => attendance[s.id]?.present !== undefined).length
-    : 0;
+  const selectedStudentsCount = filteredStudents ? filteredStudents.filter((s) => attendance[s.id]?.present !== undefined).length : 0;
 
-  /* --------------------------------------------------------------------------
-    11️⃣ RETURN UI
-  -------------------------------------------------------------------------- */
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -275,133 +214,79 @@ export default function TakeAttendance() {
         </div>
       </div>
 
-      {/* Filters */}
       <Card className="border-none shadow-soft">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl">Attendance Settings</CardTitle>
-        </CardHeader>
-
+        <CardHeader className="pb-4"><CardTitle className="text-xl">Attendance Settings</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-4 items-end">
-          {/* Select Date */}
           <div className="flex-1 min-w-[180px]">
             <Label className="text-xs">Select Date</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal mt-1",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal mt-1", !selectedDate && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
-
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                />
+                <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} />
               </PopoverContent>
             </Popover>
           </div>
-
-          {/* Grade Filter */}
           <div className="flex-1 min-w-[120px]">
             <Label className="text-xs">Filter by Grade</Label>
-            <select
-              className="border p-2 rounded w-full"
-              value={gradeFilter}
-              onChange={(e) => setGradeFilter(e.target.value)}
-            >
-              <option value="all">All Grades</option>
-              {students &&
-                Array.from(new Set(students.map((s) => s.grade))).map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
+            <Select value={gradeFilter} onValueChange={setGradeFilter}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="All Grades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Grades</SelectItem>
+                {students && Array.from(new Set(students.map((s) => s.grade))).map((g) => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
                 ))}
-            </select>
+              </SelectContent>
+            </Select>
           </div>
-
-          {/* Past Attendance */}
           <div className="flex-1 min-w-[180px]">
             <Label className="text-xs">Past Attendance</Label>
-            <select
-              className="border p-2 rounded w-full"
-              value={dateStr}
-              onChange={(e) => setSelectedDate(new Date(e.target.value))}
-            >
-              {attendanceDates.map((d) => (
-                <option key={d} value={d}>
-                  {format(new Date(d), "PPP")}
-                </option>
-              ))}
-            </select>
+            <Select value={dateStr} onValueChange={(val) => setSelectedDate(new Date(val))}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select Date" />
+              </SelectTrigger>
+              <SelectContent>
+                {attendanceDates.map((d) => (
+                  <SelectItem key={d} value={d}>{format(new Date(d), "PPP")}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
-          {/* Toggle Mini Calendar */}
           <div className="flex-1 min-w-[150px] mt-4">
             <Button variant="outline" onClick={() => setShowMiniCalendar((prev) => !prev)}>
-              {showMiniCalendar ? "Hide Mini Calendar" : "Show Mini Calendar"}{" "}
-              <ChevronDown className="ml-1 h-4 w-4" />
+              {showMiniCalendar ? "Hide Mini Calendar" : "Show Mini Calendar"} <ChevronDown className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Mini Calendar */}
       {showMiniCalendar && (
         <Card>
-          <CardHeader>
-            <CardTitle>Mini Month Calendar</CardTitle>
-            <CardDescription>Mark holidays & add notes (local only)</CardDescription>
-          </CardHeader>
-
+          <CardHeader><CardTitle>Mini Month Calendar</CardTitle><CardDescription>Mark holidays & add notes (local only)</CardDescription></CardHeader>
           <CardContent>
             <div className="flex gap-2 mb-2 items-center">
               <Label className="text-xs">Select Month:</Label>
-              <input
-                type="month"
-                value={format(miniCalendarMonth, "yyyy-MM")}
-                onChange={(e) => {
-                  const [year, month] = e.target.value.split("-");
-                  setMiniCalendarMonth(new Date(parseInt(year), parseInt(month) - 1));
-                }}
-                className="border p-1 rounded"
-              />
+              <input type="month" value={format(miniCalendarMonth, "yyyy-MM")} onChange={(e) => {
+                const [year, month] = e.target.value.split("-");
+                setMiniCalendarMonth(new Date(parseInt(year), parseInt(month) - 1));
+              }} className="border p-1 rounded" />
             </div>
-
             <div className="grid grid-cols-7 gap-2">
               {daysInMonth.map((day) => {
                 const dayStr = format(day, "yyyy-MM-dd");
-                const dayData =
-                  miniCalendar[dayStr] || {
-                    holiday: false,
-                    note: "",
-                  };
-
+                const dayData = miniCalendar[dayStr] || { holiday: false, note: "" };
                 return (
                   <div key={dayStr} className="flex flex-col items-center border rounded p-1">
-                    <button
-                      className={`w-full rounded text-sm mb-1 ${
-                        dayData.holiday ? "bg-red-500 text-white" : "bg-gray-100"
-                      }`}
-                      onClick={() => toggleMiniHoliday(dayStr)}
-                    >
+                    <button className={`w-full rounded text-sm mb-1 ${dayData.holiday ? "bg-red-500 text-white" : "bg-gray-100"}`} onClick={() => toggleMiniHoliday(dayStr)}>
                       {format(day, "d")}
                     </button>
-
-                    <Input
-                      type="text"
-                      value={dayData.note}
-                      onChange={(e) => updateMiniNote(dayStr, e.target.value)}
-                      placeholder="Note"
-                      className="text-xs p-1 w-full"
-                    />
+                    <Input type="text" value={dayData.note} onChange={(e) => updateMiniNote(dayStr, e.target.value)} placeholder="Note" className="text-xs p-1 w-full" />
                   </div>
                 );
               })}
@@ -410,103 +295,36 @@ export default function TakeAttendance() {
         </Card>
       )}
 
-      {/* Attendance Form */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-2xl font-bold">Student List</CardTitle>
-              <CardDescription>Select students who are attending today's session</CardDescription>
-            </div>
-
+            <div><CardTitle className="text-2xl font-bold">Student List</CardTitle><CardDescription>Select students who are attending today's session</CardDescription></div>
             <div className="flex gap-3">
-              <Button variant="outline" size="sm" onClick={markAllPresent} className="rounded-xl border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600 transition-all">
-                Mark All Present
-              </Button>
-              <Button variant="outline" size="sm" onClick={markAllAbsent} className="rounded-xl border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all">
-                Mark All Absent
-              </Button>
+              <Button variant="outline" size="sm" onClick={markAllPresent} className="rounded-xl border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600">Mark All Present</Button>
+              <Button variant="outline" size="sm" onClick={markAllAbsent} className="rounded-xl border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600">Mark All Absent</Button>
             </div>
           </div>
         </CardHeader>
-
         <CardContent>
           {filteredStudents && filteredStudents.length > 0 ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredStudents.map((student) => (
-                <div
-                  key={student.id}
-                  className={cn(
-                    "rounded-2xl border-2 p-5 transition-all duration-300 group",
-                    attendance[student.id]?.present
-                      ? "border-primary/20 bg-primary/5 shadow-soft"
-                      : "border-transparent bg-muted/30 grayscale-[0.5] hover:grayscale-0"
-                  )}
-                >
+                <div key={student.id} className={cn("rounded-2xl border-2 p-5 transition-all duration-300 group", attendance[student.id]?.present ? "border-primary/20 bg-primary/5 shadow-soft" : "border-transparent bg-muted/30")}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-4">
-                      <div className={cn(
-                        "p-2 rounded-xl transition-colors",
-                        attendance[student.id]?.present ? "bg-primary text-primary-foreground shadow-medium" : "bg-muted text-muted-foreground"
-                      )}>
-                         <Users className="h-5 w-5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <Label htmlFor={student.id} className="cursor-pointer font-bold text-lg leading-tight">
-                          {student.name}
-                        </Label>
-                        <Badge variant="outline" className="w-fit mt-1 h-5 text-[10px]">{student.grade}</Badge>
-                      </div>
+                      <div className={cn("p-2 rounded-xl", attendance[student.id]?.present ? "bg-primary text-primary-foreground shadow-medium" : "bg-muted text-muted-foreground")}><Users className="h-5 w-5" /></div>
+                      <div className="flex flex-col"><Label htmlFor={student.id} className="cursor-pointer font-bold text-lg leading-tight">{student.name}</Label><Badge variant="outline" className="w-fit mt-1 h-5 text-[10px]">{student.grade}</Badge></div>
                     </div>
-                    <Checkbox
-                      id={student.id}
-                      checked={attendance[student.id]?.present || false}
-                      onCheckedChange={() => handleToggle(student.id)}
-                      className="h-6 w-6 rounded-lg"
-                    />
+                    <Checkbox id={student.id} checked={attendance[student.id]?.present || false} onCheckedChange={() => handleToggle(student.id)} className="h-6 w-6 rounded-lg" />
                   </div>
-
                   <div className="flex gap-4 ml-7">
-                    {/* Time In */}
-                    <div className="flex-1">
-                      <Label
-                        htmlFor={`time-in-${student.id}`}
-                        className="text-xs text-muted-foreground"
-                      >
-                        Time In
-                      </Label>
-                      <Input
-                        id={`time-in-${student.id}`}
-                        type="time"
-                        value={attendance[student.id]?.timeIn || ""}
-                        onChange={(e) => handleTimeChange(student.id, "timeIn", e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    {/* Time Out */}
-                    <div className="flex-1">
-                      <Label
-                        htmlFor={`time-out-${student.id}`}
-                        className="text-xs text-muted-foreground"
-                      >
-                        Time Out
-                      </Label>
-                      <Input
-                        id={`time-out-${student.id}`}
-                        type="time"
-                        value={attendance[student.id]?.timeOut || ""}
-                        onChange={(e) => handleTimeChange(student.id, "timeOut", e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
+                    <div className="flex-1"><Label className="text-xs text-muted-foreground">Time In</Label><Input type="time" value={attendance[student.id]?.timeIn || ""} onChange={(e) => handleTimeChange(student.id, "timeIn", e.target.value)} className="mt-1" /></div>
+                    <div className="flex-1"><Label className="text-xs text-muted-foreground">Time Out</Label><Input type="time" value={attendance[student.id]?.timeOut || ""} onChange={(e) => handleTimeChange(student.id, "timeOut", e.target.value)} className="mt-1" /></div>
                   </div>
                 </div>
               ))}
-
               </div>
-
               <Button type="submit" className="w-full h-14 text-lg font-bold shadow-strong rounded-2xl" disabled={saveMutation.isPending}>
                 {saveMutation.isPending ? 'Saving Records...' : `Finalize Attendance (${selectedStudentsCount} Students)`}
               </Button>

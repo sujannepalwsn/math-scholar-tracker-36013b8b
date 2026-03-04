@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from 'sonner';
 import { Plus, Trash2, Check } from 'lucide-react';
 import { formatCurrency } from '@/integrations/supabase/finance-types';
+import { Select } from "@/components/ui/select";
+
 
 const FeeManagement = () => {
   const { user } = useAuth();

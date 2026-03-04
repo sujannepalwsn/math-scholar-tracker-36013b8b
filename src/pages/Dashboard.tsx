@@ -1,46 +1,16 @@
+import { BookOpen, CalendarIcon, CheckCircle2, FileText, TrendingUp, Users, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Users,
-  CheckCircle2,
-  XCircle,
-  TrendingUp,
-  CalendarIcon,
-  BookOpen,
-  FileText,
-} from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -92,7 +62,7 @@ export default function Dashboard() {
       (att) =>
         att.student_id === student.id &&
         att.date === today &&
-        att.status === "present" // Changed to lowercase
+        att.status === "present"
     )
   );
 
@@ -101,7 +71,7 @@ export default function Dashboard() {
       (att) =>
         att.student_id === student.id &&
         att.date === today &&
-        att.status === "absent" // Changed to lowercase
+        att.status === "absent"
     )
   );
 
@@ -116,9 +86,8 @@ export default function Dashboard() {
     const studentAttendance = allAttendance.filter(
       (a) => a.student_id === student.id
     );
-    const present = studentAttendance.filter((a) => a.status === "present") // Changed to lowercase
-      .length;
-    const absent = studentAttendance.filter((a) => a.status === "absent").length; // Changed to lowercase
+    const present = studentAttendance.filter((a) => a.status === "present").length;
+    const absent = studentAttendance.filter((a) => a.status === "absent").length;
     const total = present + absent;
     const percentage = total > 0 ? Math.round((absent / total) * 100) : 0;
     return { ...student, present, absent, total, percentage };
@@ -177,44 +146,29 @@ export default function Dashboard() {
   });
 
   const totalDays = attendanceData.length;
-  const presentDays = attendanceData.filter((a) => a.status === "present") // Changed to lowercase
-    .length;
+  const presentDays = attendanceData.filter((a) => a.status === "present").length;
   const attendancePercentage =
     totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
 
   const totalChaptersCount = chapterProgress.length;
-  const completedChaptersCount = chapterProgress.filter((c) => c.completed)
-    .length;
+  const completedChaptersCount = chapterProgress.filter((c) => c.completed).length;
   const chapterCompletionPercentage =
     totalChaptersCount > 0
       ? Math.round((completedChaptersCount / totalChaptersCount) * 100)
       : 0;
 
   const totalTests = testResults.length;
-  const totalMarksObtained = testResults.reduce(
-    (sum, r) => sum + r.marks_obtained,
-    0
-  );
-  const totalMaxMarks = testResults.reduce(
-    (sum, r) => sum + (r.tests?.total_marks || 0),
-    0
-  );
-  const averagePercentage =
-    totalMaxMarks > 0
-      ? Math.round((totalMarksObtained / totalMaxMarks) * 100)
-      : 0;
+  const totalMarksObtained = testResults.reduce((sum, r) => sum + r.marks_obtained, 0);
+  const totalMaxMarks = testResults.reduce((sum, r) => sum + (r.tests?.total_marks || 0), 0);
+  const averagePercentage = totalMaxMarks > 0 ? Math.round((totalMarksObtained / totalMaxMarks) * 100) : 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Welcome back! Here's today's attendance overview.
-        </p>
+        <p className="text-muted-foreground">Welcome back! Here's today's attendance overview.</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-4">
         {[
           { title: "Total Students", value: totalStudents, icon: Users, color: "text-primary", bgColor: "bg-primary/10", gradient: "from-primary/5 to-transparent" },
@@ -240,7 +194,6 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Grade Filter */}
       <div className="flex gap-4 items-center">
         <Select value={gradeFilter} onValueChange={setGradeFilter}>
           <SelectTrigger className="w-[150px]">
@@ -249,21 +202,15 @@ export default function Dashboard() {
           <SelectContent>
             <SelectItem value="all">All Grades</SelectItem>
             {grades.map((grade) => (
-              <SelectItem key={grade} value={grade}>
-                {grade}
-              </SelectItem>
+              <SelectItem key={grade} value={grade}>{grade}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Tables side by side */}
       <div className="flex gap-6 overflow-x-auto">
-        {/* Absent Today */}
         <Card className="flex-1">
-          <CardHeader>
-            <CardTitle>Absent Today</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Absent Today</CardTitle></CardHeader>
           <CardContent className="max-h-[400px] overflow-y-auto">
             <Table>
               <TableHeader>
@@ -275,20 +222,11 @@ export default function Dashboard() {
               </TableHeader>
               <TableBody>
                 {absentToday.map((student) => (
-                  <TableRow
-                    key={student.id}
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => setSelectedStudent(student)}
-                  >
+                  <TableRow key={student.id} className="cursor-pointer hover:bg-muted" onClick={() => setSelectedStudent(student)}>
                     <TableCell>{student.name}</TableCell>
                     <TableCell>{student.grade}</TableCell>
                     <TableCell className="text-center">
-                      {allAttendance.filter(
-                        (a) =>
-                          a.student_id === student.id &&
-                          a.date === today &&
-                          a.status === "absent" // Changed to lowercase
-                      ).length}
+                      {allAttendance.filter(a => a.student_id === student.id && a.date === today && a.status === "absent").length}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -297,11 +235,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Highest Absentee */}
         <Card className="flex-1">
-          <CardHeader>
-            <CardTitle>Highest Absentee</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Highest Absentee</CardTitle></CardHeader>
           <CardContent className="max-h-[400px] overflow-y-auto">
             <Table>
               <TableHeader>
@@ -313,11 +248,7 @@ export default function Dashboard() {
               </TableHeader>
               <TableBody>
                 {highestAbsentees.map((student) => (
-                  <TableRow
-                    key={student.id}
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => setSelectedStudent(student)}
-                  >
+                  <TableRow key={student.id} className="cursor-pointer hover:bg-muted" onClick={() => setSelectedStudent(student)}>
                     <TableCell>{student.name}</TableCell>
                     <TableCell>{student.grade}</TableCell>
                     <TableCell className="text-center">{student.percentage}%</TableCell>
@@ -329,64 +260,30 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Student Report Modal */}
       {selectedStudent && (
-        <Dialog
-          open={!!selectedStudent}
-          onOpenChange={() => setSelectedStudent(null)}
-        >
+        <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
           <DialogContent className="max-w-5xl w-full h-[90vh] overflow-auto">
             <DialogHeader className="sticky top-0 bg-background z-10">
-              <DialogTitle className="text-2xl font-bold">
-                {selectedStudent.name} - Grade {selectedStudent.grade}
-              </DialogTitle>
+              <DialogTitle className="text-2xl font-bold">{selectedStudent.name} - Grade {selectedStudent.grade}</DialogTitle>
             </DialogHeader>
 
-            {/* Attendance Overview */}
             <Card className="mb-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" />
-                  Attendance Overview
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><CalendarIcon className="h-5 w-5" />Attendance Overview</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Days</p>
-                    <p className="text-2xl font-bold">{totalDays}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Present</p>
-                    <p className="text-2xl font-bold text-green-600">{presentDays}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Absent</p>
-                    <p className="text-2xl font-bold text-red-600">{totalDays - presentDays}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Attendance %</p>
-                    <p className="text-2xl font-bold">{attendancePercentage}%</p>
-                  </div>
+                  <div><p className="text-sm text-muted-foreground">Total Days</p><p className="text-2xl font-bold">{totalDays}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Present</p><p className="text-2xl font-bold text-green-600">{presentDays}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Absent</p><p className="text-2xl font-bold text-red-600">{totalDays - presentDays}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Attendance %</p><p className="text-2xl font-bold">{attendancePercentage}%</p></div>
                 </div>
-
                 <div className="max-h-48 overflow-y-auto">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {attendanceData.map((record) => (
                         <TableRow key={record.id}>
                           <TableCell>{format(new Date(record.date), "PPP")}</TableCell>
-                          <TableCell>
-                            <Badge variant={record.status === "present" ? "default" : "destructive"}> {/* Changed to lowercase */}
-                              {record.status}
-                            </Badge>
-                          </TableCell>
+                          <TableCell><Badge variant={record.status === "present" ? "default" : "destructive"}>{record.status}</Badge></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -395,28 +292,13 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Chapter Progress */}
             <Card className="mb-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Chapter Progress
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5" />Chapter Progress</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Chapters</p>
-                    <p className="text-2xl font-bold">{totalChaptersCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Completed</p>
-                    <p className="text-2xl font-bold text-green-600">{completedChaptersCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Progress %</p>
-                    <p className="text-2xl font-bold">{chapterCompletionPercentage}%</p>
-                  </div>
+                  <div><p className="text-sm text-muted-foreground">Total Chapters</p><p className="text-2xl font-bold">{totalChaptersCount}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Completed</p><p className="text-2xl font-bold text-green-600">{completedChaptersCount}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Progress %</p><p className="text-2xl font-bold">{chapterCompletionPercentage}%</p></div>
                 </div>
                 <div className="max-h-48 overflow-y-auto space-y-2">
                   {chapterProgress.map((cp: any) => (
@@ -424,9 +306,7 @@ export default function Dashboard() {
                       <CardContent>
                         <p className="font-medium">{cp.lesson_plans?.chapter}</p>
                         <p className="text-sm text-muted-foreground">{cp.lesson_plans?.subject}</p>
-                        <Badge variant={cp.completed ? "default" : "secondary"}>
-                          {cp.completed ? "Completed" : "In Progress"}
-                        </Badge>
+                        <Badge variant={cp.completed ? "default" : "secondary"}>{cp.completed ? "Completed" : "In Progress"}</Badge>
                       </CardContent>
                     </Card>
                   ))}
@@ -434,28 +314,13 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Test Results */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Test Results
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />Test Results</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Tests</p>
-                    <p className="text-2xl font-bold">{totalTests}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Average %</p>
-                    <p className="text-2xl font-bold">{averagePercentage}%</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Marks</p>
-                    <p className="text-2xl font-bold">{totalMarksObtained}/{totalMaxMarks}</p>
-                  </div>
+                  <div><p className="text-sm text-muted-foreground">Total Tests</p><p className="text-2xl font-bold">{totalTests}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Average %</p><p className="text-2xl font-bold">{averagePercentage}%</p></div>
+                  <div><p className="text-sm text-muted-foreground">Total Marks</p><p className="text-2xl font-bold">{totalMarksObtained}/{totalMaxMarks}</p></div>
                 </div>
                 <div className="max-h-48 overflow-y-auto space-y-2">
                   {testResults.map((result) => (

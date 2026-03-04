@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BookOpen, Check, FileText, Star, User } from "lucide-react"; // Added FileText for tests
 import { Tables } from "@/integrations/supabase/types";
 import { safeFormatDate } from '@/lib/utils';
+import { Progress } from "@/components/ui/progress";
+
 
 // Re-using types from ParentChapterDetailModal for consistency
 type LessonPlan = Tables<'lesson_plans'>;
