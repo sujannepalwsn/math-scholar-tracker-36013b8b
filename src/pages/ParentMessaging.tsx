@@ -171,7 +171,7 @@ export default function ParentMessaging() {
                             : "bg-muted"
                         }`}
                       >
-                        <p className="text-sm">{msg.message_text}</p>
+                        <p className="text-sm whitespace-pre-wrap">{msg.message_text}</p>
                         <p className={`text-xs mt-1 ${isOwnMessage ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                           {format(new Date(msg.sent_at), "MMM d, h:mm a")}
                         </p>
