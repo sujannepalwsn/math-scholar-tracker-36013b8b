@@ -24,24 +24,26 @@ import {
   ChevronRight,
   Settings,
   KeyRound,
-  MessageSquare, // Import MessageSquare icon
+  MessageSquare,
   Video,
   Clock,
   Star,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge"; // Import Badge component
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   to: string;
   label: string;
   icon: React.ElementType;
   role?: 'admin' | 'center' | 'parent' | 'teacher';
-  featureName?: string; // New prop for feature name
-  unreadCount?: number; // NEW: Optional unread message count
+  featureName?: string;
+  unreadCount?: number;
 }
 
 interface SidebarProps {
@@ -49,9 +51,18 @@ interface SidebarProps {
   headerContent: React.ReactNode;
   footerContent: React.ReactNode;
   onCollapseChange?: (collapsed: boolean) => void;
+  isMobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
-export default function Sidebar({ navItems, headerContent, footerContent, onCollapseChange }: SidebarProps) {
+export default function Sidebar({
+  navItems,
+  headerContent,
+  footerContent,
+  onCollapseChange,
+  isMobileOpen = false,
+  onMobileOpenChange
+}: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
@@ -62,13 +73,15 @@ export default function Sidebar({ navItems, headerContent, footerContent, onColl
     onCollapseChange?.(newState);
   };
 
+  const handleMobileClose = () => {
+    onMobileOpenChange?.(false);
+  };
+
   const filteredNavItems = navItems.filter(item => {
-    // Filter by role
     if (item.role && user?.role !== item.role) {
       return false;
     }
 
-    // Filter by feature permissions
     if (item.featureName) {
       if (user?.role === 'center' && user.centerPermissions) {
         return user.centerPermissions[item.featureName];
@@ -76,17 +89,16 @@ export default function Sidebar({ navItems, headerContent, footerContent, onColl
       if (user?.role === 'teacher' && user.teacherPermissions) {
         return user.teacherPermissions[item.featureName];
       }
-      // For admin, we'll assume all features are visible in their own dashboard,
-      // but the toggle UI will be in AdminDashboard.
     }
     return true;
   });
 
-  return (
+  // Desktop sidebar
+  const desktopSidebar = (
     <TooltipProvider>
       <div
         className={cn(
-          "flex flex-col h-full border-r transition-all duration-300",
+          "hidden md:flex flex-col h-full border-r transition-all duration-300",
           "bg-sidebar text-sidebar-foreground",
           isCollapsed ? "w-20" : "w-64"
         )}
@@ -157,11 +169,86 @@ export default function Sidebar({ navItems, headerContent, footerContent, onColl
           {!isCollapsed && <div className="text-sm text-muted-foreground">{footerContent}</div>}
           {isCollapsed && (
             <div className="flex justify-center">
-              {footerContent} {/* Render only icon or minimal content if collapsed */}
+              {footerContent}
             </div>
           )}
         </div>
       </div>
     </TooltipProvider>
+  );
+
+  // Mobile drawer (appears when opened)
+  const mobileSidebar = (
+    <div
+      className={cn(
+        "fixed inset-0 z-40 md:hidden",
+        isMobileOpen ? "bg-black/50" : "pointer-events-none bg-black/0"
+      )}
+      onClick={handleMobileClose}
+    >
+      <div
+        className={cn(
+          "fixed top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r flex flex-col transition-transform duration-300 z-50",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b">
+          <div className="flex-1">{headerContent}</div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleMobileClose}
+            className="h-8 w-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="flex-1 overflow-y-auto py-4 space-y-1">
+          {filteredNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.to;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={handleMobileClose}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors mx-2",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-primary"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="flex items-center justify-between flex-1">
+                  {item.label}
+                  {item.unreadCount && item.unreadCount > 0 && (
+                    <Badge variant="destructive" className="ml-auto px-2 py-0.5 text-xs">
+                      {item.unreadCount}
+                    </Badge>
+                  )}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t p-4">
+          <div className="text-sm text-muted-foreground">{footerContent}</div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {desktopSidebar}
+      {mobileSidebar}
+    </>
   );
 }
