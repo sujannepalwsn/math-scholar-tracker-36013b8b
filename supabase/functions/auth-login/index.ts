@@ -130,21 +130,23 @@ serve(async (req) => {
         user.centerPermissions = {
           register_student: permissionsData.register_student ?? true,
           take_attendance: permissionsData.take_attendance ?? true,
-          attendance_summary: true, // Always enabled
+          attendance_summary: permissionsData.attendance_summary ?? true,
           view_records: permissionsData.view_records ?? true,
           lesson_plans: permissionsData.lesson_plans ?? true,
           lesson_tracking: permissionsData.lesson_tracking ?? true,
-          homework: permissionsData.homework_management ?? true,
-          activities: permissionsData.preschool_activities ?? true,
-          discipline: permissionsData.discipline_issues ?? true,
-          teachers: permissionsData.teacher_management ?? true,
-          teacher_attendance: permissionsData.teacher_management ?? true,
-          tests: permissionsData.test_management ?? true,
-          student_report: true, // Always enabled
+          homework_management: permissionsData.homework_management ?? true,
+          preschool_activities: permissionsData.preschool_activities ?? true,
+          discipline_issues: permissionsData.discipline_issues ?? true,
+          teacher_management: permissionsData.teacher_management ?? true,
+          test_management: permissionsData.test_management ?? true,
+          student_report: permissionsData.student_report ?? true,
           ai_insights: permissionsData.ai_insights ?? true,
           summary: permissionsData.summary ?? true,
           finance: permissionsData.finance ?? true,
           meetings_management: permissionsData.meetings_management ?? true,
+          calendar_events: permissionsData.calendar_events ?? true,
+          class_routine: permissionsData.class_routine ?? true,
+          messaging: permissionsData.messaging ?? true,
         };
       }
     }
