@@ -97,7 +97,7 @@ export default function Sidebar({ navItems, headerContent, footerContent, onColl
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={handleCollapseToggle}
             className="h-8 w-8"
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
