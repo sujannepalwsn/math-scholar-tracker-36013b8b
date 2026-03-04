@@ -297,7 +297,10 @@ export type Database = {
       center_feature_permissions: {
         Row: {
           ai_insights: boolean | null
+          attendance_summary: boolean | null
+          calendar_events: boolean | null
           center_id: string
+          class_routine: boolean | null
           created_at: string
           discipline_issues: boolean | null
           finance: boolean | null
@@ -306,8 +309,10 @@ export type Database = {
           lesson_plans: boolean | null
           lesson_tracking: boolean | null
           meetings_management: boolean | null
+          messaging: boolean | null
           preschool_activities: boolean | null
           register_student: boolean | null
+          student_report: boolean | null
           summary: boolean | null
           take_attendance: boolean | null
           teacher_management: boolean | null
@@ -317,7 +322,10 @@ export type Database = {
         }
         Insert: {
           ai_insights?: boolean | null
+          attendance_summary?: boolean | null
+          calendar_events?: boolean | null
           center_id: string
+          class_routine?: boolean | null
           created_at?: string
           discipline_issues?: boolean | null
           finance?: boolean | null
@@ -326,8 +334,10 @@ export type Database = {
           lesson_plans?: boolean | null
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
+          messaging?: boolean | null
           preschool_activities?: boolean | null
           register_student?: boolean | null
+          student_report?: boolean | null
           summary?: boolean | null
           take_attendance?: boolean | null
           teacher_management?: boolean | null
@@ -337,7 +347,10 @@ export type Database = {
         }
         Update: {
           ai_insights?: boolean | null
+          attendance_summary?: boolean | null
+          calendar_events?: boolean | null
           center_id?: string
+          class_routine?: boolean | null
           created_at?: string
           discipline_issues?: boolean | null
           finance?: boolean | null
@@ -346,8 +359,10 @@ export type Database = {
           lesson_plans?: boolean | null
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
+          messaging?: boolean | null
           preschool_activities?: boolean | null
           register_student?: boolean | null
+          student_report?: boolean | null
           summary?: boolean | null
           take_attendance?: boolean | null
           teacher_management?: boolean | null

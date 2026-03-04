@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 const FEATURES = [
   { name: 'register_student', label: 'Register Student' },
   { name: 'take_attendance', label: 'Take Attendance' },
+  { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'view_records', label: 'View Records' },
   { name: 'lesson_plans', label: 'Lesson Plans' },
   { name: 'lesson_tracking', label: 'Lesson Tracking' },
@@ -16,6 +17,7 @@ const FEATURES = [
   { name: 'discipline_issues', label: 'Discipline Issues' },
   { name: 'teacher_management', label: 'Teacher Management' },
   { name: 'test_management', label: 'Test Management' },
+  { name: 'student_report', label: 'Student Report' },
   { name: 'summary', label: 'Summary' },
   { name: 'finance', label: 'Finance Management' },
   { name: 'ai_insights', label: 'AI Insights' },
@@ -96,13 +98,13 @@ export default function CenterFeaturePermissions() {
         <CardTitle>Manage Center Feature Permissions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[500px]">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 bg-background z-10">Center Name</TableHead>
+                <TableHead className="sticky left-0 top-0 bg-background z-20">Center Name</TableHead>
                 {FEATURES.map(feature => (
-                  <TableHead key={feature.name} className="text-center min-w-[120px]">{feature.label}</TableHead>
+                  <TableHead key={feature.name} className="text-center min-w-[120px] sticky top-0 bg-background z-10">{feature.label}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>

@@ -58,9 +58,12 @@ export default function ClassRoutine() {
   // Schedule form state
   const [scheduleGrade, setScheduleGrade] = useState("");
   const [schedulePeriodId, setSchedulePeriodId] = useState("");
-  const [scheduleDay, setScheduleDay] = useState("");
+  const [scheduleDay, setScheduleDay] = useState<string>("");
   const [scheduleSubject, setScheduleSubject] = useState("");
   const [scheduleTeacherId, setScheduleTeacherId] = useState("none");
+
+  // Validate scheduleDay before submitting
+  const isValidDay = scheduleDay === "weekdays" || (scheduleDay !== "" && !isNaN(parseInt(scheduleDay)));
 
   // Fetch class periods
   const { data: periods = [], isLoading: periodsLoading } = useQuery({
@@ -489,7 +492,7 @@ export default function ClassRoutine() {
                   )}
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
-                    <Button type="submit" disabled={!scheduleGrade || !schedulePeriodId || !scheduleDay || !scheduleSubject}>
+                    <Button type="submit" disabled={!scheduleGrade || !schedulePeriodId || !isValidDay || !scheduleSubject}>
                       {editingSchedule ? "Update" : scheduleDay === "weekdays" ? "Create for All Weekdays" : "Create"}
                     </Button>
                   </div>
