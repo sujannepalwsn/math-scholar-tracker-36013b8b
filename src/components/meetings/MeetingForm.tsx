@@ -129,6 +129,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
       // Extract agenda category from description if present
       const agendaMatch = meeting.agenda?.match(/\[Category: (\w+)\]/);
       setAgendaCategory(agendaMatch ? agendaMatch[1] : "general");
+      setRelatedMeetingId((meeting as any).related_meeting_id || null);
       
       if (meeting.meeting_attendees) {
         const initialSelectedStudentIds: string[] = [];
