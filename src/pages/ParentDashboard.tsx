@@ -740,6 +740,70 @@ const ParentDashboardContent = () => {
           </Card>
         </div>
 
+        {/* Upcoming Meetings Notification */}
+        {upcomingMeetings.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Video className="h-5 w-5 text-blue-600" /> Upcoming Meetings
+                <Badge variant="secondary">{upcomingMeetings.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingMeetings.map((att: any) => (
+                  <div key={att.id} className={`p-3 rounded-lg border ${isToday(new Date(att.meetings?.meeting_date)) ? 'bg-blue-100 border-blue-300' : 'bg-background'}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{att.meetings?.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {att.meetings?.meeting_type?.charAt(0).toUpperCase() + att.meetings?.meeting_type?.slice(1)} Meeting
+                          {att.meetings?.location && ` • ${att.meetings.location}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{format(new Date(att.meetings?.meeting_date), 'PPP')}</p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(att.meetings?.meeting_date), 'p')}</p>
+                        {isToday(new Date(att.meetings?.meeting_date)) && <Badge className="mt-1">Today</Badge>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Upcoming Events */}
+        {upcomingEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CalendarIcon className="h-5 w-5" /> Upcoming Events
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingEvents.map((event: any) => (
+                  <div key={event.id} className={`p-3 rounded-lg border ${event.is_holiday ? 'bg-red-50 border-red-200' : 'bg-muted/50'}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{event.title}</h4>
+                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
+                        {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
+                        {isToday(new Date(event.event_date)) && <Badge className="ml-2">Today</Badge>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Attendance Toggle and Mini Calendar */}
         <div className="flex justify-between items-center gap-2">
           <h3 className="text-lg font-semibold flex items-center gap-2">
