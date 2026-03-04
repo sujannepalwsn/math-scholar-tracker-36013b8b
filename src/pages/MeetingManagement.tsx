@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, CalendarDays, Users, FileText, CheckCircle2, XCircle, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, CalendarDays, Users, FileText, CheckCircle2, XCircle, Eye, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
 import MeetingForm from "@/components/meetings/MeetingForm";
