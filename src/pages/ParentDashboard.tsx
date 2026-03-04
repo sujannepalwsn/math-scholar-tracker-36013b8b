@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'; // Import Input component
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isPast, isToday, isFuture } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
-import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
+import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate
 import ParentChapterPerformanceTable from '@/components/parent/ParentChapterPerformanceTable'; // NEW
 import ParentChapterDetailModal from '@/components/parent/ParentChapterDetailModal'; // NEW
 

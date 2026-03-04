@@ -13,6 +13,7 @@ import PaymentTracking from '@/components/finance/PaymentTracking';
 import ExpenseManagement from '@/components/finance/ExpenseManagement';
 import FinanceReports from '@/components/finance/FinanceReports';
 import { formatCurrency } from '@/integrations/supabase/finance-types';
+import { cn } from "@/lib/utils";
 
 const AdminFinance = () => {
   const { user } = useAuth();
