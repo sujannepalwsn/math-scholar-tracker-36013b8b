@@ -51,10 +51,16 @@ interface SidebarProps {
   onCollapseChange?: (collapsed: boolean) => void;
 }
 
-export default function Sidebar({ navItems, headerContent, footerContent }: SidebarProps) {
+export default function Sidebar({ navItems, headerContent, footerContent, onCollapseChange }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { user } = useAuth(); // Get user from AuthContext
+  const { user } = useAuth();
+
+  const handleCollapseToggle = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    onCollapseChange?.(newState);
+  };
 
   const filteredNavItems = navItems.filter(item => {
     // Filter by role
