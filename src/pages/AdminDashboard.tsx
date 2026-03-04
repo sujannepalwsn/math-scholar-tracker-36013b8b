@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Edit, Plus, Power, PowerOff, Shield, Users } from "lucide-react";
 import * as bcrypt from 'bcryptjs';
 import CenterFeaturePermissions from '@/components/admin/CenterFeaturePermissions';
+import { Badge } from "@/components/ui/badge";
+
 
 const AdminDashboard = () => {
   const { user } = useAuth();

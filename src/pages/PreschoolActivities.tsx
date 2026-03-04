@@ -14,6 +14,8 @@ import { CalendarIcon, Camera, Edit, Plus, Settings, Star, Trash2, Video } from 
 import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component
+import { Badge } from "@/components/ui/badge";
+
 
 type Activity = Tables<'activities'>;
 type StudentActivity = Tables<'student_activities'>;

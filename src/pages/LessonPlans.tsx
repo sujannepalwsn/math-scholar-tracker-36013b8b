@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { CalendarIcon, Edit, FileText, FileUp, Plus, Trash2, Video } from "lucide-react";
 import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
+import { Badge } from "@/components/ui/badge";
+
 
 type LessonPlan = Tables<'lesson_plans'>;
 type Student = Tables<'students'>; // Import Student type to get grades

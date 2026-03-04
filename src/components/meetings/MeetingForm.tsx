@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { User, Users } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { Progress } from "@/components/ui/progress";
+
 
 interface MeetingFormProps {
   meeting?: Tables<'meetings'> & { meeting_attendees?: Tables<'meeting_attendees'>[] };

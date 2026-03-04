@@ -12,6 +12,8 @@ import { Invoice, Payment } from '@/integrations/supabase/finance-types';
 import { AlertCircle, ArrowLeft, Check, CreditCard, DollarSign, Download, Eye, FileText, TrendingUp } from "lucide-react";
 import { isPast } from 'date-fns';
 import { cn } from "@/lib/utils";
+import { Alert } from "@/components/ui/alert";
+
 
 const ParentFinanceDashboard = () => {
   const { user } = useAuth();

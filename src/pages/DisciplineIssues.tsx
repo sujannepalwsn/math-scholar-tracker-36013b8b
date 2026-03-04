@@ -15,6 +15,10 @@ import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
 import DisciplineCategoryManagement from "@/components/center/DisciplineCategoryManagement"; // Import the new component
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+
+
 
 type DisciplineIssue = Tables<'discipline_issues'>;
 type Student = Tables<'students'>;
