@@ -1,90 +1,39 @@
 import os
 import re
 
-def fix_file(filepath):
+files_to_fix = [
+    'src/pages/Dashboard.tsx',
+    'src/pages/TakeAttendance.tsx',
+    'src/pages/HomeworkManagement.tsx',
+    'src/pages/TeacherManagement.tsx',
+    'src/pages/MeetingManagement.tsx'
+]
+
+def clean_file(filepath):
+    if not os.path.exists(filepath):
+        return
     with open(filepath, 'r') as f:
-        lines = f.readlines()
+        content = f.read()
 
-    new_lines = []
-    import_seen = set()
+    # Remove all duplicated UI imports
+    content = re.sub(r'import\s*\{\s*Progress\s*\}\s*from\s*["\']@/components/ui/progress["\'];?\s*', '', content)
+    content = re.sub(r'import\s*\{\s*Badge\s*\}\s*from\s*["\']@/components/ui/badge["\'];?\s*', '', content)
+    content = re.sub(r'import\s*\{\s*Select\s*\}\s*from\s*["\']@/components/ui/select["\'];?\s*', '', content)
+    content = re.sub(r'import\s*\{\s*Loader2\s*\}\s*from\s*["\']lucide-react["\'];?\s*', '', content)
 
-    for line in lines:
-        # Check if line is a corrupted import
-        if 'import { Progress } from "@/components/ui/progress";' in line and line.strip().startswith('import'):
-            if 'Progress' not in import_seen:
-                new_lines.append('import { Progress } from "@/components/ui/progress";\n')
-                import_seen.add('Progress')
-            continue
+    # Re-add them cleanly if needed
+    if 'Progress' in content and 'import { Progress }' not in content:
+        content = "import { Progress } from \"@/components/ui/progress\";\n" + content
+    if 'Badge' in content and 'import { Badge }' not in content:
+        content = "import { Badge } from \"@/components/ui/badge\";\n" + content
+    if 'Select' in content and 'import { Select' not in content:
+        # Note: some files might import Select, SelectContent etc.
+        content = "import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from \"@/components/ui/select\";\n" + content
+    if 'Loader2' in content and 'import { Loader2 }' not in content:
+        content = "import { Loader2 } from \"lucide-react\";\n" + content
 
-        # If it's a standard import, track it
-        match = re.search(r'import\s*\{([^}]*)\}\s*from\s*["\']([^"\']+)["\']', line)
-        if match:
-            parts = [p.strip() for p in match.group(1).split(',')]
-            for p in parts:
-                import_seen.add(p)
-            new_lines.append(line)
-        else:
-            # Check for corrupted lines like " supabase } from ..."
-            if re.search(r'^\s*\w+\s*\}\s*from', line):
-                # This is likely a broken multiline import
-                new_lines.append(line)
-            elif line.strip():
-                new_lines.append(line)
-            else:
-                new_lines.append(line)
+    with open(filepath, 'w') as f:
+        f.write(content)
 
-    # Actually, let's just use a more surgical approach for Dashboard.tsx
-    if 'Dashboard.tsx' in filepath:
-        # Restore a clean version of imports for Dashboard.tsx
-        return None
-
-    return "".join(new_lines)
-
-# Manual fix for Dashboard.tsx to be safe
-dashboard_content = """import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import {
-  Users,
-  CheckCircle2,
-  XCircle,
-  TrendingUp,
-  CalendarIcon,
-  BookOpen,
-  FileText,
-} from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-"""
-
-# Let's just rewrite the problematic files completely or use a better sed
+for f in files_to_fix:
+    clean_file(f)

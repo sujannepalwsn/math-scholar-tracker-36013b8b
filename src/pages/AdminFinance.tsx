@@ -1,12 +1,12 @@
+import { AlertCircle, ArrowLeft, DollarSign, FileText, TrendingUp, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, TrendingUp, AlertCircle, FileText, ArrowLeft, Wallet } from 'lucide-react';
 import FeeManagement from '@/components/finance/FeeManagement';
 import InvoiceManagement from '@/components/finance/InvoiceManagement';
 import PaymentTracking from '@/components/finance/PaymentTracking';
