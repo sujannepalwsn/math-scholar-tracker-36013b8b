@@ -48,6 +48,7 @@ interface SidebarProps {
   navItems: NavItem[];
   headerContent: React.ReactNode;
   footerContent: React.ReactNode;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
 export default function Sidebar({ navItems, headerContent, footerContent }: SidebarProps) {
