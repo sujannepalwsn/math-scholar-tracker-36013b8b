@@ -240,6 +240,15 @@ export default function MeetingManagement() {
                         </span>
                       </TableCell>
                       <TableCell>
+                        {meeting.related_meeting ? (
+                          <span className="text-xs text-blue-600 font-medium">
+                            ↩ {meeting.related_meeting.title}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                       {meeting.meeting_conclusions && meeting.meeting_conclusions.length > 0 ? (
                           <Button variant="ghost" size="sm" onClick={() => handleConclusionClick(meeting)}>
                             <Eye className="h-4 w-4 mr-1" /> View
