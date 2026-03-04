@@ -217,9 +217,12 @@ export default function DisciplineIssues() {
   // Filtering is now handled by the useQuery hook
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Discipline Issues</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Conduct Registry</h1>
+          <p className="text-muted-foreground text-lg">Monitor and manage student behavioral patterns and resolutions.</p>
+        </div>
         <div className="flex gap-2 items-center">
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
             <SelectTrigger className="w-[150px]">
@@ -359,33 +362,71 @@ export default function DisciplineIssues() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Discipline Issues</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Recorded Incidents</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {issuesLoading ? (
-            <p>Loading issues...</p>
+            <div className="flex justify-center py-12"><AlertTriangle className="h-8 w-8 animate-spin text-primary" /></div>
           ) : issues.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No discipline issues found for the selected grade.</p>
+            <p className="text-muted-foreground text-center py-12 italic">No behavioral records found for the current selection.</p>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {issues.map((issue: any) => (
-                <div key={issue.id} className="border rounded-lg p-4 flex items-start justify-between">
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-lg">{issue.students?.name} - {issue.discipline_categories?.name}</h3>
-                    <p className="text-sm text-muted-foreground">Date: {format(new Date(issue.issue_date), "PPP")}</p>
-                    <p className="text-sm">{issue.description}</p>
-                    {issue.resolution_notes && <p className="text-sm font-medium">Resolution: {issue.resolution_notes}</p>}
-                    <p className={`text-sm font-semibold ${getSeverityColor(issue.severity)}`}>Severity: {issue.severity.toUpperCase()}</p>
+                <div key={issue.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft hover:shadow-medium transition-all group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft" onClick={() => handleEditClick(issue)}>
+                      <Edit className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft hover:bg-destructive/10" onClick={() => deleteIssueMutation.mutate(issue.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(issue)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => deleteIssueMutation.mutate(issue.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                       <div className={cn("p-3 rounded-2xl",
+                         issue.severity === 'high' ? "bg-red-100 text-red-600" :
+                         issue.severity === 'medium' ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"
+                       )}>
+                          <AlertTriangle className="h-6 w-6" />
+                       </div>
+                       <div>
+                          <h3 className="font-bold text-xl leading-tight">{issue.students?.name}</h3>
+                          <div className="flex gap-2 mt-1">
+                             <Badge variant="outline" className="text-[10px]">{issue.discipline_categories?.name}</Badge>
+                             <Badge className={cn("text-[10px] border-none uppercase font-black",
+                                issue.severity === 'high' ? "bg-red-500/10 text-red-600" :
+                                issue.severity === 'medium' ? "bg-orange-500/10 text-orange-600" : "bg-green-500/10 text-green-600"
+                             )}>
+                                {issue.severity} Priority
+                             </Badge>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2">{issue.description}</p>
+                      <div className="flex items-center gap-2 text-sm font-bold text-primary">
+                        <Clock className="h-4 w-4" />
+                        Incident Date: {format(new Date(issue.issue_date), "PPP")}
+                      </div>
+                    </div>
+
+                    {issue.resolution && (
+                      <div className="p-3 rounded-xl bg-muted/50 text-xs font-medium border-l-4 border-green-500">
+                        <span className="font-black uppercase text-green-600 block mb-1">Resolution</span>
+                        {issue.resolution}
+                      </div>
+                    )}
+
+                    <div className="pt-2">
+                       <Badge className={cn("rounded-full px-3 py-1",
+                         issue.status === 'resolved' ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"
+                       )}>
+                          {issue.status || 'open'}
+                       </Badge>
+                    </div>
                   </div>
                 </div>
               ))}

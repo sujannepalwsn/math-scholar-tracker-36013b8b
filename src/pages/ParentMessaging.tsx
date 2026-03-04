@@ -134,13 +134,20 @@ export default function ParentMessaging() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Messages</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Parent-Teacher Desk</h1>
+          <p className="text-muted-foreground text-lg">Direct channel for child development and center updates.</p>
+        </div>
+      </div>
 
-      <Card className="h-[600px] flex flex-col">
-        <CardHeader className="border-b pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageSquare className="h-5 w-5" />
+      <Card className="h-[700px] flex flex-col border-none shadow-strong overflow-hidden">
+        <CardHeader className="bg-primary text-primary-foreground pb-4 shadow-soft relative z-10">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="bg-white/20 p-2 rounded-xl">
+               <MessageSquare className="h-5 w-5 text-white" />
+            </div>
             Chat with {conversation.centers?.name || "Center"}
           </CardTitle>
           <p className="text-sm text-muted-foreground">

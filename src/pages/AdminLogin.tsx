@@ -40,16 +40,26 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-destructive/10 via-background to-accent/10 p-4">
-      <Card className="w-full max-w-md border-destructive/20">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-2">
-            <Shield className="h-12 w-12 text-destructive" />
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-destructive/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      <Card className="w-full max-w-md border-none shadow-strong bg-card/80 backdrop-blur-xl animate-in zoom-in-95 duration-500">
+        <CardHeader className="space-y-4 pt-8">
+          <div className="mx-auto bg-destructive/10 p-4 rounded-2xl w-fit shadow-soft">
+            <div className="bg-destructive text-destructive-foreground p-3 rounded-xl shadow-medium">
+               <Shield className="h-8 w-8" />
+            </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
-          <CardDescription className="text-center">
-            Administrator access only
-          </CardDescription>
+          <div className="space-y-1">
+            <CardTitle className="text-3xl font-extrabold text-center tracking-tight">Admin Portal</CardTitle>
+            <CardDescription className="text-center text-base">
+              Administrator access only
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,8 +87,8 @@ const AdminLogin = () => {
                 disabled={loading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading} variant="destructive">
-              {loading ? 'Logging in...' : 'Admin Login'}
+            <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading} variant="destructive">
+              {loading ? 'Authenticating...' : 'Admin Login'}
             </Button>
             <Button
               type="button"

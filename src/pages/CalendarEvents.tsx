@@ -175,12 +175,12 @@ export default function CalendarEvents() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Calendar & Events</h1>
-          <p className="text-muted-foreground">
-            {isParent ? "View holidays and special events" : "Manage holidays and special events"}
+          <h1 className="text-4xl font-extrabold tracking-tight">Event Calendar</h1>
+          <p className="text-muted-foreground text-lg">
+            {isParent ? "Keep track of upcoming center holidays and special activities." : "Schedule and manage academic events, holidays, and center activities."}
           </p>
         </div>
         {!isParent && (
@@ -271,13 +271,13 @@ export default function CalendarEvents() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
         {/* Calendar */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-none shadow-medium overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-4">
+            <CardTitle className="text-xl flex items-center gap-2 text-primary">
               <CalendarDays className="h-5 w-5" />
-              Calendar
+              Interactive Schedule
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -285,7 +285,7 @@ export default function CalendarEvents() {
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              className="rounded-md border"
+              className="rounded-xl border"
               modifiers={{
                 hasEvent: eventDates,
               }}
@@ -300,10 +300,10 @@ export default function CalendarEvents() {
         </Card>
 
         {/* Events for Selected Date */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Events on {selectedDate ? format(selectedDate, "MMMM d, yyyy") : "Select a date"}
+        <Card className="border-none shadow-strong overflow-hidden h-fit">
+          <CardHeader className="bg-primary text-primary-foreground pb-6">
+            <CardTitle className="text-xl">
+              Agenda: {selectedDate ? format(selectedDate, "MMMM d") : "Select a date"}
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -317,9 +317,12 @@ export default function ClassRoutine() {
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Class Routine</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Academic Schedule</h1>
+          <p className="text-muted-foreground text-lg">Define periods and manage class routines for all grades.</p>
+        </div>
       </div>
 
       <Tabs defaultValue="schedule" className="w-full">
@@ -502,13 +505,16 @@ export default function ClassRoutine() {
           </div>
 
           {schedulesLoading ? (
-            <p>Loading schedule...</p>
+            <div className="flex justify-center py-12"><Clock className="h-8 w-8 animate-spin text-primary" /></div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {schedulesByDay.map(day => (
-                <Card key={day.value}>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-lg">{day.label}</CardTitle>
+                <Card key={day.value} className="border-none shadow-soft overflow-hidden">
+                  <CardHeader className="bg-muted/30 py-4 border-b">
+                    <CardTitle className="text-xl flex items-center gap-2 text-primary">
+                      <CalendarIcon className="h-5 w-5" />
+                      {day.label}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {day.schedules.length === 0 ? (

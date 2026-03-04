@@ -91,7 +91,7 @@ const MiniCalendar = ({ attendance, lessonRecords, tests, selectedMonth, setSele
               </div>
 
               {(tooltipData.dayLessons.length > 0 || tooltipData.dayTests.length > 0) && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-56 p-2 bg-white border rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 text-xs">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-56 p-2 bg-white border rounded shadow-strong opacity-0 group-hover:opacity-100 transition-opacity z-10 text-xs">
                   {tooltipData.dayLessons.length > 0 && (
                     <div className="mb-1">
                       <p className="font-semibold border-b mb-1">Lessons</p>
@@ -542,21 +542,29 @@ const ParentDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="max-w-6xl mx-auto space-y-8">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <User className="h-8 w-8 text-primary" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary/10 p-3 rounded-2xl shadow-soft">
+              <User className="h-8 w-8 text-primary" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold">Parent Dashboard</h1>
-              <p className="text-muted-foreground">Welcome, {user.username}</p>
+              <h1 className="text-4xl font-extrabold tracking-tight">Parent Portal</h1>
+              <p className="text-muted-foreground text-lg">Welcome back! Monitoring your child's progress.</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Logout
-          </Button>
+          <div className="flex items-center gap-3">
+             <div className="hidden md:flex bg-secondary/50 px-4 py-2 rounded-2xl border border-primary/5 items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold">{format(new Date(), 'MMM d, yyyy')}</span>
+             </div>
+             <Button variant="outline" onClick={handleLogout} className="rounded-2xl border-2">
+                <LogOut className="h-4 w-4 mr-2" /> Logout
+             </Button>
+          </div>
         </div>
 
         {/* STUDENT SELECTOR FOR MULTI-CHILD */}
@@ -616,129 +624,98 @@ const ParentDashboardContent = () => {
         </Card>
 
         {/* NEW SUMMARY CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {/* Latest Broadcast Message */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Latest Broadcast</CardTitle>
-              <Radio className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              {latestBroadcastMessage ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[
+            {
+              title: "Latest Broadcast",
+              icon: Radio,
+              color: "text-blue-600",
+              bgColor: "bg-blue-100",
+              content: latestBroadcastMessage ? (
                 <>
                   <p className="text-sm font-bold line-clamp-2">{latestBroadcastMessage.message_text}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {format(new Date(latestBroadcastMessage.sent_at), 'MMM d, h:mm a')}
                   </p>
                 </>
-              ) : (
-                <p className="text-sm text-muted-foreground">No new messages</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Today's Homework */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Homework</CardTitle>
-              <Book className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todaysHomework.length}</div>
-              <p className="text-xs text-muted-foreground">due today</p>
-            </CardContent>
-          </Card>
-
-          {/* NEW: Overdue Homework */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Overdue Homework</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{overdueHomeworksOnly.length}</div>
-              <p className="text-xs text-muted-foreground">past due date</p>
-            </CardContent>
-          </Card>
-
-          {/* Pending Fees */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Fees</CardTitle>
-              <DollarSign className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingFees > 0 ? `₹${pendingFees.toFixed(2)}` : '₹0.00'}</div>
-              <p className="text-xs text-muted-foreground">outstanding</p>
-            </CardContent>
-          </Card>
-
-          {/* Today's Attendance */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Attendance</CardTitle>
-              <CalendarIcon className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${todaysAttendance?.status === 'present' ? 'text-green-600' : 'text-red-600'}`}>
-                {todaysAttendance ? todaysAttendance.status.toUpperCase() : 'N/A'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {todaysAttendance?.time_in ? `In: ${formatTimeValue(todaysAttendance.time_in, todaysAttendance.date)}` : ''}
-                {todaysAttendance?.time_out ? ` Out: ${formatTimeValue(todaysAttendance.time_out, todaysAttendance.date)}` : ''}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Today's Lessons Studied */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Lessons</CardTitle>
-              <BookOpen className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todaysLessonsStudied.length}</div>
-              <p className="text-xs text-muted-foreground">chapters studied</p>
-            </CardContent>
-          </Card>
-
-          {/* NEW: Missed Chapters */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Missed Chapters</CardTitle>
-              <XCircle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{missedChaptersCount}</div>
-              <p className="text-xs text-muted-foreground">not yet covered</p>
-            </CardContent>
-          </Card>
-
-          {/* Today's Discipline Issues */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Discipline</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todaysDisciplineIssues.length}</div>
-              <p className="text-xs text-muted-foreground">issues reported</p>
-            </CardContent>
-          </Card>
-
-          {/* Test Statistics */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Test Results</CardTitle>
-              <ClipboardCheck className="h-4 w-4 text-indigo-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{testStats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                {testStats.total > 0 ? `Avg: ${testStats.average}%` : 'no tests taken'}
-              </p>
-            </CardContent>
-          </Card>
+              ) : "No new messages"
+            },
+            {
+              title: "Today's Homework",
+              value: todaysHomework.length,
+              icon: Book,
+              color: "text-orange-600",
+              bgColor: "bg-orange-100",
+              label: "due today"
+            },
+            {
+              title: "Overdue Homework",
+              value: overdueHomeworksOnly.length,
+              icon: AlertTriangle,
+              color: "text-red-600",
+              bgColor: "bg-red-100",
+              label: "past due date"
+            },
+            {
+              title: "Pending Fees",
+              value: pendingFees > 0 ? `₹${pendingFees.toFixed(2)}` : '₹0.00',
+              icon: DollarSign,
+              color: "text-purple-600",
+              bgColor: "bg-purple-100",
+              label: "outstanding"
+            },
+            {
+              title: "Today's Attendance",
+              value: todaysAttendance ? todaysAttendance.status.toUpperCase() : 'N/A',
+              icon: CalendarIcon,
+              color: "text-green-600",
+              bgColor: "bg-green-100",
+              label: todaysAttendance?.time_in ? `In: ${formatTimeValue(todaysAttendance.time_in, todaysAttendance.date)}` : 'No record'
+            },
+            {
+              title: "Today's Lessons",
+              value: todaysLessonsStudied.length,
+              icon: BookOpen,
+              color: "text-blue-600",
+              bgColor: "bg-blue-100",
+              label: "chapters studied"
+            },
+            {
+              title: "Missed Chapters",
+              value: missedChaptersCount,
+              icon: XCircle,
+              color: "text-red-600",
+              bgColor: "bg-red-100",
+              label: "not yet covered"
+            },
+            {
+              title: "Test Results",
+              value: testStats.total,
+              icon: ClipboardCheck,
+              color: "text-indigo-600",
+              bgColor: "bg-indigo-100",
+              label: testStats.total > 0 ? `Avg: ${testStats.average}%` : 'no tests'
+            },
+          ].map((stat, idx) => (
+            <Card key={idx} className="border-none shadow-soft hover:shadow-medium transition-all duration-300 group">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
+                <div className={cn("p-2 rounded-xl transition-transform group-hover:rotate-12", stat.bgColor)}>
+                  <stat.icon className={cn("h-4 w-4", stat.color)} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {stat.value !== undefined ? (
+                  <>
+                    <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
+                  </>
+                ) : (
+                  <div className="mt-1">{stat.content}</div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Upcoming Meetings Notification */}

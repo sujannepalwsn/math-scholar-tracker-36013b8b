@@ -179,21 +179,23 @@ export default function CenterSettings() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Center Settings</h1>
-        <p className="text-muted-foreground">Manage your center's profile and appearance</p>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Center Configuration</h1>
+          <p className="text-muted-foreground text-lg">Personalize your center's identity and visual experience.</p>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
         {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-none shadow-medium overflow-hidden h-fit">
+          <CardHeader className="bg-muted/30 pb-4 border-b">
+            <CardTitle className="text-xl flex items-center gap-2 text-primary">
               <Building className="h-5 w-5" />
-              Basic Information
+              Organizational Identity
             </CardTitle>
-            <CardDescription>Update your center's contact details</CardDescription>
+            <CardDescription>Core details about your educational center.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -260,13 +262,13 @@ export default function CenterSettings() {
         </Card>
 
         {/* Logo & Branding */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-none shadow-medium overflow-hidden h-fit">
+          <CardHeader className="bg-muted/30 pb-4 border-b">
+            <CardTitle className="text-xl flex items-center gap-2 text-primary">
               <Image className="h-5 w-5" />
-              Logo & Branding
+              Visual Branding
             </CardTitle>
-            <CardDescription>Customize your center's appearance</CardDescription>
+            <CardDescription>Customize your center's digital presence.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">

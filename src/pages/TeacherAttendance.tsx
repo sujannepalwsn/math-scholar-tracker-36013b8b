@@ -419,12 +419,19 @@ export default function TeacherAttendancePage() {
   }, [teacherDetailAttendance]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Teacher Attendance</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Faculty Attendance</h1>
+          <p className="text-muted-foreground text-lg">Monitor staff presence and punctuality trends.</p>
+        </div>
+        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
+           <Clock className="h-5 w-5 text-primary" />
+           <span className="font-semibold text-primary">{format(selectedDate, 'MMMM d, yyyy')}</span>
+        </div>
       </div>
 
-      <Card>
+      <Card className="border-none shadow-soft overflow-hidden">
         <CardHeader>
           <CardTitle>Select Date</CardTitle>
         </CardHeader>
@@ -458,9 +465,9 @@ export default function TeacherAttendancePage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Attendance for {safeFormatDate(selectedDate, "PPP")}</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Staff Presence Log</CardTitle>
         </CardHeader>
         <CardContent>
           {teachersLoading || attendanceLoading ? (
@@ -546,10 +553,10 @@ export default function TeacherAttendancePage() {
       </Card>
 
       {/* Attendance Report Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Monthly Attendance Report</CardTitle>
+      <Card className="border-none shadow-strong overflow-hidden h-fit">
+        <CardHeader className="bg-primary text-primary-foreground pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardTitle className="text-2xl font-black">Monthly Performance Summary</CardTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={exportReportToCSV}>
                 <Download className="mr-2 h-4 w-4" /> Export CSV

@@ -33,27 +33,29 @@ export default function AIInsights() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">AI Insights Dashboard</h1>
-          <p className="text-muted-foreground">
-            AI-powered analysis of student performance and recommendations
+          <h1 className="text-4xl font-extrabold tracking-tight">AI Insights Portal</h1>
+          <p className="text-muted-foreground text-lg">
+            Smart analysis of student performance and behavioral trends.
           </p>
         </div>
         <Button
+          size="lg"
+          className="rounded-2xl shadow-medium h-14 px-8 text-base font-bold"
           onClick={() => generateInsightsMutation.mutate()}
           disabled={generateInsightsMutation.isPending}
         >
           {generateInsightsMutation.isPending ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
+              <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+              Processing Data...
             </>
           ) : (
             <>
-              <Brain className="mr-2 h-4 w-4" />
-              Generate AI Insights
+              <Brain className="mr-3 h-5 w-5" />
+              Generate Smart Insights
             </>
           )}
         </Button>

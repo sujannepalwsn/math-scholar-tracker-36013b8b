@@ -263,16 +263,22 @@ export default function TakeAttendance() {
     11️⃣ RETURN UI
   -------------------------------------------------------------------------- */
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Take Attendance</h2>
-        <p className="text-muted-foreground">Mark students as present or absent</p>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Take Attendance</h1>
+          <p className="text-muted-foreground text-lg">Manage daily presence for your students.</p>
+        </div>
+        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
+          <CalendarIcon className="h-5 w-5 text-primary" />
+          <span className="font-semibold text-primary">{format(selectedDate, 'PPP')}</span>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
+      <Card className="border-none shadow-soft">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl">Attendance Settings</CardTitle>
         </CardHeader>
 
         <CardContent className="flex flex-wrap gap-4 items-end">
@@ -406,18 +412,18 @@ export default function TakeAttendance() {
 
       {/* Attendance Form */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>Student Attendance</CardTitle>
-              <CardDescription>Check the box for students who are present</CardDescription>
+              <CardTitle className="text-2xl font-bold">Student List</CardTitle>
+              <CardDescription>Select students who are attending today's session</CardDescription>
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={markAllPresent}>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" onClick={markAllPresent} className="rounded-xl border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600 transition-all">
                 Mark All Present
               </Button>
-              <Button variant="outline" size="sm" onClick={markAllAbsent}>
+              <Button variant="outline" size="sm" onClick={markAllAbsent} className="rounded-xl border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all">
                 Mark All Absent
               </Button>
             </div>
@@ -427,24 +433,38 @@ export default function TakeAttendance() {
         <CardContent>
           {filteredStudents && filteredStudents.length > 0 ? (
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredStudents.map((student) => (
                 <div
                   key={student.id}
-                  className="rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                  className={cn(
+                    "rounded-2xl border-2 p-5 transition-all duration-300 group",
+                    attendance[student.id]?.present
+                      ? "border-primary/20 bg-primary/5 shadow-soft"
+                      : "border-transparent bg-muted/30 grayscale-[0.5] hover:grayscale-0"
+                  )}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id={student.id}
-                        checked={attendance[student.id]?.present || false}
-                        onCheckedChange={() => handleToggle(student.id)}
-                      />
-                      <Label htmlFor={student.id} className="cursor-pointer font-medium">
-                        {student.name}
-                      </Label>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className={cn(
+                        "p-2 rounded-xl transition-colors",
+                        attendance[student.id]?.present ? "bg-primary text-primary-foreground shadow-medium" : "bg-muted text-muted-foreground"
+                      )}>
+                         <Users className="h-5 w-5" />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor={student.id} className="cursor-pointer font-bold text-lg leading-tight">
+                          {student.name}
+                        </Label>
+                        <Badge variant="outline" className="w-fit mt-1 h-5 text-[10px]">{student.grade}</Badge>
+                      </div>
                     </div>
-
-                    <span className="text-sm text-muted-foreground">{student.grade}</span>
+                    <Checkbox
+                      id={student.id}
+                      checked={attendance[student.id]?.present || false}
+                      onCheckedChange={() => handleToggle(student.id)}
+                      className="h-6 w-6 rounded-lg"
+                    />
                   </div>
 
                   <div className="flex gap-4 ml-7">
@@ -485,9 +505,10 @@ export default function TakeAttendance() {
                 </div>
               ))}
 
-              <Button type="submit" className="w-full">
-                Save attendance for {selectedStudentsCount}{" "}
-                {gradeFilter === "all" ? "" : `of grade ${gradeFilter}`}
+              </div>
+
+              <Button type="submit" className="w-full h-14 text-lg font-bold shadow-strong rounded-2xl" disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? 'Saving Records...' : `Finalize Attendance (${selectedStudentsCount} Students)`}
               </Button>
             </form>
           ) : (

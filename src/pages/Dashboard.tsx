@@ -214,25 +214,26 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-4">
         {[
-          { title: "Total Students", value: totalStudents, icon: Users, color: "text-primary", bgColor: "bg-primary/10" },
-          { title: "Present Today", value: presentCount, icon: CheckCircle2, color: "text-secondary", bgColor: "bg-secondary/10" },
-          { title: "Absent Today", value: absentCount, icon: XCircle, color: "text-destructive", bgColor: "bg-destructive/10" },
-          { title: "Absent Rate", value: `${absentRate}%`, icon: TrendingUp, color: "text-accent", bgColor: "bg-accent/10" },
+          { title: "Total Students", value: totalStudents, icon: Users, color: "text-primary", bgColor: "bg-primary/10", gradient: "from-primary/5 to-transparent" },
+          { title: "Present Today", value: presentCount, icon: CheckCircle2, color: "text-green-600", bgColor: "bg-green-100", gradient: "from-green-500/5 to-transparent" },
+          { title: "Absent Today", value: absentCount, icon: XCircle, color: "text-destructive", bgColor: "bg-destructive/10", gradient: "from-destructive/5 to-transparent" },
+          { title: "Absent Rate", value: `${absentRate}%`, icon: TrendingUp, color: "text-orange-600", bgColor: "bg-orange-100", gradient: "from-orange-500/5 to-transparent" },
         ].map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.title} className="transition-all hover:shadow-md">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <div className={`rounded-lg p-2 ${stat.bgColor}`}>
-                  <Icon className={`h-4 w-4 ${stat.color}`} />
+            <Card key={stat.title} className={cn("relative overflow-hidden border-none shadow-soft group hover:scale-[1.02] transition-all duration-300 bg-gradient-to-br", stat.gradient)}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
+                <div className={cn("rounded-xl p-2.5 shadow-soft transition-transform group-hover:rotate-12", stat.bgColor)}>
+                  <Icon className={cn("h-5 w-5", stat.color)} />
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+              <CardContent className="relative z-10">
+                <div className="text-3xl font-extrabold tracking-tight">{stat.value}</div>
               </CardContent>
+              <div className="absolute -bottom-4 -right-4 h-24 w-24 bg-current opacity-[0.03] rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
             </Card>
           );
         })}

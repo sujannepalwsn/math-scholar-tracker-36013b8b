@@ -115,16 +115,26 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-2">
-            <KeyRound className="h-12 w-12 text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-4">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      <Card className="w-full max-w-md border-none shadow-strong bg-card/80 backdrop-blur-xl animate-in zoom-in-95 duration-500">
+        <CardHeader className="space-y-4 pt-8">
+          <div className="mx-auto bg-primary/10 p-4 rounded-2xl w-fit shadow-soft">
+            <div className="bg-primary text-primary-foreground p-3 rounded-xl shadow-medium">
+               <KeyRound className="h-8 w-8" />
+            </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Change Password</CardTitle>
-          <CardDescription className="text-center">
-            Update your account password
-          </CardDescription>
+          <div className="space-y-1">
+            <CardTitle className="text-3xl font-extrabold text-center tracking-tight">Account Security</CardTitle>
+            <CardDescription className="text-center text-base">
+              Update your password to keep your account safe
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -161,14 +171,14 @@ export default function ChangePassword() {
                 disabled={loading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Changing Password...
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin text-current" />
+                  Updating Security...
                 </>
               ) : (
-                'Change Password'
+                'Confirm New Password'
               )}
             </Button>
           </form>

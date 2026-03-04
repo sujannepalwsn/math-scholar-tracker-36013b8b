@@ -215,9 +215,12 @@ export default function LessonPlans() {
   // The filtering is now handled by the useQuery hook
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Lesson Plans</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Curriculum Planner</h1>
+          <p className="text-muted-foreground text-lg">Design and organize your teaching roadmap.</p>
+        </div>
         <div className="flex gap-2 items-center">
           <Select value={subjectFilter} onValueChange={setSubjectFilter}>
             <SelectTrigger className="w-[150px]">
@@ -312,40 +315,58 @@ export default function LessonPlans() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Lesson Plans</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Plan Library</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
-            <p>Loading lesson plans...</p>
+            <div className="flex justify-center py-12"><FileText className="h-8 w-8 animate-spin text-primary" /></div>
           ) : lessonPlans.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No lesson plans found for the selected subject/grade.</p>
+            <p className="text-muted-foreground text-center py-12 italic">No lesson plans found for the current selection.</p>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {lessonPlans.map((lp) => (
-                <div key={lp.id} className="border rounded-lg p-4 flex items-start justify-between">
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-lg">{lp.subject}: {lp.chapter} - {lp.topic}</h3>
-                    <p className="text-sm text-muted-foreground">Date: {format(new Date(lp.lesson_date), "PPP")} {lp.grade && `(Grade: ${lp.grade})`}</p>
-                    {lp.notes && <p className="text-sm">{lp.notes}</p>}
-                    <div className="flex gap-2 mt-2">
-                      {lp.lesson_file_url && (
-                        <Button variant="outline" size="sm" asChild>
+                <div key={lp.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft hover:shadow-medium transition-all group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft" onClick={() => handleEditClick(lp)}>
+                      <Edit className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                       <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                          <FileText className="h-6 w-6" />
+                       </div>
+                       <div>
+                          <h3 className="font-bold text-xl leading-tight">{lp.subject}: {lp.chapter}</h3>
+                          <div className="flex gap-2 mt-1">
+                             <Badge variant="outline" className="text-[10px]">{lp.topic}</Badge>
+                             {lp.grade && <Badge className="text-[10px] bg-indigo-500/10 text-indigo-600 border-none">Grade {lp.grade}</Badge>}
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2">{lp.notes || 'No additional notes.'}</p>
+                      <div className="flex items-center gap-2 text-sm font-bold text-primary">
+                        <CalendarIcon className="h-4 w-4" />
+                        Scheduled: {format(new Date(lp.lesson_date), "PPP")}
+                      </div>
+                    </div>
+
+                    {lp.lesson_file_url && (
+                      <div className="pt-2">
+                        <Button variant="outline" size="sm" className="w-full rounded-xl border-2" asChild>
                           <a href={supabase.storage.from("lesson-files").getPublicUrl(lp.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-4 w-4 mr-1" /> File
+                            <Download className="h-4 w-4 mr-2" /> Download Material
                           </a>
                         </Button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(lp)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -298,9 +298,12 @@ export default function HomeworkManagement() {
   // Filtering is now handled by the useQuery hook
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Homework Management</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Homework Hub</h1>
+          <p className="text-muted-foreground text-lg">Assign tasks and track student submission progress.</p>
+        </div>
         <div className="flex gap-2 items-center">
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
             <SelectTrigger className="w-[150px]">
@@ -414,48 +417,68 @@ export default function HomeworkManagement() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Homework Assignments</CardTitle>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
+          <CardTitle className="text-xl">Active Assignments</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
-            <p>Loading homework...</p>
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : homeworkList.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No homework assignments found for the selected grade/subject.</p>
+            <p className="text-muted-foreground text-center py-12 italic">No homework assignments found for the current selection.</p>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {homeworkList.map((hw: any) => (
-                <div key={hw.id} className="border rounded-lg p-4 flex items-start justify-between">
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-lg">{hw.title} ({hw.subject} - Grade {hw.grade})</h3>
-                    <p className="text-sm text-muted-foreground">Due: {format(new Date(hw.due_date), "PPP")}</p>
-                    {hw.description && <p className="text-sm">{hw.description}</p>}
+                <div key={hw.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft hover:shadow-medium transition-all group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft" onClick={() => handleEditClick(hw)}>
+                      <Edit className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft hover:bg-destructive/10" onClick={() => deleteHomeworkMutation.mutate(hw.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                       <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                          <Book className="h-6 w-6" />
+                       </div>
+                       <div>
+                          <h3 className="font-bold text-xl leading-tight">{hw.title}</h3>
+                          <div className="flex gap-2 mt-1">
+                             <Badge variant="outline" className="text-[10px]">{hw.subject}</Badge>
+                             <Badge className="text-[10px] bg-indigo-500/10 text-indigo-600 border-none">Grade {hw.grade}</Badge>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2">{hw.description || 'No description provided.'}</p>
+                      <div className="flex items-center gap-2 text-sm font-bold text-destructive">
+                        <Clock className="h-4 w-4" />
+                        Due: {format(new Date(hw.due_date), "PPP")}
+                      </div>
+                    </div>
+
                     {hw.lesson_plans?.chapter && (
-                      <p className="text-sm text-blue-600 flex items-center gap-1">
-                        <Book className="h-4 w-4" /> Linked to: {hw.lesson_plans.subject}: {hw.lesson_plans.chapter}
-                      </p>
+                      <div className="p-3 rounded-xl bg-muted/50 text-xs font-medium flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Linked to: {hw.lesson_plans.chapter}
+                      </div>
                     )}
-                    <div className="flex gap-2 mt-2">
+
+                    <div className="flex gap-3 pt-2">
                       {hw.attachment_url && (
-                        <Button variant="outline" size="sm" asChild>
+                        <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2" asChild>
                           <a href={supabase.storage.from(hw.attachment_name?.endsWith('.pdf') || hw.attachment_name?.endsWith('.doc') || hw.attachment_name?.endsWith('.docx') ? "homework-files" : "homework-images").getPublicUrl(hw.attachment_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <FileUp className="h-4 w-4 mr-1" /> {hw.attachment_name || 'Attachment'}
+                            <FileUp className="h-4 w-4 mr-2" /> View File
                           </a>
                         </Button>
                       )}
-                      <Button variant="outline" size="sm" onClick={() => handleManageStatusClick(hw)}>
-                        <CheckCircle className="h-4 w-4 mr-1" /> Manage Status
+                      <Button variant="default" size="sm" className="flex-1 rounded-xl shadow-soft" onClick={() => handleManageStatusClick(hw)}>
+                        <Users className="h-4 w-4 mr-2" /> Submissions
                       </Button>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(hw)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => deleteHomeworkMutation.mutate(hw.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               ))}

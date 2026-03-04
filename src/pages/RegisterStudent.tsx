@@ -393,17 +393,22 @@ export default function RegisterStudent() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Register Student</h2>
-        <p className="text-muted-foreground">Add new students to the attendance system</p>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Register Student</h1>
+          <p className="text-muted-foreground text-lg">Add new students to the attendance system</p>
+        </div>
+        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
+          <UserPlus className="h-5 w-5 text-primary" />
+          <span className="font-semibold text-primary">New Registration</span>
+        </div>
       </div>
 
       {/* Single Student Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Student Information</CardTitle>
+      <Card className="border-none shadow-soft overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-6">
+          <CardTitle className="text-xl">Student Information</CardTitle>
           <CardDescription>Fill in the details to register a new student</CardDescription>
         </CardHeader>
         <CardContent>
@@ -561,10 +566,13 @@ export default function RegisterStudent() {
       </Dialog>
 
       {/* Students Table */}
-      <Card>
-        <CardHeader>
+      <Card className="border-none shadow-medium overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>Registered Students</CardTitle>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <CardTitle className="text-xl">Registered Students</CardTitle>
+            </div>
             <div className="flex gap-2">
               <Select value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger className="w-[150px]">

@@ -73,27 +73,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       />
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background border-b z-20 flex items-center justify-between px-4">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-destructive" />
-          <h1 className="text-lg font-bold text-foreground">Admin</h1>
+          <div className="bg-destructive/10 p-2 rounded-lg">
+            <Shield className="h-5 w-5 text-destructive" />
+          </div>
+          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">Admin</h1>
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden"
+          className="md:hidden hover:bg-muted"
         >
           <Menu className="h-5 w-5" />
         </Button>
-      </div>
+      </header>
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-y-auto bg-background",
-        "md:h-screen md:p-6",
+        "flex-1 overflow-y-auto bg-background transition-all duration-300",
+        "md:h-screen",
         "pt-20 md:pt-0",
-        "p-4 md:p-6",
+        "px-4 pb-8 md:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {children}

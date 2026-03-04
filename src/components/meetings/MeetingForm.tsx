@@ -348,7 +348,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
             <Button type="button" variant="outline" size="sm" onClick={selectAllStudents}>Select All Parents</Button>
             <Button type="button" variant="ghost" size="sm" onClick={clearStudentSelection}>Clear Selection</Button>
           </div>
-          <ScrollArea className="h-48 border rounded-md p-2">
+          <ScrollArea className="h-48 border rounded-xl p-2">
             {studentsLoading ? (
               <p className="text-muted-foreground">Loading students...</p>
             ) : filteredStudents.length === 0 ? (
@@ -388,7 +388,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
             <Button type="button" variant="outline" size="sm" onClick={selectAllTeachers}>Select All Teachers</Button>
             <Button type="button" variant="ghost" size="sm" onClick={clearTeacherSelection}>Clear Selection</Button>
           </div>
-          <ScrollArea className="h-48 border rounded-md p-2">
+          <ScrollArea className="h-48 border rounded-xl p-2">
             {teachersLoading ? (
               <p className="text-muted-foreground">Loading teachers...</p>
             ) : filteredTeachers.length === 0 ? (

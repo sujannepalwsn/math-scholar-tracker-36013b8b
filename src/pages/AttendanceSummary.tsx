@@ -120,13 +120,19 @@ export default function AttendanceSummary() {
   const colors = { present: '#22c55e', absent: '#ef4444', none: '#e5e7eb' };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Attendance Summary</h2>
-        <p className="text-muted-foreground">View attendance history and statistics</p>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Attendance Analytics</h1>
+          <p className="text-muted-foreground text-lg">Detailed statistical breakdown of student participation.</p>
+        </div>
+        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <span className="font-semibold text-primary">{format(selectedMonth, 'MMMM yyyy')}</span>
+        </div>
       </div>
 
-      <Card>
+      <Card className="border-none shadow-soft overflow-hidden">
         <CardHeader><CardTitle>Filters</CardTitle></CardHeader>
         <CardContent className="flex gap-4">
           <div className="flex-1">
@@ -138,7 +144,7 @@ export default function AttendanceSummary() {
                 const [year, month] = e.target.value.split('-');
                 setSelectedMonth(new Date(parseInt(year), parseInt(month) - 1));
               }}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 border rounded-xl"
             />
           </div>
           <div className="flex-1">
@@ -196,26 +202,43 @@ export default function AttendanceSummary() {
       )}
 
       {stats.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Monthly Statistics</CardTitle></CardHeader>
-          <CardContent>
+        <Card className="border-none shadow-medium overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-4">
+            <CardTitle className="text-xl flex items-center gap-2">
+               <TrendingUp className="h-5 w-5 text-primary" />
+               Performance Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {stats.map((stat) => (
-              <div key={stat.studentId} className="border rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between mb-2">
+              <div key={stat.studentId} className="bg-muted/30 rounded-2xl p-5 border border-primary/5 transition-all hover:shadow-soft group">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="font-semibold">{stat.studentName}</h3>
-                    <p className="text-sm text-muted-foreground">Attendance Rate: {stat.attendancePercentage}%</p>
+                    <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{stat.studentName}</h3>
+                    <p className="text-sm text-muted-foreground font-medium">Record for {format(selectedMonth, 'MMM yyyy')}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-green-600">{stat.presentDays}</p>
-                    <p className="text-xs text-muted-foreground">Present</p>
+                  <div className="text-right bg-white dark:bg-card p-2 rounded-xl shadow-soft min-w-[80px]">
+                    <p className="text-2xl font-black text-primary">{stat.attendancePercentage}%</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tighter">Attendance</p>
                   </div>
                 </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-600 transition-all" style={{ width: `${stat.attendancePercentage}%` }} />
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    <span>Presence Log</span>
+                    <span className="text-primary">{stat.presentDays} / {stat.totalDays} Days</span>
+                  </div>
+                  <div className="w-full h-3 bg-muted rounded-full overflow-hidden shadow-inner">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-indigo-400 transition-all duration-1000 ease-out rounded-full"
+                      style={{ width: `${stat.attendancePercentage}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
+            </div>
           </CardContent>
         </Card>
       )}

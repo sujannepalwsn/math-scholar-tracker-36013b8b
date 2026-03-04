@@ -106,70 +106,39 @@ export default function TeacherDashboard() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight">Teacher Dashboard</h1>
+          <p className="text-muted-foreground text-lg">Welcome back, {user?.username}! Here's your schedule for today.</p>
+        </div>
+        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          <span className="font-semibold text-primary">{format(new Date(), 'EEEE, MMMM d')}</span>
+        </div>
       </div>
 
-      {/* Welcome Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Welcome, {user?.username}!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Here's your overview for today, {format(new Date(), 'EEEE, MMMM d, yyyy')}.
-          </p>
-        </CardContent>
-      </Card>
-
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Meetings</CardTitle>
-            <Video className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todaysMeetings.length}</div>
-            <p className="text-xs text-muted-foreground">scheduled for today</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Events</CardTitle>
-            <CalendarDays className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todaysEvents.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {todaysEvents.some((e: any) => e.is_holiday) ? '🏖️ Holiday today!' : 'happening today'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{unreadCount}</div>
-            <p className="text-xs text-muted-foreground">awaiting response</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Meetings</CardTitle>
-            <Bell className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{upcomingMeetings.length}</div>
-            <p className="text-xs text-muted-foreground">scheduled ahead</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { title: "Today's Meetings", value: todaysMeetings.length, icon: Video, color: "text-blue-600", bgColor: "bg-blue-100", label: "scheduled for today" },
+          { title: "Today's Events", value: todaysEvents.length, icon: CalendarDays, color: "text-green-600", bgColor: "bg-green-100", label: todaysEvents.some((e: any) => e.is_holiday) ? '🏖️ Holiday today!' : 'happening today' },
+          { title: "Unread Messages", value: unreadCount, icon: MessageSquare, color: "text-purple-600", bgColor: "bg-purple-100", label: "awaiting response" },
+          { title: "Upcoming Meetings", value: upcomingMeetings.length, icon: Bell, color: "text-orange-600", bgColor: "bg-orange-100", label: "scheduled ahead" },
+        ].map((stat) => (
+          <Card key={stat.title} className="border-none shadow-soft hover:shadow-medium transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
+              <div className={cn("p-2 rounded-xl transition-transform group-hover:rotate-12", stat.bgColor)}>
+                <stat.icon className={cn("h-4 w-4", stat.color)} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Feature Access Cards */}
@@ -180,7 +149,7 @@ export default function TeacherDashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {user?.teacherPermissions?.take_attendance && (
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="hover:shadow-strong transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Take Attendance</CardTitle>
                   <CheckSquare className="h-4 w-4 text-blue-600" />
@@ -191,7 +160,7 @@ export default function TeacherDashboard() {
               </Card>
             )}
             {user?.teacherPermissions?.lesson_tracking && (
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="hover:shadow-strong transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Lesson Tracking</CardTitle>
                   <BookOpen className="h-4 w-4 text-green-600" />
@@ -202,7 +171,7 @@ export default function TeacherDashboard() {
               </Card>
             )}
             {user?.teacherPermissions?.student_report_access && (
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card className="hover:shadow-strong transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Student Reports</CardTitle>
                   <Users className="h-4 w-4 text-purple-600" />
