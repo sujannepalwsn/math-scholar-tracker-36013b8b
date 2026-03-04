@@ -6,6 +6,9 @@ interface CenterTheme {
   primary: string;
   background: string;
   sidebar: string;
+  foreground?: string;
+  cardBackground?: string;
+  mutedForeground?: string;
 }
 
 interface ThemeContextType {
@@ -27,6 +30,31 @@ const ThemeContext = createContext<ThemeContextType>({
   loading: true,
   refreshTheme: () => {},
 });
+
+const hexToHsl = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return null;
+  
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -60,6 +88,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             primary: centerTheme.primary || defaultTheme.primary,
             background: centerTheme.background || defaultTheme.background,
             sidebar: centerTheme.sidebar || defaultTheme.sidebar,
+            foreground: centerTheme.foreground,
+            cardBackground: centerTheme.cardBackground,
+            mutedForeground: centerTheme.mutedForeground,
           });
         } else {
           setTheme(defaultTheme);
@@ -83,35 +114,25 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (theme) {
       const root = document.documentElement;
       
-      // Convert hex to HSL for CSS variables
-      const hexToHsl = (hex: string) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        if (!result) return null;
-        
-        let r = parseInt(result[1], 16) / 255;
-        let g = parseInt(result[2], 16) / 255;
-        let b = parseInt(result[3], 16) / 255;
-        
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        let h = 0, s = 0, l = (max + min) / 2;
-        
-        if (max !== min) {
-          const d = max - min;
-          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-          switch (max) {
-            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-            case g: h = ((b - r) / d + 2) / 6; break;
-            case b: h = ((r - g) / d + 4) / 6; break;
-          }
+      const applyVar = (varName: string, hex: string | undefined) => {
+        if (hex) {
+          const hsl = hexToHsl(hex);
+          if (hsl) root.style.setProperty(varName, hsl);
         }
-        
-        return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
       };
 
-      const primaryHsl = hexToHsl(theme.primary);
-      if (primaryHsl) {
-        root.style.setProperty('--primary', primaryHsl);
+      applyVar('--primary', theme.primary);
+      applyVar('--background', theme.background);
+      applyVar('--foreground', theme.foreground);
+      applyVar('--card', theme.cardBackground);
+      applyVar('--muted-foreground', theme.mutedForeground);
+      
+      if (theme.sidebar) {
+        const hsl = hexToHsl(theme.sidebar);
+        if (hsl) {
+          root.style.setProperty('--sidebar-background', hsl);
+          root.style.setProperty('--sidebar-foreground', '0 0% 98%');
+        }
       }
     }
   }, [theme]);
