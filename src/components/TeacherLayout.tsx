@@ -129,14 +129,24 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         <div className="flex-1">
           <CenterLogo size="sm" showName={true} />
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden hover:bg-muted"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="md:hidden hover:bg-muted"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden hover:bg-muted"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
