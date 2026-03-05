@@ -16,21 +16,26 @@ const navItems: Array<{
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
+  category?: 'Academics' | 'Administration';
 }> = [
   { to: "/", label: "Dashboard", icon: Home, role: 'center' as const },
-  { to: "/register", label: "Register Student", icon: UserPlus, role: 'center' as const, featureName: 'register_student' },
-  { to: "/attendance", label: "Take Attendance", icon: CheckSquare, role: 'center' as const, featureName: 'take_attendance' },
-  { to: "/attendance-summary", label: "Attendance Summary", icon: Calendar, role: 'center' as const, featureName: 'attendance_summary' },
-  { to: "/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'center' as const, featureName: 'lesson_plans' },
-  { to: "/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'center' as const, featureName: 'lesson_tracking' },
-  { to: "/homework", label: "Homework", icon: Book, role: 'center' as const, featureName: 'homework_management' },
-  { to: "/activities", label: "Activities", icon: Paintbrush, role: 'center' as const, featureName: 'preschool_activities' },
-  { to: "/discipline", label: "Discipline", icon: AlertTriangle, role: 'center' as const, featureName: 'discipline_issues' },
-  { to: "/teachers", label: "Teachers", icon: Users, role: 'center' as const, featureName: 'teacher_management' },
-  { to: "/teacher-attendance", label: "Teacher Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teacher_management' },
-  { to: "/tests", label: "Tests", icon: ClipboardCheck, role: 'center' as const, featureName: 'test_management' },
-  { to: "/student-report", label: "Student Report", icon: User, role: 'center' as const, featureName: 'student_report' },
-  { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'lesson_tracking' },
+
+  // Academics Group
+  { to: "/attendance", label: "Take Attendance", icon: CheckSquare, role: 'center' as const, featureName: 'take_attendance', category: 'Academics' },
+  { to: "/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'center' as const, featureName: 'lesson_plans', category: 'Academics' },
+  { to: "/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'center' as const, featureName: 'lesson_tracking', category: 'Academics' },
+  { to: "/homework", label: "Homework", icon: Book, role: 'center' as const, featureName: 'homework_management', category: 'Academics' },
+  { to: "/tests", label: "Tests", icon: ClipboardCheck, role: 'center' as const, featureName: 'test_management', category: 'Academics' },
+  { to: "/activities", label: "Activities", icon: Paintbrush, role: 'center' as const, featureName: 'preschool_activities', category: 'Academics' },
+  { to: "/discipline", label: "Discipline", icon: AlertTriangle, role: 'center' as const, featureName: 'discipline_issues', category: 'Academics' },
+
+  // Administration Group
+  { to: "/register", label: "Students Registration", icon: UserPlus, role: 'center' as const, featureName: 'register_student', category: 'Administration' },
+  { to: "/teachers", label: "Teachers Registration", icon: Users, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
+  { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
+  { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'lesson_tracking', category: 'Administration' },
+
+  // Others
   { to: "/ai-insights", label: "AI Insights", icon: Brain, role: 'center' as const, featureName: 'ai_insights' },
   { to: "/records", label: "View Records", icon: FileText, role: 'center' as const, featureName: 'view_records' },
   { to: "/summary", label: "Summary", icon: BarChart3, role: 'center' as const, featureName: 'summary' },
@@ -39,6 +44,8 @@ const navItems: Array<{
   { to: "/messages", label: "Messages", icon: MessageSquare, role: 'center' as const, featureName: 'messaging' },
   { to: "/class-routine", label: "Class Routine", icon: Clock, role: 'center' as const, featureName: 'class_routine' },
   { to: "/calendar", label: "Calendar & Events", icon: CalendarDays, role: 'center' as const, featureName: 'calendar_events' },
+  { to: "/attendance-summary", label: "Attendance Summary", icon: Calendar, role: 'center' as const, featureName: 'attendance_summary' },
+  { to: "/student-report", label: "Student Report", icon: User, role: 'center' as const, featureName: 'student_report' },
   { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'center' as const },
 ];
@@ -110,23 +117,12 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Desktop Sidebar */}
-      <div className="fixed top-0 left-0 h-screen z-10 hidden md:block">
-        <Sidebar
-          navItems={filteredNavItems}
-          headerContent={headerContent}
-          footerContent={footerContent}
-          onCollapseChange={setSidebarCollapsed}
-          isMobileOpen={mobileMenuOpen}
-          onMobileOpenChange={setMobileMenuOpen}
-        />
-      </div>
-
-      {/* Mobile Sidebar */}
+      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={filteredNavItems}
         headerContent={headerContent}
         footerContent={footerContent}
+        onCollapseChange={setSidebarCollapsed}
         isMobileOpen={mobileMenuOpen}
         onMobileOpenChange={setMobileMenuOpen}
       />
@@ -134,7 +130,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
         <div className="flex-1">
-          <CenterLogo size="sm" showName={false} />
+          <CenterLogo size="sm" showName={true} />
         </div>
         <Button
           variant="ghost"

@@ -15,16 +15,21 @@ const navItems: Array<{
   icon: React.ElementType;
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   unreadCount?: number;
+  category?: 'Academics' | 'Administration';
 }> = [
   { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
+
+  // Academics Group
+  { to: "/parent-lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'parent' as const, category: 'Academics' },
+  { to: "/parent-homework", label: "Homework", icon: Book, role: 'parent' as const, category: 'Academics' },
+  { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const, category: 'Academics' },
+  { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const, category: 'Academics' },
+
+  // Others
   { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const },
-  { to: "/parent-homework", label: "Homework", icon: Book, role: 'parent' as const },
-  { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const },
-  { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const },
   { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const },
   { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const },
   { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const },
-  { to: "/parent-lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'parent' as const },
   { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'parent' as const },
 ];
@@ -87,23 +92,12 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Desktop Sidebar */}
-      <div className="fixed top-0 left-0 h-screen z-10 hidden md:block">
-        <Sidebar
-          navItems={updatedNavItems}
-          headerContent={headerContent}
-          footerContent={footerContent}
-          onCollapseChange={setSidebarCollapsed}
-          isMobileOpen={mobileMenuOpen}
-          onMobileOpenChange={setMobileMenuOpen}
-        />
-      </div>
-
-      {/* Mobile Sidebar */}
+      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={updatedNavItems}
         headerContent={headerContent}
         footerContent={footerContent}
+        onCollapseChange={setSidebarCollapsed}
         isMobileOpen={mobileMenuOpen}
         onMobileOpenChange={setMobileMenuOpen}
       />
@@ -111,7 +105,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
         <div className="flex-1">
-          <CenterLogo size="sm" showName={false} />
+          <CenterLogo size="sm" showName={true} />
         </div>
         <Button
           variant="ghost"
