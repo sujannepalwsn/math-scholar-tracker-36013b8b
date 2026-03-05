@@ -17,7 +17,7 @@ const navItems: Array<{
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const },
 
@@ -32,20 +32,19 @@ const navItems: Array<{
 
   // Administration Group
   { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance', category: 'Administration' },
+  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'teacher' as const, category: 'Administration' },
 
-  // Others
-  { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights' },
-  { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records' },
-  { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary' },
-  { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance' },
-  { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management' },
-  { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging' },
-  { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine' },
-  { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events' },
-  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary' },
-  { to: "/teacher/preschool-activities", label: "Preschool Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'preschool_activities' },
-  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access' },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'teacher' as const },
+  // Reports and Communications Group
+  { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
+  { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communications' },
+  { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communications' },
+  { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance', category: 'Reports and Communications' },
+  { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management', category: 'Reports and Communications' },
+  { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging', category: 'Reports and Communications' },
+  { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine', category: 'Reports and Communications' },
+  { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events', category: 'Reports and Communications' },
+  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
+  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access', category: 'Reports and Communications' },
 ];
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {

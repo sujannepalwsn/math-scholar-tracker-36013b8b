@@ -16,7 +16,7 @@ const navItems: Array<{
   icon: React.ElementType;
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
 
@@ -26,12 +26,12 @@ const navItems: Array<{
   { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const, category: 'Academics' },
 
-  // Others
-  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const },
-  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const },
-  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const },
-  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const },
-  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const },
+  // Reports and Communications Group
+  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communications' },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'parent' as const },
 ];
 

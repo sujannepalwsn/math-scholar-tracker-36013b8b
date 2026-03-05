@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, GraduationCap, ShieldCheck, X } from "lucide-react";
+import { Home, GraduationCap, ShieldCheck, FileText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,7 +11,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }
 
 interface BottomNavProps {
@@ -20,13 +20,14 @@ interface BottomNavProps {
 
 export default function BottomNav({ navItems }: BottomNavProps) {
   const location = useLocation();
-  const [activeMenu, setActiveMenu] = useState<'Academics' | 'Administration' | null>(null);
+  const [activeMenu, setActiveMenu] = useState<'Academics' | 'Administration' | 'Reports and Communications' | null>(null);
 
   const dashboardItem = navItems.find(item => item.label === "Dashboard");
   const academicsItems = navItems.filter(item => item.category === 'Academics');
   const administrationItems = navItems.filter(item => item.category === 'Administration');
+  const reportsItems = navItems.filter(item => item.category === 'Reports and Communications');
 
-  const handleMenuToggle = (menu: 'Academics' | 'Administration') => {
+  const handleMenuToggle = (menu: 'Academics' | 'Administration' | 'Reports and Communications') => {
     setActiveMenu(activeMenu === menu ? null : menu);
   };
 
@@ -71,9 +72,10 @@ export default function BottomNav({ navItems }: BottomNavProps) {
       {/* Sub-menus */}
       {renderSubMenu('Academics', academicsItems)}
       {renderSubMenu('Administration', administrationItems)}
+      {renderSubMenu('Reports and Communications', reportsItems)}
 
       {/* Main Bottom Nav */}
-      <div className="fixed bottom-0 inset-x-0 h-16 bg-background/80 backdrop-blur-md border-t flex items-center justify-around px-2 z-40 md:hidden">
+      <div className="fixed bottom-0 inset-x-0 h-16 bg-background/80 backdrop-blur-md border-t flex items-center justify-between px-2 z-40 md:hidden">
         {/* Dashboard */}
         {dashboardItem && (
           <Link
@@ -90,34 +92,55 @@ export default function BottomNav({ navItems }: BottomNavProps) {
         )}
 
         {/* Academics */}
-        <button
-          onClick={() => handleMenuToggle('Academics')}
-          className={cn(
-            "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
-            activeMenu === 'Academics' ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <GraduationCap className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Academics</span>
-          {academicsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
-            <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
-          )}
-        </button>
+        {academicsItems.length > 0 && (
+          <button
+            onClick={() => handleMenuToggle('Academics')}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
+              activeMenu === 'Academics' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <GraduationCap className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Academics</span>
+            {academicsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
+              <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
+            )}
+          </button>
+        )}
 
         {/* Administration */}
-        <button
-          onClick={() => handleMenuToggle('Administration')}
-          className={cn(
-            "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
-            activeMenu === 'Administration' ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <ShieldCheck className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Admin</span>
-          {administrationItems.some(i => i.unreadCount && i.unreadCount > 0) && (
-            <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
-          )}
-        </button>
+        {administrationItems.length > 0 && (
+          <button
+            onClick={() => handleMenuToggle('Administration')}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
+              activeMenu === 'Administration' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <ShieldCheck className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Admin</span>
+            {administrationItems.some(i => i.unreadCount && i.unreadCount > 0) && (
+              <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
+            )}
+          </button>
+        )}
+
+        {/* Reports */}
+        {reportsItems.length > 0 && (
+          <button
+            onClick={() => handleMenuToggle('Reports and Communications')}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
+              activeMenu === 'Reports and Communications' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <FileText className="h-5 w-5" />
+            <span className="text-[10px] font-medium text-center leading-tight">Reports</span>
+            {reportsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
+              <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Backdrop for sub-menus */}

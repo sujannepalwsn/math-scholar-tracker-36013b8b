@@ -17,7 +17,7 @@ const navItems: Array<{
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/", label: "Dashboard", icon: Home, role: 'center' as const },
 
@@ -35,20 +35,20 @@ const navItems: Array<{
   { to: "/teachers", label: "Teachers Registration", icon: Users, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
   { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
   { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'lesson_tracking', category: 'Administration' },
+  { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const, category: 'Administration' },
+  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'center' as const, category: 'Administration' },
 
-  // Others
-  { to: "/ai-insights", label: "AI Insights", icon: Brain, role: 'center' as const, featureName: 'ai_insights' },
-  { to: "/records", label: "View Records", icon: FileText, role: 'center' as const, featureName: 'view_records' },
-  { to: "/summary", label: "Summary", icon: BarChart3, role: 'center' as const, featureName: 'summary' },
-  { to: "/finance", label: "Finance", icon: DollarSign, role: 'center' as const, featureName: 'finance' },
-  { to: "/meetings", label: "Meetings", icon: Video, role: 'center' as const, featureName: 'meetings_management' },
-  { to: "/messages", label: "Messages", icon: MessageSquare, role: 'center' as const, featureName: 'messaging' },
-  { to: "/class-routine", label: "Class Routine", icon: Clock, role: 'center' as const, featureName: 'class_routine' },
-  { to: "/calendar", label: "Calendar & Events", icon: CalendarDays, role: 'center' as const, featureName: 'calendar_events' },
-  { to: "/attendance-summary", label: "Attendance Summary", icon: Calendar, role: 'center' as const, featureName: 'attendance_summary' },
-  { to: "/student-report", label: "Student Report", icon: User, role: 'center' as const, featureName: 'student_report' },
-  { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'center' as const },
+  // Reports and Communications Group
+  { to: "/ai-insights", label: "AI Insights", icon: Brain, role: 'center' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
+  { to: "/records", label: "View Records", icon: FileText, role: 'center' as const, featureName: 'view_records', category: 'Reports and Communications' },
+  { to: "/summary", label: "Summary", icon: BarChart3, role: 'center' as const, featureName: 'summary', category: 'Reports and Communications' },
+  { to: "/finance", label: "Finance", icon: DollarSign, role: 'center' as const, featureName: 'finance', category: 'Reports and Communications' },
+  { to: "/meetings", label: "Meetings", icon: Video, role: 'center' as const, featureName: 'meetings_management', category: 'Reports and Communications' },
+  { to: "/messages", label: "Messages", icon: MessageSquare, role: 'center' as const, featureName: 'messaging', category: 'Reports and Communications' },
+  { to: "/class-routine", label: "Class Routine", icon: Clock, role: 'center' as const, featureName: 'class_routine', category: 'Reports and Communications' },
+  { to: "/calendar", label: "Calendar & Events", icon: CalendarDays, role: 'center' as const, featureName: 'calendar_events', category: 'Reports and Communications' },
+  { to: "/attendance-summary", label: "Attendance Summary", icon: Calendar, role: 'center' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
+  { to: "/student-report", label: "Student Report", icon: User, role: 'center' as const, featureName: 'student_report', category: 'Reports and Communications' },
 ];
 
 export default function CenterLayout({ children }: { children: React.ReactNode }) {
