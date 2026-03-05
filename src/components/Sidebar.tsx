@@ -1,34 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Home,
-  UserPlus,
-  CheckSquare,
-  FileText,
-  BarChart3,
-  BookOpen,
-  ClipboardCheck,
-  User,
-  Brain,
-  Calendar,
-  DollarSign,
-  LayoutList,
-  Book,
-  Paintbrush,
-  AlertTriangle,
-  Users,
-  UserCheck,
   ChevronLeft,
   ChevronRight,
-  Settings,
-  KeyRound,
-  MessageSquare,
-  Video,
-  Clock,
-  Star,
-  Menu,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -65,7 +41,14 @@ export default function Sidebar({
 }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
+
+  // Prevent animation glitch on first render
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCollapseToggle = () => {
     const newState = !isCollapsed;
@@ -98,8 +81,9 @@ export default function Sidebar({
     <TooltipProvider>
       <div
         className={cn(
-          "hidden md:flex flex-col h-full border-r transition-all duration-300",
+          "hidden md:flex flex-col h-full border-r",
           "bg-card text-card-foreground shadow-soft",
+          mounted ? "transition-all duration-300" : "",
           isCollapsed ? "w-20" : "w-64"
         )}
       >
@@ -117,7 +101,7 @@ export default function Sidebar({
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.to;
@@ -127,19 +111,19 @@ export default function Sidebar({
                   <Link
                     to={item.to}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-primary text-primary-foreground shadow-medium scale-[1.02]"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:scale-[1.02]",
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                       isCollapsed ? "justify-center px-0" : ""
                     )}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4 shrink-0" />
                     {!isCollapsed && (
-                      <span className="flex items-center justify-between w-full">
+                      <span className="flex items-center justify-between w-full truncate">
                         {item.label}
                         {item.unreadCount && item.unreadCount > 0 && (
-                          <Badge variant="destructive" className="ml-auto px-2 py-0.5 text-xs">
+                          <Badge variant="destructive" className="ml-auto px-1.5 py-0 text-[10px] min-w-[18px] h-[18px] flex items-center justify-center">
                             {item.unreadCount}
                           </Badge>
                         )}
@@ -152,7 +136,7 @@ export default function Sidebar({
                     <span className="flex items-center gap-2">
                       {item.label}
                       {item.unreadCount && item.unreadCount > 0 && (
-                        <Badge variant="destructive" className="px-2 py-0.5 text-xs">
+                        <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
                           {item.unreadCount}
                         </Badge>
                       )}
@@ -165,8 +149,8 @@ export default function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="mt-auto p-4 bg-muted/30">
-          {!isCollapsed && <div className="text-sm text-muted-foreground animate-in fade-in">{footerContent}</div>}
+        <div className="mt-auto p-4 border-t">
+          {!isCollapsed && <div className="text-sm text-muted-foreground">{footerContent}</div>}
           {isCollapsed && (
             <div className="flex justify-center">
               {footerContent}
@@ -177,37 +161,37 @@ export default function Sidebar({
     </TooltipProvider>
   );
 
-  // Mobile drawer (appears when opened)
+  // Mobile drawer
   const mobileSidebar = (
     <div
       className={cn(
-        "fixed inset-0 z-40 md:hidden transition-all duration-300",
-        isMobileOpen ? "bg-black/60 backdrop-blur-sm" : "pointer-events-none bg-black/0"
+        "fixed inset-0 z-40 md:hidden transition-opacity duration-200",
+        isMobileOpen ? "bg-black/50 backdrop-blur-sm" : "pointer-events-none opacity-0"
       )}
       onClick={handleMobileClose}
     >
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-strong flex flex-col transition-transform duration-500 ease-out z-50",
+          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-lg flex flex-col transition-transform duration-300 ease-out z-50",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-20 px-6">
+        <div className="flex items-center justify-between h-16 px-4 border-b">
           <div className="flex-1">{headerContent}</div>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleMobileClose}
-            className="h-10 w-10 rounded-full hover:bg-muted"
+            className="h-9 w-9 rounded-lg hover:bg-muted"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.to;
@@ -217,17 +201,17 @@ export default function Sidebar({
                 to={item.to}
                 onClick={handleMobileClose}
                 className={cn(
-                  "flex items-center gap-4 rounded-xl px-4 py-3 text-base font-medium transition-all duration-200",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-medium"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span className="flex items-center justify-between flex-1">
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex items-center justify-between flex-1 truncate">
                   {item.label}
                   {item.unreadCount && item.unreadCount > 0 && (
-                    <Badge variant="destructive" className="ml-auto px-2 py-0.5 text-xs">
+                    <Badge variant="destructive" className="ml-auto px-1.5 py-0 text-[10px]">
                       {item.unreadCount}
                     </Badge>
                   )}
