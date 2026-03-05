@@ -12,7 +12,7 @@ const navItems: Array<{
   label: string;
   icon: React.ElementType;
   role: 'admin' | 'center' | 'parent' | 'teacher';
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/admin-dashboard", label: "Dashboard", icon: Home, role: 'admin' as const },
   { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const },

@@ -22,7 +22,7 @@ interface NavItem {
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }
 
 interface SidebarProps {
@@ -44,7 +44,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['Academics', 'Administration']);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(['Academics', 'Administration', 'Reports and Communications']);
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
 
