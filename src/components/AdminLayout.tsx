@@ -15,9 +15,9 @@ const navItems: Array<{
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/admin-dashboard", label: "Dashboard", icon: Home, role: 'admin' as const },
-  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const },
-  { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'admin' as const },
+  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const, category: 'Reports and Communications' },
+  { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const, category: 'Administration' },
+  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'admin' as const, category: 'Administration' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

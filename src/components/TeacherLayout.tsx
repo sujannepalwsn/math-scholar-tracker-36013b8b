@@ -32,6 +32,7 @@ const navItems: Array<{
 
   // Administration Group
   { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance', category: 'Administration' },
+  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'teacher' as const, category: 'Administration' },
 
   // Reports and Communications Group
   { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
@@ -44,7 +45,6 @@ const navItems: Array<{
   { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events', category: 'Reports and Communications' },
   { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
   { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access', category: 'Reports and Communications' },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'teacher' as const },
 ];
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {

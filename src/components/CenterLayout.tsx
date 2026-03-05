@@ -35,6 +35,8 @@ const navItems: Array<{
   { to: "/teachers", label: "Teachers Registration", icon: Users, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
   { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
   { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'lesson_tracking', category: 'Administration' },
+  { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const, category: 'Administration' },
+  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'center' as const, category: 'Administration' },
 
   // Reports and Communications Group
   { to: "/ai-insights", label: "AI Insights", icon: Brain, role: 'center' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
@@ -47,8 +49,6 @@ const navItems: Array<{
   { to: "/calendar", label: "Calendar & Events", icon: CalendarDays, role: 'center' as const, featureName: 'calendar_events', category: 'Reports and Communications' },
   { to: "/attendance-summary", label: "Attendance Summary", icon: Calendar, role: 'center' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
   { to: "/student-report", label: "Student Report", icon: User, role: 'center' as const, featureName: 'student_report', category: 'Reports and Communications' },
-  { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'center' as const },
 ];
 
 export default function CenterLayout({ children }: { children: React.ReactNode }) {

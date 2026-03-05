@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, GraduationCap, ShieldCheck, MessageSquare, X } from "lucide-react";
+import { Home, GraduationCap, ShieldCheck, FileText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -92,49 +92,55 @@ export default function BottomNav({ navItems }: BottomNavProps) {
         )}
 
         {/* Academics */}
-        <button
-          onClick={() => handleMenuToggle('Academics')}
-          className={cn(
-            "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
-            activeMenu === 'Academics' ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <GraduationCap className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Academics</span>
-          {academicsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
-            <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
-          )}
-        </button>
+        {academicsItems.length > 0 && (
+          <button
+            onClick={() => handleMenuToggle('Academics')}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
+              activeMenu === 'Academics' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <GraduationCap className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Academics</span>
+            {academicsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
+              <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
+            )}
+          </button>
+        )}
 
         {/* Administration */}
-        <button
-          onClick={() => handleMenuToggle('Administration')}
-          className={cn(
-            "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
-            activeMenu === 'Administration' ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <ShieldCheck className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Admin</span>
-          {administrationItems.some(i => i.unreadCount && i.unreadCount > 0) && (
-            <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
-          )}
-        </button>
+        {administrationItems.length > 0 && (
+          <button
+            onClick={() => handleMenuToggle('Administration')}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
+              activeMenu === 'Administration' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <ShieldCheck className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Admin</span>
+            {administrationItems.some(i => i.unreadCount && i.unreadCount > 0) && (
+              <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
+            )}
+          </button>
+        )}
 
         {/* Reports */}
-        <button
-          onClick={() => handleMenuToggle('Reports and Communications')}
-          className={cn(
-            "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
-            activeMenu === 'Reports and Communications' ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <MessageSquare className="h-5 w-5" />
-          <span className="text-[10px] font-medium text-center leading-tight">Reports</span>
-          {reportsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
-            <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
-          )}
-        </button>
+        {reportsItems.length > 0 && (
+          <button
+            onClick={() => handleMenuToggle('Reports and Communications')}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[64px] transition-colors relative",
+              activeMenu === 'Reports and Communications' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <FileText className="h-5 w-5" />
+            <span className="text-[10px] font-medium text-center leading-tight">Reports</span>
+            {reportsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
+              <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Backdrop for sub-menus */}
