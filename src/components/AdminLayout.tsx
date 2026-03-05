@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
 import { useState } from "react";
 
 const navItems: Array<{
@@ -85,11 +86,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         "flex-1 overflow-y-auto bg-background transition-all duration-300",
         "md:h-screen",
         "pt-20 md:pt-0",
-        "px-4 pb-8 md:p-8",
+        "px-4 pb-20 md:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav navItems={navItems} />
     </div>
   );
 }
