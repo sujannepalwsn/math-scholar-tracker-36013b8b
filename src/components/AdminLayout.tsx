@@ -11,6 +11,7 @@ const navItems: Array<{
   label: string;
   icon: React.ElementType;
   role: 'admin' | 'center' | 'parent' | 'teacher';
+  category?: 'Academics' | 'Administration';
 }> = [
   { to: "/admin-dashboard", label: "Dashboard", icon: Home, role: 'admin' as const },
   { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const },
@@ -51,23 +52,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Desktop Sidebar */}
-      <div className="fixed top-0 left-0 h-screen z-10 hidden md:block">
-        <Sidebar
-          navItems={navItems}
-          headerContent={headerContent}
-          footerContent={footerContent}
-          onCollapseChange={setSidebarCollapsed}
-          isMobileOpen={mobileMenuOpen}
-          onMobileOpenChange={setMobileMenuOpen}
-        />
-      </div>
-
-      {/* Mobile Sidebar */}
+      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={navItems}
         headerContent={headerContent}
         footerContent={footerContent}
+        onCollapseChange={setSidebarCollapsed}
         isMobileOpen={mobileMenuOpen}
         onMobileOpenChange={setMobileMenuOpen}
       />

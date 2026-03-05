@@ -16,19 +16,23 @@ const navItems: Array<{
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
+  category?: 'Academics' | 'Administration';
 }> = [
   { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const },
-  { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance' },
-  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary' },
-  { to: "/teacher/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'teacher' as const, featureName: 'lesson_plans' },
-  { to: "/teacher/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'teacher' as const, featureName: 'lesson_tracking' },
-  { to: "/teacher/homework-management", label: "Homework Management", icon: Book, role: 'teacher' as const, featureName: 'homework_management' },
-  { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'activities' },
-  { to: "/teacher/preschool-activities", label: "Preschool Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'preschool_activities' },
-  { to: "/teacher/discipline-issues", label: "Discipline Issues", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues' },
-  { to: "/teacher/test-management", label: "Test Management", icon: ClipboardCheck, role: 'teacher' as const, featureName: 'test_management' },
-  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access' },
-  { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance' },
+
+  // Academics Group
+  { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance', category: 'Academics' },
+  { to: "/teacher/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'teacher' as const, featureName: 'lesson_plans', category: 'Academics' },
+  { to: "/teacher/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'teacher' as const, featureName: 'lesson_tracking', category: 'Academics' },
+  { to: "/teacher/homework-management", label: "Homework", icon: Book, role: 'teacher' as const, featureName: 'homework_management', category: 'Academics' },
+  { to: "/teacher/test-management", label: "Tests", icon: ClipboardCheck, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
+  { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'activities', category: 'Academics' },
+  { to: "/teacher/discipline-issues", label: "Discipline", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues', category: 'Academics' },
+
+  // Administration Group
+  { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance', category: 'Administration' },
+
+  // Others
   { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights' },
   { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records' },
   { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary' },
@@ -37,6 +41,9 @@ const navItems: Array<{
   { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging' },
   { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine' },
   { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events' },
+  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary' },
+  { to: "/teacher/preschool-activities", label: "Preschool Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'preschool_activities' },
+  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access' },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'teacher' as const },
 ];
 
@@ -107,23 +114,12 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Desktop Sidebar */}
-      <div className="fixed top-0 left-0 h-screen z-10 hidden md:block">
-        <Sidebar
-          navItems={filteredTeacherNavItems}
-          headerContent={headerContent}
-          footerContent={footerContent}
-          onCollapseChange={setSidebarCollapsed}
-          isMobileOpen={mobileMenuOpen}
-          onMobileOpenChange={setMobileMenuOpen}
-        />
-      </div>
-
-      {/* Mobile Sidebar */}
+      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={filteredTeacherNavItems}
         headerContent={headerContent}
         footerContent={footerContent}
+        onCollapseChange={setSidebarCollapsed}
         isMobileOpen={mobileMenuOpen}
         onMobileOpenChange={setMobileMenuOpen}
       />
@@ -131,7 +127,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
         <div className="flex-1">
-          <CenterLogo size="sm" showName={false} />
+          <CenterLogo size="sm" showName={true} />
         </div>
         <Button
           variant="ghost"

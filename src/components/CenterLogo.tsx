@@ -55,9 +55,9 @@ export default function CenterLogo({ size = "md", showName = true }: CenterLogoP
       <div className={`${sizeClasses[size]} items-center justify-center rounded bg-primary/10 ${center?.logo_url ? 'hidden' : 'flex'}`}>
         <Building className="h-4 w-4 text-primary" />
       </div>
-      {showName && center?.name && (
+      {showName && (center?.name || user?.center_name) && (
         <span className={`font-semibold ${textSizeClasses[size]} truncate max-w-[150px]`}>
-          {center.name}
+          {center?.name || user?.center_name}
         </span>
       )}
     </div>
