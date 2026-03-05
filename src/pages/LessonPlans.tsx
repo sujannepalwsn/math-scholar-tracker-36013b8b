@@ -10,14 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CalendarIcon, Edit, FileText, FileUp, Plus, Trash2, Video } from "lucide-react";
+import { CalendarIcon, Download, Edit, FileText, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 
-
 type LessonPlan = Tables<'lesson_plans'>;
-type Student = Tables<'students'>; // Import Student type to get grades
 
 export default function LessonPlans() {
   const queryClient = useQueryClient();
@@ -25,50 +23,35 @@ export default function LessonPlans() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLessonPlan, setEditingLessonPlan] = useState<LessonPlan | null>(null);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
-  const [gradeFilter, setGradeFilter] = useState<string>("all"); // New grade filter state
+  const [gradeFilter, setGradeFilter] = useState<string>("all");
 
   const [subject, setSubject] = useState("");
   const [chapter, setChapter] = useState("");
   const [topic, setTopic] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [lessonDate, setLessonDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [media, setMedia] = useState<File | null>(null);
 
-  // Fetch students to get unique grades
   const { data: students = [] } = useQuery({
     queryKey: ["students-for-grades", user?.center_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
-        .from("students")
-        .select("grade")
-        .eq("center_id", user.center_id);
+      const { data, error } = await supabase.from("students").select("grade").eq("center_id", user.center_id);
       if (error) throw error;
       return data;
     },
     enabled: !!user?.center_id,
   });
-  const uniqueGrades = Array.from(new Set(students.map(s => s.grade))).sort();
+  const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
-  // Fetch lesson plans
   const { data: lessonPlans = [], isLoading } = useQuery({
-    queryKey: ["lesson-plans-for-tracking", user?.center_id, subjectFilter, gradeFilter], // Add gradeFilter to query key
+    queryKey: ["lesson-plans-for-tracking", user?.center_id, subjectFilter, gradeFilter],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase
-        .from("lesson_plans")
-        .select("*")
-        .eq("center_id", user.center_id)
-        .order("lesson_date", { ascending: false });
-
-      if (subjectFilter !== "all") {
-        query = query.eq("subject", subjectFilter);
-      }
-      if (gradeFilter !== "all") { // Apply grade filter
-        query = query.eq("grade", gradeFilter);
-      }
-
+      let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
+      if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
+      if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -76,240 +59,112 @@ export default function LessonPlans() {
     enabled: !!user?.center_id,
   });
 
-  const resetForm = () => {
-    setSubject("");
-    setChapter("");
-    setTopic("");
-    setLessonDate(format(new Date(), "yyyy-MM-dd"));
-    setNotes("");
-    setFile(null);
-    setMedia(null);
-    setEditingLessonPlan(null);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setMedia(e.target.files[0]);
-    }
-  };
+  const resetForm = () => { setSubject(""); setChapter(""); setTopic(""); setSelectedGrade("all"); setLessonDate(format(new Date(), "yyyy-MM-dd")); setNotes(""); setFile(null); setEditingLessonPlan(null); };
 
   const uploadFile = async (fileToUpload: File, bucket: string) => {
     const fileExt = fileToUpload.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, fileToUpload);
-    if (uploadError) {
-      console.error(`Upload error for bucket ${bucket}:`, uploadError);
-      throw uploadError;
-    }
+    const { error } = await supabase.storage.from(bucket).upload(fileName, fileToUpload);
+    if (error) throw error;
     return fileName;
   };
 
   const createLessonPlanMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
-
       let fileUrl: string | null = null;
-      let mediaUrl: string | null = null;
-
       if (file) fileUrl = await uploadFile(file, "lesson-files");
-      if (media) mediaUrl = await uploadFile(media, "lesson-plan-media");
-
       const { error } = await supabase.from("lesson_plans").insert({
         center_id: user.center_id,
         teacher_id: user.teacher_id || null,
-        subject,
-        chapter,
-        topic,
-        class: gradeFilter === "all" ? "General" : gradeFilter,
-        grade: gradeFilter === "all" ? null : gradeFilter,
+        subject, chapter, topic,
+        class: selectedGrade === "all" ? "General" : selectedGrade,
+        grade: selectedGrade === "all" ? null : selectedGrade,
         lesson_date: lessonDate,
         notes: notes || null,
         lesson_file_url: fileUrl,
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lesson-plans"] });
-      toast.success("Lesson Plan created successfully!");
-      setIsDialogOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create lesson plan");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans"] }); toast.success("Lesson Plan created!"); setIsDialogOpen(false); resetForm(); },
+    onError: (error: any) => toast.error(error.message || "Failed to create"),
   });
 
   const updateLessonPlanMutation = useMutation({
     mutationFn: async () => {
-      if (!editingLessonPlan || !user?.center_id) throw new Error("Lesson Plan or Center ID not found");
-
+      if (!editingLessonPlan || !user?.center_id) throw new Error("Missing info");
       let fileUrl: string | null = editingLessonPlan.lesson_file_url;
-
       if (file) fileUrl = await uploadFile(file, "lesson-files");
-
       const { error } = await supabase.from("lesson_plans").update({
-        subject,
-        chapter,
-        topic,
-        lesson_date: lessonDate,
-        notes: notes || null,
-        lesson_file_url: fileUrl,
-        grade: gradeFilter === "all" ? null : gradeFilter, // Update grade
+        subject, chapter, topic, lesson_date: lessonDate, notes: notes || null, lesson_file_url: fileUrl,
+        grade: selectedGrade === "all" ? null : selectedGrade,
       }).eq("id", editingLessonPlan.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lesson-plans"] });
-      toast.success("Lesson Plan updated successfully!");
-      setIsDialogOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update lesson plan");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans"] }); toast.success("Updated!"); setIsDialogOpen(false); resetForm(); },
+    onError: (error: any) => toast.error(error.message || "Failed to update"),
   });
 
   const deleteLessonPlanMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lesson_plans").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lesson-plans"] });
-      toast.success("Lesson Plan deleted successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete lesson plan");
-    },
+    mutationFn: async (id: string) => { const { error } = await supabase.from("lesson_plans").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans"] }); toast.success("Deleted!"); },
+    onError: (error: any) => toast.error(error.message || "Failed to delete"),
   });
 
-  const handleEditClick = (lessonPlan: LessonPlan) => {
-    setEditingLessonPlan(lessonPlan);
-    setSubject(lessonPlan.subject);
-    setChapter(lessonPlan.chapter);
-    setTopic(lessonPlan.topic);
-    setLessonDate(lessonPlan.lesson_date);
-    setNotes(lessonPlan.notes || "");
-    setFile(null); // Clear file input for edit
-    setMedia(null); // Clear media input for edit
-    setGradeFilter(lessonPlan.grade || "all"); // Set grade filter to current lesson plan's grade
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = () => {
-    if (editingLessonPlan) {
-      updateLessonPlanMutation.mutate();
-    } else {
-      createLessonPlanMutation.mutate();
-    }
+  const handleEditClick = (lp: LessonPlan) => {
+    setEditingLessonPlan(lp); setSubject(lp.subject); setChapter(lp.chapter); setTopic(lp.topic);
+    setLessonDate(lp.lesson_date); setNotes(lp.notes || ""); setSelectedGrade(lp.grade || "all");
+    setFile(null); setIsDialogOpen(true);
   };
 
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
-  // const filteredLessonPlans = subjectFilter === "all" ? lessonPlans : lessonPlans.filter(lp => lp.subject === subjectFilter);
-  // The filtering is now handled by the useQuery hook
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Curriculum Planner</h1>
-          <p className="text-muted-foreground text-lg">Design and organize your teaching roadmap.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Curriculum Planner</h1>
+          <p className="text-muted-foreground text-sm">Design and organize your teaching roadmap.</p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by Subject" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
-              {uniqueSubjects.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
+            <SelectTrigger className="w-[130px]"><SelectValue placeholder="Subject" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">All Subjects</SelectItem>{uniqueSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
           </Select>
-          <Select value={gradeFilter} onValueChange={setGradeFilter}> {/* New Grade Filter */}
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by Grade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grades</SelectItem>
-              {uniqueGrades.map((g) => (
-                <SelectItem key={g} value={g}>{g}</SelectItem>
-              ))}
-            </SelectContent>
+          <Select value={gradeFilter} onValueChange={setGradeFilter}>
+            <SelectTrigger className="w-[120px]"><SelectValue placeholder="Grade" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">All Grades</SelectItem>{uniqueGrades.map(g => <SelectItem key={g} value={g!}>{g}</SelectItem>)}</SelectContent>
           </Select>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" /> Create Lesson Plan</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="lesson-plan-create-title" aria-describedby="lesson-plan-create-description">
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Create</Button></DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle id="lesson-plan-create-title">{editingLessonPlan ? "Edit Lesson Plan" : "Create New Lesson Plan"}</DialogTitle>
-                <DialogDescription id="lesson-plan-create-description">
-                  {editingLessonPlan ? "Update the details of this lesson plan." : "Fill in the details to create a new lesson plan."}
-                </DialogDescription>
+                <DialogTitle>{editingLessonPlan ? "Edit Lesson Plan" : "New Lesson Plan"}</DialogTitle>
+                <DialogDescription>Fill in details below.</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Subject *</Label>
-                    <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g., Mathematics" />
+              <div className="space-y-3 py-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5"><Label>Subject *</Label><Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Mathematics" /></div>
+                  <div className="space-y-1.5"><Label>Chapter *</Label><Input value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="Algebra" /></div>
+                </div>
+                <div className="space-y-1.5"><Label>Topic *</Label><Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Linear Equations" /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Grade</Label>
+                    <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                      <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
+                      <SelectContent><SelectItem value="all">All Grades</SelectItem>{uniqueGrades.map(g => <SelectItem key={g} value={g!}>{g}</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="chapter">Chapter *</Label>
-                    <Input id="chapter" value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g., Algebra" />
-                  </div>
+                  <div className="space-y-1.5"><Label>Date *</Label><Input type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} /></div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="topic">Topic *</Label>
-                  <Input id="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g., Linear Equations" />
+                <div className="space-y-1.5"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Key points..." /></div>
+                <div className="space-y-1.5">
+                  <Label>File (PDF, DOCX)</Label>
+                  <Input type="file" accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="grade">Grade (Optional)</Label> {/* Input for grade */}
-                  <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Grade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Grades</SelectItem>
-                      {uniqueGrades.map((g) => (
-                        <SelectItem key={g} value={g}>{g}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lessonDate">Date *</Label>
-                  <Input id="lessonDate" type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (Optional)</Label>
-                  <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Key points, teaching strategies, etc." />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="file">Upload Lesson Plan File (PDF, DOCX - Optional)</Label>
-                  <Input id="file" type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} />
-                  {editingLessonPlan?.lesson_file_url && !file && (
-                    <p className="text-sm text-muted-foreground">Current file: {editingLessonPlan.lesson_file_url.split('-').pop()}</p>
-                  )}
-                </div>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!subject || !chapter || !topic || !lessonDate || createLessonPlanMutation.isPending || updateLessonPlanMutation.isPending}
-                  className="w-full"
-                >
-                  {editingLessonPlan ? (updateLessonPlanMutation.isPending ? "Updating..." : "Update Lesson Plan") : (createLessonPlanMutation.isPending ? "Creating..." : "Create Lesson Plan")}
+                <Button onClick={() => editingLessonPlan ? updateLessonPlanMutation.mutate() : createLessonPlanMutation.mutate()} disabled={!subject || !chapter || !topic || !lessonDate} className="w-full">
+                  {editingLessonPlan ? "Update" : "Create"}
                 </Button>
               </div>
             </DialogContent>
@@ -317,57 +172,39 @@ export default function LessonPlans() {
         </div>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Plan Library</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-muted/30 py-4"><CardTitle className="text-lg">Plan Library</CardTitle></CardHeader>
+        <CardContent className="pt-4">
           {isLoading ? (
-            <div className="flex justify-center py-12"><FileText className="h-8 w-8 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-8"><FileText className="h-6 w-6 animate-spin text-primary" /></div>
           ) : lessonPlans.length === 0 ? (
-            <p className="text-muted-foreground text-center py-12 italic">No lesson plans found for the current selection.</p>
+            <p className="text-muted-foreground text-center py-8">No lesson plans found.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {lessonPlans.map((lp) => (
-                <div key={lp.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft hover:shadow-medium transition-all group relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft" onClick={() => handleEditClick(lp)}>
-                      <Edit className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                <div key={lp.id} className="rounded-lg border bg-card p-4 group relative hover:shadow-sm transition-shadow">
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(lp)}><Edit className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}><Trash2 className="h-3 w-3" /></Button>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                       <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-                          <FileText className="h-6 w-6" />
-                       </div>
-                       <div>
-                          <h3 className="font-bold text-xl leading-tight">{lp.subject}: {lp.chapter}</h3>
-                          <div className="flex gap-2 mt-1">
-                             <Badge variant="outline" className="text-[10px]">{lp.topic}</Badge>
-                             {lp.grade && <Badge className="text-[10px] bg-indigo-500/10 text-indigo-600 border-none">Grade {lp.grade}</Badge>}
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground line-clamp-2">{lp.notes || 'No additional notes.'}</p>
-                      <div className="flex items-center gap-2 text-sm font-bold text-primary">
-                        <CalendarIcon className="h-4 w-4" />
-                        Scheduled: {format(new Date(lp.lesson_date), "PPP")}
+                  <div className="space-y-2">
+                    <div>
+                      <h3 className="font-semibold text-base leading-tight">{lp.subject}: {lp.chapter}</h3>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <Badge variant="outline" className="text-[10px]">{lp.topic}</Badge>
+                        {lp.grade && <Badge className="text-[10px] bg-primary/10 text-primary border-none">Grade {lp.grade}</Badge>}
                       </div>
                     </div>
-
+                    <p className="text-xs text-muted-foreground line-clamp-2">{lp.notes || 'No notes.'}</p>
+                    <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                      <CalendarIcon className="h-3 w-3" /> {format(new Date(lp.lesson_date), "PPP")}
+                    </div>
                     {lp.lesson_file_url && (
-                      <div className="pt-2">
-                        <Button variant="outline" size="sm" className="w-full rounded-xl border-2" asChild>
-                          <a href={supabase.storage.from("lesson-files").getPublicUrl(lp.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4 mr-2" /> Download Material
-                          </a>
-                        </Button>
-                      </div>
+                      <Button variant="outline" size="sm" className="w-full text-xs" asChild>
+                        <a href={supabase.storage.from("lesson-files").getPublicUrl(lp.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3 w-3 mr-1" /> Download
+                        </a>
+                      </Button>
                     )}
                   </div>
                 </div>
