@@ -44,7 +44,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['Academics', 'Administration', 'Reports and Communications']);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
 
@@ -61,6 +61,9 @@ export default function Sidebar({
 
   const handleMobileClose = () => {
     onMobileOpenChange?.(false);
+    if (window.history.state?.sidebarOpen) {
+      window.history.back();
+    }
   };
 
   const toggleCategory = (category: string) => {
@@ -74,15 +77,12 @@ export default function Sidebar({
   useEffect(() => {
     if (!isMobileOpen) return;
     window.history.pushState({ sidebarOpen: true }, "");
-    const handlePopState = () => {
-      if (onMobileOpenChange) onMobileOpenChange(false);
+    const handlePopState = (e: PopStateEvent) => {
+      onMobileOpenChange?.(false);
     };
     window.addEventListener("popstate", handlePopState);
     return () => {
       window.removeEventListener("popstate", handlePopState);
-      if (window.history.state?.sidebarOpen) {
-        window.history.back();
-      }
     };
   }, [isMobileOpen, onMobileOpenChange]);
 
