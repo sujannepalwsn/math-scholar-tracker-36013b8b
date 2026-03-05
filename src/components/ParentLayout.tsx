@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -122,11 +123,14 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         "flex-1 overflow-y-auto bg-background transition-all duration-300",
         "md:h-screen",
         "pt-20 md:pt-0",
-        "px-4 pb-8 md:p-8",
+        "px-4 pb-20 md:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav navItems={updatedNavItems} />
     </div>
   );
 }
