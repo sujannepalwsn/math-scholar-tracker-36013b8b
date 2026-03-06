@@ -5,7 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/', // Use absolute paths for proper SPA routing and MIME type handling
+  base: '/',
   server: {
     host: "::",
     port: 8080,
@@ -21,10 +21,9 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-      },
-    },
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000,
   },
 }));
