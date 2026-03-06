@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice, Payment } from '@/integrations/supabase/finance-types';
-import { isPast } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { cn } from "@/lib/utils";
 
 
