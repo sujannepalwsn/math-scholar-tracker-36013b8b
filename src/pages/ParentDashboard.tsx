@@ -541,181 +541,184 @@ const ParentDashboardContent = () => {
     setShowChapterDetailModal(true);
   };
 
+  const StatCard = ({ title, value, icon: Icon, description, colorClass, bgColor, content }: any) => (
+    <Card
+      className="group relative border-none shadow-soft overflow-hidden transition-all duration-500 hover:shadow-strong hover:-translate-y-1 active:scale-[0.98]"
+    >
+      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
+      <CardContent className="p-4 md:p-6 relative z-10">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1 md:space-y-2">
+            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{title}</p>
+            {value !== undefined ? (
+              <h3 className="text-xl md:text-3xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">{value}</h3>
+            ) : (
+              <div className="mt-1">{content}</div>
+            )}
+            {description && <p className="text-[8px] md:text-[10px] font-medium text-muted-foreground italic line-clamp-1">{description}</p>}
+          </div>
+          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3", bgColor)}>
+            <Icon className={cn("h-4 w-4 md:h-6 md:w-6 text-primary")} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-1000">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-3 rounded-2xl shadow-soft">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
               <User className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-extrabold tracking-tight">Parent Portal</h1>
-              <p className="text-muted-foreground text-lg">Welcome back! Monitoring your child's progress.</p>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Parent Portal
+              </h1>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                <p className="text-muted-foreground text-sm font-medium">Monitoring {student?.name || "your child"}'s academic journey.</p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-             <div className="hidden md:flex bg-secondary/50 px-4 py-2 rounded-2xl border border-primary/5 items-center gap-2">
+             <div className="bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{format(new Date(), 'MMM d, yyyy')}</span>
+                <span className="text-xs font-bold text-primary uppercase">{format(new Date(), 'EEEE, MMM d')}</span>
              </div>
-             <Button variant="outline" onClick={handleLogout} className="rounded-2xl border-2">
+             <Button variant="outline" onClick={handleLogout} className="rounded-2xl border-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all">
                 <LogOut className="h-4 w-4 mr-2" /> Logout
              </Button>
           </div>
         </div>
 
-        {/* STUDENT SELECTOR FOR MULTI-CHILD */}
-        {hasMultipleChildren && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Select Child</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedStudentId || ''} onValueChange={setSelectedStudentId}>
-                <SelectTrigger className="w-full md:w-[300px]">
-                  <SelectValue placeholder="Select a child" />
-                </SelectTrigger>
-                <SelectContent>
-                  {linkedStudents.map((child) => (
-                    <SelectItem key={child.id} value={child.id}>
-                      {child.name} {child.grade ? `(Grade ${child.grade})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* STUDENT INFO */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" /> Student Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {student ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-semibold">{student.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Grade</p>
-                  <p className="font-semibold">{student.grade}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">School</p>
-                  <p className="font-semibold">{student.school_name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Contact</p>
-                  <p className="font-semibold">{student.contact_number}</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No student data available</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* NEW SUMMARY CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[
-            {
-              title: "Latest Broadcast",
-              icon: Radio,
-              color: "text-blue-600",
-              bgColor: "bg-blue-100",
-              content: latestBroadcastMessage ? (
-                <>
-                  <p className="text-sm font-bold line-clamp-2">{latestBroadcastMessage.message_text}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(latestBroadcastMessage.sent_at), 'MMM d, h:mm a')}
-                  </p>
-                </>
-              ) : "No new messages"
-            },
-            {
-              title: "Today's Homework",
-              value: todaysHomework.length,
-              icon: Book,
-              color: "text-orange-600",
-              bgColor: "bg-orange-100",
-              label: "due today"
-            },
-            {
-              title: "Overdue Homework",
-              value: overdueHomeworksOnly.length,
-              icon: AlertTriangle,
-              color: "text-red-600",
-              bgColor: "bg-red-100",
-              label: "past due date"
-            },
-            {
-              title: "Pending Fees",
-              value: pendingFees > 0 ? `₹${pendingFees.toFixed(2)}` : '₹0.00',
-              icon: DollarSign,
-              color: "text-purple-600",
-              bgColor: "bg-purple-100",
-              label: "outstanding"
-            },
-            {
-              title: "Today's Attendance",
-              value: todaysAttendance ? todaysAttendance.status.toUpperCase() : 'N/A',
-              icon: CalendarIcon,
-              color: "text-green-600",
-              bgColor: "bg-green-100",
-              label: todaysAttendance?.time_in ? `In: ${formatTimeValue(todaysAttendance.time_in, todaysAttendance.date)}` : 'No record'
-            },
-            {
-              title: "Today's Lessons",
-              value: todaysLessonsStudied.length,
-              icon: BookOpen,
-              color: "text-blue-600",
-              bgColor: "bg-blue-100",
-              label: "chapters studied"
-            },
-            {
-              title: "Missed Chapters",
-              value: missedChaptersCount,
-              icon: XCircle,
-              color: "text-red-600",
-              bgColor: "bg-red-100",
-              label: "not yet covered"
-            },
-            {
-              title: "Test Results",
-              value: testStats.total,
-              icon: ClipboardCheck,
-              color: "text-indigo-600",
-              bgColor: "bg-indigo-100",
-              label: testStats.total > 0 ? `Avg: ${testStats.average}%` : 'no tests'
-            },
-          ].map((stat, idx) => (
-            <Card key={idx} className="border-none shadow-soft hover:shadow-medium transition-all duration-300 group">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
-                <div className={cn("p-2 rounded-xl transition-transform group-hover:rotate-12", stat.bgColor)}>
-                  <stat.icon className={cn("h-4 w-4", stat.color)} />
-                </div>
+        {/* STUDENT SELECTOR & INFO */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {hasMultipleChildren && (
+            <Card className="border-none shadow-strong bg-white/60 backdrop-blur-xl rounded-3xl overflow-hidden">
+              <CardHeader className="pb-2 border-b border-muted/20 bg-muted/5">
+                <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Select Child</CardTitle>
               </CardHeader>
-              <CardContent>
-                {stat.value !== undefined ? (
-                  <>
-                    <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
-                  </>
-                ) : (
-                  <div className="mt-1">{stat.content}</div>
-                )}
+              <CardContent className="pt-6">
+                <Select value={selectedStudentId || ''} onValueChange={setSelectedStudentId}>
+                  <SelectTrigger className="w-full h-12 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                    <SelectValue placeholder="Select a child" />
+                  </SelectTrigger>
+                  <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+                    {linkedStudents.map((child) => (
+                      <SelectItem key={child.id} value={child.id}>
+                        {child.name} {child.grade ? `(Grade ${child.grade})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
-          ))}
+          )}
+
+          <Card className={cn("border-none shadow-strong bg-white/60 backdrop-blur-xl rounded-3xl overflow-hidden", hasMultipleChildren ? "lg:col-span-2" : "lg:col-span-3")}>
+            <CardHeader className="pb-2 border-b border-muted/20 bg-muted/5">
+              <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <User className="h-4 w-4" /> Academic Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {student ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Student Name</p>
+                    <p className="font-black text-lg text-primary">{student.name}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Current Grade</p>
+                    <Badge className="font-bold">{student.grade}</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Institution</p>
+                    <p className="font-bold text-sm line-clamp-1">{student.school_name || "Academy Central"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Parent Contact</p>
+                    <p className="font-bold text-sm">{student.contact_number}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-4">
+                  <p className="text-muted-foreground italic text-sm">No profile data available</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* NEW SUMMARY CARDS */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <StatCard
+            title="Latest Broadcast"
+            icon={Radio}
+            bgColor="bg-blue-500/10"
+            content={latestBroadcastMessage ? (
+              <div className="min-h-[40px]">
+                <p className="text-sm font-bold line-clamp-2 leading-tight">{latestBroadcastMessage.message_text}</p>
+                <p className="text-[10px] text-muted-foreground font-medium mt-1">
+                  {format(new Date(latestBroadcastMessage.sent_at), 'MMM d')}
+                </p>
+              </div>
+            ) : <p className="text-sm font-medium italic text-muted-foreground">No new messages</p>}
+          />
+          <StatCard
+            title="Today's Homework"
+            value={todaysHomework.length}
+            icon={Book}
+            bgColor="bg-orange-500/10"
+            description="due today"
+          />
+          <StatCard
+            title="Overdue"
+            value={overdueHomeworksOnly.length}
+            icon={AlertTriangle}
+            bgColor="bg-red-500/10"
+            description="past due date"
+          />
+          <StatCard
+            title="Pending Fees"
+            value={pendingFees > 0 ? `₹${pendingFees.toFixed(0)}` : '₹0'}
+            icon={DollarSign}
+            bgColor="bg-purple-500/10"
+            description="outstanding"
+          />
+          <StatCard
+            title="Attendance"
+            value={todaysAttendance ? todaysAttendance.status.toUpperCase() : 'N/A'}
+            icon={CalendarIcon}
+            bgColor="bg-green-500/10"
+            description={todaysAttendance?.time_in ? `In: ${formatTimeValue(todaysAttendance.time_in, todaysAttendance.date)}` : 'No record'}
+          />
+          <StatCard
+            title="Today's Lessons"
+            value={todaysLessonsStudied.length}
+            icon={BookOpen}
+            bgColor="bg-blue-500/10"
+            description="chapters studied"
+          />
+          <StatCard
+            title="Missed"
+            value={missedChaptersCount}
+            icon={XCircle}
+            bgColor="bg-red-500/10"
+            description="chapters missed"
+          />
+          <StatCard
+            title="Test Stats"
+            value={testStats.total}
+            icon={ClipboardCheck}
+            bgColor="bg-indigo-500/10"
+            description={testStats.total > 0 ? `Avg: ${testStats.average}%` : 'no tests'}
+          />
         </div>
 
         {/* Upcoming Meetings Notification */}
@@ -831,20 +834,30 @@ const ParentDashboardContent = () => {
         </Card>
 
         {/* Chapter-wise Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" /> Chapter-wise Performance
+        <Card className="border-none shadow-strong bg-white/40 backdrop-blur-md rounded-3xl overflow-hidden border border-white/20">
+          <CardHeader className="bg-primary/5 border-b border-muted/20 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              Curricular Intelligence: Chapter Performance
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {activeStudentId ? (
-              <ParentChapterPerformanceTable
-                chapterPerformanceData={chapterPerformanceData}
-                onViewDetails={handleViewChapterDetails}
-              />
+              <div className="p-6">
+                <ParentChapterPerformanceTable
+                  chapterPerformanceData={chapterPerformanceData}
+                  onViewDetails={handleViewChapterDetails}
+                />
+              </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">Please select a student to view chapter performance.</p>
+              <div className="text-center py-20 space-y-4">
+                <div className="p-4 rounded-full bg-muted/10 inline-block">
+                   <BookOpen className="h-10 w-10 text-muted-foreground/20" />
+                </div>
+                <p className="text-muted-foreground font-medium italic">Please select a student to view detailed analytics.</p>
+              </div>
             )}
           </CardContent>
         </Card>
