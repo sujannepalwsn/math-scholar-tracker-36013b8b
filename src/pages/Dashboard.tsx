@@ -31,7 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -178,12 +178,6 @@ export default function Dashboard() {
 
   const teacherPresentCount = teacherAttendance.filter(a => a.status === "present").length;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
   const teacherAttendanceRate = teachers.length > 0 ? Math.round((teacherPresentCount / teachers.length) * 100) : 0;
 
   const completedHomework = homeworkStats.filter(h => ["completed", "checked"].includes(h.status || "")).length;

@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, GraduationCap, Paintbrush, Printer, Star, Users, Video, XCircle } from "lucide-react";
+import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, Users, XCircle, BarChart3 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subYears, isPast } from "date-fns"; // Added subYears, isPast
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
 import { Invoice, Payment } from "@/integrations/supabase/finance-types";
-import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate and cn
+import { safeFormatDate, cn, formatCurrency } from '@/lib/utils'; // Import safeFormatDate, cn, formatCurrency
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -663,13 +664,6 @@ export default function StudentReport() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
-
   const getHomeworkStatusIcon = (status: StudentHomeworkRecord['status']) => {
     switch (status) {
       case 'completed':
@@ -708,18 +702,19 @@ export default function StudentReport() {
       <Card
         onClick={handleClick}
         className={cn(
-          "border-none shadow-soft overflow-hidden transition-all duration-300 hover:shadow-medium",
-          isClickable && "cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+          "group relative border-none shadow-soft overflow-hidden transition-all duration-500",
+          isClickable ? "cursor-pointer hover:shadow-strong hover:-translate-y-1" : "hover:shadow-medium"
         )}
       >
-        <CardContent className="p-6">
+        <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
+        <CardContent className="p-6 relative z-10">
           <div className="flex justify-between items-start">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">{title}</p>
-              <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
-              {description && <p className="text-xs text-muted-foreground">{description}</p>}
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{title}</p>
+              <h3 className="text-3xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">{value}</h3>
+              {description && <p className="text-[10px] font-medium text-muted-foreground italic">{description}</p>}
             </div>
-            <div className={cn("p-3 rounded-xl bg-primary/10", colorClass)}>
+            <div className={cn("p-3 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3", colorClass)}>
               <Icon className="h-6 w-6 text-primary" />
             </div>
           </div>
@@ -729,7 +724,16 @@ export default function StudentReport() {
   };
 
   const SummaryDashboard = () => (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+          <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground/80 font-mono">Real-time Analytics</h2>
+        </div>
+        <div className="text-[10px] font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded border border-muted-foreground/10 uppercase tracking-widest">
+          Updated just now
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title={reportLevel === "student" ? "Financial Status" : "Total Students"}
@@ -798,58 +802,95 @@ export default function StudentReport() {
       </div>
 
       {/* Aggregate Tables for Grade/Subject */}
-      {(reportLevel === "grade" || reportLevel === "subject" || reportLevel === "grade-subject") && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-none shadow-medium">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-primary" /> Test Performance
+      {(reportLevel === "grade" || reportLevel === "subject" || reportLevel === "grade-subject" || reportLevel === "school") && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="border-b border-muted/20 bg-muted/5">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-purple-500/10">
+                  <ClipboardCheck className="h-5 w-5 text-purple-600" />
+                </div>
+                Academic Performance Spotlight
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {testResults.length === 0 ? (
-                <p className="text-muted-foreground italic">No test results found for this selection.</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+                  <div className="p-3 rounded-full bg-muted/10">
+                    <FileText className="h-8 w-8 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium italic">No test results found for this selection.</p>
+                </div>
               ) : (
                 <div className="space-y-4">
-                  {testResults.slice(0, 5).map((tr: any) => (
-                    <div key={tr.id} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-                      <div>
-                        <p className="font-medium">{tr.tests?.name}</p>
-                        <p className="text-xs text-muted-foreground">{safeFormatDate(tr.date_taken, "PPP")}</p>
+                  {testResults.slice(0, 5).map((tr: any) => {
+                    const pct = Math.round((tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100);
+                    return (
+                      <div key={tr.id} className="group p-4 rounded-xl bg-white/50 border border-transparent hover:border-primary/10 hover:shadow-soft transition-all duration-300">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="space-y-1">
+                            <p className="font-bold text-sm group-hover:text-primary transition-colors">{tr.tests?.name}</p>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px] uppercase font-bold py-0 h-4 border-muted-foreground/20 text-muted-foreground">
+                                {tr.tests?.subject}
+                              </Badge>
+                              <p className="text-[10px] font-medium text-muted-foreground">{safeFormatDate(tr.date_taken, "PPP")}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-lg">{tr.marks_obtained}<span className="text-xs text-muted-foreground font-medium">/{tr.tests?.total_marks}</span></p>
+                            <p className={cn("text-xs font-bold", pct >= 75 ? "text-green-600" : pct >= 50 ? "text-orange-600" : "text-red-600")}>{pct}%</p>
+                          </div>
+                        </div>
+                        <div className="w-full h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full transition-all duration-1000", pct >= 75 ? "bg-green-500" : pct >= 50 ? "bg-orange-500" : "bg-red-500")}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold">{tr.marks_obtained}/{tr.tests?.total_marks}</p>
-                        <p className="text-xs text-primary">{Math.round((tr.marks_obtained / tr.tests?.total_marks) * 100)}%</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-medium">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-primary" /> Recent Discipline Issues
+          <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="border-b border-muted/20 bg-muted/5">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-red-500/10">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                Behavioral Insights
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {disciplineIssues.length === 0 ? (
-                <p className="text-muted-foreground italic">No discipline records found for this selection.</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+                  <div className="p-3 rounded-full bg-muted/10">
+                    <CheckCircle className="h-8 w-8 text-green-500/40" />
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium italic">No discipline records found for this selection.</p>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {disciplineIssues.slice(0, 5).map((di: any) => (
-                    <div key={di.id} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-                      <div>
-                        <p className="font-medium">{di.discipline_categories?.name}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">{di.description}</p>
+                    <div key={di.id} className="p-4 rounded-xl bg-white/50 border border-transparent hover:border-red-500/10 hover:shadow-soft transition-all duration-300">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="space-y-1">
+                          <p className="font-bold text-sm">{di.discipline_categories?.name}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{di.description}</p>
+                        </div>
+                        <Badge className={cn("text-[10px] font-black uppercase tracking-tighter px-1.5 py-0 h-5",
+                          di.severity === "high" ? "bg-red-500 text-white" :
+                          di.severity === "medium" ? "bg-orange-500 text-white" : "bg-green-500 text-white")}>
+                          {di.severity}
+                        </Badge>
                       </div>
-                      <div className="text-right">
-                        <p className={cn("text-xs font-bold px-2 py-1 rounded bg-white", getSeverityColor(di.severity))}>
-                          {di.severity?.toUpperCase()}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-1">{safeFormatDate(di.issue_date, "PPP")}</p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-muted/20">
+                        <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{safeFormatDate(di.issue_date, "PPP")}</p>
+                        <p className="text-[10px] font-medium text-primary underline cursor-pointer">View details</p>
                       </div>
                     </div>
                   ))}
@@ -865,14 +906,33 @@ export default function StudentReport() {
   const isLoading = isAttendanceLoading || isChaptersLoading || isTestsLoading || isHomeworkLoading || isActivitiesLoading || isDisciplineLoading || isAllActivitiesLoading;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-1000">
       {/* Header and Print/Export */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Academic Profile</h1>
-          <p className="text-muted-foreground text-lg">Comprehensive view of student performance and engagement.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <BarChart3 className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Performance Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="rounded-md px-2 py-0 text-[10px] uppercase font-bold tracking-widest bg-primary/5 text-primary border-primary/10">
+                  {reportLevel.replace('-', ' ')} level
+                </Badge>
+                {reportLevel === "student" && selectedStudent && (
+                  <span className="text-sm font-medium text-muted-foreground">— {selectedStudent.name}</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Real-time academic intelligence and performance analytics across your institution.
+          </p>
         </div>
-        {selectedStudentId !== "none" && ( // Only show if a student is selected
+        {selectedStudentId !== "none" && (
           <div className="flex gap-3">
             <Button onClick={exportToCSV} variant="outline" className="rounded-xl border-2">
               <Download className="mr-2 h-4 w-4" /> Export CSV
@@ -885,51 +945,53 @@ export default function StudentReport() {
       </div>
 
       {/* Filters */}
-      <Card className="border-none shadow-soft p-6 overflow-hidden">
-        <div className="flex flex-wrap gap-4 items-end">
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Grade</label>
+      {/* Filters */}
+      <div className={cn("relative group transition-all duration-700", isLoading ? "opacity-50 grayscale pointer-events-none" : "opacity-100")}>
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+        <Card className="relative border-none shadow-medium p-8 overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-8 items-end">
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
           <Select value={gradeFilter} onValueChange={(val) => { setGradeFilter(val); setSelectedStudentId("none"); }}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Grade" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
-            {Array.from(new Set(students.map(s => s.grade))).map((g) => (
-              <SelectItem key={g} value={g}>{g}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
+            <SelectTrigger className="w-[160px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+              <SelectValue placeholder="Grade" />
+            </SelectTrigger>
+            <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+              <SelectItem value="all">All Grades</SelectItem>
+              {Array.from(new Set(students.map(s => s.grade))).map((g) => (
+                <SelectItem key={g} value={g}>{g}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">From</label>
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">From Date</label>
           <Input
             type="date"
-            className="w-[150px]"
+            className="w-[160px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl"
             value={safeFormatDate(dateRange.from, "yyyy-MM-dd")}
             onChange={(e) => setDateRange(prev => ({ ...prev, from: new Date(e.target.value) }))}
           />
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">To</label>
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">To Date</label>
           <Input
             type="date"
-            className="w-[150px]"
+            className="w-[160px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl"
             value={safeFormatDate(dateRange.to, "yyyy-MM-dd")}
             onChange={(e) => setDateRange(prev => ({ ...prev, to: new Date(e.target.value) }))}
           />
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Subject</label>
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Subject</label>
           <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[160px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
               <SelectValue placeholder="Subject" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
               <SelectItem value="all">All Subjects</SelectItem>
               {subjects.map((s) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -938,13 +1000,13 @@ export default function StudentReport() {
           </Select>
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Student</label>
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Student</label>
           <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[220px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
               <SelectValue placeholder="Select Student" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
               <SelectItem value="none">All Students</SelectItem>
               {filteredStudents.map((student) => (
                 <SelectItem key={student.id} value={student.id}>
@@ -956,26 +1018,53 @@ export default function StudentReport() {
         </div>
       </div>
       </Card>
+      </div>
 
       {isLoading ? (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(7)].map((_, i) => (
-              <Card key={i} className="border-none shadow-soft p-6">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-8 w-16" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                  <Skeleton className="h-12 w-12 rounded-xl" />
+        <div className="space-y-12 animate-in fade-in duration-500">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-14 w-14 rounded-2xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-64 rounded-lg" />
+                  <Skeleton className="h-4 w-32 rounded-md" />
                 </div>
-              </Card>
-            ))}
+              </div>
+              <Skeleton className="h-4 w-full max-w-xl rounded-md" />
+            </div>
+            <div className="flex gap-3">
+              <Skeleton className="h-10 w-32 rounded-xl" />
+              <Skeleton className="h-10 w-32 rounded-xl" />
+            </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Skeleton className="h-64 w-full rounded-xl" />
-            <Skeleton className="h-64 w-full rounded-xl" />
+
+          <Skeleton className="h-32 w-full rounded-[2rem]" />
+
+          <div className="space-y-6">
+            <div className="flex justify-between items-end">
+              <Skeleton className="h-4 w-48 rounded-md" />
+              <Skeleton className="h-4 w-24 rounded-md" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <Card key={i} className="border-none shadow-soft p-6 rounded-2xl">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-3">
+                      <Skeleton className="h-3 w-20 rounded-full" />
+                      <Skeleton className="h-10 w-16 rounded-lg" />
+                      <Skeleton className="h-2 w-28 rounded-full" />
+                    </div>
+                    <Skeleton className="h-12 w-12 rounded-2xl" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Skeleton className="h-[400px] w-full rounded-[2rem] shadow-soft" />
+            <Skeleton className="h-[400px] w-full rounded-[2rem] shadow-soft" />
           </div>
         </div>
       ) : (
@@ -983,12 +1072,26 @@ export default function StudentReport() {
           <SummaryDashboard />
 
           {reportLevel === "student" && selectedStudent && (
-            <div id="printable-report" className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+            <div id="printable-report" className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-muted" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-background px-4 text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground/60">
+                Detailed Academic Profile
+              </span>
+            </div>
+          </div>
+
           {/* Finance Summary */}
-          <Card id="finance-section" className="border-none shadow-medium overflow-hidden">
-            <CardHeader className="bg-muted/30 pb-4 border-b">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-primary" /> Financial Overview
+          <Card id="finance-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
+            <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <DollarSign className="h-6 w-6 text-primary" />
+                </div>
+                Financial Overview
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1028,9 +1131,14 @@ export default function StudentReport() {
           </Card>
 
           {/* Attendance Overview */}
-          <Card id="attendance-section" className="border-none shadow-medium overflow-hidden">
-            <CardHeader className="bg-muted/30 pb-4 border-b">
-              <CardTitle className="text-xl">Attendance Analytics</CardTitle>
+          <Card id="attendance-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
+            <CardHeader className="bg-green-500/5 pb-4 border-b border-green-500/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Clock className="h-6 w-6 text-green-600" />
+                </div>
+                Attendance Analytics
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-4 mb-4">
@@ -1065,10 +1173,13 @@ export default function StudentReport() {
           </Card>
 
           {/* Chapter-wise Performance */}
-          <Card id="milestones-section" className="border-none shadow-medium overflow-hidden">
-            <CardHeader className="bg-muted/30 pb-4 border-b">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" /> Curricular Milestones
+          <Card id="milestones-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
+            <CardHeader className="bg-blue-500/5 pb-4 border-b border-blue-500/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <BookOpen className="h-6 w-6 text-blue-600" />
+                </div>
+                Curricular Milestones
               </CardTitle>
             </CardHeader>
             <CardContent>
