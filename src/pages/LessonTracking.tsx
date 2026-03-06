@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, Users, Plus, ChevronDown, ChevronUp, BookOpen, Edit, Star, User, FileText, CheckCircle, XCircle, Clock, Book } from "lucide-react";
+import { Trash2, Users, Plus, ChevronDown, ChevronUp, BookOpen, Edit, Star, User, FileText, CheckCircle, XCircle, Clock, Book, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
 import EditStudentLessonRecord from "@/components/center/EditStudentLessonRecord"; // Import the new component
@@ -53,6 +53,9 @@ export default function LessonTracking() {
   // State for editing individual student lesson records
   const [showEditStudentRecordDialog, setShowEditStudentRecordDialog] = useState(false);
   const [editingStudentChapterId, setEditingStudentChapterId] = useState<string | null>(null);
+
+  const [showViewLessonDialog, setShowViewLessonDialog] = useState(false);
+  const [viewingLessonGroup, setViewingLessonGroup] = useState<GroupedLessonRecord | null>(null);
 
   // Track which lesson plans have students shown
   const [showStudentsMap, setShowStudentsMap] = useState<{ [lessonPlanId: string]: boolean }>({});
@@ -502,18 +505,31 @@ export default function LessonTracking() {
                       </Button>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleShowStudents(group.lessonPlan.id)}
-                  >
-                    {showStudentsMap[group.lessonPlan.id] ? (
-                      <ChevronUp className="h-4 w-4 mr-1" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 mr-1" />
-                    )}
-                    {group.students.length} Students
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setViewingLessonGroup(group);
+                        setShowViewLessonDialog(true);
+                      }}
+                      title="View lesson details and students"
+                    >
+                      <Eye className="h-4 w-4 mr-1" /> View
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleShowStudents(group.lessonPlan.id)}
+                    >
+                      {showStudentsMap[group.lessonPlan.id] ? (
+                        <ChevronUp className="h-4 w-4 mr-1" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 mr-1" />
+                      )}
+                      {group.students.length} Students
+                    </Button>
+                  </div>
                 </div>
 
                 {showStudentsMap[group.lessonPlan.id] && (
@@ -593,6 +609,84 @@ export default function LessonTracking() {
           </div>
         </CardContent>
       </Card>
+
+      {/* View Lesson Dialog */}
+      <Dialog open={showViewLessonDialog} onOpenChange={setShowViewLessonDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Lesson Tracking Details</DialogTitle>
+          </DialogHeader>
+          {viewingLessonGroup && (
+            <div className="space-y-6 py-4">
+              <div className="bg-muted/30 p-4 rounded-xl space-y-2">
+                <h3 className="font-bold text-xl">{viewingLessonGroup.lessonPlan.subject}: {viewingLessonGroup.lessonPlan.chapter}</h3>
+                <p className="font-medium text-primary">{viewingLessonGroup.lessonPlan.topic}</p>
+                <div className="flex gap-4 text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                  <span>Date: {format(new Date(viewingLessonGroup.lessonPlan.lesson_date), "PPP")}</span>
+                  {viewingLessonGroup.lessonPlan.grade && <span>Grade: {viewingLessonGroup.lessonPlan.grade}</span>}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-bold flex items-center gap-2"><Users className="h-5 w-5" /> Students & Evaluations ({viewingLessonGroup.students.length})</h4>
+                <div className="grid gap-4">
+                  {viewingLessonGroup.students.map((record) => (
+                    <div key={record.id} className="border rounded-xl p-4 bg-card shadow-sm space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-lg">{record.students?.name}</p>
+                          <p className="text-xs text-muted-foreground">Grade {record.students?.grade}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {record.evaluation_rating && (
+                            <Badge className="bg-yellow-500 hover:bg-yellow-600">
+                              <Star className="h-3 w-3 mr-1 fill-white" /> {record.evaluation_rating}/5
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-[10px] font-bold uppercase">
+                            {record.completed ? "Completed" : "In Progress"}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground">Teacher Remarks</Label>
+                          <p className="text-sm bg-muted/20 p-2 rounded border italic">
+                            {record.teacher_notes || "No specific remarks entered."}
+                          </p>
+                        </div>
+                        <div className="space-y-2 text-xs">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground">Academic Links</Label>
+                          <div className="space-y-1">
+                            {record.linked_test_results?.length ? (
+                              record.linked_test_results.map(tr => (
+                                <div key={tr.id} className="flex justify-between p-1 bg-primary/5 rounded">
+                                  <span>{tr.tests?.name}</span>
+                                  <span className="font-bold">{tr.marks_obtained}/{tr.tests?.total_marks}</span>
+                                </div>
+                              ))
+                            ) : <p className="text-muted-foreground italic">No tests linked.</p>}
+
+                            {record.linked_homework_records?.length ? (
+                              record.linked_homework_records.map(hr => (
+                                <div key={hr.id} className="flex justify-between p-1 bg-orange-50 rounded">
+                                  <span>{hr.homework?.title}</span>
+                                  <span className="font-bold uppercase text-[9px]">{hr.status}</span>
+                                </div>
+                              ))
+                            ) : <p className="text-muted-foreground italic">No homework linked.</p>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Student Lesson Record Dialog */}
       <Dialog open={showEditStudentRecordDialog} onOpenChange={setShowEditStudentRecordDialog}>

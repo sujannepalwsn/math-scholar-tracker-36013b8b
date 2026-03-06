@@ -1,4 +1,4 @@
-import { BookOpen, Bot, CalendarIcon, Edit, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
+import { BookOpen, Bot, CalendarIcon, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,8 @@ export default function Tests() {
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [showBulkEntry, setShowBulkEntry] = useState(false);
   const [extractedTestContent, setExtractedTestContent] = useState("");
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+  const [viewingTestDetails, setViewingTestDetails] = useState<any>(null);
 
   // Form states for new test
   const [testName, setTestName] = useState("");
@@ -699,18 +701,31 @@ export default function Tests() {
                       </div>
                     )}
                   </button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
-                        deleteTestMutation.mutate(test.id);
-                      }
-                    }}
-                    title="Delete test"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setViewingTestDetails(test);
+                        setIsViewDetailsOpen(true);
+                      }}
+                      title="View test details"
+                    >
+                      <Eye className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
+                          deleteTestMutation.mutate(test.id);
+                        }
+                      }}
+                      title="Delete test"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               ))}
               {tests.length === 0 && (
@@ -937,6 +952,91 @@ export default function Tests() {
           toast.success("Test content extracted! You can now use this for reference.");
         }}
       />
+
+      <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Test Specifications & Results</DialogTitle>
+          </DialogHeader>
+          {viewingTestDetails && (
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl">
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Test Name</Label>
+                  <p className="font-bold">{viewingTestDetails.name}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Total Marks</Label>
+                  <p className="font-bold">{viewingTestDetails.total_marks} PTS</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Subject</Label>
+                  <p className="font-medium">{viewingTestDetails.subject}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Date</Label>
+                  <p className="font-medium">{format(new Date(viewingTestDetails.date), "PPP")}</p>
+                </div>
+              </div>
+
+              {viewingTestDetails.lesson_plans && (
+                <div className="border-l-4 border-primary pl-4 py-1">
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Linked Lesson/Chapter</Label>
+                  <p className="text-sm font-semibold">
+                    {viewingTestDetails.lesson_plans.subject}: {viewingTestDetails.lesson_plans.chapter} - {viewingTestDetails.lesson_plans.topic}
+                  </p>
+                </div>
+              )}
+
+              {viewingTestDetails.questions && (viewingTestDetails.questions as any).length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-bold">Questions ({ (viewingTestDetails.questions as any).length })</Label>
+                  <div className="space-y-2">
+                    {(viewingTestDetails.questions as any).map((q: any, i: number) => (
+                      <div key={i} className="text-xs p-3 rounded-lg border bg-card">
+                        <div className="flex justify-between font-bold mb-1">
+                          <span>Q{i+1}. {q.maxMarks} Marks</span>
+                        </div>
+                        <p>{q.questionText}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <Label className="text-sm font-bold">Entered Results</Label>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead className="text-right">Score</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tests.find(t => t.id === viewingTestDetails.id) && testResults.length > 0 && selectedTest === viewingTestDetails.id ? (
+                      testResults.map((r: any) => (
+                        <TableRow key={r.id}>
+                          <TableCell className="text-sm font-medium">{r.students?.name}</TableCell>
+                          <TableCell className="text-right text-sm font-bold">
+                            {r.marks_obtained}/{viewingTestDetails.total_marks}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={2} className="text-center text-muted-foreground py-4 italic text-xs">
+                          {selectedTest === viewingTestDetails.id ? "No results entered yet." : "Select this test in the catalog to view its results here."}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {selectedTest && selectedTestData && (
         <BulkMarksEntry

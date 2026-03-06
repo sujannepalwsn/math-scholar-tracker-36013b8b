@@ -74,17 +74,6 @@ export default function Sidebar({
     );
   };
 
-  useEffect(() => {
-    if (!isMobileOpen) return;
-    window.history.pushState({ sidebarOpen: true }, "");
-    const handlePopState = (e: PopStateEvent) => {
-      onMobileOpenChange?.(false);
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [isMobileOpen, onMobileOpenChange]);
 
   const filteredNavItems = navItems.filter(item => {
     if (item.role && user?.role !== item.role) return false;
