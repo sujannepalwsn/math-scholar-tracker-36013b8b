@@ -1,4 +1,5 @@
 import { CalendarDays, CheckCircle2, Edit, Eye, FileText, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
