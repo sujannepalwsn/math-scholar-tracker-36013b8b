@@ -54,6 +54,7 @@ import AdminSettings from "./pages/admin/Settings";
 import CenterSettings from "./pages/CenterSettings";
 import ChangePassword from "./pages/ChangePassword";
 import ChapterPerformanceOverview from "./pages/ChapterPerformanceOverview";
+import TeacherPerformanceReport from "./pages/TeacherPerformanceReport";
 
 const queryClient = new QueryClient();
 
