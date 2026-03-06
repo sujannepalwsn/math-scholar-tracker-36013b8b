@@ -7,9 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Users } from "lucide-react";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
-import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
+import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate and cn
 
 interface StudentSummary {
   id: string;
@@ -40,10 +40,10 @@ export default function Summary() {
   });
 
   // Fetch attendance
+  const studentIds = students?.map((s) => s.id) || [];
   const { data: allAttendance } = useQuery({
-    queryKey: ["all-attendance", user?.center_id],
+    queryKey: ["all-attendance", user?.center_id, studentIds.length > 0 ? studentIds.join(",") : ""],
     queryFn: async () => {
-      const studentIds = students?.map((s) => s.id) || [];
       if (!studentIds.length) return [];
       const { data, error } = await supabase
         .from("attendance")
@@ -52,7 +52,7 @@ export default function Summary() {
       if (error) throw error;
       return data;
     },
-    enabled: !!students?.length,
+    enabled: !!studentIds.length,
   });
 
   const grades = [...new Set(students?.map((s) => s.grade) || [])];

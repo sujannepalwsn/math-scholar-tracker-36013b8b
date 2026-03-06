@@ -90,10 +90,14 @@ export default function ViewRecords() {
           )
         `)
         .in("student_id", studentIds)
-        .eq("date", dateStr)
-        .order("students(name)");
+        .eq("date", dateStr);
       if (error) throw error;
-      return data as StudentAttendanceRecord[];
+
+      // Sort by student name in JavaScript after fetching
+      const sortedData = (data as StudentAttendanceRecord[]).sort((a, b) =>
+        a.students.name.localeCompare(b.students.name)
+      );
+      return sortedData;
     },
     enabled: filteredStudents.length > 0,
   });

@@ -1,4 +1,4 @@
-import { BookOpen, Bot, CalendarIcon, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
+import { BookOpen, Bot, CalendarIcon, ClipboardCheck, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -145,6 +145,12 @@ export default function Tests() {
 
   // Effect to update questionMarks when selectedTest changes
   useEffect(() => {
+    if (!selectedTest) {
+      setQuestions([]);
+      setQuestionMarks([]);
+      return;
+    }
+
     const test = tests.find(t => t.id === selectedTest);
     if (test && test.questions) {
       const parsedQuestions = test.questions as unknown as Question[];
@@ -159,7 +165,7 @@ export default function Tests() {
       setQuestions([]);
       setQuestionMarks([]);
     }
-  }, [selectedTest, tests]);
+  }, [selectedTest]);
 
   // Create test mutation
   const createTestMutation = useMutation({
@@ -412,13 +418,6 @@ export default function Tests() {
   };
 
   const selectedTestData = tests.find((t) => t.id === selectedTest);
-  
-  // New useEffect to log selectedTestData's lesson_plan_id
-  useEffect(() => {
-    if (selectedTestData) {
-      console.log("DEBUG: Selected test data. Lesson Plan ID from DB:", selectedTestData.lesson_plan_id);
-    }
-  }, [selectedTestData]);
 
   const testsWithFiles: typeof tests = []; // No uploaded_file_url in schema
 

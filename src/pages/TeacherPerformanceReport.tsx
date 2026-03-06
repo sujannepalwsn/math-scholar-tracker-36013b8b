@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
 import { BarChart3, BookOpen, CheckCircle, ClipboardCheck, Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 export default function TeacherPerformanceReport() {
   const { user } = useAuth();

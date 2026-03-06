@@ -125,7 +125,7 @@ export default function TeacherAttendancePage() {
     if (showTeacherDetailDialog && selectedTeacherDetail?.id) {
       refetchTeacherDetailAttendance();
     }
-  }, [showTeacherDetailDialog, selectedTeacherDetail?.id, detailMonthFilter, refetchTeacherDetailAttendance]);
+  }, [showTeacherDetailDialog, selectedTeacherDetail?.id, detailMonthFilter]);
 
   // Initialize attendance state when teachers or existing attendance changes
   useEffect(() => {
