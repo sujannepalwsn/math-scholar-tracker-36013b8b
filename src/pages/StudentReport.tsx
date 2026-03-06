@@ -692,31 +692,52 @@ export default function StudentReport() {
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon, description, colorClass }: any) => (
-    <Card className="border-none shadow-soft overflow-hidden transition-all duration-300 hover:shadow-medium">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+  const StatCard = ({ title, value, icon: Icon, description, colorClass, targetId }: any) => {
+    const isClickable = !!targetId && reportLevel === "student";
+
+    const handleClick = () => {
+      if (isClickable) {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    };
+
+    return (
+      <Card
+        onClick={handleClick}
+        className={cn(
+          "border-none shadow-soft overflow-hidden transition-all duration-300 hover:shadow-medium",
+          isClickable && "cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+        )}
+      >
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">{title}</p>
+              <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
+              {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            </div>
+            <div className={cn("p-3 rounded-xl bg-primary/10", colorClass)}>
+              <Icon className="h-6 w-6 text-primary" />
+            </div>
           </div>
-          <div className={cn("p-3 rounded-xl bg-primary/10", colorClass)}>
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   const SummaryDashboard = () => (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Students"
-          value={dashboardStats.totalStudents}
-          icon={Users}
+          title={reportLevel === "student" ? "Financial Status" : "Total Students"}
+          value={reportLevel === "student" ? formatCurrency(outstandingDues) : dashboardStats.totalStudents}
+          icon={reportLevel === "student" ? DollarSign : Users}
           colorClass="bg-blue-500/10"
+          targetId="finance-section"
+          description={reportLevel === "student" ? "Outstanding Balance" : ""}
         />
         <StatCard
           title="Attendance"
@@ -724,6 +745,7 @@ export default function StudentReport() {
           icon={Clock}
           colorClass="bg-green-500/10"
           description="Average student attendance"
+          targetId="attendance-section"
         />
         <StatCard
           title="Homework Completion"
@@ -731,6 +753,7 @@ export default function StudentReport() {
           icon={Book}
           colorClass="bg-orange-500/10"
           description="Assigned vs Completed"
+          targetId="overdue-homework-section"
         />
         <StatCard
           title="Evaluation Completion"
@@ -738,6 +761,7 @@ export default function StudentReport() {
           icon={Star}
           colorClass="bg-yellow-500/10"
           description="Lesson evaluations"
+          targetId="milestones-section"
         />
         <StatCard
           title="Test Performance"
@@ -745,6 +769,7 @@ export default function StudentReport() {
           icon={ClipboardCheck}
           colorClass="bg-purple-500/10"
           description="Average score across tests"
+          targetId="tests-section"
         />
         <StatCard
           title="Activities"
@@ -752,6 +777,7 @@ export default function StudentReport() {
           icon={Paintbrush}
           colorClass="bg-pink-500/10"
           description="Total activities conducted"
+          targetId="activities-section"
         />
         <StatCard
           title="Discipline Records"
@@ -759,6 +785,7 @@ export default function StudentReport() {
           icon={AlertTriangle}
           colorClass="bg-red-500/10"
           description="Total incidents reported"
+          targetId="discipline-section"
         />
         {(reportLevel === "subject" || reportLevel === "grade-subject") && (
           <StatCard
@@ -951,12 +978,14 @@ export default function StudentReport() {
             <Skeleton className="h-64 w-full rounded-xl" />
           </div>
         </div>
-      ) : reportLevel !== "student" ? (
-        <SummaryDashboard />
-      ) : selectedStudent && (
-        <div id="printable-report" className="space-y-8">
+      ) : (
+        <div className="space-y-8">
+          <SummaryDashboard />
+
+          {reportLevel === "student" && selectedStudent && (
+            <div id="printable-report" className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
           {/* Finance Summary */}
-          <Card className="border-none shadow-medium overflow-hidden">
+          <Card id="finance-section" className="border-none shadow-medium overflow-hidden">
             <CardHeader className="bg-muted/30 pb-4 border-b">
               <CardTitle className="text-xl flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-primary" /> Financial Overview
@@ -999,7 +1028,7 @@ export default function StudentReport() {
           </Card>
 
           {/* Attendance Overview */}
-          <Card className="border-none shadow-medium overflow-hidden">
+          <Card id="attendance-section" className="border-none shadow-medium overflow-hidden">
             <CardHeader className="bg-muted/30 pb-4 border-b">
               <CardTitle className="text-xl">Attendance Analytics</CardTitle>
             </CardHeader>
@@ -1036,7 +1065,7 @@ export default function StudentReport() {
           </Card>
 
           {/* Chapter-wise Performance */}
-          <Card className="border-none shadow-medium overflow-hidden">
+          <Card id="milestones-section" className="border-none shadow-medium overflow-hidden">
             <CardHeader className="bg-muted/30 pb-4 border-b">
               <CardTitle className="text-xl flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-primary" /> Curricular Milestones
@@ -1110,7 +1139,7 @@ export default function StudentReport() {
           </Card>
 
           {/* Test Report */}
-          <Card>
+          <Card id="tests-section">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ClipboardCheck className="h-5 w-5" /> Test Report
@@ -1196,7 +1225,7 @@ export default function StudentReport() {
           </Card>
 
           {/* NEW: Missed Chapters */}
-          <Card>
+          <Card id="missed-chapters-section">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <XCircle className="h-5 w-5 text-red-600" /> Missed Chapters
@@ -1233,7 +1262,7 @@ export default function StudentReport() {
           </Card>
 
           {/* NEW: Overdue Homework */}
-          <Card>
+          <Card id="overdue-homework-section">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-orange-600" /> Overdue Homework
@@ -1270,7 +1299,7 @@ export default function StudentReport() {
           </Card>
 
           {/* Preschool Activities */}
-          <Card>
+          <Card id="activities-section">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Paintbrush className="h-5 w-5" /> Preschool Activities
@@ -1319,7 +1348,7 @@ export default function StudentReport() {
           </Card>
 
           {/* Discipline Issues */}
-          <Card>
+          <Card id="discipline-section">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" /> Discipline Issues
@@ -1359,21 +1388,23 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          {/* AI Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Performance Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {aiSummary ? (
-                <Textarea value={aiSummary} onChange={e => setAiSummary(e.target.value)} rows={12} className="resize-none" />
-              ) : (
-                <Button onClick={() => generateSummaryMutation.mutate()} disabled={generateSummaryMutation.isPending}>
-                  {generateSummaryMutation.isPending ? "Generating..." : "Generate AI Summary"}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+              {/* AI Summary */}
+              <Card id="ai-summary-section">
+                <CardHeader>
+                  <CardTitle>AI Performance Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {aiSummary ? (
+                    <Textarea value={aiSummary} onChange={e => setAiSummary(e.target.value)} rows={12} className="resize-none" />
+                  ) : (
+                    <Button onClick={() => generateSummaryMutation.mutate()} disabled={generateSummaryMutation.isPending}>
+                      {generateSummaryMutation.isPending ? "Generating..." : "Generate AI Summary"}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       )}
     </div>
