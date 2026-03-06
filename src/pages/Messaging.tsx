@@ -271,32 +271,46 @@ export default function Messaging() {
   const uniqueGrades = Array.from(new Set(studentsWithParents.map(s => s.grade))).sort();
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Communication Center</h1>
-          <p className="text-muted-foreground text-lg">Stay connected with parents and teachers.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Communication Hub
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Real-time engagement with the academic community.</p>
+          </div>
         </div>
       </div>
 
       <Tabs defaultValue="direct" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="direct" className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Direct Messages</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-14 bg-white/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-white/40 shadow-soft">
+          <TabsTrigger value="direct" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            <MessageSquare className="h-4 w-4" />
+            Direct Messages
+          </TabsTrigger>
           {user?.role === 'center' && (
-            <TabsTrigger value="broadcast" className="flex items-center gap-2"><Radio className="h-4 w-4" /> Broadcast Messages</TabsTrigger>
+            <TabsTrigger value="broadcast" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+              <Radio className="h-4 w-4" />
+              Broadcast Pulse
+            </TabsTrigger>
           )}
         </TabsList>
 
         <TabsContent value="direct">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[700px]">
             {/* Conversations List */}
-            <Card className="md:col-span-1 border-none shadow-medium overflow-hidden flex flex-col">
-              <CardHeader className="bg-muted/30 pb-4 border-b">
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" /> Conversations
+            <Card className="md:col-span-1 border-none shadow-strong overflow-hidden flex flex-col rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+              <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+                <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  Conversations
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-2">
+              <CardContent className="p-3">
                 <ScrollArea className="h-[500px]">
                   {user?.role === "center" && studentsWithParents.length > 0 && (
                     <div className="mb-4 p-2 border-b">
@@ -375,17 +389,24 @@ export default function Messaging() {
             </Card>
 
             {/* Messages Area */}
-            <Card className="md:col-span-2 border-none shadow-strong overflow-hidden flex flex-col">
-              <CardHeader className="bg-primary text-primary-foreground pb-4 shadow-soft relative z-10">
-                <CardTitle className="text-xl flex items-center gap-3">
-                  <div className="bg-white/20 p-2 rounded-xl">
-                    <MessageSquare className="h-5 w-5 text-white" />
+            <Card className="md:col-span-2 border-none shadow-strong overflow-hidden flex flex-col rounded-[2.5rem] bg-white/40 backdrop-blur-md border border-white/20">
+              <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong relative z-10 border-b border-white/10">
+                <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
+                    <MessageSquare className="h-6 w-6 text-white" />
                   </div>
-                  {selectedConversation
-                    ? user?.role === "parent"
-                      ? selectedConversation.centers?.name
-                      : selectedConversation.students?.name
-                    : "Select a conversation"}
+                  <div className="space-y-0.5">
+                    {selectedConversation
+                      ? user?.role === "parent"
+                        ? selectedConversation.centers?.name
+                        : selectedConversation.students?.name
+                      : "Neural Message Protocol"}
+                    {selectedConversation && (
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
+                        {user?.role === "parent" ? "Institution Stream" : `Direct Link: ${selectedConversation.parent_user?.username}`}
+                      </p>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0 flex flex-col h-[520px]">

@@ -3,8 +3,9 @@
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, Star } from "lucide-react";
-import { safeFormatDate } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Star, Calendar } from "lucide-react";
+import { safeFormatDate, cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
 
 type LessonPlan = Tables<'lesson_plans'>;
@@ -26,54 +27,66 @@ interface ParentChapterPerformanceTableProps {
   onViewDetails: (chapterGroup: ChapterPerformanceGroup) => void;
 }
 
-const getRatingStars = (rating: number | null) => {
-  if (rating === null) return "N/A";
-  return Array(rating).fill("⭐").join("");
-};
-
 export default function ParentChapterPerformanceTable({ chapterPerformanceData, onViewDetails }: ParentChapterPerformanceTableProps) {
   return (
-    <div className="overflow-x-auto max-h-[400px] border rounded-lg">
+    <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Subject</TableHead>
-            <TableHead>Chapter</TableHead>
-            <TableHead>Topic</TableHead>
-            <TableHead>Date Taught</TableHead>
-            <TableHead>Avg. Rating</TableHead>
-            <TableHead>Actions</TableHead>
+          <TableRow className="bg-muted/5 border-b border-slate-100">
+            <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Domain</TableHead>
+            <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Module/Chapter</TableHead>
+            <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Topic</TableHead>
+            <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Instruction Date</TableHead>
+            <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Proficiency</TableHead>
+            <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4 text-right">Details</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {chapterPerformanceData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
-                No chapter performance data available for this period.
+              <TableCell colSpan={6} className="text-center text-muted-foreground py-12 italic font-medium">
+                No performance data identified for this academic sequence.
               </TableCell>
             </TableRow>
           ) : (
             chapterPerformanceData.map((group) => {
-              // Calculate average rating only from chapters with ratings
               const chaptersWithRatings = group.studentChapters.filter(sc => sc.evaluation_rating !== null && sc.evaluation_rating !== undefined);
               const avgRating = chaptersWithRatings.length > 0
                 ? (chaptersWithRatings.reduce((sum, sc) => sum + (sc.evaluation_rating || 0), 0) / chaptersWithRatings.length).toFixed(1)
                 : 'N/A';
 
               return (
-                <TableRow key={group.lessonPlan.id}>
-                  <TableCell className="font-medium">{group.lessonPlan.subject}</TableCell>
-                  <TableCell>{group.lessonPlan.chapter}</TableCell>
-                  <TableCell>{group.lessonPlan.topic}</TableCell>
-                  <TableCell>{safeFormatDate(group.lessonPlan.lesson_date, "PPP")}</TableCell>
-                  <TableCell className="flex items-center gap-1">
-                    {avgRating !== 'N/A' ? `${avgRating} ` : ''}
-                    {avgRating !== 'N/A' && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                    {avgRating === 'N/A' && 'N/A'}
+                <TableRow key={group.lessonPlan.id} className="group transition-all duration-300 hover:bg-white/60">
+                  <TableCell className="px-6 py-4">
+                    <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-none rounded-lg text-[9px] font-black uppercase tracking-tighter">
+                        {group.lessonPlan.subject}
+                    </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => onViewDetails(group)}>
-                      <Eye className="h-4 w-4 mr-1" /> View Details
+                  <TableCell className="px-6 py-4">
+                    <p className="font-black text-slate-700 text-xs leading-none">{group.lessonPlan.chapter}</p>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <p className="text-[10px] font-medium text-slate-400 line-clamp-1 max-w-[150px]">{group.lessonPlan.topic}</p>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-slate-500 font-bold text-xs">
+                        <Calendar className="h-3 w-3" />
+                        {safeFormatDate(group.lessonPlan.lesson_date, "MMM dd, yyyy")}
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    {avgRating !== 'N/A' ? (
+                       <div className="flex items-center gap-1.5 bg-amber-500/10 text-amber-600 px-2 py-1 rounded-lg w-fit">
+                          <span className="font-black text-[10px] leading-none">{avgRating}</span>
+                          <Star className="h-2.5 w-2.5 fill-current" />
+                       </div>
+                    ) : (
+                       <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Awaiting</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-right">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft group-hover:scale-110 transition-transform" onClick={() => onViewDetails(group)}>
+                      <Eye className="h-4 w-4 text-primary" />
                     </Button>
                   </TableCell>
                 </TableRow>

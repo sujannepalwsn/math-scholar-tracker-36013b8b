@@ -427,7 +427,7 @@ export default function Tests() {
     : students;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-1000">
       {testsWithFiles.length > 0 && (
         <Card className="border-none shadow-medium overflow-hidden">
           <CardHeader className="bg-muted/30 pb-4">
@@ -464,15 +464,20 @@ export default function Tests() {
         </Card>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-           <h1 className="text-4xl font-extrabold tracking-tight">Assessment Center</h1>
-           <p className="text-muted-foreground text-lg">Create tests, manage question papers, and track student results.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Assessment Center
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Create tests, manage papers, and track results.</p>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setShowOCRModal(true)}>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" onClick={() => setShowOCRModal(true)} className="rounded-xl">
             <FileUp className="mr-2 h-4 w-4" />
-            Upload Test Paper (OCR)
+            OCR Upload
           </Button>
           <Dialog open={isAddingTest} onOpenChange={setIsAddingTest}>
             <DialogTrigger asChild>
@@ -659,11 +664,16 @@ export default function Tests() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <Card className="border-none shadow-medium overflow-hidden h-fit">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle className="text-xl">Evaluation Catalog</CardTitle>
+        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 h-fit">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <ClipboardCheck className="h-6 w-6 text-primary" />
+              </div>
+              Evaluation Catalog
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="p-6">
             <div className="space-y-3">
               {tests.map((test) => (
                 <div
@@ -738,8 +748,8 @@ export default function Tests() {
         </Card>
 
         {selectedTest && selectedTestData && (
-          <Card className="border-none shadow-strong overflow-hidden animate-in slide-in-from-right-4 duration-500">
-            <CardHeader className="bg-primary text-primary-foreground pb-6">
+          <Card className="border-none shadow-strong overflow-hidden rounded-3xl animate-in slide-in-from-right-4 duration-500">
+            <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground pb-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-2xl font-black">Performance Entry</CardTitle>

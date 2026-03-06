@@ -118,86 +118,137 @@ export default function TeacherPerformanceReport() {
   }).filter(t => selectedTeacher === "all" || t.id === selectedTeacher);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-primary" /> Teacher Performance Reports
-        </h1>
-        <p className="text-muted-foreground text-sm">Evaluate teacher performance and consistency.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Faculty Performance Insights
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Evaluate faculty efficiency and curricular consistency.</p>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6 flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[150px]">
-            <Label className="text-xs">Teacher</Label>
-            <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Teachers</SelectItem>
-                {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Faculty Member</Label>
+              <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
+                <SelectTrigger className="h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="All Faculty" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+                  <SelectItem value="all">All Faculty Members</SelectItem>
+                  {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-[180px] space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Analysis Period</Label>
+              <Select value={dateRange} onValueChange={(v: any) => setDateRange(v)}>
+                <SelectTrigger className="h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+                  <SelectItem value="daily">Daily Pulse</SelectItem>
+                  <SelectItem value="weekly">Weekly Cycle</SelectItem>
+                  <SelectItem value="monthly">Monthly Audit</SelectItem>
+                  <SelectItem value="overall">Cumulative Registry</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex-1 min-w-[150px]">
-            <Label className="text-xs">Period</Label>
-            <Select value={dateRange} onValueChange={(v: any) => setDateRange(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Today</SelectItem>
-                <SelectItem value="weekly">This Week</SelectItem>
-                <SelectItem value="monthly">This Month</SelectItem>
-                <SelectItem value="overall">Overall</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { title: "Attendance", value: `${teacherStats.reduce((s, t) => s + t.attendancePct, 0) / (teacherStats.length || 1)}%`, icon: Users, color: "text-green-600" },
-          { title: "Lesson Plans", value: teacherStats.reduce((s, t) => s + t.lessonPlans, 0), icon: BookOpen, color: "text-primary" },
-          { title: "Homework Given", value: teacherStats.reduce((s, t) => s + t.homework, 0), icon: ClipboardCheck, color: "text-orange-600" },
-          { title: "Evaluations Done", value: teacherStats.reduce((s, t) => s + t.evaluations, 0), icon: CheckCircle, color: "text-blue-600" },
+          { title: "Staff Attendance", value: `${Math.round(teacherStats.reduce((s, t) => s + t.attendancePct, 0) / (teacherStats.length || 1))}%`, icon: Users, colorClass: "bg-green-500/10 text-green-600", desc: "Average presence" },
+          { title: "Lesson Output", value: teacherStats.reduce((s, t) => s + t.lessonPlans, 0), icon: BookOpen, colorClass: "bg-primary/10 text-primary", desc: "Modules developed" },
+          { title: "Homework Flow", value: teacherStats.reduce((s, t) => s + t.homework, 0), icon: ClipboardCheck, colorClass: "bg-orange-500/10 text-orange-600", desc: "Assignments dispatched" },
+          { title: "Evaluation Rate", value: teacherStats.reduce((s, t) => s + t.evaluations, 0), icon: CheckCircle, colorClass: "bg-indigo-500/10 text-indigo-600", desc: "Milestones verified" },
         ].map(s => (
-          <Card key={s.title}>
-            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">{s.title}</CardTitle></CardHeader>
-            <CardContent><div className="text-2xl font-bold">{typeof s.value === 'number' ? s.value : Math.round(parseFloat(s.value))}</div></CardContent>
+          <Card key={s.title} className="border-none shadow-strong rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 group hover:-translate-y-1 transition-all duration-500">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className={cn("p-3 rounded-2xl transition-transform group-hover:rotate-6", s.colorClass)}>
+                  <s.icon className="h-6 w-6" />
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{s.title}</p>
+                  <h3 className="text-3xl font-black tracking-tighter mt-1">{s.value}</h3>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-muted/10">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{s.desc}</p>
+              </div>
+            </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Detailed Table */}
-      <Card>
-        <CardHeader><CardTitle className="text-lg">Detailed Breakdown</CardTitle></CardHeader>
-        <CardContent>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <BarChart3 className="h-6 w-6 text-primary" />
+            </div>
+            Faculty Efficiency Breakdown
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead>Attendance</TableHead>
-                  <TableHead>Lesson Plans</TableHead>
-                  <TableHead>Homework</TableHead>
-                  <TableHead>Evaluations</TableHead>
+                <TableRow className="bg-muted/5">
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Faculty Member</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Presence Dynamics</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Lesson Velocity</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Homework Index</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Eval Index</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teacherStats.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No data available</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12 text-muted-foreground font-medium italic">
+                      No efficiency metrics discovered for the current parameters.
+                    </TableCell>
+                  </TableRow>
                 ) : teacherStats.map(t => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Progress value={t.attendancePct} className="w-16 h-2" />
-                        <span className="text-sm">{t.attendancePct}% ({t.attendancePresent}/{t.attendanceTotal})</span>
+                  <TableRow key={t.id} className="group transition-all duration-300 hover:bg-white/60">
+                    <TableCell className="px-6 py-4">
+                      <div className="space-y-0.5">
+                        <p className="font-black text-slate-700 group-hover:text-primary transition-colors leading-none">{t.name}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Certified Instructor</p>
                       </div>
                     </TableCell>
-                    <TableCell>{t.lessonPlans}</TableCell>
-                    <TableCell>{t.homework}</TableCell>
-                    <TableCell>{t.evaluations}</TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+                          <span>{t.attendancePct}% Reliability</span>
+                          <span>{t.attendancePresent}/{t.attendanceTotal}D</span>
+                        </div>
+                        <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden shadow-inner">
+                          <div
+                            className={cn(
+                              "h-full transition-all duration-1000 ease-out",
+                              t.attendancePct >= 90 ? "bg-green-500" : t.attendancePct >= 75 ? "bg-primary" : "bg-orange-500"
+                            )}
+                            style={{ width: `${t.attendancePct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 font-black text-slate-600">{t.lessonPlans}</TableCell>
+                    <TableCell className="px-6 py-4 font-black text-slate-600">{t.homework}</TableCell>
+                    <TableCell className="px-6 py-4 font-black text-slate-600">{t.evaluations}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

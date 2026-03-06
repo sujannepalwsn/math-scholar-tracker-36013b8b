@@ -227,57 +227,71 @@ export default function ChapterPerformanceOverview() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Academic Progress</h1>
-          <p className="text-muted-foreground text-lg">Detailed breakdown of student performance across all chapters.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Progress Matrix
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Multi-dimensional breakdown of student curricular performance.</p>
+          </div>
         </div>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4 border-b">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" /> Evaluation Archive
-            </CardTitle>
-            <div className="flex gap-2">
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="w-[160px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Subject</label>
               <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filter by Subject" />
+                <SelectTrigger className="h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Subject" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
                   <SelectItem value="all">All Subjects</SelectItem>
-                  {allSubjects.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
+                  {allSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="w-[140px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
               <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filter by Grade" />
+                <SelectTrigger className="h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Grade" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
                   <SelectItem value="all">All Grades</SelectItem>
-                  {uniqueGrades.map((g) => (
-                    <SelectItem key={g} value={g}>{g}</SelectItem>
-                  ))}
+                  {uniqueGrades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {/* NEW: Student Filter */}
+            </div>
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Student Focus</label>
               <Select value={studentFilter} onValueChange={setStudentFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by Student" />
+                <SelectTrigger className="h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Search Student" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Students</SelectItem>
-                  {allStudents.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name} ({s.grade})</SelectItem>
-                  ))}
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+                  <SelectItem value="all">All Registered Students</SelectItem>
+                  {allStudents.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} ({s.grade})</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
+        </Card>
+      </div>
+
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <BookOpen className="h-6 w-6 text-primary" />
+            </div>
+            Evaluation Archive
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {combinedChapterRecords.length === 0 ? (

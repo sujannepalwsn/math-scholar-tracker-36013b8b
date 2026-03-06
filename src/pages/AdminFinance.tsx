@@ -88,59 +88,69 @@ const AdminFinance = () => {
   const unpaidCount = invoices.filter(i => ['pending', 'overdue'].includes(i.status)).length;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-extrabold tracking-tight">Finance Management</h1>
-            <p className="text-muted-foreground text-lg">Manage fees, invoices, payments, and financial reports.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="max-w-7xl mx-auto space-y-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+              Treasury Matrix
+            </h1>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <p className="text-muted-foreground text-sm font-medium">Fiscal management and revenue optimization.</p>
+            </div>
           </div>
-          <Button variant="outline" onClick={() => navigate(user?.role === 'admin' ? '/admin-dashboard' : '/')} className="rounded-2xl border-2">
-            <ArrowLeft className="h-4 w-4 mr-2" />Back to Dashboard
+          <Button variant="outline" onClick={() => navigate(user?.role === 'admin' ? '/admin-dashboard' : '/')} className="rounded-xl h-11 border-2">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Control Center
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { title: "Total Invoiced", value: formatCurrency(totalInvoiced), icon: FileText, color: "text-blue-600", bgColor: "bg-blue-100" },
-            { title: "Total Collected", value: formatCurrency(totalCollected), icon: TrendingUp, color: "text-green-600", bgColor: "bg-green-100", valueClass: "text-green-600" },
-            { title: "Outstanding", value: formatCurrency(outstanding), icon: AlertCircle, color: "text-orange-600", bgColor: "bg-orange-100", valueClass: "text-orange-600", label: `${unpaidCount} unpaid invoices` },
-            { title: "Net Balance", value: formatCurrency(netBalance), icon: Wallet, color: "text-purple-600", bgColor: "bg-purple-100", valueClass: netBalance >= 0 ? 'text-green-600' : 'text-red-600', label: "After expenses" },
+            { title: "Revenue Flow", value: formatCurrency(totalInvoiced), icon: FileText, color: "text-blue-600", bgColor: "bg-blue-500/10", desc: "Total Invoiced Assets" },
+            { title: "Capital Collected", value: formatCurrency(totalCollected), icon: TrendingUp, color: "text-green-600", bgColor: "bg-green-500/10", valueClass: "text-green-600", desc: "Realized Liquidity" },
+            { title: "Risk Exposure", value: formatCurrency(outstanding), icon: AlertCircle, color: "text-orange-600", bgColor: "bg-orange-500/10", valueClass: "text-orange-600", desc: `${unpaidCount} Pending Receivables` },
+            { title: "Net Liquidity", value: formatCurrency(netBalance), icon: Wallet, color: "text-purple-600", bgColor: "bg-purple-500/10", valueClass: netBalance >= 0 ? 'text-green-600' : 'text-red-600', desc: "Post-Expenditure Balance" },
           ].map((stat) => (
-            <Card key={stat.title} className="border-none shadow-soft hover:shadow-medium transition-all duration-300 group">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
-                <div className={cn("p-2 rounded-xl transition-transform group-hover:rotate-12", stat.bgColor)}>
-                  <stat.icon className={cn("h-4 w-4", stat.color)} />
+            <Card key={stat.title} className="border-none shadow-strong hover:-translate-y-1 transition-all duration-500 group rounded-[2rem] bg-white/40 backdrop-blur-md border border-white/20">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                   <div className={cn("p-3 rounded-2xl transition-transform group-hover:rotate-6", stat.bgColor)}>
+                    <stat.icon className={cn("h-6 w-6", stat.color)} />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{stat.title}</p>
+                    <h3 className={cn("text-2xl font-black tracking-tighter mt-1", stat.valueClass)}>{stat.value}</h3>
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className={cn("text-2xl font-bold tracking-tight", stat.valueClass)}>{stat.value}</div>
-                {stat.label && <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>}
+                <div className="pt-4 border-t border-muted/10">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.desc}</p>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {overdueCount > 0 && (
-          <Card className="mb-6 border-orange-200 bg-orange-50">
-            <CardContent className="flex items-center gap-3 pt-6">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="font-semibold text-orange-900">{overdueCount} overdue invoice{overdueCount > 1 ? 's' : ''}</p>
-                <p className="text-sm text-orange-700">These invoices require immediate attention</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-4 p-6 bg-red-50/50 backdrop-blur-sm border border-red-100 rounded-3xl text-red-700 shadow-soft animate-in slide-in-from-top-2">
+            <div className="p-3 rounded-2xl bg-red-100">
+              <AlertCircle className="h-6 w-6 text-red-600 animate-pulse" />
+            </div>
+            <div>
+              <p className="text-sm font-black uppercase tracking-tight">{overdueCount} Critical Receivables Detected</p>
+              <p className="text-xs font-bold opacity-70 uppercase tracking-widest mt-0.5">Immediate liquidation protocol recommended for overdue invoices.</p>
+            </div>
+          </div>
         )}
 
-        <Tabs defaultValue="invoices" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="invoices">Invoices</TabsTrigger>
-            <TabsTrigger value="fees">Fees</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="expenses">Expenses</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+        <Tabs defaultValue="invoices" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-5 h-14 bg-white/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-white/40 shadow-soft">
+            <TabsTrigger value="invoices" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Invoices</TabsTrigger>
+            <TabsTrigger value="fees" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Fees</TabsTrigger>
+            <TabsTrigger value="payments" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Payments</TabsTrigger>
+            <TabsTrigger value="expenses" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Expenses</TabsTrigger>
+            <TabsTrigger value="reports" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="invoices"><InvoiceManagement /></TabsContent>

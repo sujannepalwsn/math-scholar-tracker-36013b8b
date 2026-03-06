@@ -419,57 +419,62 @@ export default function TeacherAttendancePage() {
   }, [teacherDetailAttendance]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Faculty Attendance</h1>
-          <p className="text-muted-foreground text-lg">Monitor staff presence and punctuality trends.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Faculty Attendance
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Monitor staff presence and punctuality trends.</p>
+          </div>
         </div>
-        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
-           <Clock className="h-5 w-5 text-primary" />
-           <span className="font-semibold text-primary">{format(selectedDate, 'MMMM d, yyyy')}</span>
+        <div className="bg-white/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/40 shadow-soft flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <Clock className="h-5 w-5 text-primary" />
+          </div>
+          <span className="font-bold text-slate-700 text-sm">{format(selectedDate, 'MMMM d, yyyy')}</span>
         </div>
       </div>
 
-      <Card className="border-none shadow-soft overflow-hidden">
-        <CardHeader>
-          <CardTitle>Select Date</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4 items-end">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full md:w-[220px] justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? safeFormatDate(selectedDate, "PPP") : "Pick a date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={date => date && setSelectedDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" size="sm" onClick={markAllPresent}>Mark All Present</Button>
-            <Button variant="outline" size="sm" onClick={markAllAbsent}>Mark All Absent</Button>
+      {/* Date Picker Card */}
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Select Attendance Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full h-11 justify-start text-left font-normal bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl", !selectedDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? safeFormatDate(selectedDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-2xl border-none shadow-strong" align="start">
+                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" onClick={markAllPresent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Present</Button>
+              <Button variant="outline" size="sm" onClick={markAllAbsent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Absent</Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Staff Presence Log</CardTitle>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <User className="h-6 w-6 text-primary" />
+            </div>
+            Staff Presence Log
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {teachersLoading || attendanceLoading ? (
             <p>Loading teachers and attendance...</p>
           ) : teachers.length === 0 ? (
@@ -491,40 +496,42 @@ export default function TeacherAttendancePage() {
                     {teachers.map(teacher => {
                       const record = attendanceRecords[teacher.id];
                       return (
-                        <TableRow key={teacher.id}>
-                          <TableCell className="font-medium">{teacher.name}</TableCell>
-                          <TableCell>
+                        <TableRow key={teacher.id} className="group transition-all duration-300 hover:bg-white/60">
+                          <TableCell className="px-6 py-4 font-black text-slate-700 group-hover:text-primary transition-colors">{teacher.name}</TableCell>
+                          <TableCell className="px-6 py-4">
                             <Select
                               value={record?.status || 'absent'}
                               onValueChange={(value: TeacherAttendance['status']) => handleStatusChange(teacher.id, value)}
                             >
-                              <SelectTrigger className="w-[120px]">
+                              <SelectTrigger className="w-[130px] h-10 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl font-bold">
                                 <SelectItem value="present">Present</SelectItem>
                                 <SelectItem value="absent">Absent</SelectItem>
                                 <SelectItem value="leave">Leave</SelectItem>
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-6 py-4">
                             <Input
                               type="time"
                               value={record?.time_in || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_in', e.target.value)}
                               disabled={record?.status !== 'present'}
+                              className="h-10 bg-white/40 rounded-xl text-xs font-bold"
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-6 py-4">
                             <Input
                               type="time"
                               value={record?.time_out || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_out', e.target.value)}
                               disabled={record?.status !== 'present'}
+                              className="h-10 bg-white/40 rounded-xl text-xs font-bold"
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-6 py-4">
                             <Input
                               type="text"
                               value={record?.notes || ''}
@@ -535,7 +542,8 @@ export default function TeacherAttendancePage() {
                                   notes: e.target.value || null
                                 }
                               }))}
-                              placeholder="Notes (optional)"
+                              placeholder="Session notes..."
+                              className="h-10 bg-white/40 rounded-xl text-xs font-medium"
                             />
                           </TableCell>
                         </TableRow>
@@ -544,25 +552,43 @@ export default function TeacherAttendancePage() {
                   </TableBody>
                 </Table>
               </div>
-              <Button type="submit" className="w-full" disabled={saveAttendanceMutation.isPending}>
-                {saveAttendanceMutation.isPending ? 'Saving...' : 'Save Attendance'}
-              </Button>
+              <div className="p-6 border-t border-muted/10">
+                <Button
+                  type="submit"
+                  className="w-full h-14 text-lg font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
+                  disabled={saveAttendanceMutation.isPending}
+                >
+                  {saveAttendanceMutation.isPending ? (
+                    <div className="flex items-center gap-3">
+                      <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <span>SECURELY COMMITTING...</span>
+                    </div>
+                  ) : (
+                    'COMMIT FACULTY ATTENDANCE'
+                  )}
+                </Button>
+              </div>
             </form>
           )}
         </CardContent>
       </Card>
 
       {/* Attendance Report Section */}
-      <Card className="border-none shadow-strong overflow-hidden h-fit">
-        <CardHeader className="bg-primary text-primary-foreground pb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle className="text-2xl font-black">Monthly Performance Summary</CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={exportReportToCSV}>
-                <Download className="mr-2 h-4 w-4" /> Export CSV
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 h-fit mt-12">
+        <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <CardTitle className="text-2xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              Monthly Efficiency Matrix
+            </CardTitle>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" onClick={exportReportToCSV} className="rounded-xl border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold h-10 px-4">
+                <Download className="mr-2 h-4 w-4" /> CSV EXPORT
               </Button>
-              <Button variant="outline" size="sm" onClick={handlePrintReport}>
-                <Printer className="mr-2 h-4 w-4" /> Print
+              <Button variant="outline" size="sm" onClick={handlePrintReport} className="rounded-xl border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold h-10 px-4">
+                <Printer className="mr-2 h-4 w-4" /> PRINT RECORD
               </Button>
             </div>
           </div>

@@ -106,20 +106,24 @@ export default function TeacherDashboard() {
     enabled: !!user?.center_id,
   });
 
-  const StatCard = ({ title, value, icon: Icon, description, colorClass, bgColor }: any) => (
+  const StatCard = ({ title, value, icon: Icon, description, colorClass, bgColor, link }: any) => (
     <Card
-      className="group relative border-none shadow-soft overflow-hidden transition-all duration-500 hover:shadow-strong hover:-translate-y-1 active:scale-[0.98]"
+      onClick={() => link && navigate(link)}
+      className={cn(
+        "group relative border-none shadow-strong overflow-hidden transition-all duration-500 rounded-[2rem] bg-white/40 backdrop-blur-md border border-white/20",
+        link && "cursor-pointer hover:shadow-xl hover:-translate-y-1 active:scale-[0.98]"
+      )}
     >
       <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
-      <CardContent className="p-4 md:p-6 relative z-10">
+      <CardContent className="p-6 relative z-10">
         <div className="flex justify-between items-start">
-          <div className="space-y-1 md:space-y-2">
-            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{title}</p>
-            <h3 className="text-xl md:text-3xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">{value}</h3>
-            {description && <p className="text-[8px] md:text-[10px] font-medium text-muted-foreground italic line-clamp-1">{description}</p>}
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{title}</p>
+            <h3 className="text-3xl font-black tracking-tighter group-hover:text-primary transition-colors duration-300">{value}</h3>
+            {description && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-70">{description}</p>}
           </div>
-          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3", bgColor)}>
-            <Icon className={cn("h-4 w-4 md:h-6 md:w-6 text-primary")} />
+          <div className={cn("p-3 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-soft", bgColor)}>
+            <Icon className={cn("h-6 w-6 text-primary")} />
           </div>
         </div>
       </CardContent>
@@ -127,101 +131,110 @@ export default function TeacherDashboard() {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Teacher Hub
+    <div className="space-y-10 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-primary to-violet-600 uppercase">
+            Instructor Console
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Welcome back, {user?.username}! Planning your day.</p>
+            <p className="text-muted-foreground text-sm font-bold uppercase tracking-[0.2em] opacity-70">
+              Welcome, Agent {user?.username?.split('@')[0].toUpperCase() || 'FACULTY'}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 text-primary">
-            <Clock className="h-4 w-4" />
-            {format(new Date(), 'EEEE, MMMM d')}
+        <div className="bg-white/40 backdrop-blur-md px-6 py-3 rounded-[2rem] border border-white/40 shadow-soft flex items-center gap-4">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <Clock className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground leading-none">Temporal Marker</span>
+            <span className="font-black text-slate-700 text-sm">{format(new Date(), 'EEEE, MMMM d')}</span>
           </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Today's Meetings"
+          title="Daily Assemblies"
           value={todaysMeetings.length}
           icon={Video}
           bgColor="bg-blue-500/10"
-          description="scheduled for today"
+          description="sessions today"
+          link="/teacher/meetings"
         />
         <StatCard
-          title="Today's Events"
+          title="Calendar Events"
           value={todaysEvents.length}
           icon={CalendarDays}
           bgColor="bg-green-500/10"
-          description={todaysEvents.some((e: any) => e.is_holiday) ? '🏖️ Holiday today!' : 'happening today'}
+          description={todaysEvents.some((e: any) => e.is_holiday) ? 'Institutional Holiday' : 'active events'}
+          link="/teacher/calendar"
         />
         <StatCard
-          title="Unread Messages"
+          title="Neural Comms"
           value={unreadCount}
           icon={MessageSquare}
           bgColor="bg-purple-500/10"
-          description="awaiting response"
+          description="unread signals"
+          link="/teacher/messaging"
         />
         <StatCard
-          title="Upcoming"
+          title="Upcoming Queue"
           value={upcomingMeetings.length}
           icon={Bell}
           bgColor="bg-orange-500/10"
-          description="scheduled ahead"
+          description="pending sessions"
+          link="/teacher/meetings"
         />
       </div>
 
       {/* Feature Access Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
           {
-            title: "Take Attendance",
+            title: "Roll Call",
             icon: CheckSquare,
-            color: "text-blue-600",
-            bgColor: "bg-blue-50",
-            desc: "Mark student presence for your classes.",
+            color: "text-indigo-600",
+            bgColor: "bg-indigo-500/10",
+            desc: "Verify daily student presence.",
             perm: user?.teacherPermissions?.take_attendance,
             link: "/teacher/take-attendance"
           },
           {
-            title: "Lesson Tracking",
+            title: "Syllabus Pulse",
             icon: BookOpen,
-            color: "text-green-600",
-            bgColor: "bg-green-50",
-            desc: "Record lessons taught and student progress.",
+            color: "text-emerald-600",
+            bgColor: "bg-emerald-500/10",
+            desc: "Update instructional milestones.",
             perm: user?.teacherPermissions?.lesson_tracking,
             link: "/teacher/lesson-tracking"
           },
           {
-            title: "Student Reports",
+            title: "Analytics Hub",
             icon: Users,
-            color: "text-purple-600",
-            bgColor: "bg-purple-50",
-            desc: "View in-depth performance analytics.",
+            color: "text-violet-600",
+            bgColor: "bg-violet-500/10",
+            desc: "Deep-dive into student performance.",
             perm: user?.teacherPermissions?.student_report_access,
             link: "/teacher/student-report"
           }
         ].filter(f => f.perm).map((feature) => (
           <Card
             key={feature.title}
-            className="group cursor-pointer border-none shadow-soft hover:shadow-strong transition-all duration-300"
-            onClick={() => window.location.href = feature.link}
+            className="group cursor-pointer border-none shadow-strong rounded-[2.5rem] bg-white/40 backdrop-blur-md border border-white/20 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98]"
+            onClick={() => navigate(feature.link)}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className={cn("p-3 rounded-2xl transition-all duration-300 group-hover:scale-110", feature.bgColor)}>
-                  <feature.icon className={cn("h-6 w-6", feature.color)} />
+            <CardContent className="p-8">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className={cn("p-5 rounded-[2rem] shadow-soft transition-all duration-500 group-hover:scale-110 group-hover:rotate-6", feature.bgColor)}>
+                  <feature.icon className={cn("h-10 w-10", feature.color)} />
                 </div>
-                <div>
-                  <h4 className="font-bold text-lg">{feature.title}</h4>
-                  <p className="text-xs text-muted-foreground font-medium">{feature.desc}</p>
+                <div className="space-y-1">
+                  <h4 className="font-black text-xl text-slate-800 tracking-tight uppercase">{feature.title}</h4>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">{feature.desc}</p>
                 </div>
               </div>
             </CardContent>

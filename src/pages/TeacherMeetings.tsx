@@ -88,18 +88,26 @@ export default function TeacherMeetings() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Staff Consultations</h1>
-          <p className="text-muted-foreground text-lg">Keep track of faculty meetings and collaborative sessions.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Faculty assemblies
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Keep track of faculty meetings and collaborative sessions.</p>
+          </div>
         </div>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" /> Personalized Schedule
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <CalendarDays className="h-6 w-6 text-primary" />
+            </div>
+            Personalized Schedule
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, Users, XCircle, BarChart3 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subYears, isPast } from "date-fns"; // Added subYears, isPast
 import { Badge } from "@/components/ui/badge";
@@ -632,37 +633,134 @@ export default function StudentReport() {
       newWindow?.document.write(`
         <html>
           <head>
-            <title>Student Report - ${selectedStudent?.name}</title>
+            <title>Academic Performance Report — ${selectedStudent?.name}</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              h1, h2, h3 { margin: 0 0 10px 0; }
-              table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; }
-              .text-green-600 { color: #22c55e; }
-              .text-red-600 { color: #ef4444; }
-              .text-orange-600 { color: #f97316; }
-              .text-blue-600 { color: #3b82f6; }
-              .text-yellow-500 { color: #eab308; }
-              .font-semibold { font-weight: 600; }
-              .text-muted-foreground { color: #6b7280; }
-              .flex { display: flex; }
-              .items-center { align-items: center; }
-              .gap-1 { gap: 0.25rem; }
-              .list-disc { list-style-type: disc; }
-              .list-inside { list-style-position: inside; }
-              .ml-4 { margin-left: 1rem; }
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+              body {
+                font-family: 'Inter', -apple-system, sans-serif;
+                padding: 40px;
+                color: #1e293b;
+                background: white;
+              }
+              .print-header {
+                border-bottom: 4px solid #4f46e5;
+                padding-bottom: 20px;
+                margin-bottom: 30px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+              }
+              .print-header h1 {
+                margin: 0;
+                font-size: 28px;
+                font-weight: 800;
+                letter-spacing: -0.025em;
+                color: #4f46e5;
+                text-transform: uppercase;
+              }
+              .print-header p {
+                margin: 4px 0 0 0;
+                font-size: 14px;
+                color: #64748b;
+                font-weight: 500;
+              }
+              h2 {
+                font-size: 18px;
+                font-weight: 700;
+                margin: 30px 0 15px 0;
+                color: #0f172a;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+              }
+              h3 { font-size: 15px; font-weight: 700; margin: 20px 0 10px 0; color: #334155; }
+              table { border-collapse: collapse; width: 100%; margin-bottom: 25px; font-size: 12px; }
+              th, td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; }
+              th { background-color: #f8fafc; font-weight: 700; text-transform: uppercase; color: #64748b; font-size: 10px; letter-spacing: 0.05em; }
+              .text-green-600 { color: #16a34a; font-weight: 700; }
+              .text-red-600 { color: #dc2626; font-weight: 700; }
+              .text-orange-600 { color: #ea580c; font-weight: 700; }
+              .text-blue-600 { color: #2563eb; font-weight: 700; }
+              .font-bold { font-weight: 700; }
+              .text-muted-foreground { color: #64748b; }
+              .badge {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                background: #f1f5f9;
+                color: #475569;
+              }
+              .stats-grid {
+                display: grid;
+                grid-template-cols: repeat(3, 1fr);
+                gap: 20px;
+                margin-bottom: 30px;
+              }
+              .stat-box {
+                padding: 15px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+              }
+              .stat-box p:first-child {
+                margin: 0;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                color: #64748b;
+                letter-spacing: 0.05em;
+              }
+              .stat-box p:last-child {
+                margin: 5px 0 0 0;
+                font-size: 20px;
+                font-weight: 800;
+                color: #1e293b;
+              }
+              .chapter-group {
+                margin-bottom: 20px;
+                padding: 15px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+              }
+              @media print {
+                body { padding: 0; }
+                .no-print { display: none; }
+                .chapter-group { page-break-inside: avoid; }
+                table { page-break-inside: auto; }
+                tr { page-break-inside: avoid; page-break-after: auto; }
+              }
             </style>
           </head>
           <body>
+            <div class="print-header">
+              <div>
+                <h1>Official Progress Report</h1>
+                <p>Academic Cycle: ${format(dateRange.from, "MMM yyyy")} - ${format(dateRange.to, "MMM yyyy")}</p>
+              </div>
+              <div style="text-right">
+                <p style="font-weight: 800; color: #0f172a; font-size: 18px;">${selectedStudent?.name}</p>
+                <p>Grade: ${selectedStudent?.grade} | Center: ${user?.center_name || 'Institution'}</p>
+              </div>
+            </div>
             ${content.innerHTML}
+            <div style="margin-top: 50px; border-top: 1px solid #e2e8f0; pt-20px; display: flex; justify-content: space-between;">
+              <p style="font-size: 10px; color: #94a3b8;">Generated on ${format(new Date(), "PPP p")}</p>
+              <p style="font-size: 10px; color: #94a3b8;">Computer Generated Record</p>
+            </div>
           </body>
         </html>
       `);
       newWindow?.document.close();
       newWindow?.focus();
-      newWindow?.print();
-      newWindow?.close();
+      setTimeout(() => {
+        newWindow?.print();
+        newWindow?.close();
+      }, 500);
     }
   };
 

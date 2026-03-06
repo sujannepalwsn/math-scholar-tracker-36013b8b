@@ -10,9 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/co
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Pencil, Trash2, Save, X, UserPlus, Upload, Download, Users, } from "lucide-react";
+import { Pencil, Trash2, Save, X, UserPlus, Upload, Download, Users, Search, GraduationCap, School, Phone, User as UserIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import LinkChildToParent from "@/components/center/LinkChildToParent";
+import { cn } from "@/lib/utils";
 
 interface Student {
   id: string;
@@ -393,123 +395,146 @@ export default function RegisterStudent() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Register Student</h1>
-          <p className="text-muted-foreground text-lg">Add new students to the attendance system</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Faculty Nexus: Enrolment
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Onboard new students to the academic system.</p>
+          </div>
         </div>
-        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
-          <UserPlus className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-primary">New Registration</span>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" size="sm" onClick={downloadTemplate} className="rounded-xl h-11 border-2 font-black uppercase text-[10px] tracking-widest hover:bg-white/60 shadow-soft">
+            <Download className="mr-2 h-4 w-4" /> Template
+          </Button>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            id="csv-upload"
+            className="hidden"
+            onChange={(e) => handleCsvFile(e.target.files?.[0] ?? null)}
+          />
+          <label htmlFor="csv-upload">
+            <Button variant="outline" size="sm" asChild className="rounded-xl h-11 border-2 cursor-pointer font-black uppercase text-[10px] tracking-widest hover:bg-white/60 shadow-soft">
+              <span>
+                <Upload className="inline-block mr-2 h-4 w-4" /> Import CSV
+              </span>
+            </Button>
+          </label>
         </div>
       </div>
 
       {/* Single Student Form */}
-      <Card className="border-none shadow-soft overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-6">
-          <CardTitle className="text-xl">Student Information</CardTitle>
-          <CardDescription>Fill in the details to register a new student</CardDescription>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 group hover:shadow-xl transition-all duration-500">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10 group-hover:scale-110 transition-transform">
+              <UserPlus className="h-6 w-6 text-primary" />
+            </div>
+            Student Registry Profile
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+        <CardContent className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
+                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Identity *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  placeholder="Enter full name"
+                  className="h-12 rounded-2xl bg-white/50 border-none shadow-soft focus-visible:ring-primary/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="grade">Grade *</Label>
+                <Label htmlFor="grade" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Grade Level *</Label>
                 <Input
                   id="grade"
                   value={formData.grade}
                   onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
                   required
+                  placeholder="e.g. 5, 10, XII"
+                  className="h-12 rounded-2xl bg-white/50 border-none shadow-soft focus-visible:ring-primary/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="school_name">School Name *</Label>
+                <Label htmlFor="school_name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Academy Name *</Label>
                 <Input
                   id="school_name"
                   value={formData.school_name}
                   onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
                   required
+                  placeholder="School name"
+                  className="h-12 rounded-2xl bg-white/50 border-none shadow-soft focus-visible:ring-primary/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="parent_name">Parent Name *</Label>
+                <Label htmlFor="parent_name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Guardian Name *</Label>
                 <Input
                   id="parent_name"
                   value={formData.parent_name}
                   onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
                   required
+                  placeholder="Parent/Guardian"
+                  className="h-12 rounded-2xl bg-white/50 border-none shadow-soft focus-visible:ring-primary/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact_number">Contact Number *</Label>
+                <Label htmlFor="contact_number" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telecom Protocol *</Label>
                 <Input
                   id="contact_number"
                   value={formData.contact_number}
                   onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
                   required
+                  placeholder="Phone number"
+                  className="h-12 rounded-2xl bg-white/50 border-none shadow-soft focus-visible:ring-primary/20"
                 />
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-2 items-center mt-4">
-              <Button type="submit">Register Student</Button>
-              <Button type="button" variant="outline" onClick={() => setShowLinkChildDialog(true)}>
-                <Users className="h-4 w-4 mr-2" /> Link Child to Parent
+            <div className="flex flex-wrap gap-3 items-center pt-4 border-t border-slate-100">
+              <Button type="submit" className="h-12 rounded-2xl px-8 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">
+                ENROL STUDENT
               </Button>
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                id="csv-upload"
-                className="hidden"
-                onChange={(e) => handleCsvFile(e.target.files?.[0] ?? null)}
-              />
-              <label htmlFor="csv-upload">
-                <Button variant="outline" size="sm" asChild>
-                  <span>
-                    <Upload className="inline-block mr-2 h-4 w-4" /> Upload CSV
-                  </span>
-                </Button>
-              </label>
-              <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                <Download className="inline-block mr-2 h-4 w-4" /> CSV Template
+              <Button type="button" variant="outline" onClick={() => setShowLinkChildDialog(true)} className="h-12 rounded-2xl font-black uppercase text-xs tracking-widest border-2 shadow-soft hover:bg-white/60">
+                <Users className="h-4 w-4 mr-2" /> LINK GUARDIAN
               </Button>
+              <div className="flex-1" />
               <Button
                 variant="ghost"
+                type="button"
                 size="sm"
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors"
                 onClick={() => {
                   const el = document.getElementById("multiline-area");
                   if (el) el.style.display = el.style.display === "none" ? "block" : "none";
                 }}
               >
-                Paste Rows
+                BULK SYNTAX PASTE
               </Button>
             </div>
 
             {/* Multiline paste */}
-            <div id="multiline-area" style={{ display: "none" }} className="mt-4">
-              <Label>Paste rows: name, grade, school_name, parent_name, contact_number</Label>
+            <div id="multiline-area" style={{ display: "none" }} className="mt-8 space-y-4 animate-in slide-in-from-top-2 duration-300">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syntax Format: name, grade, school_name, parent_name, contact_number</Label>
               <Textarea
                 value={multilineText}
                 onChange={(e) => setMultilineText(e.target.value)}
                 rows={5}
                 placeholder="John Doe,6,ABC School,Robert Doe,9812345678"
+                className="rounded-2xl border-2 border-dashed bg-slate-50/50 focus-visible:ring-primary/20"
               />
-              <div className="flex gap-2 mt-2">
-                <Button onClick={handleParseMultiline} disabled={parsing}>
-                  Parse & Preview
+              <div className="flex gap-3">
+                <Button onClick={handleParseMultiline} disabled={parsing} variant="secondary" className="rounded-xl font-black uppercase text-[10px] tracking-widest">
+                   PARSING & PREVIEW
                 </Button>
-                <Button variant="outline" onClick={() => setMultilineText("")}>
+                <Button variant="ghost" onClick={() => setMultilineText("")} className="rounded-xl text-xs">
                   Clear
                 </Button>
               </div>
@@ -518,250 +543,286 @@ export default function RegisterStudent() {
         </CardContent>
       </Card>
 
+      {/* Students Table */}
+      <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-8 px-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-primary/10">
+                  <Users className="h-7 w-7 text-primary" />
+                </div>
+                Academic Roster
+              </CardTitle>
+              <div className="flex items-center gap-2 ml-14">
+                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                   {filteredStudents?.length || 0} active enrolment records
+                 </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-4 items-center">
+              <div className="flex items-center gap-2 bg-white/60 p-1.5 rounded-2xl border border-white/40 shadow-soft">
+                  <Select value={gradeFilter} onValueChange={setGradeFilter}>
+                    <SelectTrigger className="w-[140px] h-10 border-none bg-transparent shadow-none font-black text-[10px] uppercase tracking-widest focus:ring-0">
+                      <SelectValue placeholder="Grade" />
+                    </SelectTrigger>
+                    <SelectContent className="backdrop-blur-xl bg-white/90 border-none rounded-2xl shadow-strong">
+                      <SelectItem value="all" className="font-black text-[10px] uppercase tracking-widest">All Grades</SelectItem>
+                      {uniqueGrades.map((g) => (
+                        <SelectItem key={g} value={g} className="font-black text-[10px] uppercase tracking-widest">Grade {g}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="h-4 w-[1px] bg-slate-200" />
+                  <div className="relative">
+                    <Input
+                      placeholder="SYNCHRONIZED SEARCH..."
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      className="w-[220px] h-10 border-none bg-transparent shadow-none font-black text-[10px] uppercase tracking-widest focus-visible:ring-0 pl-8"
+                    />
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  </div>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/5 border-b border-slate-100">
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-8 py-4">Student Identity</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-8 py-4">Academic Level</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-8 py-4">Academy</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-8 py-4">Guardian</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-8 py-4">Telecom Link</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest px-8 py-4 text-right">Operations</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-20"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></TableCell>
+                  </TableRow>
+                ) : filteredStudents && filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
+                    <TableRow key={student.id} className="group transition-all duration-300 hover:bg-white/60">
+                      <TableCell className="px-8 py-5">
+                        {editingId === student.id ? (
+                          <Input
+                            value={editData?.name}
+                            className="h-9 rounded-xl text-xs font-bold"
+                            onChange={(e) =>
+                              setEditData((prev) =>
+                                prev ? { ...prev, name: e.target.value } : null
+                              )
+                            }
+                          />
+                        ) : (
+                          <div className="flex items-center gap-3">
+                             <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                <UserIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+                             </div>
+                             <p className="font-black text-slate-700 text-sm group-hover:text-primary transition-colors leading-none">{student.name}</p>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-8 py-5">
+                        {editingId === student.id ? (
+                          <Input
+                            value={editData?.grade}
+                            className="h-9 rounded-xl text-xs font-bold"
+                            onChange={(e) =>
+                              setEditData((prev) =>
+                                prev ? { ...prev, grade: e.target.value } : null
+                              )
+                            }
+                          />
+                        ) : (
+                          <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-none rounded-lg text-[10px] font-black uppercase tracking-tighter">Grade {student.grade}</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-8 py-5">
+                        {editingId === student.id ? (
+                          <Input
+                            value={editData?.school_name}
+                            className="h-9 rounded-xl text-xs font-bold"
+                            onChange={(e) =>
+                              setEditData((prev) =>
+                                prev ? { ...prev, school_name: e.target.value } : null
+                              )
+                            }
+                          />
+                        ) : (
+                          <p className="text-xs font-bold text-slate-500">{student.school_name}</p>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-8 py-5">
+                        {editingId === student.id ? (
+                          <Input
+                            value={editData?.parent_name}
+                            className="h-9 rounded-xl text-xs font-bold"
+                            onChange={(e) =>
+                              setEditData((prev) =>
+                                prev ? { ...prev, parent_name: e.target.value } : null
+                              )
+                            }
+                          />
+                        ) : (
+                          <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{student.parent_name}</p>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-8 py-5">
+                        {editingId === student.id ? (
+                          <Input
+                            value={editData?.contact_number}
+                            className="h-9 rounded-xl text-xs font-bold"
+                            onChange={(e) =>
+                              setEditData((prev) =>
+                                prev ? { ...prev, contact_number: e.target.value } : null
+                              )
+                            }
+                          />
+                        ) : (
+                          <p className="text-xs font-black text-indigo-600">{student.contact_number}</p>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-8 py-5 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {editingId === student.id ? (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-green-50 text-green-600 hover:bg-green-100" onClick={handleSave}>
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100" onClick={handleCancel}>
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleEdit(student)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-indigo-600 hover:bg-indigo-50" onClick={() => handleCreateParentAccount(student)}>
+                                <UserPlus className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-xl bg-white shadow-soft text-rose-500 hover:bg-rose-50"
+                                onClick={() => deleteMutation.mutate(student.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-20 italic text-slate-400 font-medium">No enrolment records discovered for the current parameters.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* CSV Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" aria-labelledby="csv-preview-title" aria-describedby="csv-preview-description">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-white/95 backdrop-blur-xl">
           <DialogHeader>
-            <DialogTitle id="csv-preview-title">Preview Parsed Rows</DialogTitle>
-            <DialogDescription id="csv-preview-description">
-              Review parsed rows before inserting. Errors (if any) are below.
+            <DialogTitle id="csv-preview-title" className="text-2xl font-black tracking-tight">Bulk Import Matrix</DialogTitle>
+            <DialogDescription id="csv-preview-description" className="text-[10px] font-black uppercase tracking-widest text-primary/60">
+              Reviewing parsed operational data for batch enrolment
             </DialogDescription>
           </DialogHeader>
           {csvErrors.length > 0 && (
-            <div className="p-3 bg-red-50 rounded border border-red-100 text-red-700 mb-4">
-              {csvErrors.map((err, idx) => (
-                <div key={idx}>{err}</div>
-              ))}
+            <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 text-rose-700 mb-6 text-xs font-bold">
+              <p className="uppercase tracking-widest mb-2 flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Syntax Protocols Violated:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                {csvErrors.map((err, idx) => (
+                  <li key={idx} className="font-medium">{err}</li>
+                ))}
+              </ul>
             </div>
           )}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>School Name</TableHead>
-                <TableHead>Parent Name</TableHead>
-                <TableHead>Contact</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {csvPreviewRows.map((row, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.grade}</TableCell>
-                  <TableCell>{row.school_name}</TableCell>
-                  <TableCell>{row.parent_name}</TableCell>
-                  <TableCell>{row.contact_number}</TableCell>
+          <div className="overflow-hidden border border-slate-100 rounded-3xl">
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Name</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Grade</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Academy</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Guardian</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Telecom</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>
-              Cancel
+              </TableHeader>
+              <TableBody>
+                {csvPreviewRows.map((row, idx) => (
+                  <TableRow key={idx} className="border-b last:border-none">
+                    <TableCell className="text-xs font-bold">{row.name}</TableCell>
+                    <TableCell className="text-xs font-bold"><Badge variant="outline" className="text-[9px] font-black">{row.grade}</Badge></TableCell>
+                    <TableCell className="text-[10px] font-medium text-slate-500">{row.school_name}</TableCell>
+                    <TableCell className="text-xs font-black uppercase text-slate-600">{row.parent_name}</TableCell>
+                    <TableCell className="text-xs font-black text-indigo-600">{row.contact_number}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex justify-end gap-3 mt-8">
+            <Button variant="ghost" onClick={() => setShowPreviewDialog(false)} className="rounded-xl font-black uppercase text-[10px] tracking-widest">
+              ABORT IMPORT
             </Button>
-            <Button onClick={handleBulkInsertConfirm}>Insert All</Button>
+            <Button onClick={handleBulkInsertConfirm} className="rounded-xl font-black uppercase text-[10px] tracking-widest px-8 bg-slate-900 hover:bg-slate-800 text-white shadow-lg">
+              EXECUTE BATCH ENROLMENT
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Students Table */}
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <CardTitle className="text-xl">Registered Students</CardTitle>
-            </div>
-            <div className="flex gap-2">
-              <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filter by Grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Grades</SelectItem>
-                  {uniqueGrades.map((g) => (
-                    <SelectItem key={g} value={g}>{g}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Search by name, parent, or contact"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                className="w-[250px]"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>School</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              ) : filteredStudents && filteredStudents.length > 0 ? (
-                filteredStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell>
-                      {editingId === student.id ? (
-                        <Input
-                          value={editData?.name}
-                          onChange={(e) =>
-                            setEditData((prev) =>
-                              prev ? { ...prev, name: e.target.value } : null
-                            )
-                          }
-                        />
-                      ) : (
-                        student.name
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === student.id ? (
-                        <Input
-                          value={editData?.grade}
-                          onChange={(e) =>
-                            setEditData((prev) =>
-                              prev ? { ...prev, grade: e.target.value } : null
-                            )
-                          }
-                        />
-                      ) : (
-                        student.grade
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === student.id ? (
-                        <Input
-                          value={editData?.school_name}
-                          onChange={(e) =>
-                            setEditData((prev) =>
-                              prev ? { ...prev, school_name: e.target.value } : null
-                            )
-                          }
-                        />
-                      ) : (
-                        student.school_name
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === student.id ? (
-                        <Input
-                          value={editData?.parent_name}
-                          onChange={(e) =>
-                            setEditData((prev) =>
-                              prev ? { ...prev, parent_name: e.target.value } : null
-                            )
-                          }
-                        />
-                      ) : (
-                        student.parent_name
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingId === student.id ? (
-                        <Input
-                          value={editData?.contact_number}
-                          onChange={(e) =>
-                            setEditData((prev) =>
-                              prev ? { ...prev, contact_number: e.target.value } : null
-                            )
-                          }
-                        />
-                      ) : (
-                        student.contact_number
-                      )}
-                    </TableCell>
-                    <TableCell className="flex gap-2">
-                      {editingId === student.id ? (
-                        <>
-                          <Button size="icon" onClick={handleSave}>
-                            <Save />
-                          </Button>
-                          <Button size="icon" onClick={handleCancel}>
-                            <X />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button size="icon" onClick={() => handleEdit(student)}>
-                            <Pencil />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            onClick={() => deleteMutation.mutate(student.id)}
-                          >
-                            <Trash2 />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="secondary"
-                            onClick={() => handleCreateParentAccount(student)}
-                          >
-                            <UserPlus />
-                          </Button>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    No students registered yet
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
       {/* Create Parent Dialog */}
       <Dialog open={isCreatingParent} onOpenChange={setIsCreatingParent}>
-        <DialogContent aria-labelledby="create-parent-title" aria-describedby="create-parent-description">
+        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-strong bg-white/95 backdrop-blur-xl" aria-labelledby="create-parent-title" aria-describedby="create-parent-description">
           <DialogHeader>
-            <DialogTitle id="create-parent-title">Create Parent Account</DialogTitle>
-            <DialogDescription id="create-parent-description">
-              Set a username and password for the parent of {selectedStudentForParent?.name}
+            <DialogTitle id="create-parent-title" className="text-2xl font-black tracking-tight">Access Protocol Setup</DialogTitle>
+            <DialogDescription id="create-parent-description" className="text-[10px] font-black uppercase tracking-widest text-indigo-500">
+              Generating secure guardian link for {selectedStudentForParent?.name}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Username</Label>
-              <Input
-                value={parentUsername}
-                onChange={(e) => setParentUsername(e.target.value)}
-              />
+          <div className="space-y-6 mt-6">
+            <div className="space-y-4">
+               <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Identity (Username)</Label>
+                 <Input
+                   value={parentUsername}
+                   onChange={(e) => setParentUsername(e.target.value)}
+                   className="h-12 rounded-2xl border-none bg-slate-50 shadow-inner focus-visible:ring-primary/20 font-bold"
+                 />
+               </div>
+               <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Secure Vector (Password)</Label>
+                 <Input
+                   value={parentPassword}
+                   type="password"
+                   onChange={(e) => setParentPassword(e.target.value)}
+                   className="h-12 rounded-2xl border-none bg-slate-50 shadow-inner focus-visible:ring-primary/20 font-bold"
+                 />
+               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <Input
-                value={parentPassword}
-                type="password"
-                onChange={(e) => setParentPassword(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => setIsCreatingParent(false)}>
-                Cancel
+            <div className="flex flex-col gap-3 pt-4">
+              <Button onClick={() => createParentMutation.mutate()} className="h-12 rounded-2xl font-black uppercase text-xs tracking-widest bg-slate-900 hover:bg-slate-800 text-white shadow-lg">
+                 ESTABLISH SECURE LINK
               </Button>
-              <Button onClick={() => createParentMutation.mutate()}>Create Account</Button>
+              <Button variant="ghost" onClick={() => setIsCreatingParent(false)} className="h-10 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                CANCEL OPERATION
+              </Button>
             </div>
           </div>
         </DialogContent>
