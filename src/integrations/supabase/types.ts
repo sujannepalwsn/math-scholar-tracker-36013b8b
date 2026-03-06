@@ -134,6 +134,7 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          is_locked: boolean | null
           marked_by: string | null
           notes: string | null
           remarks: string | null
@@ -147,6 +148,7 @@ export type Database = {
           created_at?: string
           date: string
           id?: string
+          is_locked?: boolean | null
           marked_by?: string | null
           notes?: string | null
           remarks?: string | null
@@ -160,6 +162,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          is_locked?: boolean | null
           marked_by?: string | null
           notes?: string | null
           remarks?: string | null
@@ -553,6 +556,48 @@ export type Database = {
             columns: ["center_id"]
             isOneToOne: false
             referencedRelation: "centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_teacher_assignments: {
+        Row: {
+          center_id: string
+          created_at: string
+          grade: string
+          id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          center_id: string
+          created_at?: string
+          grade: string
+          id?: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          center_id?: string
+          created_at?: string
+          grade?: string
+          id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_teacher_assignments_center_id_fkey"
+            columns: ["center_id"]
+            isOneToOne: false
+            referencedRelation: "centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_teacher_assignments_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
