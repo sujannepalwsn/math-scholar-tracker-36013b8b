@@ -28,10 +28,30 @@ export default function BottomNav({ navItems }: BottomNavProps) {
   const reportsItems = navItems.filter(item => item.category === 'Reports and Communications');
 
   const handleMenuToggle = (menu: 'Academics' | 'Administration' | 'Reports and Communications') => {
-    setActiveMenu(activeMenu === menu ? null : menu);
+    if (activeMenu === menu) {
+      closeMenu();
+    } else {
+      setActiveMenu(menu);
+      window.history.pushState({ menuOpen: true }, "");
+    }
   };
 
-  const closeMenu = () => setActiveMenu(null);
+  const closeMenu = () => {
+    setActiveMenu(null);
+    if (window.history.state?.menuOpen) {
+      window.history.back();
+    }
+  };
+
+  React.useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (activeMenu) {
+        setActiveMenu(null);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [activeMenu]);
 
   const renderSubMenu = (category: string, items: NavItem[]) => (
     <div

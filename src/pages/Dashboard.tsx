@@ -106,7 +106,7 @@ export default function Dashboard() {
     queryKey: ["evaluation-stats-dashboard", centerId],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("student_chapters").select("completed, lesson_plans!inner(center_id)").eq("lesson_plans.center_id", centerId);
+      const { data, error } = await supabase.from("student_chapters").select("completed, evaluation_rating, lesson_plans!inner(center_id)").eq("lesson_plans.center_id", centerId);
       if (error) throw error;
       return data || [];
     },
@@ -183,8 +183,8 @@ export default function Dashboard() {
   const completedHomework = homeworkStats.filter(h => ["completed", "checked"].includes(h.status || "")).length;
   const homeworkRate = homeworkStats.length > 0 ? Math.round((completedHomework / homeworkStats.length) * 100) : 0;
 
-  const completedEvaluations = evaluationStats.filter(e => e.completed).length;
-  const evaluationRate = evaluationStats.length > 0 ? Math.round((completedEvaluations / evaluationStats.length) * 100) : 0;
+  const ratedEvaluations = evaluationStats.filter(e => e.evaluation_rating !== null).length;
+  const evaluationRate = evaluationStats.length > 0 ? Math.round((ratedEvaluations / evaluationStats.length) * 100) : 0;
 
   const avgTestScore = recentTestResults.length > 0
     ? Math.round(recentTestResults.reduce((acc, r: any) => acc + (r.marks_obtained / (r.tests?.total_marks || 100)) * 100, 0) / recentTestResults.length)
@@ -227,15 +227,15 @@ export default function Dashboard() {
       onClick={() => handleCardClick(path)}
       className="border-none shadow-soft overflow-hidden transition-all duration-300 hover:shadow-medium cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
     >
-      <CardContent className="p-6">
+      <CardContent className="p-4 md:p-6">
         <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          <div className="space-y-1 md:space-y-2">
+            <p className="text-[10px] md:text-sm font-medium text-muted-foreground truncate max-w-[100px] md:max-w-none">{title}</p>
+            <h3 className="text-xl md:text-3xl font-bold tracking-tight">{value}</h3>
+            {description && <p className="text-[8px] md:text-xs text-muted-foreground line-clamp-1">{description}</p>}
           </div>
-          <div className={cn("p-3 rounded-xl bg-primary/10", colorClass)}>
-            <Icon className="h-6 w-6 text-primary" />
+          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-xl bg-primary/10", colorClass)}>
+            <Icon className="h-4 w-4 md:h-6 md:w-6 text-primary" />
           </div>
         </div>
       </CardContent>
@@ -256,22 +256,22 @@ export default function Dashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
-            <Card key={i} className="border-none shadow-soft p-6">
+            <Card key={i} className="border-none shadow-soft p-4 md:p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-3 w-16 md:h-4 md:w-24" />
+                  <Skeleton className="h-6 w-12 md:h-8 md:w-16" />
+                  <Skeleton className="h-2 w-20 md:h-3 md:w-32" />
                 </div>
-                <Skeleton className="h-12 w-12 rounded-xl" />
+                <Skeleton className="h-8 w-8 md:h-12 md:w-12 rounded-lg md:rounded-xl" />
               </div>
             </Card>
           ))}
         </div>
       ) : (
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Students Attendance"
           value={`${totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0}%`}

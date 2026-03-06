@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CalendarIcon, Download, Edit, FileText, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,9 @@ export default function LessonPlans() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingLessonPlan, setEditingLessonPlan] = useState<LessonPlan | null>(null);
+  const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan | null>(null);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
 
@@ -117,6 +119,11 @@ export default function LessonPlans() {
     setFile(null); setIsDialogOpen(true);
   };
 
+  const handleViewClick = (lp: LessonPlan) => {
+    setViewingLessonPlan(lp);
+    setIsViewOpen(true);
+  };
+
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
 
   return (
@@ -184,6 +191,7 @@ export default function LessonPlans() {
               {lessonPlans.map((lp) => (
                 <div key={lp.id} className="rounded-lg border bg-card p-4 group relative hover:shadow-sm transition-shadow">
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleViewClick(lp)}><Eye className="h-3 w-3" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(lp)}><Edit className="h-3 w-3" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}><Trash2 className="h-3 w-3" /></Button>
                   </div>
@@ -213,6 +221,58 @@ export default function LessonPlans() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Lesson Plan Details</DialogTitle>
+          </DialogHeader>
+          {viewingLessonPlan && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Subject</Label>
+                  <p className="font-semibold">{viewingLessonPlan.subject}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Chapter</Label>
+                  <p className="font-semibold">{viewingLessonPlan.chapter}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Topic</Label>
+                <p className="font-semibold">{viewingLessonPlan.topic}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Grade</Label>
+                  <p className="font-semibold">{viewingLessonPlan.grade || "All Grades"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Planned Date</Label>
+                  <p className="font-semibold">{format(new Date(viewingLessonPlan.lesson_date), "PPP")}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Notes</Label>
+                <p className="text-sm whitespace-pre-wrap bg-muted/30 p-3 rounded-lg border">
+                  {viewingLessonPlan.notes || "No notes provided."}
+                </p>
+              </div>
+              {viewingLessonPlan.lesson_file_url && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Resource</Label>
+                  <Button variant="outline" size="sm" className="w-full mt-1" asChild>
+                    <a href={supabase.storage.from("lesson-files").getPublicUrl(viewingLessonPlan.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                      <Download className="h-4 w-4 mr-2" /> Download Attached File
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

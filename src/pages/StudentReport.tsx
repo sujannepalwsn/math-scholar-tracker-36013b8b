@@ -341,8 +341,9 @@ export default function StudentReport() {
 
     // 4. Overall Evaluation Completion Rate (from student_chapters)
     const totalEvaluations = studentChapters.length;
+    const ratedEvaluations = studentChapters.filter(sc => sc.evaluation_rating !== null).length;
     const evaluationCompletionRate = totalEvaluations > 0
-      ? Math.round((studentChapters.filter(sc => sc.completed).length / totalEvaluations) * 100)
+      ? Math.round((ratedEvaluations / totalEvaluations) * 100)
       : 0;
 
     // 5. Average Test Performance

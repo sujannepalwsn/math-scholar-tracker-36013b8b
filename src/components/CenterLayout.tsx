@@ -143,14 +143,6 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
           >
             <LogOut className="h-5 w-5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden hover:bg-muted"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
         </div>
       </header>
 
