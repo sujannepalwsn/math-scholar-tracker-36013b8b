@@ -143,6 +143,11 @@ const ParentDashboardContent = () => {
   const [showChapterDetailModal, setShowChapterDetailModal] = useState(false);
   const [selectedChapterGroup, setSelectedChapterGroup] = useState<ChapterPerformanceGroup | null>(null);
 
+  const handleViewChapterDetails = (chapterGroup: ChapterPerformanceGroup) => {
+    setSelectedChapterGroup(chapterGroup);
+    setShowChapterDetailModal(true);
+  };
+
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
 
