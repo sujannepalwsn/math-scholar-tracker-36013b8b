@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, Users } from "lucide-react";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
-import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
+import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate and cn
 
 interface StudentSummary {
   id: string;
