@@ -1,11 +1,31 @@
-import { BookOpen, CalendarIcon, CheckCircle2, Clock, FileText, TrendingUp, Users, XCircle, AlertTriangle, Book } from "lucide-react";
+import {
+  BookOpen,
+  CalendarIcon,
+  CheckCircle2,
+  Clock,
+  FileText,
+  TrendingUp,
+  Users,
+  XCircle,
+  AlertTriangle,
+  Book,
+  GraduationCap,
+  LayoutDashboard,
+  Paintbrush,
+  Printer,
+  Star,
+  Video,
+  ClipboardCheck,
+  DollarSign
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import React, { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,7 +43,7 @@ export default function Dashboard() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
-  const { data: students = [] } = useQuery({
+  const { data: students = [], isLoading: isStudentsLoading } = useQuery({
     queryKey: ["students", centerId],
     queryFn: async () => {
       let query = supabase.from("students").select("*").eq("is_active", true).order("name");
@@ -35,13 +55,69 @@ export default function Dashboard() {
     enabled: !!user && !loading,
   });
 
+  const { data: teachers = [], isLoading: isTeachersLoading } = useQuery({
+    queryKey: ["teachers", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("teachers").select("*").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
   const grades = [...new Set(students.map((s) => s.grade))];
 
-  const { data: allAttendance = [] } = useQuery({
+  const { data: allAttendance = [], isLoading: isAttendanceLoading } = useQuery({
     queryKey: ["attendance-today", centerId, today],
     queryFn: async () => {
       if (!centerId) return [];
       const { data, error } = await supabase.from("attendance").select("student_id, status, date").eq("center_id", centerId).eq("date", today);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: teacherAttendance = [], isLoading: isTeacherAttendanceLoading } = useQuery({
+    queryKey: ["teacher-attendance-today", centerId, today],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("teacher_attendance").select("*").eq("center_id", centerId).eq("date", today);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: homeworkStats = [], isLoading: isHomeworkStatsLoading } = useQuery({
+    queryKey: ["homework-stats-dashboard", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("student_homework_records").select("status").eq("student_id", students[0]?.id).limit(1); // dummy check for RLS
+      const { data: allRecords, error: allErr } = await supabase.from("student_homework_records").select("status, homework!inner(center_id)").eq("homework.center_id", centerId);
+      if (allErr) throw allErr;
+      return allRecords || [];
+    },
+    enabled: !!centerId && students.length > 0,
+  });
+
+  const { data: evaluationStats = [], isLoading: isEvaluationStatsLoading } = useQuery({
+    queryKey: ["evaluation-stats-dashboard", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("student_chapters").select("completed, lesson_plans!inner(center_id)").eq("lesson_plans.center_id", centerId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: allActivities = [], isLoading: isAllActivitiesLoading } = useQuery({
+    queryKey: ["center-activities-dashboard", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("activities").select("id").eq("center_id", centerId);
       if (error) throw error;
       return data || [];
     },
@@ -98,6 +174,28 @@ export default function Dashboard() {
   const unmarkedCount = totalStudents - presentCount - absentCount;
   const absentRate = totalStudents ? Math.round((absentCount / totalStudents) * 100) : 0;
 
+  const isLoading = isStudentsLoading || isTeachersLoading || isAttendanceLoading || isTeacherAttendanceLoading || isHomeworkStatsLoading || isEvaluationStatsLoading || isAllActivitiesLoading;
+
+  const teacherPresentCount = teacherAttendance.filter(a => a.status === "present").length;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+    }).format(amount);
+  };
+  const teacherAttendanceRate = teachers.length > 0 ? Math.round((teacherPresentCount / teachers.length) * 100) : 0;
+
+  const completedHomework = homeworkStats.filter(h => ["completed", "checked"].includes(h.status || "")).length;
+  const homeworkRate = homeworkStats.length > 0 ? Math.round((completedHomework / homeworkStats.length) * 100) : 0;
+
+  const completedEvaluations = evaluationStats.filter(e => e.completed).length;
+  const evaluationRate = evaluationStats.length > 0 ? Math.round((completedEvaluations / evaluationStats.length) * 100) : 0;
+
+  const avgTestScore = recentTestResults.length > 0
+    ? Math.round(recentTestResults.reduce((acc, r: any) => acc + (r.marks_obtained / (r.tests?.total_marks || 100)) * 100, 0) / recentTestResults.length)
+    : 0;
+
   const absentToday = students.filter((s) => allAttendance.some((a) => a.student_id === s.id && a.status === "absent"));
 
   const lowPerformers = recentTestResults.filter((r: any) => {
@@ -130,32 +228,122 @@ export default function Dashboard() {
   // Clickable card handler
   const handleCardClick = (path: string) => navigate(path);
 
+  const StatCard = ({ title, value, icon: Icon, description, colorClass, path }: any) => (
+    <Card
+      onClick={() => handleCardClick(path)}
+      className="border-none shadow-soft overflow-hidden transition-all duration-300 hover:shadow-medium cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+    >
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          </div>
+          <div className={cn("p-3 rounded-xl bg-primary/10", colorClass)}>
+            <Icon className="h-6 w-6 text-primary" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground text-sm">Overview of today's attendance and center performance.</p>
+    <div className="space-y-6 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Center Dashboard</h2>
+          <p className="text-muted-foreground text-sm">Real-time overview of attendance, performance, and activities.</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm font-medium bg-primary/5 px-4 py-2 rounded-xl border border-primary/10">
+          <CalendarIcon className="h-4 w-4 text-primary" />
+          {format(new Date(), "EEEE, MMMM do, yyyy")}
+        </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        {[
-          { title: "Total Students", value: totalStudents, icon: Users, color: "text-primary", bg: "bg-primary/10", path: "/register" },
-          { title: "Present Today", value: presentCount, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30", path: "/attendance-summary" },
-          { title: "Absent Today", value: absentCount, icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", path: "/attendance-summary" },
-          { title: "Unmarked", value: unmarkedCount, icon: Clock, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30", path: "/attendance" },
-        ].map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.title} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(stat.path)}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
-                <div className={cn("rounded-lg p-2", stat.bg)}><Icon className={cn("h-4 w-4", stat.color)} /></div>
-              </CardHeader>
-              <CardContent><div className="text-2xl font-bold">{stat.value}</div></CardContent>
+      {isLoading ? (
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="border-none shadow-soft p-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-12 w-12 rounded-xl" />
+              </div>
             </Card>
-          );
-        })}
+          ))}
+        </div>
+      ) : (
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Students Attendance"
+          value={`${totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0}%`}
+          icon={Users}
+          colorClass="bg-blue-500/10"
+          description={`Present: ${presentCount} / Total: ${totalStudents}`}
+          path="/attendance-summary"
+        />
+        <StatCard
+          title="Teachers Attendance"
+          value={`${teacherAttendanceRate}%`}
+          icon={Clock}
+          colorClass="bg-green-500/10"
+          description={`Present: ${teacherPresentCount} / Total: ${teachers.length}`}
+          path="/teacher-attendance"
+        />
+        <StatCard
+          title="Homework Completion"
+          value={`${homeworkRate}%`}
+          icon={Book}
+          colorClass="bg-orange-500/10"
+          description="Global completion rate"
+          path="/homework"
+        />
+        <StatCard
+          title="Evaluation Rate"
+          value={`${evaluationRate}%`}
+          icon={CheckCircle2}
+          colorClass="bg-yellow-500/10"
+          description="Syllabus coverage"
+          path="/lesson-tracking"
+        />
+        <StatCard
+          title="Test Performance"
+          value={`${avgTestScore}%`}
+          icon={TrendingUp}
+          colorClass="bg-purple-500/10"
+          description="Average student score"
+          path="/tests"
+        />
+        <StatCard
+          title="Activities"
+          value={allActivities.length}
+          icon={BookOpen}
+          colorClass="bg-pink-500/10"
+          description="Total activities conducted"
+          path="/activities"
+        />
+        <StatCard
+          title="Discipline Issues"
+          value={recentDiscipline.length}
+          icon={AlertTriangle}
+          colorClass="bg-red-500/10"
+          description="Open discipline cases"
+          path="/discipline"
+        />
+        <StatCard
+          title="Upcoming Lessons"
+          value={upcomingLessons.length}
+          icon={FileText}
+          colorClass="bg-indigo-500/10"
+          description="Planned for this week"
+          path="/lesson-plans"
+        />
       </div>
+      )}
 
       <Select value={gradeFilter} onValueChange={setGradeFilter}>
         <SelectTrigger className="w-[140px]"><SelectValue placeholder="All Grades" /></SelectTrigger>
