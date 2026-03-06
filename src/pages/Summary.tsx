@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Users } from "lucide-react";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
 import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
 
