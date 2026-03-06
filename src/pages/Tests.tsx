@@ -1,4 +1,4 @@
-import { BookOpen, Bot, CalendarIcon, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
+import { BookOpen, Bot, CalendarIcon, ClipboardCheck, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
