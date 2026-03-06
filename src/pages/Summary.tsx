@@ -40,10 +40,10 @@ export default function Summary() {
   });
 
   // Fetch attendance
+  const studentIds = students?.map((s) => s.id) || [];
   const { data: allAttendance } = useQuery({
-    queryKey: ["all-attendance", user?.center_id],
+    queryKey: ["all-attendance", user?.center_id, studentIds.length > 0 ? studentIds.join(",") : ""],
     queryFn: async () => {
-      const studentIds = students?.map((s) => s.id) || [];
       if (!studentIds.length) return [];
       const { data, error } = await supabase
         .from("attendance")
@@ -52,7 +52,7 @@ export default function Summary() {
       if (error) throw error;
       return data;
     },
-    enabled: !!students?.length,
+    enabled: !!studentIds.length,
   });
 
   const grades = [...new Set(students?.map((s) => s.grade) || [])];
