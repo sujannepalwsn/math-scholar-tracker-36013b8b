@@ -119,58 +119,66 @@ export default function Summary() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Attendance Summary</h1>
-          <p className="text-muted-foreground text-lg">View detailed attendance statistics and student trends.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Attendance Insights
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">View detailed statistics and student trends.</p>
+          </div>
         </div>
-        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
-           <Download className="h-5 w-5 text-primary" />
-           <span className="font-semibold text-primary">Report Ready</span>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" size="sm" onClick={exportToCSV} className="rounded-xl h-11 border-2">
+            <Download className="mr-2 h-4 w-4" /> Export CSV
+          </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="border-none shadow-soft overflow-hidden">
-        <CardHeader className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-          <div className="flex flex-col md:flex-row gap-2 md:items-center">
-            <CardTitle>Filters</CardTitle>
-            <CardDescription>Filter students by grade and month</CardDescription>
-          </div>
-          <Button variant="outline" size="sm" onClick={exportToCSV}>
-            <Download className="mr-2 h-4 w-4" /> Export Summary
-          </Button>
-        </CardHeader>
-        <CardContent className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-          <Select value={gradeFilter} onValueChange={setGradeFilter}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Select grade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grades</SelectItem>
-              {grades.map((grade) => (
-                <SelectItem key={grade} value={grade}>
-                  {grade}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
+              <Select value={gradeFilter} onValueChange={setGradeFilter}>
+                <SelectTrigger className="w-[160px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Grade" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+                  <SelectItem value="all">All Grades</SelectItem>
+                  {grades.map((grade) => (
+                    <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <input
-            type="month"
-            value={monthFilter}
-            onChange={(e) => setMonthFilter(e.target.value)}
-            className="w-36 px-2 py-1 border rounded-xl"
-          />
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Month</label>
+              <input
+                type="month"
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+                className="flex h-11 w-[180px] rounded-xl border border-white/20 bg-white/50 backdrop-blur-sm px-4 py-2 text-sm ring-offset-background transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 shadow-sm hover:border-primary/30"
+              />
+            </div>
+          </div>
+        </Card>
+      </div>
 
       {/* Table */}
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Student Statistics</CardTitle>
-          <CardDescription>Detailed attendance breakdown per student</CardDescription>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            Student Statistics
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {summaryData.length ? (
@@ -189,31 +197,44 @@ export default function Summary() {
                 </TableHeader>
                 <TableBody>
                   {summaryData.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell className="font-medium">{student.name}</TableCell>
-                      <TableCell>{student.grade}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="default" className="bg-secondary hover:bg-secondary/80">
-                          {student.present}
+                    <TableRow key={student.id} className="group transition-all duration-300">
+                      <TableCell className="font-black text-slate-700 group-hover:text-primary transition-colors">{student.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg font-bold">
+                          {student.grade}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="destructive">{student.absent}</Badge>
+                        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 font-bold text-xs">
+                          {student.present}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-center">{student.total}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 text-red-600 font-bold text-xs">
+                          {student.absent}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center font-bold text-slate-500">{student.total}</TableCell>
                       <TableCell className="text-center">
                         <Badge
                           variant={student.percentage >= 75 ? "default" : "destructive"}
-                          className={student.percentage >= 75 ? "bg-secondary hover:bg-secondary/80" : ""}
+                          className={cn(
+                            "rounded-xl px-3 py-1 font-black",
+                            student.percentage >= 75 ? "bg-green-500/20 text-green-700 hover:bg-green-500/30 border-none" : "shadow-sm"
+                          )}
                         >
                           {student.percentage}%
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm max-w-xs overflow-x-auto">
-                        <div className="whitespace-nowrap">
+                      <TableCell className="text-[10px] max-w-xs overflow-x-auto text-muted-foreground font-medium">
+                        <div className="flex flex-wrap gap-1">
                           {student.absentDates.length > 0
-                            ? student.absentDates.map((d) => safeFormatDate(d, "MMM d")).join(", ")
-                            : "None"}
+                            ? student.absentDates.map((d) => (
+                              <span key={d} className="px-1.5 py-0.5 rounded bg-red-500/5 text-red-600 border border-red-500/10">
+                                {safeFormatDate(d, "MMM d")}
+                              </span>
+                            ))
+                            : <span className="text-green-600 font-bold">PERFECT ATTENDANCE</span>}
                         </div>
                       </TableCell>
                     </TableRow>

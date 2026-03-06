@@ -1,4 +1,4 @@
-import { AlertTriangle, Book, BookOpen, Calendar as CalendarIcon, CheckCircle, ClipboardCheck, Clock, DollarSign, FileText, LogOut, MessageSquare, Paintbrush, Radio, Star, User, Video, XCircle } from "lucide-react";
+import { AlertTriangle, Book, BookOpen, Calendar as CalendarIcon, CheckCircle, ClipboardCheck, Clock, DollarSign, FileText, LogOut, MessageSquare, Paintbrush, Radio, Star, User, Video, XCircle, LayoutDashboard, GraduationCap, Wallet, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,15 +12,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isPast, isToday, isFuture } from 'date-fns';
 import { Tables } from '@/integrations/supabase/types';
-import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate
-import ParentChapterPerformanceTable from '@/components/parent/ParentChapterPerformanceTable'; // NEW
-import ParentChapterDetailModal from '@/components/parent/ParentChapterDetailModal'; // NEW
+import { safeFormatDate, cn } from '@/lib/utils';
+import ParentChapterPerformanceTable from '@/components/parent/ParentChapterPerformanceTable';
+import ParentChapterDetailModal from '@/components/parent/ParentChapterDetailModal';
 
-// Initialize QueryClient (v4 syntax)
+// Initialize QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 min
+      staleTime: 1000 * 60,
       retry: 1,
     },
   },
@@ -31,7 +31,6 @@ type DisciplineIssue = Tables<'discipline_issues'>;
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentChapter = Tables<'student_chapters'>;
 type Invoice = Tables<'invoices'>;
-type Payment = Tables<'payments'>;
 type Test = Tables<'tests'>;
 type Homework = Tables<'homework'>;
 type TestResult = Tables<'test_results'>;
@@ -58,67 +57,70 @@ const MiniCalendar = ({ attendance, lessonRecords, tests, selectedMonth, setSele
     return { dayLessons, dayTests };
   };
 
-  const colors = { present: '#16a34a', absent: '#dc2626', none: '#e5e7eb' };
+  const colors = { present: 'bg-emerald-500', absent: 'bg-rose-500', none: 'bg-slate-100' };
 
   return (
-    <div className="w-full max-w-md border rounded p-2 bg-white shadow">
-      {/* Month Navigation */}
-      <div className="flex justify-between items-center mb-2">
-        <button onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))} className="px-2">‹</button>
-        <span className="font-semibold">{format(selectedMonth, 'MMMM yyyy')}</span>
-        <button onClick={() => setSelectedMonth(addMonths(selectedMonth, 1))} className="px-2">›</button>
-      </div>
+    <Card className="w-full border-none shadow-strong rounded-[2rem] bg-white/80 backdrop-blur-md overflow-hidden animate-in zoom-in-95 duration-500">
+      <CardHeader className="p-6 border-b border-slate-100">
+        <div className="flex justify-between items-center">
+          <Button variant="ghost" size="icon" onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))} className="rounded-xl h-8 w-8">‹</Button>
+          <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-800">{format(selectedMonth, 'MMMM yyyy')}</span>
+          <Button variant="ghost" size="icon" onClick={() => setSelectedMonth(addMonths(selectedMonth, 1))} className="rounded-xl h-8 w-8">›</Button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="grid grid-cols-7 gap-2 mb-2 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
+        </div>
 
-      {/* Week Days */}
-      <div className="grid grid-cols-7 gap-1 mb-1 text-center font-semibold text-xs text-gray-500">
-        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
-      </div>
+        <div className="grid grid-cols-7 gap-2">
+          {daysInMonth.map(day => {
+            const dateStr = safeFormatDate(day, 'yyyy-MM-dd');
+            const status = getAttendanceStatus(dateStr);
+            const tooltipData = getTooltipData(dateStr);
 
-      {/* Calendar Days */}
-      <div className="grid grid-cols-7 gap-1">
-        {daysInMonth.map(day => {
-          const dateStr = safeFormatDate(day, 'yyyy-MM-dd');
-          const status = getAttendanceStatus(dateStr);
-          const tooltipData = getTooltipData(dateStr);
-
-          return (
-            <div key={dateStr} className="relative group">
-              <div
-                className="aspect-square rounded flex items-center justify-center text-xs font-medium cursor-pointer"
-                style={{ backgroundColor: colors[status], color: status !== 'none' ? 'white' : 'inherit' }}
-              >
-                {day.getDate()}
-              </div>
-
-              {(tooltipData.dayLessons.length > 0 || tooltipData.dayTests.length > 0) && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-56 p-2 bg-white border rounded shadow-strong opacity-0 group-hover:opacity-100 transition-opacity z-10 text-xs">
-                  {tooltipData.dayLessons.length > 0 && (
-                    <div className="mb-1">
-                      <p className="font-semibold border-b mb-1">Lessons</p>
-                      {tooltipData.dayLessons.map((lr: any) => (
-                        <p key={lr.id}>
-                          <span className="font-semibold">{lr.lesson_plans?.chapter}</span> ({lr.lesson_plans?.subject}) - {lr.lesson_plans?.topic || 'No topic'}
-                        </p>
-                      ))}
-                    </div>
+            return (
+              <div key={dateStr} className="relative group">
+                <div
+                  className={cn(
+                    "aspect-square rounded-xl flex items-center justify-center text-[10px] font-black transition-all duration-300",
+                    colors[status],
+                    status !== 'none' ? 'text-white shadow-lg' : 'text-slate-400 hover:bg-slate-200'
                   )}
-                  {tooltipData.dayTests.length > 0 && (
-                    <div>
-                      <p className="font-semibold border-b mb-1">Tests</p>
-                      {tooltipData.dayTests.map(t => (
-                        <p key={t.id}>
-                          {t.tests?.name}: {t.marks_obtained}/{t.tests?.total_marks}
-                        </p>
-                      ))}
-                    </div>
-                  )}
+                >
+                  {day.getDate()}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+
+                {(tooltipData.dayLessons.length > 0 || tooltipData.dayTests.length > 0) && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-strong opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 pointer-events-none scale-95 group-hover:scale-100 origin-bottom">
+                    {tooltipData.dayLessons.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-primary mb-2 border-b border-primary/10 pb-1">Modules Synthesis</p>
+                        {tooltipData.dayLessons.map((lr: any) => (
+                          <p key={lr.id} className="text-[10px] font-medium text-slate-600 mb-1">
+                            <span className="font-black text-slate-800">{lr.lesson_plans?.chapter}</span> • {lr.lesson_plans?.topic || 'General'}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {tooltipData.dayTests.length > 0 && (
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-rose-500 mb-2 border-b border-rose-500/10 pb-1">Evaluation Matrix</p>
+                        {tooltipData.dayTests.map(t => (
+                          <p key={t.id} className="text-[10px] font-black text-slate-700">
+                            {t.tests?.name}: <span className="text-emerald-600">{t.marks_obtained}/{t.tests?.total_marks}</span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -128,24 +130,22 @@ const ParentDashboardContent = () => {
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [dateRange, setDateRange] = useState<{from: string, to: string}>({
-    from: format(subMonths(new Date(), 3), 'yyyy-MM-dd'), // Default to last 3 months
+    from: format(subMonths(new Date(), 3), 'yyyy-MM-dd'),
     to: format(new Date(), 'yyyy-MM-dd')
   });
   
-  // Multi-child support: track selected student
   const linkedStudents = user?.linked_students || [];
   const hasMultipleChildren = linkedStudents.length > 1;
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     user?.student_id || linkedStudents[0]?.id || null
   );
 
-  const [showChapterDetailModal, setShowChapterDetailModal] = useState(false); // NEW
-  const [selectedChapterGroup, setSelectedChapterGroup] = useState<ChapterPerformanceGroup | null>(null); // NEW
+  const [showChapterDetailModal, setShowChapterDetailModal] = useState(false);
+  const [selectedChapterGroup, setSelectedChapterGroup] = useState<ChapterPerformanceGroup | null>(null);
 
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
 
-  // Update selected student when linked_students changes
   useEffect(() => {
     if (!selectedStudentId && linkedStudents.length > 0) {
       setSelectedStudentId(linkedStudents[0].id);
@@ -157,10 +157,8 @@ const ParentDashboardContent = () => {
     return null;
   }
 
-  // Use the selected student ID (or fallback to user.student_id for legacy support)
   const activeStudentId = selectedStudentId || user.student_id;
 
-  // Fetch student details
   const { data: student } = useQuery({
     queryKey: ['student', activeStudentId],
     queryFn: async () => {
@@ -172,7 +170,6 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Fetch upcoming center events for this student's center
   const { data: upcomingEvents = [] } = useQuery({
     queryKey: ['parent-upcoming-events', student?.center_id],
     queryFn: async () => {
@@ -191,34 +188,18 @@ const ParentDashboardContent = () => {
     enabled: !!student?.center_id,
   });
 
-  // Fetch latest broadcast message for this parent's conversation
   const { data: latestBroadcastMessage } = useQuery({
     queryKey: ['latest-broadcast-message', user.id],
     queryFn: async () => {
       if (!user.id) return null;
-      const { data: conversation, error: convError } = await supabase
-        .from('chat_conversations')
-        .select('id')
-        .eq('parent_user_id', user.id)
-        .maybeSingle();
-
-      if (convError || !conversation) return null;
-
-      const { data: message, error: msgError } = await supabase
-        .from('chat_messages')
-        .select('message_text, sent_at')
-        .eq('conversation_id', conversation.id)
-        .order('sent_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      if (msgError) console.error("Error fetching latest broadcast message:", msgError);
+      const { data: conversation } = await supabase.from('chat_conversations').select('id').eq('parent_user_id', user.id).maybeSingle();
+      if (!conversation) return null;
+      const { data: message } = await supabase.from('chat_messages').select('message_text, sent_at').eq('conversation_id', conversation.id).order('sent_at', { ascending: false }).limit(1).maybeSingle();
       return message;
     },
     enabled: !!user.id,
   });
 
-  // Attendance
   const { data: attendance = [] } = useQuery({
     queryKey: ['attendance', activeStudentId],
     queryFn: async () => {
@@ -230,7 +211,6 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Tests (for MiniCalendar tooltip and Test Report)
   const { data: testResults = [] } = useQuery({
     queryKey: ['test-results-parent-dashboard', activeStudentId],
     queryFn: async () => {
@@ -242,24 +222,17 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Lesson Records (student_chapters now links to lesson_plans)
   const { data: lessonRecords = [] } = useQuery({
     queryKey: ['student-lesson-records-mini-calendar', activeStudentId],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      let query = supabase.from('student_chapters').select(`
-        *,
-        lesson_plans(id, subject, chapter, topic, lesson_date)
-      `).eq('student_id', activeStudentId).order('completed_at', { ascending: false });
-      
-      const { data, error } = await query;
+      const { data, error } = await supabase.from('student_chapters').select('*, lesson_plans(id, subject, chapter, topic, lesson_date)').eq('student_id', activeStudentId).order('completed_at', { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!activeStudentId,
   });
 
-  // Homework Records
   const { data: homeworkStatus = [] } = useQuery({
     queryKey: ['student-homework-records', activeStudentId],
     queryFn: async () => {
@@ -271,7 +244,6 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Discipline Issues
   const { data: disciplineIssues = [] } = useQuery({
     queryKey: ['student-discipline-issues', activeStudentId],
     queryFn: async () => {
@@ -283,7 +255,6 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Fetch Invoices for Pending Fees
   const { data: invoices = [] } = useQuery({
     queryKey: ['student-invoices-dashboard', activeStudentId],
     queryFn: async () => {
@@ -295,270 +266,74 @@ const ParentDashboardContent = () => {
     enabled: !!activeStudentId,
   });
 
-  // Fetch all lesson plans for the center
   const { data: allLessonPlans = [] } = useQuery({
     queryKey: ["all-lesson-plans-for-report", user?.center_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
-        .from("lesson_plans")
-        .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url")
-        .eq("center_id", user.center_id)
-        .order("lesson_date", { ascending: false });
+      const { data, error } = await supabase.from("lesson_plans").select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!user?.center_id,
   });
 
-  // Fetch upcoming meetings for parent
   const { data: upcomingMeetings = [] } = useQuery({
     queryKey: ['parent-upcoming-meetings', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('meeting_attendees')
-        .select(`
-          *,
-          meetings(id, title, meeting_date, meeting_type, status, location, agenda)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data || []).filter((att: any) => {
-        if (!att.meetings?.meeting_date) return false;
-        const meetingDate = new Date(att.meetings.meeting_date);
-        return isFuture(meetingDate) || isToday(meetingDate);
-      }).slice(0, 5);
+      const { data } = await supabase.from('meeting_attendees').select('*, meetings(id, title, meeting_date, meeting_type, status, location, agenda)').eq('user_id', user.id).order('created_at', { ascending: false });
+      return (data || []).filter((att: any) => att.meetings?.meeting_date && (isFuture(new Date(att.meetings.meeting_date)) || isToday(new Date(att.meetings.meeting_date)))).slice(0, 5);
     },
     enabled: !!user?.id,
   });
 
-  // Calculate summary - handle null paid_amount
-  const pendingFees = useMemo(() => {
-    return invoices.reduce((sum, inv) => sum + (inv.total_amount - (inv.paid_amount || 0)), 0);
-  }, [invoices]);
+  const pendingFees = useMemo(() => invoices.reduce((sum, inv) => sum + (inv.total_amount - (inv.paid_amount || 0)), 0), [invoices]);
+  const attendancePercentage = attendance.length > 0 ? Math.round((attendance.filter(a => a.status === 'present').length / attendance.length) * 100) : 0;
 
-  // Attendance summary
-  const totalDays = attendance.length;
-  const presentDays = attendance.filter(a => a.status === 'present').length;
-  const absentDays = totalDays - presentDays;
-  const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-
-  // Filtered attendance by date range
-  const filteredAttendance = attendance.filter(a => {
-    if (!dateRange.from || !dateRange.to) return true;
-    const date = new Date(a.date);
-    return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-  });
-
-  // Filtered test results by date range
-  const filteredTestResults = testResults.filter((tr: any) => {
-    if (!dateRange.from || !dateRange.to) return true;
-    if (!tr.date_taken) return false;
-    const date = new Date(tr.date_taken);
-    return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-  });
-
-  // Test statistics
+  const filteredTestResults = testResults.filter((tr: any) => tr.date_taken && new Date(tr.date_taken) >= new Date(dateRange.from) && new Date(tr.date_taken) <= new Date(dateRange.to));
   const testStats = useMemo(() => {
     const filtered = filteredTestResults.filter((tr: any) => tr.tests);
-    if (filtered.length === 0) {
-      return { total: 0, average: 0, highest: 0, lowest: 0 };
-    }
-    const percentages = filtered.map((tr: any) => {
-      const total = tr.tests?.total_marks || 1;
-      return (tr.marks_obtained / total) * 100;
-    });
-    return {
-      total: filtered.length,
-      average: Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length),
-      highest: Math.round(Math.max(...percentages)),
-      lowest: Math.round(Math.min(...percentages)),
-    };
+    if (filtered.length === 0) return { total: 0, average: 0, highest: 0, lowest: 0 };
+    const percentages = filtered.map((tr: any) => (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100);
+    return { total: filtered.length, average: Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length), highest: Math.round(Math.max(...percentages)), lowest: Math.round(Math.min(...percentages)) };
   }, [filteredTestResults]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login-parent');
-  };
-
-  // --------------------------
-  // Helper: robust time formatter
-  // --------------------------
-  const formatTimeValue = (timeVal: string | null, dateVal: string | null) => {
-    if (!timeVal) return '-';
-
-    // If timeVal is just "HH:mm" or "HH:mm:ss", combine with dateVal
-    if (typeof timeVal === 'string' && /^\d{1,2}:\d{2}(:\d{2})?$/.test(timeVal)) {
-      let datePart = null;
-
-      if (dateVal) {
-        const dtemp = new Date(dateVal);
-        if (!isNaN(dtemp.getTime())) {
-          datePart = dtemp.toISOString().split('T')[0];
-        } else if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateVal)) {
-          datePart = dateVal.split('T')[0];
-        }
-      }
-
-      // Fallback to today's date if datePart not available
-      if (!datePart) {
-        datePart = new Date().toISOString().split('T')[0];
-      }
-
-      // Try combining date and time
-      const d = new Date(`${datePart}T${timeVal}`);
-      if (!isNaN(d.getTime())) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    // If direct parsing or combining fails, return original value or placeholder
-    return timeVal;
-  };
-
-  // --- New Dashboard Card Data Calculations ---
-
-  // Today's Homework
-  const todaysHomework = homeworkStatus.filter((hs: any) => 
-    hs.homework?.due_date && isToday(new Date(hs.homework.due_date)) && 
-    !['completed', 'checked'].includes(hs.status)
-  );
-
-  // Missed or Due Homeworks (excluding today's)
-  const overdueHomeworksOnly = homeworkStatus.filter((hs: any) => {
-    if (!hs.homework?.due_date) return false;
-    const dueDate = new Date(hs.homework.due_date);
-    const isNotCompleted = !['completed', 'checked'].includes(hs.status);
-    const isOverdue = isPast(dueDate) && !isToday(dueDate);
-    return isNotCompleted && isOverdue;
-  });
-
-  // Today's Attendance
+  const todaysHomework = homeworkStatus.filter((hs: any) => hs.homework?.due_date && isToday(new Date(hs.homework.due_date)) && !['completed', 'checked'].includes(hs.status));
+  const overdueHomeworksOnly = homeworkStatus.filter((hs: any) => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && !isToday(new Date(hs.homework.due_date)) && !['completed', 'checked'].includes(hs.status));
   const todaysAttendance = attendance.find(a => isToday(new Date(a.date)));
-
-  // Today's Lessons Studied
-  const todaysLessonsStudied = lessonRecords.filter((lr: any) => 
-    lr.completed_at && isToday(new Date(lr.completed_at))
-  );
-
-  // Today's Discipline Issues
-  const todaysDisciplineIssues = disciplineIssues.filter(di => 
-    di.issue_date && isToday(new Date(di.issue_date))
-  );
-
-  // NEW: Calculate Missed Chapters for Dashboard
+  const todaysLessonsStudied = lessonRecords.filter((lr: any) => lr.completed_at && isToday(new Date(lr.completed_at)));
   const missedChaptersCount = useMemo(() => {
     if (!student?.grade) return 0;
-    const studentGrade = student.grade;
+    const completedIds = new Set(lessonRecords.map(sc => sc.lesson_plan_id));
+    return allLessonPlans.filter(lp => lp.grade === student.grade && !completedIds.has(lp.id) && new Date(lp.lesson_date) <= today).length;
+  }, [student, lessonRecords, allLessonPlans]);
 
-    const completedLessonPlanIds = new Set(lessonRecords.map(sc => sc.lesson_plan_id));
-
-    const missed = allLessonPlans.filter(lp => 
-      lp.grade === studentGrade && // Filter by student's grade
-      !completedLessonPlanIds.has(lp.id) &&
-      new Date(lp.lesson_date) <= today // Only count lessons that should have been taught by now
-    );
-    return missed.length;
-  }, [student, lessonRecords, allLessonPlans, today]);
-
-
-  // NEW: Chapter-wise Performance Data Grouping for Parent Dashboard
   const chapterPerformanceData: ChapterPerformanceGroup[] = useMemo(() => {
     const dataMap = new Map<string, ChapterPerformanceGroup>();
-
-    // Filter studentChapters, testResults, homeworkStatus by dateRange
-    const filteredStudentChapters = lessonRecords.filter((sc: any) => {
-      if (!sc.completed_at) return false;
-      const date = new Date(sc.completed_at);
-      return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-    });
-
-    const filteredTestResults = testResults.filter((tr: any) => {
-      if (!tr.date_taken) return false;
-      const date = new Date(tr.date_taken);
-      return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-    });
-
-    const filteredHomeworkRecords = homeworkStatus.filter((hs: any) => {
-      if (!hs.homework?.due_date) return false;
-      const date = new Date(hs.homework.due_date);
-      return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-    });
-
-    // Process student_chapters (lesson evaluations)
-    filteredStudentChapters.forEach((sc: any) => {
-      if (sc.lesson_plan_id && sc.lesson_plans) {
-        if (!dataMap.has(sc.lesson_plan_id)) {
-          dataMap.set(sc.lesson_plan_id, {
-            lessonPlan: sc.lesson_plans,
-            studentChapters: [],
-            testResults: [],
-            homeworkRecords: [],
-          });
-        }
+    lessonRecords.forEach((sc: any) => {
+      if (sc.lesson_plan_id && sc.lesson_plans && new Date(sc.completed_at) >= new Date(dateRange.from) && new Date(sc.completed_at) <= new Date(dateRange.to)) {
+        if (!dataMap.has(sc.lesson_plan_id)) dataMap.set(sc.lesson_plan_id, { lessonPlan: sc.lesson_plans, studentChapters: [], testResults: [], homeworkRecords: [] });
         dataMap.get(sc.lesson_plan_id)?.studentChapters.push(sc);
       }
     });
+    return Array.from(dataMap.values()).sort((a, b) => new Date(b.lessonPlan.lesson_date).getTime() - new Date(a.lessonPlan.lesson_date).getTime());
+  }, [lessonRecords, dateRange]);
 
-    // Process test results
-    filteredTestResults.forEach((tr: any) => {
-      if (tr.tests?.lesson_plan_id) {
-        if (!dataMap.has(tr.tests.lesson_plan_id)) {
-          const correspondingLessonPlan = allLessonPlans.find(lp => lp.id === tr.tests.lesson_plan_id);
-          if (correspondingLessonPlan) {
-            dataMap.set(tr.tests.lesson_plan_id, {
-              lessonPlan: correspondingLessonPlan as any,
-              studentChapters: [],
-              testResults: [],
-              homeworkRecords: [],
-            });
-          } else {
-            return; // Skip if no corresponding lesson plan found
-          }
-        }
-        dataMap.get(tr.tests.lesson_plan_id)?.testResults.push(tr);
-      }
-    });
-
-    // Process homework records - match by subject instead of lesson_plan_id
-    filteredHomeworkRecords.forEach((hs: any) => {
-      const hwSubject = hs.homework?.subject;
-      if (hwSubject) {
-        const matchingLessonPlan = allLessonPlans.find(lp => lp.subject === hwSubject);
-        if (matchingLessonPlan && dataMap.has(matchingLessonPlan.id)) {
-          dataMap.get(matchingLessonPlan.id)?.homeworkRecords.push(hs);
-        }
-      }
-    });
-
-    // Sort by lesson plan date
-    return Array.from(dataMap.values()).sort((a, b) => 
-      new Date(b.lessonPlan.lesson_date).getTime() - new Date(a.lessonPlan.lesson_date).getTime()
-    );
-  }, [lessonRecords, testResults, homeworkStatus, dateRange, allLessonPlans]); // Added allLessonPlans to dependencies
-
-  const handleViewChapterDetails = (chapterGroup: ChapterPerformanceGroup) => {
-    setSelectedChapterGroup(chapterGroup);
-    setShowChapterDetailModal(true);
-  };
-
-  const StatCard = ({ title, value, icon: Icon, description, colorClass, bgColor, content }: any) => (
-    <Card
-      className="group relative border-none shadow-soft overflow-hidden transition-all duration-500 hover:shadow-strong hover:-translate-y-1 active:scale-[0.98]"
-    >
-      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
-      <CardContent className="p-4 md:p-6 relative z-10">
+  const StatCard = ({ title, value, icon: Icon, description, bgColor, content, isAlert }: any) => (
+    <Card className={cn("group border-none shadow-soft overflow-hidden transition-all duration-500 hover:shadow-strong hover:-translate-y-1 bg-white/40 backdrop-blur-md rounded-3xl border border-white/20", isAlert && value > 0 && "bg-rose-50/80 border-rose-100")}>
+      <CardContent className="p-6">
         <div className="flex justify-between items-start">
-          <div className="space-y-1 md:space-y-2">
-            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{title}</p>
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{title}</p>
             {value !== undefined ? (
-              <h3 className="text-xl md:text-3xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">{value}</h3>
+              <h3 className={cn("text-2xl font-black tracking-tight", isAlert && value > 0 ? "text-rose-600" : "text-slate-800")}>{value}</h3>
             ) : (
               <div className="mt-1">{content}</div>
             )}
-            {description && <p className="text-[8px] md:text-[10px] font-medium text-muted-foreground italic line-clamp-1">{description}</p>}
+            {description && <p className="text-[10px] font-bold text-slate-400 italic opacity-60">{description}</p>}
           </div>
-          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3", bgColor)}>
-            <Icon className={cn("h-4 w-4 md:h-6 md:w-6 text-primary")} />
+          <div className={cn("p-3 rounded-2xl transition-all duration-500 group-hover:scale-110", bgColor)}>
+            <Icon className={cn("h-5 w-5 text-primary", isAlert && value > 0 && "text-rose-600")} />
           </div>
         </div>
       </CardContent>
@@ -566,571 +341,239 @@ const ParentDashboardContent = () => {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
-              <User className="h-8 w-8 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-                Parent Portal
-              </h1>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <p className="text-muted-foreground text-sm font-medium">Monitoring {student?.name || "your child"}'s academic journey.</p>
-              </div>
+    <div className="space-y-10 animate-in fade-in duration-1000 pb-20">
+      {/* HUB HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="flex items-center gap-6">
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-violet-600 rounded-[2rem] blur opacity-25 group-hover:opacity-40 transition duration-1000" />
+            <div className="relative h-20 w-20 rounded-[2rem] bg-white shadow-strong border border-white/40 flex items-center justify-center">
+              <LayoutDashboard className="h-10 w-10 text-primary" />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-             <div className="bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary uppercase">{format(new Date(), 'EEEE, MMM d')}</span>
-             </div>
-             <Button variant="outline" onClick={handleLogout} className="rounded-2xl border-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all">
-                <LogOut className="h-4 w-4 mr-2" /> Logout
-             </Button>
+          <div className="space-y-1">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-primary to-violet-600">
+              Learning Odyssey
+            </h1>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <p className="text-muted-foreground text-xs font-black uppercase tracking-[0.2em] opacity-60">Guardian Command Terminal</p>
+            </div>
           </div>
         </div>
 
-        {/* STUDENT SELECTOR & INFO */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {hasMultipleChildren && (
-            <Card className="border-none shadow-strong bg-white/60 backdrop-blur-xl rounded-3xl overflow-hidden">
-              <CardHeader className="pb-2 border-b border-muted/20 bg-muted/5">
-                <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Select Child</CardTitle>
+        <div className="flex flex-wrap items-center gap-4">
+           <div className="bg-white/40 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/40 shadow-soft flex items-center gap-3">
+              <Zap className="h-4 w-4 text-amber-500" />
+              <span className="text-xs font-black text-slate-700 uppercase tracking-widest">{student?.name || "Initializing..."}</span>
+           </div>
+           <Button variant="outline" onClick={() => navigate('/login-parent')} className="rounded-2xl border-2 h-12 px-6 font-black uppercase text-xs tracking-widest hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all shadow-soft bg-white/40 backdrop-blur-md">
+              <LogOut className="h-4 w-4 mr-2" /> DISCONNECT
+           </Button>
+        </div>
+      </div>
+
+      {/* IDENTITY MATRIX */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <Card className="lg:col-span-3 border-none shadow-strong bg-white/40 backdrop-blur-xl rounded-[2.5rem] overflow-hidden border border-white/20">
+          <CardHeader className="p-8 pb-4 border-b border-slate-100/50">
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-primary" /> Institutional Identity Matrix
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            {student ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Academic Year</p>
+                  <p className="font-black text-2xl text-slate-800 tracking-tighter">2024-25</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Grade Level</p>
+                  <Badge className="bg-primary/10 text-primary border-none rounded-lg px-3 py-1 font-black text-sm uppercase tracking-widest">Grade {student.grade}</Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Enrollment ID</p>
+                  <p className="font-bold text-sm text-slate-600 uppercase tracking-widest">{activeStudentId?.slice(0, 8)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Institution</p>
+                  <p className="font-black text-sm text-indigo-600 truncate">{student.school_name || "Academy Central"}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-8 opacity-40 italic font-medium">Synchronizing student data...</div>
+            )}
+          </CardContent>
+        </Card>
+
+        {hasMultipleChildren && (
+          <Card className="border-none shadow-strong bg-white/40 backdrop-blur-xl rounded-[2.5rem] overflow-hidden border border-white/20">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Child Selector</CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 pt-0">
+              <Select value={selectedStudentId || ''} onValueChange={setSelectedStudentId}>
+                <SelectTrigger className="w-full h-14 bg-white/50 border-none focus:ring-primary/20 rounded-2xl shadow-soft font-black text-slate-700">
+                  <SelectValue placeholder="Select Profile" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-none rounded-2xl shadow-strong">
+                  {linkedStudents.map((child) => (
+                    <SelectItem key={child.id} value={child.id} className="font-black text-xs py-3">{child.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* QUICK STATS HUB */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <StatCard title="Communications" icon={Radio} bgColor="bg-blue-500/10" content={latestBroadcastMessage ? <p className="text-xs font-bold line-clamp-2">{latestBroadcastMessage.message_text}</p> : <p className="text-xs italic text-slate-400">No new alerts</p>} />
+        <StatCard title="Today's Load" value={todaysHomework.length} icon={Book} bgColor="bg-orange-500/10" description="active assignments" />
+        <StatCard title="Protocols Breached" value={overdueHomeworksOnly.length} icon={AlertTriangle} bgColor="bg-rose-500/10" description="past due date" isAlert />
+        <StatCard title="Net Liabilities" value={pendingFees > 0 ? `₹${pendingFees.toFixed(0)}` : '₹0'} icon={Wallet} bgColor="bg-purple-500/10" description="outstanding fees" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* CENTER COLUMN: ANALYTICS & CHAPTERS */}
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="border-none shadow-strong bg-white/40 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-slate-100 p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10"><BookOpen className="h-6 w-6 text-primary" /></div>
+                  Academic Progress Matrix
+                </CardTitle>
+                <div className="flex items-center gap-2 bg-white/60 p-1 rounded-xl border border-white/40 shadow-soft">
+                   <Input type="date" value={dateRange.from} onChange={e => setDateRange({...dateRange, from: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
+                   <span className="text-[10px] font-black text-slate-300">TO</span>
+                   <Input type="date" value={dateRange.to} onChange={e => setDateRange({...dateRange, to: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8">
+              <ParentChapterPerformanceTable chapterPerformanceData={chapterPerformanceData} onViewDetails={handleViewChapterDetails} />
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <Card className="border-none shadow-strong bg-white/40 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
+                <CardHeader className="border-b border-slate-100 p-6">
+                  <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <ClipboardCheck className="h-4 w-4 text-emerald-500" /> Evaluation Synthesis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {testStats.total > 0 ? (
+                    <div className="space-y-6">
+                       <div className="flex justify-between items-end">
+                          <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Mean Score</p>
+                            <p className="text-4xl font-black text-slate-800 tracking-tighter">{testStats.average}%</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Sample Size</p>
+                            <p className="text-xl font-black text-primary">{testStats.total} Tests</p>
+                          </div>
+                       </div>
+                       <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-100">
+                          <div>
+                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Peak Perf</p>
+                            <p className="text-lg font-black text-slate-700">{testStats.highest}%</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Min Perf</p>
+                            <p className="text-lg font-black text-slate-700">{testStats.lowest}%</p>
+                          </div>
+                       </div>
+                    </div>
+                  ) : <p className="text-center py-10 text-xs italic text-slate-400">No evaluation data identified.</p>}
+                </CardContent>
+             </Card>
+
+             <Card className="border-none shadow-strong bg-white/40 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
+                <CardHeader className="border-b border-slate-100 p-6">
+                  <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-indigo-500" /> Attendance Protocol
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                     <div className="flex justify-between items-end">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Presence Index</p>
+                          <p className="text-4xl font-black text-slate-800 tracking-tighter">{attendancePercentage}%</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Protocol Day</p>
+                          <p className="text-xl font-black text-indigo-600">{todaysAttendance ? todaysAttendance.status.toUpperCase() : "PENDING"}</p>
+                        </div>
+                     </div>
+                     <Button variant="ghost" className="w-full rounded-2xl border-none bg-indigo-50 text-indigo-600 font-black text-[10px] uppercase tracking-widest h-10" onClick={() => setShowMiniCalendar(!showMiniCalendar)}>
+                        {showMiniCalendar ? "Minimize Calendar" : "Expand Heatmap"}
+                     </Button>
+                  </div>
+                </CardContent>
+             </Card>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: CALENDAR & ALERTS */}
+        <div className="space-y-8">
+          {showMiniCalendar && (
+            <MiniCalendar attendance={attendance} lessonRecords={lessonRecords} tests={testResults} selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />
+          )}
+
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">
+             <CardContent className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                   <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md"><Zap className="h-6 w-6 text-amber-400" /></div>
+                   <Badge className="bg-white/20 text-white border-none font-black text-[9px] tracking-widest px-3">CRITICAL VECTOR</Badge>
+                </div>
+                <div className="space-y-1">
+                   <h4 className="text-xl font-black tracking-tight">System Summary</h4>
+                   <p className="text-slate-400 text-xs font-medium leading-relaxed">Integrated monitoring of academic and institutional milestones.</p>
+                </div>
+                <div className="pt-6 border-t border-white/10 grid grid-cols-2 gap-6">
+                   <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Missed</p>
+                      <p className="text-2xl font-black text-rose-500">{missedChaptersCount}</p>
+                   </div>
+                   <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Completed</p>
+                      <p className="text-2xl font-black text-emerald-500">{lessonRecords.length}</p>
+                   </div>
+                </div>
+             </CardContent>
+          </Card>
+
+          {upcomingMeetings.length > 0 && (
+            <Card className="border-none shadow-strong bg-white/40 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
+              <CardHeader className="p-6 border-b border-slate-100">
+                <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <Video className="h-4 w-4 text-blue-500" /> Upcoming Briefings
+                </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <Select value={selectedStudentId || ''} onValueChange={setSelectedStudentId}>
-                  <SelectTrigger className="w-full h-12 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
-                    <SelectValue placeholder="Select a child" />
-                  </SelectTrigger>
-                  <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
-                    {linkedStudents.map((child) => (
-                      <SelectItem key={child.id} value={child.id}>
-                        {child.name} {child.grade ? `(Grade ${child.grade})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <CardContent className="p-6 space-y-4">
+                {upcomingMeetings.map((att: any) => (
+                  <div key={att.id} className="p-4 rounded-2xl bg-white/60 border border-white/40 shadow-soft space-y-2">
+                    <p className="text-xs font-black text-slate-800 truncate">{att.meetings?.title}</p>
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400">
+                       <span className="uppercase tracking-widest">{format(new Date(att.meetings?.meeting_date), 'MMM dd')}</span>
+                       <span className="text-primary">{format(new Date(att.meetings?.meeting_date), 'p')}</span>
+                    </div>
+                  </div>
+                ))}
+                <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-primary" onClick={() => navigate('/parent-meetings')}>View Full Schedule</Button>
               </CardContent>
             </Card>
           )}
-
-          <Card className={cn("border-none shadow-strong bg-white/60 backdrop-blur-xl rounded-3xl overflow-hidden", hasMultipleChildren ? "lg:col-span-2" : "lg:col-span-3")}>
-            <CardHeader className="pb-2 border-b border-muted/20 bg-muted/5">
-              <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <User className="h-4 w-4" /> Academic Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {student ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Student Name</p>
-                    <p className="font-black text-lg text-primary">{student.name}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Current Grade</p>
-                    <Badge className="font-bold">{student.grade}</Badge>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Institution</p>
-                    <p className="font-bold text-sm line-clamp-1">{student.school_name || "Academy Central"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Parent Contact</p>
-                    <p className="font-bold text-sm">{student.contact_number}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center py-4">
-                  <p className="text-muted-foreground italic text-sm">No profile data available</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
-
-        {/* NEW SUMMARY CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <StatCard
-            title="Latest Broadcast"
-            icon={Radio}
-            bgColor="bg-blue-500/10"
-            content={latestBroadcastMessage ? (
-              <div className="min-h-[40px]">
-                <p className="text-sm font-bold line-clamp-2 leading-tight">{latestBroadcastMessage.message_text}</p>
-                <p className="text-[10px] text-muted-foreground font-medium mt-1">
-                  {format(new Date(latestBroadcastMessage.sent_at), 'MMM d')}
-                </p>
-              </div>
-            ) : <p className="text-sm font-medium italic text-muted-foreground">No new messages</p>}
-          />
-          <StatCard
-            title="Today's Homework"
-            value={todaysHomework.length}
-            icon={Book}
-            bgColor="bg-orange-500/10"
-            description="due today"
-          />
-          <StatCard
-            title="Overdue"
-            value={overdueHomeworksOnly.length}
-            icon={AlertTriangle}
-            bgColor="bg-red-500/10"
-            description="past due date"
-          />
-          <StatCard
-            title="Pending Fees"
-            value={pendingFees > 0 ? `₹${pendingFees.toFixed(0)}` : '₹0'}
-            icon={DollarSign}
-            bgColor="bg-purple-500/10"
-            description="outstanding"
-          />
-          <StatCard
-            title="Attendance"
-            value={todaysAttendance ? todaysAttendance.status.toUpperCase() : 'N/A'}
-            icon={CalendarIcon}
-            bgColor="bg-green-500/10"
-            description={todaysAttendance?.time_in ? `In: ${formatTimeValue(todaysAttendance.time_in, todaysAttendance.date)}` : 'No record'}
-          />
-          <StatCard
-            title="Today's Lessons"
-            value={todaysLessonsStudied.length}
-            icon={BookOpen}
-            bgColor="bg-blue-500/10"
-            description="chapters studied"
-          />
-          <StatCard
-            title="Missed"
-            value={missedChaptersCount}
-            icon={XCircle}
-            bgColor="bg-red-500/10"
-            description="chapters missed"
-          />
-          <StatCard
-            title="Test Stats"
-            value={testStats.total}
-            icon={ClipboardCheck}
-            bgColor="bg-indigo-500/10"
-            description={testStats.total > 0 ? `Avg: ${testStats.average}%` : 'no tests'}
-          />
-        </div>
-
-        {/* Upcoming Meetings Notification */}
-        {upcomingMeetings.length > 0 && (
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Video className="h-5 w-5 text-blue-600" /> Upcoming Meetings
-                <Badge variant="secondary">{upcomingMeetings.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upcomingMeetings.map((att: any) => (
-                  <div key={att.id} className={`p-3 rounded-lg border ${isToday(new Date(att.meetings?.meeting_date)) ? 'bg-blue-100 border-blue-300' : 'bg-background'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{att.meetings?.title}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {att.meetings?.meeting_type?.charAt(0).toUpperCase() + att.meetings?.meeting_type?.slice(1)} Meeting
-                          {att.meetings?.location && ` • ${att.meetings.location}`}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{format(new Date(att.meetings?.meeting_date), 'PPP')}</p>
-                        <p className="text-xs text-muted-foreground">{format(new Date(att.meetings?.meeting_date), 'p')}</p>
-                        {isToday(new Date(att.meetings?.meeting_date)) && <Badge className="mt-1">Today</Badge>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Upcoming Events */}
-        {upcomingEvents.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CalendarIcon className="h-5 w-5" /> Upcoming Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upcomingEvents.map((event: any) => (
-                  <div key={event.id} className={`p-3 rounded-lg border ${event.is_holiday ? 'bg-red-50 border-red-200' : 'bg-muted/50'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{event.title}</h4>
-                        <p className="text-sm text-muted-foreground">{event.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
-                        {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
-                        {isToday(new Date(event.event_date)) && <Badge className="ml-2">Today</Badge>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Attendance Toggle and Mini Calendar */}
-        <div className="flex justify-between items-center gap-2">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" /> Attendance Calendar
-          </h3>
-          <Button size="sm" onClick={() => setShowMiniCalendar(prev => !prev)}>
-            {showMiniCalendar ? 'Hide Calendar' : 'Show Calendar'}
-          </Button>
-        </div>
-        {showMiniCalendar && (
-          <MiniCalendar
-            attendance={attendance}
-            lessonRecords={lessonRecords}
-            tests={testResults}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-          />
-        )}
-
-        {/* Date Range Filter for Chapter Performance */}
-        {/* Date Range Filter - Global */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" /> Date Range Filter
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 flex-wrap">
-              <label className="text-sm font-medium">From:</label>
-              <Input
-                type="date"
-                value={dateRange.from}
-                onChange={e => setDateRange({...dateRange, from: e.target.value})}
-                className="w-[150px]"
-              />
-              <label className="text-sm font-medium">To:</label>
-              <Input
-                type="date"
-                value={dateRange.to}
-                onChange={e => setDateRange({...dateRange, to: e.target.value})}
-                className="w-[150px]"
-              />
-              <p className="text-xs text-muted-foreground ml-2">This filter applies to attendance, chapter performance, homework, and test reports below</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Chapter-wise Performance */}
-        <Card className="border-none shadow-strong bg-white/40 backdrop-blur-md rounded-3xl overflow-hidden border border-white/20">
-          <CardHeader className="bg-primary/5 border-b border-muted/20 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <BookOpen className="h-6 w-6 text-primary" />
-              </div>
-              Curricular Intelligence: Chapter Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {activeStudentId ? (
-              <div className="p-6">
-                <ParentChapterPerformanceTable
-                  chapterPerformanceData={chapterPerformanceData}
-                  onViewDetails={handleViewChapterDetails}
-                />
-              </div>
-            ) : (
-              <div className="text-center py-20 space-y-4">
-                <div className="p-4 rounded-full bg-muted/10 inline-block">
-                   <BookOpen className="h-10 w-10 text-muted-foreground/20" />
-                </div>
-                <p className="text-muted-foreground font-medium italic">Please select a student to view detailed analytics.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Test Report */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5" /> Test Report
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredTestResults.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No test results found for the selected date range.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Test Name</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Date Taken</TableHead>
-                      <TableHead>Marks Obtained</TableHead>
-                      <TableHead>Total Marks</TableHead>
-                      <TableHead>Percentage</TableHead>
-                      <TableHead>Grade</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTestResults.map((tr: any) => {
-                      const percentage = tr.tests?.total_marks 
-                        ? Math.round((tr.marks_obtained / tr.tests.total_marks) * 100)
-                        : 0;
-                      const getGradeColor = (pct: number) => {
-                        if (pct >= 90) return 'text-green-600 font-semibold';
-                        if (pct >= 75) return 'text-blue-600 font-semibold';
-                        if (pct >= 60) return 'text-yellow-600 font-semibold';
-                        if (pct >= 50) return 'text-orange-600 font-semibold';
-                        return 'text-red-600 font-semibold';
-                      };
-                      const getGrade = (pct: number) => {
-                        if (pct >= 90) return 'A+';
-                        if (pct >= 80) return 'A';
-                        if (pct >= 75) return 'B+';
-                        if (pct >= 70) return 'B';
-                        if (pct >= 60) return 'C+';
-                        if (pct >= 50) return 'C';
-                        return 'F';
-                      };
-                      return (
-                        <TableRow key={tr.id}>
-                          <TableCell className="font-medium">{tr.tests?.name || 'N/A'}</TableCell>
-                          <TableCell>{tr.tests?.subject || 'N/A'}</TableCell>
-                          <TableCell>{safeFormatDate(tr.date_taken, 'PPP')}</TableCell>
-                          <TableCell className="font-semibold">{tr.marks_obtained}</TableCell>
-                          <TableCell>{tr.tests?.total_marks || 'N/A'}</TableCell>
-                          <TableCell className={getGradeColor(percentage)}>{percentage}%</TableCell>
-                          <TableCell className={getGradeColor(percentage)}>{getGrade(percentage)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-            {filteredTestResults.length > 0 && (
-              <div className="mt-4 pt-4 border-t">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Total Tests</p>
-                    <p className="font-semibold">{testStats.total}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Average Score</p>
-                    <p className="font-semibold">{testStats.average}%</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Highest Score</p>
-                    <p className="font-semibold text-green-600">{testStats.highest}%</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Lowest Score</p>
-                    <p className="font-semibold text-red-600">{testStats.lowest}%</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Missed Chapters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-600" /> Missed Chapters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {missedChaptersCount === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No missed chapters. Great job!</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Chapter</TableHead>
-                      <TableHead>Topic</TableHead>
-                      <TableHead>Lesson Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allLessonPlans
-                      .filter(lp => {
-                        if (!student?.grade) return false;
-                        const studentGrade = student.grade;
-                        const completedLessonPlanIds = new Set(lessonRecords.map(sc => sc.lesson_plan_id));
-                        return (
-                          lp.grade === studentGrade &&
-                          !completedLessonPlanIds.has(lp.id) &&
-                          new Date(lp.lesson_date) <= today
-                        );
-                      })
-                      .map((lp) => (
-                        <TableRow key={lp.id}>
-                          <TableCell className="font-medium">{lp.subject || 'N/A'}</TableCell>
-                          <TableCell>{lp.chapter || 'N/A'}</TableCell>
-                          <TableCell>{lp.topic || 'N/A'}</TableCell>
-                          <TableCell>{safeFormatDate(lp.lesson_date, 'PPP')}</TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Overdue Homework */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" /> Overdue Homework
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {overdueHomeworksOnly.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No overdue homework. Keep up the good work!</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Due Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {overdueHomeworksOnly.map((hs: any) => (
-                      <TableRow key={hs.id}>
-                        <TableCell className="font-medium">{hs.homework?.title || 'N/A'}</TableCell>
-                        <TableCell>{hs.homework?.subject || 'N/A'}</TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center gap-1 ${
-                            hs.status === 'completed' || hs.status === 'checked' 
-                              ? 'text-green-600' 
-                              : hs.status === 'in_progress' 
-                              ? 'text-yellow-600' 
-                              : 'text-red-600'
-                          }`}>
-                            {hs.status === 'completed' || hs.status === 'checked' ? (
-                              <CheckCircle className="h-4 w-4" />
-                            ) : hs.status === 'in_progress' ? (
-                              <Clock className="h-4 w-4" />
-                            ) : (
-                              <XCircle className="h-4 w-4" />
-                            )}
-                            {hs.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-red-600 font-semibold">
-                          {hs.homework?.due_date ? safeFormatDate(hs.homework.due_date, 'PPP') : 'N/A'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Events */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" /> Upcoming Events
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {upcomingEvents.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No upcoming events.</p>
-            ) : (
-              <div className="space-y-3">
-                {upcomingEvents.map((event: any) => (
-                  <div key={event.id} className={`p-3 rounded-lg border ${event.is_holiday ? 'bg-red-50 border-red-200' : 'bg-muted/50'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{event.title}</h4>
-                        <p className="text-sm text-muted-foreground">{event.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
-                        {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" /> Daily Attendance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto max-h-64">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Time In</TableHead>
-                    <TableHead>Time Out</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAttendance.map(a => (
-                    <TableRow key={a.id}>
-                      <TableCell>{safeFormatDate(a.date, "PPP")}</TableCell>
-                      <TableCell className={a.status === 'present' ? 'text-green-600' : 'text-red-600'}>
-                        {a.status}
-                      </TableCell>
-
-                      <TableCell>
-                        {formatTimeValue(a.time_in, a.date)}
-                      </TableCell>
-
-                      <TableCell>
-                        {formatTimeValue(a.time_out, a.date)}
-                      </TableCell>
-
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Chapter Detail Modal */}
-      <ParentChapterDetailModal
-        open={showChapterDetailModal}
-        onOpenChange={setShowChapterDetailModal}
-        chapterGroup={selectedChapterGroup}
-      />
+      <ParentChapterDetailModal open={showChapterDetailModal} onOpenChange={setShowChapterDetailModal} chapterGroup={selectedChapterGroup} />
     </div>
   );
 };

@@ -273,26 +273,31 @@ export default function PreschoolActivities() {
   // Filtering is now handled by the useQuery hook
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Preschool Journal</h1>
-          <p className="text-muted-foreground text-lg">Document and share student engagement and creative milestones.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Creative Journal
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Document and share student creative milestones.</p>
+          </div>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-3">
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by Grade" />
+            <SelectTrigger className="w-[140px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+              <SelectValue placeholder="Grade" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
               <SelectItem value="all">All Grades</SelectItem>
               {uniqueGrades.map((g) => (
                 <SelectItem key={g} value={g}>{g}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => setShowActivityTypeManagement(true)}>
-            <Settings className="h-4 w-4 mr-2" /> Manage Types
+          <Button variant="outline" onClick={() => setShowActivityTypeManagement(true)} className="rounded-xl h-11">
+            <Settings className="h-4 w-4 mr-2" /> Categories
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
@@ -406,77 +411,95 @@ export default function PreschoolActivities() {
         </div>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Activity Log</CardTitle>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Camera className="h-6 w-6 text-primary" />
+            </div>
+            Activity Stream
+          </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="p-6">
           {isLoading ? (
-            <div className="flex justify-center py-12"><Star className="h-8 w-8 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            </div>
           ) : activities.length === 0 ? (
-            <p className="text-muted-foreground text-center py-12 italic">No activities recorded for the current selection.</p>
+            <div className="text-center py-12 space-y-3">
+              <div className="mx-auto w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center">
+                <Camera className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+              <p className="text-muted-foreground font-medium">No activities recorded for selected filters.</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {activities.map((activity: any) => (
-                <div key={activity.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft hover:shadow-medium transition-all group relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft" onClick={() => handleEditClick(activity)}>
+                <div
+                  key={activity.id}
+                  className="rounded-3xl border border-white/40 bg-white/50 p-6 shadow-medium group relative hover:shadow-strong transition-all duration-300 backdrop-blur-sm"
+                >
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleEditClick(activity)}>
                       <Edit className="h-4 w-4 text-primary" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                       <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-                          <Camera className="h-6 w-6" />
-                       </div>
-                       <div>
-                          <h3 className="font-bold text-xl leading-tight">{activity.students?.name}</h3>
-                          <div className="flex gap-2 mt-1">
-                             <Badge variant="outline" className="text-[10px]">{activity.activity_types?.name || 'Activity'}</Badge>
-                             <Badge className="text-[10px] bg-primary/10 text-primary border-none">{activity.students?.grade}</Badge>
-                          </div>
-                       </div>
+
+                  <div className="space-y-5">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          {activity.activity_types?.name || 'Milestone'}
+                        </Badge>
+                        <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          Grade {activity.students?.grade}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="font-black text-xl leading-tight text-slate-800 group-hover:text-primary transition-colors">{activity.students?.name}</h3>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{activity.activities?.title}</p>
+                      </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-bold text-sm text-foreground">{activity.activities?.title}</h4>
-                        <p className="text-sm text-muted-foreground line-clamp-3 mt-1">{activity.activities?.description || 'No description'}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed border-l-2 border-primary/10 pl-3">
+                      {activity.activities?.description || 'Creative details pending...'}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {format(new Date(activity.activities?.activity_date || activity.created_at), "MMM d, yyyy")}
                       </div>
 
-                      <div className="flex flex-wrap gap-x-4 gap-y-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-tighter">
-                          <CalendarIcon className="h-3.5 w-3.5" />
-                          {format(new Date(activity.activities?.activity_date || activity.created_at), "PPP")}
+                      {activity.involvement_score && (
+                        <div className="flex items-center gap-1.5 bg-orange-500/10 text-orange-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter">
+                          <Star className="h-3.5 w-3.5 fill-current" />
+                          Lvl {activity.involvement_score}
                         </div>
-                        {activity.involvement_score && (
-                          <div className="flex items-center gap-1 text-xs font-bold text-orange-500 uppercase tracking-tighter">
-                            <Star className="h-3.5 w-3.5 fill-current" />
-                            Engagement: {activity.involvement_score}/5
-                          </div>
+                      )}
+                    </div>
+
+                    {(activity.activities?.photo_url || activity.activities?.video_url) && (
+                      <div className="flex gap-2 pt-2">
+                        {activity.activities?.photo_url && (
+                          <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2 h-9 text-xs font-bold" asChild>
+                            <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                              <Camera className="h-3.5 w-3.5 mr-2" /> PHOTO
+                            </a>
+                          </Button>
+                        )}
+                        {activity.activities?.video_url && (
+                          <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2 h-9 text-xs font-bold" asChild>
+                            <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                              <Video className="h-3.5 w-3.5 mr-2" /> VIDEO
+                            </a>
+                          </Button>
                         )}
                       </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      {activity.activities?.photo_url && (
-                        <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2" asChild>
-                          <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Camera className="h-4 w-4 mr-2" /> Photo
-                          </a>
-                        </Button>
-                      )}
-                      {activity.activities?.video_url && (
-                        <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2" asChild>
-                          <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Video className="h-4 w-4 mr-2" /> Video
-                          </a>
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
               ))}

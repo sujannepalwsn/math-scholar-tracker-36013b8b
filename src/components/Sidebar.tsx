@@ -214,7 +214,7 @@ export default function Sidebar({
       <div
         className={cn(
           "fixed top-0 left-0 h-screen z-20 hidden md:flex flex-col border-r print:hidden",
-          "bg-card text-card-foreground shadow-soft",
+          "bg-white/40 backdrop-blur-xl text-card-foreground shadow-soft",
           mounted ? "transition-all duration-300" : "",
           isCollapsed ? "w-20" : "w-64"
         )}
@@ -247,7 +247,7 @@ export default function Sidebar({
       {isMobileOpen && <style>{`body { overflow: hidden; }`}</style>}
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-lg flex flex-col transition-transform duration-300 ease-out z-50",
+          "fixed top-0 left-0 h-screen w-72 bg-white/90 backdrop-blur-2xl text-card-foreground shadow-lg flex flex-col transition-transform duration-300 ease-out z-50",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}

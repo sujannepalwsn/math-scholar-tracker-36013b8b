@@ -225,18 +225,18 @@ export default function Dashboard() {
   const StatCard = ({ title, value, icon: Icon, description, colorClass, path }: any) => (
     <Card
       onClick={() => handleCardClick(path)}
-      className="group relative border-none shadow-soft overflow-hidden transition-all duration-500 cursor-pointer hover:shadow-strong hover:-translate-y-1 active:scale-[0.98]"
+      className="group relative border-none shadow-strong overflow-hidden transition-all duration-500 cursor-pointer hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] rounded-[2rem] bg-white/40 backdrop-blur-md border border-white/20"
     >
       <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
-      <CardContent className="p-4 md:p-6 relative z-10">
+      <CardContent className="p-6 relative z-10">
         <div className="flex justify-between items-start">
-          <div className="space-y-1 md:space-y-2">
-            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{title}</p>
-            <h3 className="text-xl md:text-3xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">{value}</h3>
-            {description && <p className="text-[8px] md:text-[10px] font-medium text-muted-foreground italic line-clamp-1">{description}</p>}
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{title}</p>
+            <h3 className="text-3xl font-black tracking-tighter group-hover:text-primary transition-colors duration-300">{value}</h3>
+            {description && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-70">{description}</p>}
           </div>
-          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3", colorClass)}>
-            <Icon className="h-4 w-4 md:h-6 md:w-6 text-primary" />
+          <div className={cn("p-3 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-soft", colorClass)}>
+            <Icon className="h-6 w-6 text-primary" />
           </div>
         </div>
       </CardContent>
@@ -244,21 +244,24 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Center Dashboard
+    <div className="space-y-10 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-primary to-violet-600 uppercase">
+            Command Center
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Real-time overview of your institution's health.</p>
+            <p className="text-muted-foreground text-sm font-bold uppercase tracking-[0.2em] opacity-70">Institutional Performance Oversight</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 text-primary">
-            <CalendarIcon className="h-4 w-4" />
-            {format(new Date(), "EEEE, MMMM do, yyyy")}
+        <div className="bg-white/40 backdrop-blur-md px-6 py-3 rounded-[2rem] border border-white/40 shadow-soft flex items-center gap-4">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground leading-none">Fiscal/Temporal Marker</span>
+            <span className="font-black text-slate-700 text-sm">{format(new Date(), "EEEE, MMM do, yyyy")}</span>
           </div>
         </div>
       </div>

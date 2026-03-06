@@ -179,23 +179,29 @@ export default function CenterSettings() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Center Configuration</h1>
-          <p className="text-muted-foreground text-lg">Personalize your center's identity and visual experience.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Center Control
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Configure institutional parameters and visual identity.</p>
+          </div>
         </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Basic Information */}
-        <Card className="border-none shadow-medium overflow-hidden h-fit">
-          <CardHeader className="bg-muted/30 pb-4 border-b">
-            <CardTitle className="text-xl flex items-center gap-2 text-primary">
-              <Building className="h-5 w-5" />
-              Organizational Identity
+        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Building className="h-6 w-6 text-primary" />
+              </div>
+              Identity Matrix
             </CardTitle>
-            <CardDescription>Core details about your educational center.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -262,13 +268,14 @@ export default function CenterSettings() {
         </Card>
 
         {/* Logo & Branding */}
-        <Card className="border-none shadow-medium overflow-hidden h-fit">
-          <CardHeader className="bg-muted/30 pb-4 border-b">
-            <CardTitle className="text-xl flex items-center gap-2 text-primary">
-              <Image className="h-5 w-5" />
-              Visual Branding
+        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Image className="h-6 w-6 text-primary" />
+              </div>
+              Visual Assets
             </CardTitle>
-            <CardDescription>Customize your center's digital presence.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -458,10 +465,11 @@ export default function CenterSettings() {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-4">
         <Button
           variant="outline"
           size="lg"
+          className="rounded-2xl border-2 h-14 px-8 font-black uppercase text-xs tracking-widest"
           onClick={() => {
             const defaultTheme: CenterTheme = {
               primary: "#6366f1",
@@ -490,9 +498,19 @@ export default function CenterSettings() {
           onClick={() => updateCenterMutation.mutate()}
           disabled={!name || updateCenterMutation.isPending}
           size="lg"
+          className="rounded-2xl shadow-strong h-14 px-10 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all"
         >
-          <Save className="h-4 w-4 mr-2" />
-          {updateCenterMutation.isPending ? "Saving..." : "Save Settings"}
+          {updateCenterMutation.isPending ? (
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              <span>COMMITTING...</span>
+            </div>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              SYNCHRONIZE SETTINGS
+            </>
+          )}
         </Button>
       </div>
     </div>

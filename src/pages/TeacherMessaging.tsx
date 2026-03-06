@@ -140,23 +140,30 @@ export default function TeacherMessaging() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Staff Messenger</h1>
-          <p className="text-muted-foreground text-lg">Direct communication line with center administration.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Administrative Liaison
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Secure communication link with institutional leadership.</p>
+          </div>
         </div>
       </div>
 
-      <Card className="h-[700px] flex flex-col border-none shadow-strong overflow-hidden">
-        <CardHeader className="bg-primary text-primary-foreground pb-4 shadow-soft relative z-10">
-          <CardTitle className="flex items-center gap-3 text-xl">
-             <div className="bg-white/20 p-2 rounded-xl">
-                <MessageSquare className="h-5 w-5 text-white" />
+      <Card className="h-[700px] flex flex-col border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong relative z-10 border-b border-white/10">
+          <CardTitle className="flex items-center gap-3 text-xl font-black tracking-tight">
+             <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
+                <MessageSquare className="h-6 w-6 text-white" />
              </div>
-             Center Administration
+             <div className="space-y-0.5">
+               <span>Institution Command</span>
+               <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Official channel for {conversation.centers?.name || "Center"}</p>
+             </div>
           </CardTitle>
-          <p className="text-sm text-primary-foreground/80 font-medium">Official channel for {conversation.centers?.name || "Center"}</p>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col p-0">
           <ScrollArea className="flex-1 p-4">

@@ -208,84 +208,105 @@ export default function ViewRecords() {
   }, [studentDetailAttendance]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Attendance Archive</h1>
-          <p className="text-muted-foreground text-lg">
-            Comprehensive history of student presence and punctuality.
-          </p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Attendance Archive
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Historical audit of institutional presence and punctuality.</p>
+          </div>
         </div>
-        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
-          <CalendarIcon className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-primary">{format(selectedDate, 'MMMM d, yyyy')}</span>
+        <div className="bg-white/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/40 shadow-soft flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+          </div>
+          <span className="font-bold text-slate-700 text-sm">{format(selectedDate, 'MMMM d, yyyy')}</span>
         </div>
       </div>
 
       {/* Filters Row */}
-      <Card className="p-6 border-none shadow-soft overflow-hidden">
-        <div className="flex flex-col md:flex-row gap-4 md:items-center">
-          {/* Grade Filter */}
-          <Select value={gradeFilter} onValueChange={setGradeFilter}>
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="Grade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Grades</SelectItem>
-              {Array.from(new Set(students.map(s => s.grade))).map(g => (
-                <SelectItem key={g} value={g}>{g}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="w-[140px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
+              <Select value={gradeFilter} onValueChange={setGradeFilter}>
+                <SelectTrigger className="h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Grade" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+                  <SelectItem value="all">All Grades</SelectItem>
+                  {Array.from(new Set(students.map(s => s.grade))).map(g => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Date Picker */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full md:w-[220px] justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Historical Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full h-11 justify-start text-left font-normal bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl shadow-sm",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-2xl border-none shadow-strong" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={date => date && setSelectedDate(date)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" onClick={exportToCSV} className="rounded-xl h-11 border-2 font-bold px-4">
+                <Download className="mr-2 h-4 w-4" /> EXPORT CSV
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={date => date && setSelectedDate(date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-
-          {/* Export / Print */}
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" size="sm" onClick={exportToCSV}>
-              <Download className="mr-2 h-4 w-4" /> Export CSV
-            </Button>
-            <Button variant="outline" size="sm" onClick={handlePrint}>
-              <Printer className="mr-2 h-4 w-4" /> Print
-            </Button>
+              <Button variant="outline" size="sm" onClick={handlePrint} className="rounded-xl h-11 border-2 font-bold px-4">
+                <Printer className="mr-2 h-4 w-4" /> PRINT
+              </Button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* Attendance Table */}
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl">Daily Log: {format(selectedDate, "MMMM d")}</CardTitle>
-              <CardDescription className="flex gap-3 mt-1">
-                <Badge className="bg-green-500/10 text-green-600 border-none">{presentCount} Present</Badge>
-                <Badge variant="destructive" className="bg-red-500/10 text-red-600 border-none">{absentCount} Absent</Badge>
-              </CardDescription>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <CardTitle className="text-xl font-black flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Clock className="h-6 w-6 text-primary" />
+                </div>
+                Daily Log Analysis
+              </CardTitle>
+              <div className="flex gap-4 ml-11">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">{presentCount} Present</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">{absentCount} Absent</span>
+                </div>
+              </div>
             </div>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Snapshot: {format(selectedDate, "MMMM d, yyyy")}</p>
           </div>
         </CardHeader>
         <CardContent>
@@ -306,22 +327,27 @@ export default function ViewRecords() {
                 </TableHeader>
                 <TableBody>
                   {records.map(r => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.students.name}</TableCell>
-                      <TableCell>{r.students.grade}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={r.status === "present" ? "default" : "destructive"}
-                          className={r.status === "present" ? "bg-secondary hover:bg-secondary/80" : ""}
-                        >
-                          {r.status}
+                    <TableRow key={r.id} className="group transition-all duration-300 hover:bg-white/60">
+                      <TableCell className="px-6 py-4 font-black text-slate-700 group-hover:text-primary transition-colors">{r.students.name}</TableCell>
+                      <TableCell className="px-6 py-4">
+                        <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold">
+                          Grade {r.students.grade}
                         </Badge>
                       </TableCell>
-                      <TableCell>{r.time_in || "-"}</TableCell>
-                      <TableCell>{r.time_out || "-"}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleStudentClick(r.student_id, r.students.name, r.students.grade)}>
-                          <User className="h-4 w-4" />
+                      <TableCell className="px-6 py-4">
+                        <div className={cn(
+                          "inline-flex items-center gap-1.5 font-black uppercase text-[10px] tracking-tight",
+                          r.status === 'present' ? "text-green-600" : "text-red-600"
+                        )}>
+                          <div className={cn("h-1.5 w-1.5 rounded-full", r.status === 'present' ? "bg-green-600" : "bg-red-600")} />
+                          {r.status}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-6 py-4 font-bold text-indigo-600 text-xs">{r.time_in || "-"}</TableCell>
+                      <TableCell className="px-6 py-4 font-bold text-indigo-400 text-xs">{r.time_out || "-"}</TableCell>
+                      <TableCell className="px-6 py-4 text-right">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft group-hover:scale-105 transition-all" onClick={() => handleStudentClick(r.student_id, r.students.name, r.students.grade)}>
+                          <User className="h-4 w-4 text-slate-500" />
                         </Button>
                       </TableCell>
                     </TableRow>

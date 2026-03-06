@@ -185,18 +185,27 @@ export default function ClassRoutine() {
   }));
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Academic Schedule</h1>
-          <p className="text-muted-foreground text-sm">Define periods and manage class routines.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Scheduling Matrix
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Define and manage institutional class routines.</p>
+          </div>
         </div>
       </div>
 
       <Tabs defaultValue="schedule" className="w-full">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="schedule" className="flex-1 sm:flex-none">Schedule</TabsTrigger>
-          <TabsTrigger value="periods" className="flex-1 sm:flex-none">Periods</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-14 bg-white/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-white/40 shadow-soft">
+          <TabsTrigger value="schedule" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Institutional Schedule
+          </TabsTrigger>
+          <TabsTrigger value="periods" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Time Slots
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule" className="space-y-4">
@@ -289,31 +298,50 @@ export default function ClassRoutine() {
           </div>
 
           {schedulesLoading ? (
-            <div className="flex justify-center py-8"><Clock className="h-6 w-6 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {schedulesByDay.map(day => (
-                <Card key={day.value} className="overflow-hidden">
-                  <CardHeader className="bg-muted/30 py-3 border-b">
-                    <CardTitle className="text-base flex items-center gap-2 text-primary">
-                      <CalendarIcon className="h-4 w-4" /> {day.label}
+                <Card key={day.value} className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+                  <CardHeader className="border-b border-muted/20 bg-primary/5 py-4">
+                    <CardTitle className="text-base font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
+                      <div className="p-1.5 rounded-lg bg-primary/10">
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                      </div>
+                      {day.label}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     {day.schedules.length === 0 ? (
-                      <p className="text-muted-foreground text-sm p-4">No classes</p>
+                      <div className="p-8 text-center">
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest opacity-40 italic text-pretty">No Sessions Programmed</p>
+                      </div>
                     ) : (
-                      <div className="divide-y">
+                      <div className="divide-y divide-muted/10">
                         {day.schedules.map((schedule: any) => (
-                          <div key={schedule.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium truncate">{schedule.subject}</div>
-                              <div className="text-xs text-muted-foreground">P{schedule.class_periods?.period_number} · {schedule.class_periods?.start_time}-{schedule.class_periods?.end_time}</div>
-                              {schedule.teachers?.name && <div className="text-xs text-muted-foreground">{schedule.teachers.name}</div>}
+                          <div key={schedule.id} className="group flex items-center justify-between p-4 transition-all duration-300 hover:bg-white/60">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="font-black text-slate-800 text-sm group-hover:text-primary transition-colors truncate">{schedule.subject}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 text-[10px] font-black uppercase">Slot {schedule.class_periods?.period_number}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{schedule.class_periods?.start_time} - {schedule.class_periods?.end_time}</span>
+                              </div>
+                              {schedule.teachers?.name && (
+                                <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
+                                  <div className="h-1 w-1 rounded-full bg-slate-300" />
+                                  {schedule.teachers.name}
+                                </div>
+                              )}
                             </div>
-                            <div className="flex gap-1 shrink-0">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditSchedule(schedule)}><Edit className="h-3 w-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteScheduleMutation.mutate(schedule.id)}><Trash2 className="h-3 w-3" /></Button>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleEditSchedule(schedule)}>
+                                <Edit className="h-3.5 w-3.5 text-primary" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteScheduleMutation.mutate(schedule.id)}>
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
                             </div>
                           </div>
                         ))}

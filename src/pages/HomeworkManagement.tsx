@@ -176,13 +176,47 @@ export default function HomeworkManagement() {
   const uniqueSubjects = Array.from(new Set(homeworkList.map(hw => hw.subject))).sort();
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div><h1 className="text-4xl font-extrabold tracking-tight">Homework Hub</h1><p className="text-muted-foreground text-lg">Assign tasks and track student submission progress.</p></div>
-        <div className="flex gap-2 items-center">
-          <Select value={gradeFilter} onValueChange={setGradeFilter}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Grade" /></SelectTrigger><SelectContent><SelectItem value="all">All Grades</SelectItem>{uniqueGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select>
-          <Select value={subjectFilter} onValueChange={setSubjectFilter}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent><SelectItem value="all">All Subjects</SelectItem>{uniqueSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}><DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Create Homework</Button></DialogTrigger><DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle><DialogDescription>Enter details below.</DialogDescription></DialogHeader>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Homework Hub
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Assign tasks and track student submission progress.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+          <Select value={gradeFilter} onValueChange={setGradeFilter}>
+            <SelectTrigger className="w-[140px] h-10 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+              <SelectValue placeholder="Grade" />
+            </SelectTrigger>
+            <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+              <SelectItem value="all">All Grades</SelectItem>
+              {uniqueGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+            <SelectTrigger className="w-[140px] h-10 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+              <SelectValue placeholder="Subject" />
+            </SelectTrigger>
+            <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl">
+              <SelectItem value="all">All Subjects</SelectItem>
+              {uniqueSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="rounded-xl shadow-medium">
+                <Plus className="h-4 w-4 mr-2" /> Create Homework
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle>
+                <DialogDescription>Enter details below.</DialogDescription>
+              </DialogHeader>
             <div className="space-y-4 py-4">
               <Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} />
               <div className="grid grid-cols-2 gap-4">
@@ -196,20 +230,81 @@ export default function HomeworkManagement() {
             </div></DialogContent></Dialog>
         </div>
       </div>
-      <Card className="border-none shadow-medium overflow-hidden"><CardHeader className="bg-muted/30 pb-4"><CardTitle className="text-xl">Active Assignments</CardTitle></CardHeader><CardContent className="pt-6">
-        {isLoading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : homeworkList.length === 0 ? <p className="text-muted-foreground text-center">No homework found.</p> :
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{homeworkList.map((hw: any) => (
-            <div key={hw.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft group relative">
-              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2"><Button variant="ghost" size="sm" onClick={() => handleEditClick(hw)}><Edit className="h-4 w-4" /></Button><Button variant="destructive" size="sm" onClick={() => deleteHomeworkMutation.mutate(hw.id)}><Trash2 className="h-4 w-4" /></Button></div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4"><div className="p-3 rounded-2xl bg-primary/10 text-primary"><Book className="h-6 w-6" /></div><div><h3 className="font-bold text-xl">{hw.title}</h3><div className="flex gap-2 mt-1"><Badge variant="outline">{hw.subject}</Badge><Badge className="bg-indigo-500/10 text-indigo-600 border-none">Grade {hw.grade}</Badge></div></div></div>
-                <p className="text-sm text-muted-foreground line-clamp-2">{hw.description}</p>
-                <div className="flex items-center gap-2 text-sm font-bold text-destructive"><Clock className="h-4 w-4" />Due: {format(new Date(hw.due_date), "PPP")}</div>
-                <div className="flex gap-3 pt-2"><Button variant="default" size="sm" className="flex-1 rounded-xl" onClick={() => handleManageStatusClick(hw)}><Users className="h-4 w-4 mr-2" /> Submissions</Button></div>
-              </div>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Book className="h-6 w-6 text-primary" />
             </div>
-          ))}</div>}
-      </CardContent></Card>
+            Active Assignments
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : homeworkList.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <div className="mx-auto w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center">
+                <Book className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+              <p className="text-muted-foreground font-medium">No homework found for selected filters.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {homeworkList.map((hw: any) => (
+                <div
+                  key={hw.id}
+                  className="rounded-3xl border border-white/40 bg-white/50 p-6 shadow-medium group relative hover:shadow-strong transition-all duration-300 backdrop-blur-sm"
+                >
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80" onClick={() => handleEditClick(hw)}>
+                      <Edit className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-destructive/10" onClick={() => deleteHomeworkMutation.mutate(hw.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          {hw.subject}
+                        </Badge>
+                        <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          Grade {hw.grade}
+                        </Badge>
+                      </div>
+                      <h3 className="font-black text-xl leading-tight text-slate-800">{hw.title}</h3>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{hw.description}</p>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/5 text-destructive font-bold text-xs">
+                        <Clock className="h-3.5 w-3.5" />
+                        {format(new Date(hw.due_date), "MMM d, yyyy")}
+                      </div>
+
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="rounded-xl shadow-soft hover:shadow-medium transition-all px-4"
+                        onClick={() => handleManageStatusClick(hw)}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Track
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}><DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Status for: {selectedHomeworkForStatus?.title}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">{studentStatuses.length === 0 ? <p className="text-center">No students assigned.</p> :
           <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Status</TableHead><TableHead>Remarks</TableHead><TableHead>Action</TableHead></TableRow></TableHeader><TableBody>{studentStatuses.map((s: any) => (
