@@ -5,7 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/', // Use absolute paths for proper SPA routing and MIME type handling
+  base: '/',
   server: {
     host: "::",
     port: 8080,
@@ -21,9 +21,15 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
   },
   build: {
+    target: 'esnext',
+    minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs'],
+          supabase: ['@supabase/supabase-js'],
+        },
       },
     },
   },
