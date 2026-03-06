@@ -9,11 +9,13 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
   const centerId = user?.center_id;
   const role = user?.role;
@@ -24,7 +26,7 @@ export default function Dashboard() {
   const { data: students = [] } = useQuery({
     queryKey: ["students", centerId],
     queryFn: async () => {
-      let query = supabase.from("students").select("*").order("name");
+      let query = supabase.from("students").select("*").eq("is_active", true).order("name");
       if (role !== "admin" && centerId) query = query.eq("center_id", centerId);
       const { data, error } = await query;
       if (error) throw error;
@@ -36,18 +38,16 @@ export default function Dashboard() {
   const grades = [...new Set(students.map((s) => s.grade))];
 
   const { data: allAttendance = [] } = useQuery({
-    queryKey: ["attendance", centerId],
+    queryKey: ["attendance-today", centerId, today],
     queryFn: async () => {
-      const studentIds = students.map((s) => s.id);
-      if (!studentIds.length) return [];
-      const { data, error } = await supabase.from("attendance").select("*").in("student_id", studentIds);
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("attendance").select("student_id, status, date").eq("center_id", centerId).eq("date", today);
       if (error) throw error;
       return data || [];
     },
-    enabled: students.length > 0,
+    enabled: !!centerId,
   });
 
-  // Fetch test results for performance tracking
   const { data: recentTestResults = [] } = useQuery({
     queryKey: ["recent-test-results-dashboard", centerId],
     queryFn: async () => {
@@ -59,7 +59,6 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
-  // Fetch homework defaulters
   const { data: homeworkDefaulters = [] } = useQuery({
     queryKey: ["homework-defaulters-dashboard", centerId],
     queryFn: async () => {
@@ -71,7 +70,6 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
-  // Fetch discipline issues
   const { data: recentDiscipline = [] } = useQuery({
     queryKey: ["recent-discipline-dashboard", centerId],
     queryFn: async () => {
@@ -83,7 +81,6 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
-  // Fetch upcoming lesson plans
   const { data: upcomingLessons = [] } = useQuery({
     queryKey: ["upcoming-lessons-dashboard", centerId],
     queryFn: async () => {
@@ -95,29 +92,17 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
-  // Stats
-  const presentToday = students.filter((s) => allAttendance.some((a) => a.student_id === s.id && a.date === today && a.status === "present"));
-  const absentToday = students.filter((s) => allAttendance.some((a) => a.student_id === s.id && a.date === today && a.status === "absent"));
   const totalStudents = students.length;
-  const presentCount = presentToday.length;
-  const absentCount = absentToday.length;
+  const presentCount = allAttendance.filter(a => a.status === "present").length;
+  const absentCount = allAttendance.filter(a => a.status === "absent").length;
+  const unmarkedCount = totalStudents - presentCount - absentCount;
   const absentRate = totalStudents ? Math.round((absentCount / totalStudents) * 100) : 0;
 
-  const studentAttendanceSummary = students.map((student) => {
-    const sa = allAttendance.filter((a) => a.student_id === student.id);
-    const present = sa.filter((a) => a.status === "present").length;
-    const absent = sa.filter((a) => a.status === "absent").length;
-    const total = present + absent;
-    const percentage = total > 0 ? Math.round((absent / total) * 100) : 0;
-    return { ...student, present, absent, total, percentage };
-  });
+  const absentToday = students.filter((s) => allAttendance.some((a) => a.student_id === s.id && a.status === "absent"));
 
-  const highestAbsentees = [...studentAttendanceSummary].sort((a, b) => b.percentage - a.percentage).filter((s) => gradeFilter === "all" || s.grade === gradeFilter).slice(0, 10);
-
-  // Low performers from test results
   const lowPerformers = recentTestResults.filter((r: any) => {
     const total = r.tests?.total_marks || 100;
-    return r.marks_obtained < total * 0.4; // Below 40%
+    return r.marks_obtained < total * 0.4;
   }).slice(0, 10);
 
   const topPerformers = [...recentTestResults].sort((a: any, b: any) => {
@@ -126,7 +111,6 @@ export default function Dashboard() {
     return bP - aP;
   }).slice(0, 5);
 
-  // Student detail queries
   const studentId = selectedStudent?.id;
   const { data: attendanceData = [] } = useQuery({
     queryKey: ["student-attendance", studentId], queryFn: async () => { if (!studentId) return []; const { data } = await supabase.from("attendance").select("*").eq("student_id", studentId).order("date"); return data || []; }, enabled: !!studentId,
@@ -142,10 +126,9 @@ export default function Dashboard() {
   const presentDays = attendanceData.filter((a) => a.status === "present").length;
   const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
   const completedChaptersCount = chapterProgress.filter((c) => c.completed).length;
-  const totalTests = testResults.length;
-  const totalMarksObtained = testResults.reduce((sum, r) => sum + r.marks_obtained, 0);
-  const totalMaxMarks = testResults.reduce((sum, r) => sum + (r.tests?.total_marks || 0), 0);
-  const averagePercentage = totalMaxMarks > 0 ? Math.round((totalMarksObtained / totalMaxMarks) * 100) : 0;
+
+  // Clickable card handler
+  const handleCardClick = (path: string) => navigate(path);
 
   return (
     <div className="space-y-6">
@@ -154,17 +137,16 @@ export default function Dashboard() {
         <p className="text-muted-foreground text-sm">Overview of today's attendance and center performance.</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         {[
-          { title: "Total Students", value: totalStudents, icon: Users, color: "text-primary", bg: "bg-primary/10" },
-          { title: "Present Today", value: presentCount, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30" },
-          { title: "Absent Today", value: absentCount, icon: XCircle, color: "text-destructive", bg: "bg-destructive/10" },
-          { title: "Absent Rate", value: `${absentRate}%`, icon: TrendingUp, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30" },
+          { title: "Total Students", value: totalStudents, icon: Users, color: "text-primary", bg: "bg-primary/10", path: "/register" },
+          { title: "Present Today", value: presentCount, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30", path: "/attendance-summary" },
+          { title: "Absent Today", value: absentCount, icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", path: "/attendance-summary" },
+          { title: "Unmarked", value: unmarkedCount, icon: Clock, color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30", path: "/attendance" },
         ].map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.title} className="overflow-hidden">
+            <Card key={stat.title} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(stat.path)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
                 <div className={cn("rounded-lg p-2", stat.bg)}><Icon className={cn("h-4 w-4", stat.color)} /></div>
@@ -180,32 +162,33 @@ export default function Dashboard() {
         <SelectContent><SelectItem value="all">All Grades</SelectItem>{grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
       </Select>
 
-      {/* Attendance Tables */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/attendance-summary")}>
           <CardHeader className="pb-3"><CardTitle className="text-base">Absent Today</CardTitle></CardHeader>
           <CardContent className="max-h-[300px] overflow-y-auto">
             <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Grade</TableHead></TableRow></TableHeader>
               <TableBody>{absentToday.filter(s => gradeFilter === "all" || s.grade === gradeFilter).map((s) => (
-                <TableRow key={s.id} className="cursor-pointer hover:bg-muted" onClick={() => setSelectedStudent(s)}><TableCell className="text-sm">{s.name}</TableCell><TableCell className="text-sm">{s.grade}</TableCell></TableRow>
+                <TableRow key={s.id} className="cursor-pointer hover:bg-muted" onClick={(e) => { e.stopPropagation(); setSelectedStudent(s); }}><TableCell className="text-sm">{s.name}</TableCell><TableCell className="text-sm">{s.grade}</TableCell></TableRow>
               ))}</TableBody></Table>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Highest Absentees</CardTitle></CardHeader>
+
+        {/* Pending Homework - clicks to homework page */}
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/homework")}>
+          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Book className="h-4 w-4 text-orange-600" /> Pending Homework ({homeworkDefaulters.length})</CardTitle></CardHeader>
           <CardContent className="max-h-[300px] overflow-y-auto">
-            <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Grade</TableHead><TableHead className="text-right">Absent %</TableHead></TableRow></TableHeader>
-              <TableBody>{highestAbsentees.map((s) => (
-                <TableRow key={s.id} className="cursor-pointer hover:bg-muted" onClick={() => setSelectedStudent(s)}><TableCell className="text-sm">{s.name}</TableCell><TableCell className="text-sm">{s.grade}</TableCell><TableCell className="text-right text-sm">{s.percentage}%</TableCell></TableRow>
-              ))}</TableBody></Table>
+            {homeworkDefaulters.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">All caught up!</p> : (
+              <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Homework</TableHead><TableHead>Due</TableHead></TableRow></TableHeader>
+                <TableBody>{homeworkDefaulters.map((h: any) => (
+                  <TableRow key={h.id}><TableCell className="text-sm">{h.students?.name}</TableCell><TableCell className="text-sm">{h.homework?.title}</TableCell><TableCell className="text-sm">{h.homework?.due_date ? format(new Date(h.homework.due_date), "MMM d") : "-"}</TableCell></TableRow>
+                ))}</TableBody></Table>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* New Sections: Low Performers, Homework Defaulters, Discipline, Lessons */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        {/* Low Performers */}
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/tests")}>
           <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4 text-destructive" /> Low Performers</CardTitle></CardHeader>
           <CardContent className="max-h-[280px] overflow-y-auto">
             {lowPerformers.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No low performers.</p> : (
@@ -217,35 +200,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Top Performers */}
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4 text-green-600" /> Top Performers</CardTitle></CardHeader>
-          <CardContent className="max-h-[280px] overflow-y-auto">
-            {topPerformers.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No test results yet.</p> : (
-              <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Test</TableHead><TableHead className="text-right">Score</TableHead></TableRow></TableHeader>
-                <TableBody>{topPerformers.map((r: any) => (
-                  <TableRow key={r.id}><TableCell className="text-sm">{r.students?.name}</TableCell><TableCell className="text-sm">{r.tests?.name}</TableCell><TableCell className="text-right text-sm font-medium text-green-600">{r.marks_obtained}/{r.tests?.total_marks}</TableCell></TableRow>
-                ))}</TableBody></Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Homework Defaulters */}
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Book className="h-4 w-4 text-orange-600" /> Pending Homework</CardTitle></CardHeader>
-          <CardContent className="max-h-[280px] overflow-y-auto">
-            {homeworkDefaulters.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">All caught up!</p> : (
-              <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Homework</TableHead><TableHead>Due</TableHead></TableRow></TableHeader>
-                <TableBody>{homeworkDefaulters.map((h: any) => (
-                  <TableRow key={h.id}><TableCell className="text-sm">{h.students?.name}</TableCell><TableCell className="text-sm">{h.homework?.title}</TableCell><TableCell className="text-sm">{h.homework?.due_date ? format(new Date(h.homework.due_date), "MMM d") : "-"}</TableCell></TableRow>
-                ))}</TableBody></Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Discipline Issues */}
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-destructive" /> Open Discipline Issues</CardTitle></CardHeader>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/discipline")}>
+          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-destructive" /> Open Discipline Issues ({recentDiscipline.length})</CardTitle></CardHeader>
           <CardContent className="max-h-[280px] overflow-y-auto">
             {recentDiscipline.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No open issues.</p> : (
               <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Issue</TableHead><TableHead>Severity</TableHead></TableRow></TableHeader>
@@ -257,8 +213,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Upcoming Lessons */}
-      <Card>
+      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/lesson-plans")}>
         <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" /> Upcoming Lesson Plans</CardTitle></CardHeader>
         <CardContent>
           {upcomingLessons.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No upcoming lessons.</p> : (
@@ -267,7 +222,7 @@ export default function Dashboard() {
                 <div key={lp.id} className="rounded-lg border p-3 space-y-1">
                   <div className="font-medium text-sm">{lp.subject}: {lp.chapter}</div>
                   <div className="text-xs text-muted-foreground">{lp.topic}</div>
-                  <div className="text-xs text-primary font-medium flex items-center gap-1"><CalendarIcon className="h-3 w-3" />{format(new Date(lp.lesson_date), "MMM d")}</div>
+                  <div className="text-xs text-primary font-medium flex items-center gap-1"><CalendarIcon className="h-3 w-3" />{lp.lesson_date && format(new Date(lp.lesson_date), "MMM d")}</div>
                   {lp.grade && <Badge variant="outline" className="text-[10px]">Grade {lp.grade}</Badge>}
                 </div>
               ))}
@@ -276,7 +231,6 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Student Detail Dialog */}
       {selectedStudent && (
         <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
           <DialogContent className="max-w-2xl w-full max-h-[85vh] overflow-auto">
@@ -299,9 +253,9 @@ export default function Dashboard() {
                 ))}</div></CardContent>
               </Card>
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" />Tests (Avg: {averagePercentage}%)</CardTitle></CardHeader>
-                <CardContent><div className="max-h-40 overflow-y-auto space-y-1">{testResults.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between text-sm py-1 border-b last:border-0"><span>{r.tests?.name}</span><span className="font-medium">{r.marks_obtained}/{r.tests?.total_marks}</span></div>
+                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" />Test Results</CardTitle></CardHeader>
+                <CardContent><div className="max-h-40 overflow-y-auto space-y-1">{testResults.map((tr: any) => (
+                  <div key={tr.id} className="flex items-center justify-between text-sm py-1 border-b last:border-0"><span>{tr.tests?.name} ({tr.tests?.subject})</span><span className="font-semibold">{tr.marks_obtained}/{tr.tests?.total_marks}</span></div>
                 ))}</div></CardContent>
               </Card>
             </div>

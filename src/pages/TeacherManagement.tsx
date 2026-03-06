@@ -1,4 +1,4 @@
-import { Check, Clock, DollarSign, Edit, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
+import { Check, Clock, DollarSign, Edit, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +36,6 @@ export default function TeacherManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
 
-  // Individual entry form
   const [name, setName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -44,7 +44,6 @@ export default function TeacherManagement() {
   const [regularInTime, setRegularInTime] = useState("09:00");
   const [regularOutTime, setRegularOutTime] = useState("17:00");
 
-  // Bulk entry
   const [bulkText, setBulkText] = useState("");
   const [parsedBulkEntries, setParsedBulkEntries] = useState<BulkTeacherEntry[]>([]);
 
@@ -56,7 +55,11 @@ export default function TeacherManagement() {
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [selectedTeacherForPermissions, setSelectedTeacherForPermissions] = useState<Teacher | null>(null);
 
-  // Fetch teachers
+  // Class teacher assignment states
+  const [showClassTeacherDialog, setShowClassTeacherDialog] = useState(false);
+  const [selectedTeacherForClassAssign, setSelectedTeacherForClassAssign] = useState<Teacher | null>(null);
+  const [classTeacherGrade, setClassTeacherGrade] = useState("select-grade");
+
   const { data: teachers = [], isLoading } = useQuery({
     queryKey: ["teachers", user?.center_id],
     queryFn: async () => {
@@ -72,480 +75,251 @@ export default function TeacherManagement() {
     enabled: !!user?.center_id,
   });
 
-  const resetForm = () => {
-    setName("");
-    setContactNumber("");
-    setEmail("");
-    setHireDate(format(new Date(), "yyyy-MM-dd"));
-    setMonthlySalary("");
-    setRegularInTime("09:00");
-    setRegularOutTime("17:00");
-    setEditingTeacher(null);
-    setBulkText("");
-    setParsedBulkEntries([]);
+  // Fetch students for unique grades
+  const { data: students = [] } = useQuery({
+    queryKey: ["students-grades", user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase.from("students").select("grade").eq("center_id", user.center_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id,
+  });
+  const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
+
+  // Fetch class teacher assignments
+  const { data: classTeacherAssignments = [] } = useQuery({
+    queryKey: ["class-teacher-assignments", user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase
+        .from("class_teacher_assignments")
+        .select("*, teachers(name)")
+        .eq("center_id", user.center_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id,
+  });
+
+  const getClassTeacherGrades = (teacherId: string) => {
+    return classTeacherAssignments.filter((a: any) => a.teacher_id === teacherId).map((a: any) => a.grade);
   };
 
-  // Parse bulk text (CSV-like format: name, email, contact, salary, inTime, outTime)
+  const resetForm = () => {
+    setName(""); setContactNumber(""); setEmail("");
+    setHireDate(format(new Date(), "yyyy-MM-dd"));
+    setMonthlySalary(""); setRegularInTime("09:00"); setRegularOutTime("17:00");
+    setEditingTeacher(null); setBulkText(""); setParsedBulkEntries([]);
+  };
+
   const parseBulkText = () => {
     const lines = bulkText.trim().split('\n').filter(line => line.trim());
     const entries: BulkTeacherEntry[] = [];
-    
     for (const line of lines) {
       const parts = line.split(',').map(p => p.trim());
       if (parts.length >= 1 && parts[0]) {
-        entries.push({
-          name: parts[0] || '',
-          email: parts[1] || '',
-          contactNumber: parts[2] || '',
-          monthlySalary: parseFloat(parts[3]) || 0,
-          regularInTime: parts[4] || '09:00',
-          regularOutTime: parts[5] || '17:00',
-        });
+        entries.push({ name: parts[0], email: parts[1] || '', contactNumber: parts[2] || '', monthlySalary: parseFloat(parts[3]) || 0, regularInTime: parts[4] || '09:00', regularOutTime: parts[5] || '17:00' });
       }
     }
-    
     setParsedBulkEntries(entries);
-    if (entries.length > 0) {
-      toast.success(`Parsed ${entries.length} teacher entries`);
-    } else {
-      toast.error("No valid entries found");
-    }
+    entries.length > 0 ? toast.success(`Parsed ${entries.length} teacher entries`) : toast.error("No valid entries found");
   };
 
   const createTeacherMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
       const { error, data: newTeacher } = await supabase.from("teachers").insert({
-        center_id: user.center_id,
-        name,
-        contact_number: contactNumber || null,
-        email: email || null,
-        hire_date: hireDate,
-        is_active: true,
-        monthly_salary: parseFloat(monthlySalary) || 0,
-        regular_in_time: regularInTime || '09:00',
-        regular_out_time: regularOutTime || '17:00',
+        center_id: user.center_id, name, contact_number: contactNumber || null, email: email || null,
+        hire_date: hireDate, is_active: true, monthly_salary: parseFloat(monthlySalary) || 0,
+        regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
       } as any).select().single();
       if (error) throw error;
-
-      // Seed initial default permissions
       const { error: permError } = await supabase.from('teacher_feature_permissions').insert({
-        teacher_id: newTeacher.id,
-        take_attendance: true,
-        lesson_tracking: true,
-        homework_management: true,
-        preschool_activities: true,
-        discipline_issues: true,
-        test_management: true,
-        student_report_access: true,
-        meetings_management: true,
+        teacher_id: newTeacher.id, take_attendance: true, lesson_tracking: true, homework_management: true,
+        preschool_activities: true, discipline_issues: true, test_management: true, student_report_access: true, meetings_management: true,
       });
       if (permError) console.error('Error seeding default permissions:', permError);
-
       return newTeacher;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      toast.success("Teacher added successfully!");
-      setIsDialogOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to add teacher");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher added successfully!"); setIsDialogOpen(false); resetForm(); },
+    onError: (error: any) => toast.error(error.message || "Failed to add teacher"),
   });
 
   const bulkCreateTeachersMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
       if (parsedBulkEntries.length === 0) throw new Error("No entries to add");
-
       const teachersToInsert = parsedBulkEntries.map(entry => ({
-        center_id: user.center_id,
-        name: entry.name,
-        contact_number: entry.contactNumber || null,
-        email: entry.email || null,
-        hire_date: format(new Date(), "yyyy-MM-dd"),
-        is_active: true,
-        monthly_salary: entry.monthlySalary || 0,
-        regular_in_time: entry.regularInTime || '09:00',
-        regular_out_time: entry.regularOutTime || '17:00',
+        center_id: user.center_id, name: entry.name, contact_number: entry.contactNumber || null, email: entry.email || null,
+        hire_date: format(new Date(), "yyyy-MM-dd"), is_active: true, monthly_salary: entry.monthlySalary || 0,
+        regular_in_time: entry.regularInTime || '09:00', regular_out_time: entry.regularOutTime || '17:00',
       }));
-
-      const { data: newTeachers, error } = await supabase
-        .from("teachers")
-        .insert(teachersToInsert as any)
-        .select();
+      const { data: newTeachers, error } = await supabase.from("teachers").insert(teachersToInsert as any).select();
       if (error) throw error;
-
-      // Create default permissions for all new teachers
       if (newTeachers && newTeachers.length > 0) {
-        const permissions = newTeachers.map(t => ({
-          teacher_id: t.id,
-          take_attendance: true,
-          lesson_tracking: true,
-          homework_management: true,
-          preschool_activities: true,
-          discipline_issues: true,
-          test_management: true,
-          student_report_access: true,
-          meetings_management: true,
-        }));
+        const permissions = newTeachers.map(t => ({ teacher_id: t.id, take_attendance: true, lesson_tracking: true, homework_management: true, preschool_activities: true, discipline_issues: true, test_management: true, student_report_access: true, meetings_management: true }));
         await supabase.from('teacher_feature_permissions').insert(permissions);
       }
-
       return newTeachers;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      toast.success(`${data?.length || 0} teachers added successfully!`);
-      setIsDialogOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to add teachers");
-    },
+    onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success(`${data?.length || 0} teachers added!`); setIsDialogOpen(false); resetForm(); },
+    onError: (error: any) => toast.error(error.message || "Failed to add teachers"),
   });
 
   const updateTeacherMutation = useMutation({
     mutationFn: async () => {
       if (!editingTeacher || !user?.center_id) throw new Error("Teacher or Center ID not found");
       const { error } = await supabase.from("teachers").update({
-        name,
-        contact_number: contactNumber || null,
-        email: email || null,
-        hire_date: hireDate,
-        monthly_salary: parseFloat(monthlySalary) || 0,
-        regular_in_time: regularInTime || '09:00',
-        regular_out_time: regularOutTime || '17:00',
+        name, contact_number: contactNumber || null, email: email || null, hire_date: hireDate,
+        monthly_salary: parseFloat(monthlySalary) || 0, regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
       } as any).eq("id", editingTeacher.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      toast.success("Teacher updated successfully!");
-      setIsDialogOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update teacher");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher updated!"); setIsDialogOpen(false); resetForm(); },
+    onError: (error: any) => toast.error(error.message || "Failed to update"),
   });
 
   const toggleTeacherStatusMutation = useMutation({
     mutationFn: async (teacher: Teacher) => {
-      const { error } = await supabase.from("teachers").update({
-        is_active: !teacher.is_active,
-      }).eq("id", teacher.id);
+      const { error } = await supabase.from("teachers").update({ is_active: !teacher.is_active }).eq("id", teacher.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      toast.success("Teacher status updated!");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update teacher status");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Status updated!"); },
+    onError: (error: any) => toast.error(error.message),
   });
 
   const deleteTeacherMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("teachers").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      toast.success("Teacher deleted successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete teacher");
-    },
+    mutationFn: async (id: string) => { const { error } = await supabase.from("teachers").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher deleted!"); },
+    onError: (error: any) => toast.error(error.message),
   });
 
   const createTeacherLoginMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTeacherForLogin || !user?.center_id) throw new Error("Teacher or Center ID not found");
-
-      const { data: existingUser, error: existingUserError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', teacherUsername)
-        .single();
-
+      if (!selectedTeacherForLogin || !user?.center_id) throw new Error("Missing info");
+      const { data: existingUser, error: existingUserError } = await supabase.from('users').select('id').eq('username', teacherUsername).single();
       if (existingUserError && existingUserError.code !== 'PGRST116') throw existingUserError;
-      if (existingUser) {
-        throw new Error('Username already exists. Please choose a different one.');
-      }
-
+      if (existingUser) throw new Error('Username already exists.');
       const hashedPassword = await bcrypt.hash(teacherPassword, 12);
+      const { error } = await supabase.from("users").insert({ username: teacherUsername, password_hash: hashedPassword, role: 'teacher', center_id: user.center_id, teacher_id: selectedTeacherForLogin.id, is_active: true });
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Login created!"); setIsCreatingTeacherLogin(false); setSelectedTeacherForLogin(null); setTeacherUsername(""); setTeacherPassword(""); },
+    onError: (error: any) => toast.error(error.message),
+  });
 
-      const { error } = await supabase.from("users").insert({
-        username: teacherUsername,
-        password_hash: hashedPassword,
-        role: 'teacher',
+  // Class teacher assignment mutation
+  const assignClassTeacherMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedTeacherForClassAssign || !user?.center_id || classTeacherGrade === "select-grade") throw new Error("Select a grade");
+      // Upsert: replace existing assignment for that grade
+      const { error } = await supabase.from("class_teacher_assignments").upsert({
+        teacher_id: selectedTeacherForClassAssign.id,
+        grade: classTeacherGrade,
         center_id: user.center_id,
-        teacher_id: selectedTeacherForLogin.id,
-        is_active: true,
-      });
+      }, { onConflict: 'grade,center_id' });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      toast.success("Teacher login created successfully!");
-      setIsCreatingTeacherLogin(false);
-      setSelectedTeacherForLogin(null);
-      setTeacherUsername("");
-      setTeacherPassword("");
+      queryClient.invalidateQueries({ queryKey: ["class-teacher-assignments"] });
+      toast.success("Class teacher assigned!");
+      setShowClassTeacherDialog(false);
+      setClassTeacherGrade("select-grade");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create teacher login");
-    },
+    onError: (error: any) => toast.error(error.message),
   });
 
   const handleEditClick = (teacher: any) => {
-    setEditingTeacher(teacher);
-    setName(teacher.name);
-    setContactNumber(teacher.phone || teacher.contact_number || "");
-    setEmail(teacher.email || "");
+    setEditingTeacher(teacher); setName(teacher.name);
+    setContactNumber(teacher.phone || teacher.contact_number || ""); setEmail(teacher.email || "");
     setHireDate(teacher.hire_date ? format(new Date(teacher.hire_date), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"));
     setMonthlySalary(teacher.monthly_salary?.toString() || "");
-    setRegularInTime(teacher.regular_in_time || "09:00");
-    setRegularOutTime(teacher.regular_out_time || "17:00");
+    setRegularInTime(teacher.regular_in_time || "09:00"); setRegularOutTime(teacher.regular_out_time || "17:00");
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = () => {
-    if (editingTeacher) {
-      updateTeacherMutation.mutate();
-    } else {
-      createTeacherMutation.mutate();
-    }
-  };
+  const handleSubmit = () => { editingTeacher ? updateTeacherMutation.mutate() : createTeacherMutation.mutate(); };
+  const handleCreateLoginClick = (teacher: Teacher) => { setSelectedTeacherForLogin(teacher); setTeacherUsername(teacher.email || ''); setTeacherPassword(''); setIsCreatingTeacherLogin(true); };
+  const handleManagePermissionsClick = (teacher: Teacher) => { setSelectedTeacherForPermissions(teacher); setShowPermissionsDialog(true); };
+  const handleClassTeacherClick = (teacher: Teacher) => { setSelectedTeacherForClassAssign(teacher); setClassTeacherGrade("select-grade"); setShowClassTeacherDialog(true); };
 
-  const handleCreateLoginClick = (teacher: Teacher) => {
-    setSelectedTeacherForLogin(teacher);
-    setTeacherUsername(teacher.email || '');
-    setTeacherPassword('');
-    setIsCreatingTeacherLogin(true);
-  };
-
-  const handleManagePermissionsClick = (teacher: Teacher) => {
-    setSelectedTeacherForPermissions(teacher);
-    setShowPermissionsDialog(true);
-  };
-
-  // Calculate total monthly salary expense
   const totalMonthlySalary = teachers.reduce((sum, t: any) => sum + (t.monthly_salary || 0), 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Faculty Directory</h1>
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">Faculty Directory</h1>
           <div className="flex flex-wrap gap-4 mt-2">
-             <div className="bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20 flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-primary" />
-                <span className="font-bold text-primary text-sm">Monthly Payroll: ₹{totalMonthlySalary.toLocaleString()}</span>
-             </div>
-             <div className="bg-muted px-3 py-1.5 rounded-xl border flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="font-bold text-muted-foreground text-sm">{teachers.length} Active Staff</span>
-             </div>
+            <div className="bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20 flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-primary" />
+              <span className="font-bold text-primary text-sm">Monthly Payroll: ₹{totalMonthlySalary.toLocaleString()}</span>
+            </div>
+            <div className="bg-muted px-3 py-1.5 rounded-xl border flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="font-bold text-muted-foreground text-sm">{teachers.length} Active Staff</span>
+            </div>
           </div>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> Add Teacher(s)</Button>
-          </DialogTrigger>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Add Teacher(s)</Button></DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingTeacher ? "Edit Teacher" : "Add New Teacher(s)"}</DialogTitle>
-              <DialogDescription>
-                {editingTeacher ? "Update the details of this teacher." : "Add teachers individually or in bulk."}
-              </DialogDescription>
+              <DialogDescription>{editingTeacher ? "Update details." : "Add individually or in bulk."}</DialogDescription>
             </DialogHeader>
-            
             {editingTeacher ? (
-              // Individual edit form
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Jane Doe" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g., jane@example.com" />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="contactNumber">Contact Number</Label>
-                    <Input id="contactNumber" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} placeholder="e.g., 9876543210" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hireDate">Hire Date</Label>
-                    <Input id="hireDate" type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Contact Number</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="monthlySalary" className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" /> Monthly Salary
-                    </Label>
-                    <Input 
-                      id="monthlySalary" 
-                      type="number" 
-                      value={monthlySalary} 
-                      onChange={(e) => setMonthlySalary(e.target.value)} 
-                      placeholder="e.g., 25000" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="regularInTime" className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" /> In Time
-                    </Label>
-                    <Input 
-                      id="regularInTime" 
-                      type="time" 
-                      value={regularInTime} 
-                      onChange={(e) => setRegularInTime(e.target.value)} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="regularOutTime" className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" /> Out Time
-                    </Label>
-                    <Input 
-                      id="regularOutTime" 
-                      type="time" 
-                      value={regularOutTime} 
-                      onChange={(e) => setRegularOutTime(e.target.value)} 
-                    />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2"><Label><DollarSign className="h-4 w-4 inline" /> Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
+                  <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> In</Label><Input type="time" value={regularInTime} onChange={(e) => setRegularInTime(e.target.value)} /></div>
+                  <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Out</Label><Input type="time" value={regularOutTime} onChange={(e) => setRegularOutTime(e.target.value)} /></div>
                 </div>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!name || updateTeacherMutation.isPending}
-                  className="w-full"
-                >
-                  {updateTeacherMutation.isPending ? "Updating..." : "Update Teacher"}
-                </Button>
+                <Button onClick={handleSubmit} disabled={!name || updateTeacherMutation.isPending} className="w-full">{updateTeacherMutation.isPending ? "Updating..." : "Update Teacher"}</Button>
               </div>
             ) : (
-              // Add new with tabs
               <Tabs defaultValue="individual" className="mt-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="individual">Individual Entry</TabsTrigger>
-                  <TabsTrigger value="bulk">Bulk Entry</TabsTrigger>
-                </TabsList>
-                
+                <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="individual">Individual</TabsTrigger><TabsTrigger value="bulk">Bulk</TabsTrigger></TabsList>
                 <TabsContent value="individual" className="space-y-4 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
-                      <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Jane Doe" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g., jane@example.com" />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="contactNumber">Contact Number</Label>
-                      <Input id="contactNumber" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} placeholder="e.g., 9876543210" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="hireDate">Hire Date</Label>
-                      <Input id="hireDate" type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Contact</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
+                    <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="monthlySalary" className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4" /> Monthly Salary
-                      </Label>
-                      <Input 
-                        id="monthlySalary" 
-                        type="number" 
-                        value={monthlySalary} 
-                        onChange={(e) => setMonthlySalary(e.target.value)} 
-                        placeholder="e.g., 25000" 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="regularInTime" className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" /> In Time
-                      </Label>
-                      <Input 
-                        id="regularInTime" 
-                        type="time" 
-                        value={regularInTime} 
-                        onChange={(e) => setRegularInTime(e.target.value)} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="regularOutTime" className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" /> Out Time
-                      </Label>
-                      <Input 
-                        id="regularOutTime" 
-                        type="time" 
-                        value={regularOutTime} 
-                        onChange={(e) => setRegularOutTime(e.target.value)} 
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2"><Label><DollarSign className="h-4 w-4 inline" /> Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
+                    <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> In</Label><Input type="time" value={regularInTime} onChange={(e) => setRegularInTime(e.target.value)} /></div>
+                    <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Out</Label><Input type="time" value={regularOutTime} onChange={(e) => setRegularOutTime(e.target.value)} /></div>
                   </div>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!name || createTeacherMutation.isPending}
-                    className="w-full"
-                  >
-                    {createTeacherMutation.isPending ? "Adding..." : "Add Teacher"}
-                  </Button>
+                  <Button onClick={handleSubmit} disabled={!name || createTeacherMutation.isPending} className="w-full">{createTeacherMutation.isPending ? "Adding..." : "Add Teacher"}</Button>
                 </TabsContent>
-                
                 <TabsContent value="bulk" className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label>Bulk Entry (CSV Format)</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enter one teacher per line: Name, Email, Contact, Salary, InTime, OutTime
-                    </p>
-                    <Textarea 
-                      placeholder={`John Doe, john@example.com, 9876543210, 25000, 09:00, 17:00
-Jane Smith, jane@example.com, 9876543211, 30000, 08:30, 16:30
-...`}
-                      value={bulkText}
-                      onChange={(e) => setBulkText(e.target.value)}
-                      rows={6}
-                    />
+                    <p className="text-sm text-muted-foreground">Name, Email, Contact, Salary, InTime, OutTime</p>
+                    <Textarea placeholder={`John Doe, john@example.com, 9876543210, 25000, 09:00, 17:00`} value={bulkText} onChange={(e) => setBulkText(e.target.value)} rows={6} />
                   </div>
-                  
-                  <Button variant="outline" onClick={parseBulkText} className="w-full">
-                    <Upload className="h-4 w-4 mr-2" /> Parse Entries
-                  </Button>
-                  
+                  <Button variant="outline" onClick={parseBulkText} className="w-full"><Upload className="h-4 w-4 mr-2" /> Parse</Button>
                   {parsedBulkEntries.length > 0 && (
                     <div className="space-y-2">
-                      <Label>Parsed Entries ({parsedBulkEntries.length})</Label>
+                      <Label>Parsed ({parsedBulkEntries.length})</Label>
                       <div className="max-h-40 overflow-y-auto border rounded p-2 text-sm">
-                        {parsedBulkEntries.map((entry, idx) => (
-                          <div key={idx} className="py-1 border-b last:border-0">
-                            <strong>{entry.name}</strong> - {entry.email || 'No email'} - ₹{entry.monthlySalary}
-                          </div>
-                        ))}
+                        {parsedBulkEntries.map((entry, idx) => <div key={idx} className="py-1 border-b last:border-0"><strong>{entry.name}</strong> - {entry.email || 'No email'} - ₹{entry.monthlySalary}</div>)}
                       </div>
-                      <Button
-                        onClick={() => bulkCreateTeachersMutation.mutate()}
-                        disabled={bulkCreateTeachersMutation.isPending}
-                        className="w-full"
-                      >
-                        {bulkCreateTeachersMutation.isPending ? "Adding..." : `Add ${parsedBulkEntries.length} Teachers`}
-                      </Button>
+                      <Button onClick={() => bulkCreateTeachersMutation.mutate()} disabled={bulkCreateTeachersMutation.isPending} className="w-full">{bulkCreateTeachersMutation.isPending ? "Adding..." : `Add ${parsedBulkEntries.length} Teachers`}</Button>
                     </div>
                   )}
                 </TabsContent>
@@ -556,9 +330,7 @@ Jane Smith, jane@example.com, 9876543211, 30000, 08:30, 16:30
       </div>
 
       <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Staff Roster</CardTitle>
-        </CardHeader>
+        <CardHeader className="bg-muted/30 pb-4"><CardTitle className="text-xl">Staff Roster</CardTitle></CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -571,68 +343,54 @@ Jane Smith, jane@example.com, 9876543211, 30000, 08:30, 16:30
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Contact</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Salary</TableHead>
-                    <TableHead>Schedule</TableHead>
+                    <TableHead className="hidden sm:table-cell">Email</TableHead>
+                    <TableHead className="hidden sm:table-cell">Salary</TableHead>
+                    <TableHead>Class Teacher</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Login</TableHead>
+                    <TableHead className="hidden sm:table-cell">Login</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {teachers.map((teacher: any) => (
-                    <TableRow key={teacher.id}>
-                      <TableCell className="font-medium">{teacher.name}</TableCell>
-                      <TableCell>{teacher.contact_number || teacher.phone || '-'}</TableCell>
-                      <TableCell>{teacher.email || '-'}</TableCell>
-                      <TableCell>
-                        {teacher.monthly_salary ? `₹${teacher.monthly_salary.toLocaleString()}` : '-'}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {teacher.regular_in_time && teacher.regular_out_time 
-                          ? `${teacher.regular_in_time} - ${teacher.regular_out_time}`
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleTeacherStatusMutation.mutate(teacher)}
-                          className={`flex items-center gap-1 ${teacher.is_active ? 'text-green-600' : 'text-red-600'}`}
-                        >
-                          {teacher.is_active ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                          {teacher.is_active ? 'Active' : 'Inactive'}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        {teacher.users && teacher.users.length > 0 ? (
-                          <span className="text-green-600 flex items-center gap-1 text-sm">
-                            <Check className="h-4 w-4" /> {teacher.users[0].username}
-                          </span>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCreateLoginClick(teacher)}
-                          >
-                            <UserPlus className="h-4 w-4 mr-1" /> Create
+                  {teachers.map((teacher: any) => {
+                    const ctGrades = getClassTeacherGrades(teacher.id);
+                    return (
+                      <TableRow key={teacher.id}>
+                        <TableCell className="font-medium">{teacher.name}</TableCell>
+                        <TableCell>{teacher.contact_number || teacher.phone || '-'}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{teacher.email || '-'}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{teacher.monthly_salary ? `₹${teacher.monthly_salary.toLocaleString()}` : '-'}</TableCell>
+                        <TableCell>
+                          {ctGrades.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {ctGrades.map((g: string) => <Badge key={g} variant="outline" className="text-[10px]"><GraduationCap className="h-3 w-3 mr-1" />{g}</Badge>)}
+                            </div>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => toggleTeacherStatusMutation.mutate(teacher)} className={`flex items-center gap-1 ${teacher.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                            {teacher.is_active ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                            {teacher.is_active ? 'Active' : 'Inactive'}
                           </Button>
-                        )}
-                      </TableCell>
-                      <TableCell className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(teacher)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleManagePermissionsClick(teacher)}>
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => deleteTeacherMutation.mutate(teacher.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {teacher.users && teacher.users.length > 0 ? (
+                            <span className="text-green-600 flex items-center gap-1 text-sm"><Check className="h-4 w-4" /> {teacher.users[0].username}</span>
+                          ) : (
+                            <Button variant="outline" size="sm" onClick={() => handleCreateLoginClick(teacher)}><UserPlus className="h-4 w-4 mr-1" /> Create</Button>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            <Button variant="ghost" size="sm" onClick={() => handleEditClick(teacher)}><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleClassTeacherClick(teacher)} title="Assign as Class Teacher"><GraduationCap className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleManagePermissionsClick(teacher)}><Settings className="h-4 w-4" /></Button>
+                            <Button variant="destructive" size="sm" onClick={() => deleteTeacherMutation.mutate(teacher.id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -640,43 +398,47 @@ Jane Smith, jane@example.com, 9876543211, 30000, 08:30, 16:30
         </CardContent>
       </Card>
 
-      {/* Create Teacher Login Dialog */}
-      <Dialog open={isCreatingTeacherLogin} onOpenChange={setIsCreatingTeacherLogin}>
-        <DialogContent aria-labelledby="create-teacher-login-title" aria-describedby="create-teacher-login-description">
+      {/* Class Teacher Assignment Dialog */}
+      <Dialog open={showClassTeacherDialog} onOpenChange={setShowClassTeacherDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle id="create-teacher-login-title">Create Login for {selectedTeacherForLogin?.name}</DialogTitle>
-            <DialogDescription id="create-teacher-login-description">
-              Set a username and password for this teacher to log in.
-            </DialogDescription>
+            <DialogTitle>Assign Class Teacher</DialogTitle>
+            <DialogDescription>Assign {selectedTeacherForClassAssign?.name} as class teacher for a grade.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="teacherUsername">Username</Label>
-              <Input
-                id="teacherUsername"
-                value={teacherUsername}
-                onChange={(e) => setTeacherUsername(e.target.value)}
-                placeholder="Enter username"
-              />
+              <Label>Select Grade</Label>
+              <Select value={classTeacherGrade} onValueChange={setClassTeacherGrade}>
+                <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="select-grade" disabled>Select Grade</SelectItem>
+                  {uniqueGrades.map(g => {
+                    const existing = classTeacherAssignments.find((a: any) => a.grade === g);
+                    return <SelectItem key={g} value={g!}>{g} {existing ? `(Currently: ${(existing as any).teachers?.name})` : ''}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacherPassword">Password</Label>
-              <Input
-                id="teacherPassword"
-                type="password"
-                value={teacherPassword}
-                onChange={(e) => setTeacherPassword(e.target.value)}
-                placeholder="Enter password"
-              />
-            </div>
+            <Button onClick={() => assignClassTeacherMutation.mutate()} disabled={classTeacherGrade === "select-grade" || assignClassTeacherMutation.isPending} className="w-full">
+              {assignClassTeacherMutation.isPending ? "Assigning..." : "Assign"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Teacher Login Dialog */}
+      <Dialog open={isCreatingTeacherLogin} onOpenChange={setIsCreatingTeacherLogin}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Login for {selectedTeacherForLogin?.name}</DialogTitle>
+            <DialogDescription>Set username and password.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2"><Label>Username</Label><Input value={teacherUsername} onChange={(e) => setTeacherUsername(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Password</Label><Input type="password" value={teacherPassword} onChange={(e) => setTeacherPassword(e.target.value)} /></div>
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => setIsCreatingTeacherLogin(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => createTeacherLoginMutation.mutate()}
-                disabled={!teacherUsername || !teacherPassword || createTeacherLoginMutation.isPending}
-              >
+              <Button variant="outline" onClick={() => setIsCreatingTeacherLogin(false)}>Cancel</Button>
+              <Button onClick={() => createTeacherLoginMutation.mutate()} disabled={!teacherUsername || !teacherPassword || createTeacherLoginMutation.isPending}>
                 {createTeacherLoginMutation.isPending ? 'Creating...' : 'Create Login'}
               </Button>
             </div>
@@ -686,19 +448,12 @@ Jane Smith, jane@example.com, 9876543211, 30000, 08:30, 16:30
 
       {/* Manage Teacher Permissions Dialog */}
       <Dialog open={showPermissionsDialog} onOpenChange={setShowPermissionsDialog}>
-        <DialogContent className="max-w-2xl" aria-labelledby="manage-teacher-permissions-title" aria-describedby="manage-teacher-permissions-description">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle id="manage-teacher-permissions-title">Manage Teacher Permissions</DialogTitle>
-            <DialogDescription id="manage-teacher-permissions-description">
-              Enable or disable specific features for {selectedTeacherForPermissions?.name}.
-            </DialogDescription>
+            <DialogTitle>Manage Permissions</DialogTitle>
+            <DialogDescription>Toggle features for {selectedTeacherForPermissions?.name}.</DialogDescription>
           </DialogHeader>
-          {selectedTeacherForPermissions && (
-            <TeacherFeaturePermissions
-              teacherId={selectedTeacherForPermissions.id}
-              teacherName={selectedTeacherForPermissions.name}
-            />
-          )}
+          {selectedTeacherForPermissions && <TeacherFeaturePermissions teacherId={selectedTeacherForPermissions.id} teacherName={selectedTeacherForPermissions.name} />}
         </DialogContent>
       </Dialog>
     </div>
