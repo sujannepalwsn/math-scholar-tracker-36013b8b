@@ -43,6 +43,7 @@ export default function StudentReport() {
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [aiSummary, setAiSummary] = useState<string>("");
+  const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -891,7 +892,12 @@ export default function StudentReport() {
                       </div>
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-muted/20">
                         <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">{safeFormatDate(di.issue_date, "PPP")}</p>
-                        <p className="text-[10px] font-medium text-primary underline cursor-pointer">View details</p>
+                        <p
+                          className="text-[10px] font-medium text-primary underline cursor-pointer hover:text-primary/80 transition-colors"
+                          onClick={() => setSelectedDisciplineIssue(di)}
+                        >
+                          View details
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -1491,6 +1497,16 @@ export default function StudentReport() {
                             </span>
                           </td>
                           <td className="border px-2 py-1">{safeFormatDate(di.issue_date, "PPP")}</td>
+                          <td className="border px-2 py-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-[10px] font-bold uppercase text-primary"
+                              onClick={() => setSelectedDisciplineIssue(di)}
+                            >
+                              Details
+                            </Button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1519,6 +1535,60 @@ export default function StudentReport() {
           )}
         </div>
       )}
+
+      {/* Discipline Detail Dialog */}
+      <Dialog open={!!selectedDisciplineIssue} onOpenChange={() => setSelectedDisciplineIssue(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Discipline Issue Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedDisciplineIssue && (
+            <div className="space-y-4 py-2">
+              <div className="flex justify-between items-start border-b pb-4">
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</p>
+                  <p className="text-lg font-bold">{selectedDisciplineIssue.discipline_categories?.name}</p>
+                </div>
+                <Badge className={cn("text-[10px] font-black uppercase",
+                  selectedDisciplineIssue.severity === "high" ? "bg-red-500" :
+                  selectedDisciplineIssue.severity === "medium" ? "bg-orange-500" : "bg-green-500")}>
+                  {selectedDisciplineIssue.severity} Severity
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Description</p>
+                <p className="text-sm bg-muted/30 p-3 rounded-lg border italic leading-relaxed">
+                  {selectedDisciplineIssue.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Date Reported</p>
+                  <p className="text-sm font-semibold">{safeFormatDate(selectedDisciplineIssue.issue_date, "PPP")}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</p>
+                  <Badge variant="outline" className="mt-1 font-bold uppercase text-[10px]">
+                    {selectedDisciplineIssue.status || "Reported"}
+                  </Badge>
+                </div>
+              </div>
+
+              {selectedDisciplineIssue.action_taken && (
+                <div className="space-y-2 pt-2">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Action Taken</p>
+                  <p className="text-sm font-medium">{selectedDisciplineIssue.action_taken}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

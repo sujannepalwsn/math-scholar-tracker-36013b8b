@@ -106,85 +106,128 @@ export default function TeacherDashboard() {
     enabled: !!user?.center_id,
   });
 
-  return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Teacher Dashboard</h1>
-          <p className="text-muted-foreground text-lg">Welcome back, {user?.username}! Here's your schedule for today.</p>
+  const StatCard = ({ title, value, icon: Icon, description, colorClass, bgColor }: any) => (
+    <Card
+      className="group relative border-none shadow-soft overflow-hidden transition-all duration-500 hover:shadow-strong hover:-translate-y-1 active:scale-[0.98]"
+    >
+      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
+      <CardContent className="p-4 md:p-6 relative z-10">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1 md:space-y-2">
+            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{title}</p>
+            <h3 className="text-xl md:text-3xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">{value}</h3>
+            {description && <p className="text-[8px] md:text-[10px] font-medium text-muted-foreground italic line-clamp-1">{description}</p>}
+          </div>
+          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3", bgColor)}>
+            <Icon className={cn("h-4 w-4 md:h-6 md:w-6 text-primary")} />
+          </div>
         </div>
-        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-primary">{format(new Date(), 'EEEE, MMMM d')}</span>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Teacher Hub
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Welcome back, {user?.username}! Planning your day.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 text-primary">
+            <Clock className="h-4 w-4" />
+            {format(new Date(), 'EEEE, MMMM d')}
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <StatCard
+          title="Today's Meetings"
+          value={todaysMeetings.length}
+          icon={Video}
+          bgColor="bg-blue-500/10"
+          description="scheduled for today"
+        />
+        <StatCard
+          title="Today's Events"
+          value={todaysEvents.length}
+          icon={CalendarDays}
+          bgColor="bg-green-500/10"
+          description={todaysEvents.some((e: any) => e.is_holiday) ? '🏖️ Holiday today!' : 'happening today'}
+        />
+        <StatCard
+          title="Unread Messages"
+          value={unreadCount}
+          icon={MessageSquare}
+          bgColor="bg-purple-500/10"
+          description="awaiting response"
+        />
+        <StatCard
+          title="Upcoming"
+          value={upcomingMeetings.length}
+          icon={Bell}
+          bgColor="bg-orange-500/10"
+          description="scheduled ahead"
+        />
+      </div>
+
+      {/* Feature Access Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { title: "Today's Meetings", value: todaysMeetings.length, icon: Video, color: "text-blue-600", bgColor: "bg-blue-100", label: "scheduled for today" },
-          { title: "Today's Events", value: todaysEvents.length, icon: CalendarDays, color: "text-green-600", bgColor: "bg-green-100", label: todaysEvents.some((e: any) => e.is_holiday) ? '🏖️ Holiday today!' : 'happening today' },
-          { title: "Unread Messages", value: unreadCount, icon: MessageSquare, color: "text-purple-600", bgColor: "bg-purple-100", label: "awaiting response" },
-          { title: "Upcoming Meetings", value: upcomingMeetings.length, icon: Bell, color: "text-orange-600", bgColor: "bg-orange-100", label: "scheduled ahead" },
-        ].map((stat) => (
-          <Card key={stat.title} className="border-none shadow-soft hover:shadow-medium transition-all duration-300 group">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
-              <div className={cn("p-2 rounded-xl transition-transform group-hover:rotate-12", stat.bgColor)}>
-                <stat.icon className={cn("h-4 w-4", stat.color)} />
+          {
+            title: "Take Attendance",
+            icon: CheckSquare,
+            color: "text-blue-600",
+            bgColor: "bg-blue-50",
+            desc: "Mark student presence for your classes.",
+            perm: user?.teacherPermissions?.take_attendance,
+            link: "/teacher/take-attendance"
+          },
+          {
+            title: "Lesson Tracking",
+            icon: BookOpen,
+            color: "text-green-600",
+            bgColor: "bg-green-50",
+            desc: "Record lessons taught and student progress.",
+            perm: user?.teacherPermissions?.lesson_tracking,
+            link: "/teacher/lesson-tracking"
+          },
+          {
+            title: "Student Reports",
+            icon: Users,
+            color: "text-purple-600",
+            bgColor: "bg-purple-50",
+            desc: "View in-depth performance analytics.",
+            perm: user?.teacherPermissions?.student_report_access,
+            link: "/teacher/student-report"
+          }
+        ].filter(f => f.perm).map((feature) => (
+          <Card
+            key={feature.title}
+            className="group cursor-pointer border-none shadow-soft hover:shadow-strong transition-all duration-300"
+            onClick={() => window.location.href = feature.link}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className={cn("p-3 rounded-2xl transition-all duration-300 group-hover:scale-110", feature.bgColor)}>
+                  <feature.icon className={cn("h-6 w-6", feature.color)} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg">{feature.title}</h4>
+                  <p className="text-xs text-muted-foreground font-medium">{feature.desc}</p>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {/* Feature Access Cards */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Access</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {user?.teacherPermissions?.take_attendance && (
-              <Card className="hover:shadow-strong transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Take Attendance</CardTitle>
-                  <CheckSquare className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">Mark student presence.</p>
-                </CardContent>
-              </Card>
-            )}
-            {user?.teacherPermissions?.lesson_tracking && (
-              <Card className="hover:shadow-strong transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Lesson Tracking</CardTitle>
-                  <BookOpen className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">Record lessons taught.</p>
-                </CardContent>
-              </Card>
-            )}
-            {user?.teacherPermissions?.student_report_access && (
-              <Card className="hover:shadow-strong transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Student Reports</CardTitle>
-                  <Users className="h-4 w-4 text-purple-600" />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">View student performance reports.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Today's Meetings Detail */}
       {todaysMeetings.length > 0 && (

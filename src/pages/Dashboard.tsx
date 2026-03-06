@@ -225,16 +225,17 @@ export default function Dashboard() {
   const StatCard = ({ title, value, icon: Icon, description, colorClass, path }: any) => (
     <Card
       onClick={() => handleCardClick(path)}
-      className="border-none shadow-soft overflow-hidden transition-all duration-300 hover:shadow-medium cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+      className="group relative border-none shadow-soft overflow-hidden transition-all duration-500 cursor-pointer hover:shadow-strong hover:-translate-y-1 active:scale-[0.98]"
     >
-      <CardContent className="p-4 md:p-6">
+      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
+      <CardContent className="p-4 md:p-6 relative z-10">
         <div className="flex justify-between items-start">
           <div className="space-y-1 md:space-y-2">
-            <p className="text-[10px] md:text-sm font-medium text-muted-foreground truncate max-w-[100px] md:max-w-none">{title}</p>
-            <h3 className="text-xl md:text-3xl font-bold tracking-tight">{value}</h3>
-            {description && <p className="text-[8px] md:text-xs text-muted-foreground line-clamp-1">{description}</p>}
+            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{title}</p>
+            <h3 className="text-xl md:text-3xl font-black tracking-tight group-hover:text-primary transition-colors duration-300">{value}</h3>
+            {description && <p className="text-[8px] md:text-[10px] font-medium text-muted-foreground italic line-clamp-1">{description}</p>}
           </div>
-          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-xl bg-primary/10", colorClass)}>
+          <div className={cn("p-2 md:p-3 rounded-lg md:rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3", colorClass)}>
             <Icon className="h-4 w-4 md:h-6 md:w-6 text-primary" />
           </div>
         </div>
@@ -243,29 +244,36 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Center Dashboard</h2>
-          <p className="text-muted-foreground text-sm">Real-time overview of attendance, performance, and activities.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Center Dashboard
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Real-time overview of your institution's health.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-sm font-medium bg-primary/5 px-4 py-2 rounded-xl border border-primary/10">
-          <CalendarIcon className="h-4 w-4 text-primary" />
-          {format(new Date(), "EEEE, MMMM do, yyyy")}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 text-primary">
+            <CalendarIcon className="h-4 w-4" />
+            {format(new Date(), "EEEE, MMMM do, yyyy")}
+          </div>
         </div>
       </div>
 
       {isLoading ? (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
-            <Card key={i} className="border-none shadow-soft p-4 md:p-6">
+            <Card key={i} className="border-none shadow-soft p-4 md:p-6 rounded-2xl">
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
-                  <Skeleton className="h-3 w-16 md:h-4 md:w-24" />
-                  <Skeleton className="h-6 w-12 md:h-8 md:w-16" />
-                  <Skeleton className="h-2 w-20 md:h-3 md:w-32" />
+                  <Skeleton className="h-3 w-16 md:h-4 md:w-24 rounded-full" />
+                  <Skeleton className="h-6 w-12 md:h-8 md:w-16 rounded-lg" />
+                  <Skeleton className="h-2 w-20 md:h-3 md:w-32 rounded-full" />
                 </div>
-                <Skeleton className="h-8 w-8 md:h-12 md:w-12 rounded-lg md:rounded-xl" />
+                <Skeleton className="h-8 w-8 md:h-12 md:w-12 rounded-lg md:rounded-2xl" />
               </div>
             </Card>
           ))}
@@ -344,68 +352,204 @@ export default function Dashboard() {
         <SelectContent><SelectItem value="all">All Grades</SelectItem>{grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
       </Select>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/attendance-summary")}>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Absent Today</CardTitle></CardHeader>
-          <CardContent className="max-h-[300px] overflow-y-auto">
-            <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Grade</TableHead></TableRow></TableHeader>
-              <TableBody>{absentToday.filter(s => gradeFilter === "all" || s.grade === gradeFilter).map((s) => (
-                <TableRow key={s.id} className="cursor-pointer hover:bg-muted" onClick={(e) => { e.stopPropagation(); setSelectedStudent(s); }}><TableCell className="text-sm">{s.name}</TableCell><TableCell className="text-sm">{s.grade}</TableCell></TableRow>
-              ))}</TableBody></Table>
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
+        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl group" onClick={() => handleCardClick("/attendance-summary")}>
+          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
+            <CardTitle className="text-lg font-bold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-red-500/10">
+                  <Users className="h-5 w-5 text-red-600" />
+                </div>
+                Absent Today
+              </div>
+              <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest">{absentToday.length} students</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Name</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Grade</TableHead>
+                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {absentToday.filter(s => gradeFilter === "all" || s.grade === gradeFilter).length === 0 ? (
+                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">Everyone is present!</TableCell></TableRow>
+                ) : (
+                  absentToday.filter(s => gradeFilter === "all" || s.grade === gradeFilter).map((s) => (
+                    <TableRow key={s.id} className="group/row hover:bg-primary/5 transition-colors cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedStudent(s); }}>
+                      <TableCell className="font-bold text-sm py-3">{s.name}</TableCell>
+                      <TableCell><Badge variant="secondary" className="text-[10px]">{s.grade}</Badge></TableCell>
+                      <TableCell className="text-right text-[10px] font-bold text-primary group-hover/row:underline">View Profile</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
-        {/* Pending Homework - clicks to homework page */}
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/homework")}>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Book className="h-4 w-4 text-orange-600" /> Pending Homework ({homeworkDefaulters.length})</CardTitle></CardHeader>
-          <CardContent className="max-h-[300px] overflow-y-auto">
-            {homeworkDefaulters.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">All caught up!</p> : (
-              <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Homework</TableHead><TableHead>Due</TableHead></TableRow></TableHeader>
-                <TableBody>{homeworkDefaulters.map((h: any) => (
-                  <TableRow key={h.id}><TableCell className="text-sm">{h.students?.name}</TableCell><TableCell className="text-sm">{h.homework?.title}</TableCell><TableCell className="text-sm">{h.homework?.due_date ? format(new Date(h.homework.due_date), "MMM d") : "-"}</TableCell></TableRow>
-                ))}</TableBody></Table>
-            )}
+        {/* Pending Homework */}
+        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl" onClick={() => handleCardClick("/homework")}>
+          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
+            <CardTitle className="text-lg font-bold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-orange-500/10">
+                  <Book className="h-5 w-5 text-orange-600" />
+                </div>
+                Pending Homework
+              </div>
+              <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest text-orange-600 border-orange-600/20">{homeworkDefaulters.length} pending</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Student</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Task</TableHead>
+                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Due</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {homeworkDefaulters.length === 0 ? (
+                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">All caught up!</TableCell></TableRow>
+                ) : (
+                  homeworkDefaulters.map((h: any) => (
+                    <TableRow key={h.id} className="hover:bg-orange-50/50 transition-colors">
+                      <TableCell className="font-bold text-sm py-3">{h.students?.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-medium">{h.homework?.title}</TableCell>
+                      <TableCell className="text-right text-[10px] font-black text-orange-600 uppercase">{h.homework?.due_date ? format(new Date(h.homework.due_date), "MMM d") : "-"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/tests")}>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4 text-destructive" /> Low Performers</CardTitle></CardHeader>
-          <CardContent className="max-h-[280px] overflow-y-auto">
-            {lowPerformers.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No low performers.</p> : (
-              <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Test</TableHead><TableHead className="text-right">Score</TableHead></TableRow></TableHeader>
-                <TableBody>{lowPerformers.map((r: any) => (
-                  <TableRow key={r.id}><TableCell className="text-sm">{r.students?.name}</TableCell><TableCell className="text-sm">{r.tests?.name}</TableCell><TableCell className="text-right text-sm font-medium text-destructive">{r.marks_obtained}/{r.tests?.total_marks}</TableCell></TableRow>
-                ))}</TableBody></Table>
-            )}
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
+        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl" onClick={() => handleCardClick("/tests")}>
+          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
+            <CardTitle className="text-lg font-bold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-purple-500/10">
+                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                </div>
+                Performance Alerts
+              </div>
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">Critical Attention</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Student</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Test</TableHead>
+                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Score</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lowPerformers.length === 0 ? (
+                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">No critical performance alerts.</TableCell></TableRow>
+                ) : (
+                  lowPerformers.map((r: any) => (
+                    <TableRow key={r.id} className="hover:bg-red-50/50 transition-colors">
+                      <TableCell className="font-bold text-sm py-3">{r.students?.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground line-clamp-1">{r.tests?.name}</TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-sm font-black text-red-600">{r.marks_obtained}</span>
+                        <span className="text-[10px] text-muted-foreground">/{r.tests?.total_marks}</span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/discipline")}>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-destructive" /> Open Discipline Issues ({recentDiscipline.length})</CardTitle></CardHeader>
-          <CardContent className="max-h-[280px] overflow-y-auto">
-            {recentDiscipline.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No open issues.</p> : (
-              <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Issue</TableHead><TableHead>Severity</TableHead></TableRow></TableHeader>
-                <TableBody>{recentDiscipline.map((d: any) => (
-                  <TableRow key={d.id}><TableCell className="text-sm">{d.students?.name}</TableCell><TableCell className="text-sm truncate max-w-[150px]">{d.description}</TableCell><TableCell><Badge variant={d.severity === 'high' ? 'destructive' : 'secondary'} className="text-[10px]">{d.severity}</Badge></TableCell></TableRow>
-                ))}</TableBody></Table>
-            )}
+        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl" onClick={() => handleCardClick("/discipline")}>
+          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
+            <CardTitle className="text-lg font-bold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-red-600/10">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                Open Discipline Cases
+              </div>
+              <Badge className="bg-red-600 text-white font-black text-[10px]">{recentDiscipline.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Student</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Issue</TableHead>
+                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Severity</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentDiscipline.length === 0 ? (
+                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">No open discipline issues.</TableCell></TableRow>
+                ) : (
+                  recentDiscipline.map((d: any) => (
+                    <TableRow key={d.id} className="hover:bg-red-50/50 transition-colors">
+                      <TableCell className="font-bold text-sm py-3">{d.students?.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground truncate max-w-[150px]">{d.description}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={d.severity === 'high' ? 'destructive' : 'secondary'} className="text-[10px] font-black uppercase tracking-tighter">
+                          {d.severity}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("/lesson-plans")}>
-        <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" /> Upcoming Lesson Plans</CardTitle></CardHeader>
-        <CardContent>
-          {upcomingLessons.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No upcoming lessons.</p> : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl group" onClick={() => handleCardClick("/lesson-plans")}>
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10 group-hover:scale-110 transition-transform">
+              <BookOpen className="h-6 w-6 text-primary" />
+            </div>
+            Academic Roadmap: Upcoming Lessons
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          {upcomingLessons.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <div className="p-3 rounded-full bg-muted/10 inline-block">
+                <CalendarIcon className="h-8 w-8 text-muted-foreground/30" />
+              </div>
+              <p className="text-sm text-muted-foreground font-medium italic">No upcoming lessons planned for this week.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {upcomingLessons.map((lp: any) => (
-                <div key={lp.id} className="rounded-lg border p-3 space-y-1">
-                  <div className="font-medium text-sm">{lp.subject}: {lp.chapter}</div>
-                  <div className="text-xs text-muted-foreground">{lp.topic}</div>
-                  <div className="text-xs text-primary font-medium flex items-center gap-1"><CalendarIcon className="h-3 w-3" />{lp.lesson_date && format(new Date(lp.lesson_date), "MMM d")}</div>
-                  {lp.grade && <Badge variant="outline" className="text-[10px]">Grade {lp.grade}</Badge>}
+                <div key={lp.id} className="relative p-5 rounded-2xl bg-white border border-muted/20 shadow-soft hover:shadow-medium hover:-translate-y-1 transition-all space-y-3 group/plan">
+                  <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary/40 group-hover/plan:animate-ping" />
+                  <div className="space-y-1">
+                    <Badge variant="outline" className="text-[10px] font-black uppercase text-primary border-primary/20 bg-primary/5">{lp.subject}</Badge>
+                    <h4 className="font-bold text-lg leading-tight group-hover/plan:text-primary transition-colors">{lp.chapter}</h4>
+                    <p className="text-xs text-muted-foreground font-medium line-clamp-1">{lp.topic}</p>
+                  </div>
+                  <div className="pt-3 border-t border-muted/10 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase">
+                      <CalendarIcon className="h-3 w-3" />
+                      {lp.lesson_date && format(new Date(lp.lesson_date), "MMM d")}
+                    </div>
+                    {lp.grade && <Badge className="text-[9px] font-black h-5">{lp.grade}</Badge>}
+                  </div>
                 </div>
               ))}
             </div>
