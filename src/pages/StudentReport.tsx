@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, GraduationCap, LayoutDashboard, Paintbrush, Printer, Star, Users, Video, XCircle } from "lucide-react";
+import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, GraduationCap, Paintbrush, Printer, Star, Users, Video, XCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subYears, isPast } from "date-fns"; // Added subYears, isPast
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
 import { Invoice, Payment } from "@/integrations/supabase/finance-types";
-import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
+import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate and cn
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -760,7 +760,7 @@ export default function StudentReport() {
           colorClass="bg-red-500/10"
           description="Total incidents reported"
         />
-        {reportLevel === "subject" && (
+        {(reportLevel === "subject" || reportLevel === "grade-subject") && (
           <StatCard
             title="Lessons Covered"
             value={studentChapters.length}
