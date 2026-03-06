@@ -224,7 +224,7 @@ export default function Sidebar({
     <TooltipProvider>
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen z-20 hidden md:flex flex-col border-r",
+          "fixed top-0 left-0 h-screen z-20 hidden md:flex flex-col border-r print:hidden",
           "bg-card text-card-foreground shadow-soft",
           mounted ? "transition-all duration-300" : "",
           isCollapsed ? "w-20" : "w-64"

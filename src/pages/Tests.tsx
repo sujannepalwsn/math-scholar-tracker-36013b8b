@@ -851,7 +851,23 @@ export default function Tests() {
                 />
               </div>
               <Button
-                onClick={() => addResultMutation.mutate()}
+                onClick={() => {
+                  // Validate marks don't exceed total
+                  if (questions.length === 0) {
+                    const m = parseInt(marksObtained);
+                    if (m > selectedTestData.total_marks) {
+                      toast.error(`Marks (${m}) cannot exceed total marks (${selectedTestData.total_marks})`);
+                      return;
+                    }
+                  } else {
+                    const totalFromQ = questionMarks.reduce((sum, qm) => sum + qm.marksObtained, 0);
+                    if (totalFromQ > selectedTestData.total_marks) {
+                      toast.error(`Total marks (${totalFromQ}) exceed test total (${selectedTestData.total_marks})`);
+                      return;
+                    }
+                  }
+                  addResultMutation.mutate();
+                }}
                 disabled={!selectedStudentId || (!marksObtained && questions.length === 0) || addResultMutation.isPending}
                 className="w-full"
               >

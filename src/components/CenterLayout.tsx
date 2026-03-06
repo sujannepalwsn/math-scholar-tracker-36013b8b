@@ -35,6 +35,7 @@ const navItems: Array<{
   { to: "/teachers", label: "Teachers Registration", icon: Users, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
   { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
   { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'lesson_tracking', category: 'Administration' },
+  { to: "/teacher-performance", label: "Teacher Reports", icon: BarChart3, role: 'center' as const, category: 'Administration' },
   { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const, category: 'Administration' },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'center' as const, category: 'Administration' },
 
