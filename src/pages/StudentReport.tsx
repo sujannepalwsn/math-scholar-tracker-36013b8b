@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, User, Video, XCircle } from "lucide-react";
+import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, GraduationCap, LayoutDashboard, Paintbrush, Printer, Star, Users, Video, XCircle } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subYears, isPast } from "date-fns"; // Added subYears, isPast
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
@@ -56,22 +57,35 @@ export default function StudentReport() {
 
   const filteredStudents = students.filter(s => gradeFilter === "all" || s.grade === gradeFilter);
 
+  // Get student IDs for current filters
+  const studentIds = useMemo(() => {
+    if (selectedStudentId && selectedStudentId !== "none") return [selectedStudentId];
+    return filteredStudents.map(s => s.id);
+  }, [selectedStudentId, filteredStudents]);
+
   // Fetch attendance
-  const { data: attendanceData = [] } = useQuery({
-    queryKey: ["student-attendance", selectedStudentId, dateRange],
+  const { data: attendanceData = [], isLoading: isAttendanceLoading } = useQuery({
+    queryKey: ["student-attendance", selectedStudentId, gradeFilter, dateRange, user?.center_id],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
-      const { data, error } = await supabase
+      if (!user?.center_id) return [];
+      let query = supabase
         .from("attendance")
         .select("*")
-        .eq("student_id", selectedStudentId)
+        .eq("center_id", user.center_id)
         .gte("date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
-        .lte("date", safeFormatDate(dateRange.to, "yyyy-MM-dd"))
-        .order("date");
+        .lte("date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (selectedStudentId && selectedStudentId !== "none") {
+        query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
+      }
+
+      const { data, error } = await query.order("date");
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: !!user?.center_id,
   });
 
   // Fetch lesson plans (needed for grouping)
@@ -91,105 +105,177 @@ export default function StudentReport() {
   });
 
   // Fetch student_chapters (lesson evaluations)
-  const { data: studentChapters = [] } = useQuery({
-    queryKey: ["student-lesson-records-report", selectedStudentId, subjectFilter, dateRange],
+  const { data: studentChapters = [], isLoading: isChaptersLoading } = useQuery({
+    queryKey: ["student-lesson-records-report", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
       let query = supabase.from("student_chapters").select(`
         *,
-        lesson_plans(id, subject, chapter, topic, lesson_date, lesson_file_url),
+        lesson_plans!inner(id, subject, chapter, topic, lesson_date, lesson_file_url),
         recorded_by_teacher:recorded_by_teacher_id(name)
-      `).eq("student_id", selectedStudentId)
+      `)
         .gte("completed_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("completed_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
-      if (subjectFilter !== "all") query = query.eq("lesson_plans.subject", subjectFilter);
+
+      if (selectedStudentId && selectedStudentId !== "none") {
+        query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
+      } else {
+        // School level: still need to ensure students belong to the center
+        query = query.in("student_id", studentIds);
+      }
+
+      if (subjectFilter !== "all") {
+        query = query.eq("lesson_plans.subject", subjectFilter);
+      }
+
       const { data, error } = await query.order("completed_at", { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: studentIds.length > 0,
   });
 
   // Fetch test results
-  const { data: testResults = [] } = useQuery({
-    queryKey: ["student-test-results", selectedStudentId, subjectFilter, dateRange],
+  const { data: testResults = [], isLoading: isTestsLoading } = useQuery({
+    queryKey: ["student-test-results", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
-      let query = supabase.from("test_results").select("*, tests(id, name, subject, total_marks, lesson_plan_id, questions)").eq("student_id", selectedStudentId)
+      let query = supabase.from("test_results").select("*, tests!inner(id, name, subject, total_marks, lesson_plan_id, questions)")
         .gte("date_taken", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("date_taken", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
-      if (subjectFilter !== "all") query = query.eq("tests.subject", subjectFilter);
+
+      if (selectedStudentId && selectedStudentId !== "none") {
+        query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
+      } else {
+        query = query.in("student_id", studentIds);
+      }
+
+      if (subjectFilter !== "all") {
+        query = query.eq("tests.subject", subjectFilter);
+      }
+
       const { data, error } = await query.order("date_taken", { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: studentIds.length > 0,
   });
 
   // Fetch homework status
-  const { data: homeworkStatus = [] } = useQuery({
-    queryKey: ["student-homework-status-report", selectedStudentId, subjectFilter, dateRange],
+  const { data: homeworkStatus = [], isLoading: isHomeworkLoading } = useQuery({
+    queryKey: ["student-homework-status-report", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
-      let query = supabase.from("student_homework_records").select("*, homework(id, title, subject, due_date, lesson_plan_id)")
-        .eq("student_id", selectedStudentId)
-        .gte("homework.due_date", safeFormatDate(dateRange.from, "yyyy-MM-dd")) // Filter by homework due_date
-        .lte("homework.due_date", safeFormatDate(dateRange.to, "yyyy-MM-dd")); // Filter by homework due_date
-      if (subjectFilter !== "all") query = query.eq("homework.subject", subjectFilter);
+      let query = supabase.from("student_homework_records").select("*, homework!inner(id, title, subject, due_date, lesson_plan_id)")
+        .gte("homework.due_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
+        .lte("homework.due_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (selectedStudentId && selectedStudentId !== "none") {
+        query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
+      } else {
+        query = query.in("student_id", studentIds);
+      }
+
+      if (subjectFilter !== "all") {
+        query = query.eq("homework.subject", subjectFilter);
+      }
+
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: studentIds.length > 0,
   });
 
-  // Fetch preschool activities
-  const { data: preschoolActivities = [] } = useQuery({
-    queryKey: ["student-preschool-activities-report", selectedStudentId, dateRange],
+  // Fetch activities (distinct from student participations)
+  const { data: activities = [], isLoading: isAllActivitiesLoading } = useQuery({
+    queryKey: ["center-activities", user?.center_id, gradeFilter, dateRange],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
-      const { data, error } = await supabase.from("student_activities").select("*, activities(title, description, activity_date, photo_url, video_url, activity_type_id, activity_types(name))").eq("student_id", selectedStudentId)
-        .gte("created_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
-        .lte("created_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+      if (!user?.center_id) return [];
+      let query = supabase.from("activities")
+        .select("*")
+        .eq("center_id", user.center_id)
+        .gte("activity_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
+        .lte("activity_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (gradeFilter !== "all") {
+        query = query.eq("grade", gradeFilter);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: !!user?.center_id,
+  });
+
+  // Fetch preschool activities (student participations)
+  const { data: preschoolActivities = [], isLoading: isActivitiesLoading } = useQuery({
+    queryKey: ["student-preschool-activities-report", selectedStudentId, gradeFilter, dateRange, studentIds],
+    queryFn: async () => {
+      let query = supabase.from("student_activities").select("*, activities(title, description, activity_date, photo_url, video_url, activity_type_id, activity_types(name))")
+        .gte("created_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
+        .lte("created_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (selectedStudentId && selectedStudentId !== "none") {
+        query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
+      } else {
+        query = query.in("student_id", studentIds);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: studentIds.length > 0,
   });
 
   // Fetch discipline issues
-  const { data: disciplineIssues = [] } = useQuery({
-    queryKey: ["student-discipline-issues-report", selectedStudentId, dateRange],
+  const { data: disciplineIssues = [], isLoading: isDisciplineLoading } = useQuery({
+    queryKey: ["student-discipline-issues-report", selectedStudentId, gradeFilter, dateRange, user?.center_id],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
-      const { data, error } = await supabase.from("discipline_issues").select("*, discipline_categories(name)").eq("student_id", selectedStudentId)
+      if (!user?.center_id) return [];
+      let query = supabase.from("discipline_issues").select("*, discipline_categories(name)")
+        .eq("center_id", user.center_id)
         .gte("issue_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("issue_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (selectedStudentId && selectedStudentId !== "none") {
+        query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: !!user?.center_id,
   });
 
-  // Fetch finance data
+  // Fetch finance data (keep student-specific for now, or generalize if needed)
   const { data: invoices = [] } = useQuery({
     queryKey: ["student-invoices-report", selectedStudentId, dateRange],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
+      if (!selectedStudentId || selectedStudentId === "none") return [];
       const { data, error } = await supabase.from("invoices").select("*").eq("student_id", selectedStudentId)
         .gte("invoice_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("invoice_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
       if (error) throw error;
       return data as Invoice[];
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: !!selectedStudentId && selectedStudentId !== "none",
   });
 
   const { data: payments = [] } = useQuery({
     queryKey: ["student-payments-report", selectedStudentId, dateRange],
     queryFn: async () => {
-      if (!selectedStudentId || selectedStudentId === "none") return []; // Added check for "none"
-      // Get invoices for this student first
+      if (!selectedStudentId || selectedStudentId === "none") return [];
       const { data: invoices, error: invError } = await supabase
         .from('invoices')
         .select('id')
@@ -206,7 +292,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data as Payment[];
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none", // Enabled only if a real student is selected
+    enabled: !!selectedStudentId && selectedStudentId !== "none",
   });
 
   // Calculate finance summary
@@ -226,23 +312,75 @@ export default function StudentReport() {
   }, [totalInvoiced, totalPaid]);
 
   // Statistics
-  const totalDays = attendanceData.length;
-  const presentDays = attendanceData.filter((a) => a.status === "present").length;
-  const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+  const reportLevel = useMemo(() => {
+    if (selectedStudentId && selectedStudentId !== "none") return "student";
+    if (gradeFilter !== "all" && subjectFilter !== "all") return "grade-subject";
+    if (gradeFilter !== "all") return "grade";
+    if (subjectFilter !== "all") return "subject";
+    return "school";
+  }, [selectedStudentId, gradeFilter, subjectFilter]);
 
-  const totalTests = testResults.length;
-  const totalMarksObtained = testResults.reduce(
-    (sum, r) => sum + r.marks_obtained,
-    0
-  );
-  const totalMaxMarks = testResults.reduce(
-    (sum, r) => sum + (r.tests?.total_marks || 0),
-    0
-  );
-  const averagePercentage =
-    totalMaxMarks > 0
+  const dashboardStats = useMemo(() => {
+    // 1. Total Students
+    const totalStudents = reportLevel === "student" ? 1 : filteredStudents.length;
+
+    // 2. Average Attendance %
+    const totalAttendanceDays = attendanceData.length;
+    const presentAttendanceDays = attendanceData.filter(a => a.status === "present").length;
+    const attendancePercentage = totalAttendanceDays > 0
+      ? Math.round((presentAttendanceDays / totalAttendanceDays) * 100)
+      : 0;
+
+    // 3. Overall Homework Completion Rate
+    const totalHomework = homeworkStatus.length;
+    const completedHomework = homeworkStatus.filter(h => ["completed", "checked"].includes(h.status || "")).length;
+    const homeworkCompletionRate = totalHomework > 0
+      ? Math.round((completedHomework / totalHomework) * 100)
+      : 0;
+
+    // 4. Overall Evaluation Completion Rate (from student_chapters)
+    const totalEvaluations = studentChapters.length;
+    const evaluationCompletionRate = totalEvaluations > 0
+      ? Math.round((studentChapters.filter(sc => sc.completed).length / totalEvaluations) * 100)
+      : 0;
+
+    // 5. Average Test Performance
+    const totalTestResults = testResults.length;
+    const totalMarksObtained = testResults.reduce((sum, r) => sum + (r.marks_obtained || 0), 0);
+    const totalMaxMarks = testResults.reduce((sum, r) => sum + (r.tests?.total_marks || 0), 0);
+    const testPerformance = totalMaxMarks > 0
       ? Math.round((totalMarksObtained / totalMaxMarks) * 100)
       : 0;
+
+    // 6. Total Discipline Records
+    const totalDiscipline = disciplineIssues.length;
+
+    // 7. Total Activities Conducted
+    // If student selected, show participations. Else show unique activities.
+    const totalActivities = reportLevel === "student" ? preschoolActivities.length : activities.length;
+
+    return {
+      totalStudents,
+      attendancePercentage,
+      homeworkCompletionRate,
+      evaluationCompletionRate,
+      testPerformance,
+      totalDiscipline,
+      totalActivities,
+      totalTests: totalTestResults,
+      totalMarksObtained,
+      totalMaxMarks
+    };
+  }, [reportLevel, filteredStudents, attendanceData, homeworkStatus, studentChapters, testResults, disciplineIssues, activities, preschoolActivities]);
+
+  const totalDays = attendanceData.length;
+  const presentDays = attendanceData.filter((a) => a.status === "present").length;
+  const attendancePercentage = dashboardStats.attendancePercentage;
+
+  const totalTests = dashboardStats.totalTests;
+  const totalMarksObtained = dashboardStats.totalMarksObtained;
+  const totalMaxMarks = dashboardStats.totalMaxMarks;
+  const averagePercentage = dashboardStats.testPerformance;
 
   const subjects = Array.from(new Set([
     ...allLessonPlans.map(lp => lp.subject).filter(Boolean),
@@ -554,6 +692,151 @@ export default function StudentReport() {
     }
   };
 
+  const StatCard = ({ title, value, icon: Icon, description, colorClass }: any) => (
+    <Card className="border-none shadow-soft overflow-hidden transition-all duration-300 hover:shadow-medium">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          </div>
+          <div className={cn("p-3 rounded-xl bg-primary/10", colorClass)}>
+            <Icon className="h-6 w-6 text-primary" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const SummaryDashboard = () => (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Students"
+          value={dashboardStats.totalStudents}
+          icon={Users}
+          colorClass="bg-blue-500/10"
+        />
+        <StatCard
+          title="Attendance"
+          value={`${dashboardStats.attendancePercentage}%`}
+          icon={Clock}
+          colorClass="bg-green-500/10"
+          description="Average student attendance"
+        />
+        <StatCard
+          title="Homework Completion"
+          value={`${dashboardStats.homeworkCompletionRate}%`}
+          icon={Book}
+          colorClass="bg-orange-500/10"
+          description="Assigned vs Completed"
+        />
+        <StatCard
+          title="Evaluation Completion"
+          value={`${dashboardStats.evaluationCompletionRate}%`}
+          icon={Star}
+          colorClass="bg-yellow-500/10"
+          description="Lesson evaluations"
+        />
+        <StatCard
+          title="Test Performance"
+          value={`${dashboardStats.testPerformance}%`}
+          icon={ClipboardCheck}
+          colorClass="bg-purple-500/10"
+          description="Average score across tests"
+        />
+        <StatCard
+          title="Activities"
+          value={dashboardStats.totalActivities}
+          icon={Paintbrush}
+          colorClass="bg-pink-500/10"
+          description="Total activities conducted"
+        />
+        <StatCard
+          title="Discipline Records"
+          value={dashboardStats.totalDiscipline}
+          icon={AlertTriangle}
+          colorClass="bg-red-500/10"
+          description="Total incidents reported"
+        />
+        {reportLevel === "subject" && (
+          <StatCard
+            title="Lessons Covered"
+            value={studentChapters.length}
+            icon={BookOpen}
+            colorClass="bg-indigo-500/10"
+          />
+        )}
+      </div>
+
+      {/* Aggregate Tables for Grade/Subject */}
+      {(reportLevel === "grade" || reportLevel === "subject" || reportLevel === "grade-subject") && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-none shadow-medium">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-primary" /> Test Performance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {testResults.length === 0 ? (
+                <p className="text-muted-foreground italic">No test results found for this selection.</p>
+              ) : (
+                <div className="space-y-4">
+                  {testResults.slice(0, 5).map((tr: any) => (
+                    <div key={tr.id} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                      <div>
+                        <p className="font-medium">{tr.tests?.name}</p>
+                        <p className="text-xs text-muted-foreground">{safeFormatDate(tr.date_taken, "PPP")}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">{tr.marks_obtained}/{tr.tests?.total_marks}</p>
+                        <p className="text-xs text-primary">{Math.round((tr.marks_obtained / tr.tests?.total_marks) * 100)}%</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-medium">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-primary" /> Recent Discipline Issues
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {disciplineIssues.length === 0 ? (
+                <p className="text-muted-foreground italic">No discipline records found for this selection.</p>
+              ) : (
+                <div className="space-y-4">
+                  {disciplineIssues.slice(0, 5).map((di: any) => (
+                    <div key={di.id} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                      <div>
+                        <p className="font-medium">{di.discipline_categories?.name}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">{di.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={cn("text-xs font-bold px-2 py-1 rounded bg-white", getSeverityColor(di.severity))}>
+                          {di.severity?.toUpperCase()}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">{safeFormatDate(di.issue_date, "PPP")}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+
+  const isLoading = isAttendanceLoading || isChaptersLoading || isTestsLoading || isHomeworkLoading || isActivitiesLoading || isDisciplineLoading || isAllActivitiesLoading;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header and Print/Export */}
@@ -577,7 +860,9 @@ export default function StudentReport() {
       {/* Filters */}
       <Card className="border-none shadow-soft p-6 overflow-hidden">
         <div className="flex flex-wrap gap-4 items-end">
-        <Select value={gradeFilter} onValueChange={setGradeFilter}>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Grade</label>
+          <Select value={gradeFilter} onValueChange={(val) => { setGradeFilter(val); setSelectedStudentId("none"); }}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Grade" />
           </SelectTrigger>
@@ -589,46 +874,86 @@ export default function StudentReport() {
           </SelectContent>
         </Select>
 
-        <Input
-          type="date"
-          value={safeFormatDate(dateRange.from, "yyyy-MM-dd")}
-          onChange={(e) => setDateRange(prev => ({ ...prev, from: new Date(e.target.value) }))}
-        />
-        <Input
-          type="date"
-          value={safeFormatDate(dateRange.to, "yyyy-MM-dd")}
-          onChange={(e) => setDateRange(prev => ({ ...prev, to: new Date(e.target.value) }))}
-        />
+        </div>
 
-        <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Subject" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">From</label>
+          <Input
+            type="date"
+            className="w-[150px]"
+            value={safeFormatDate(dateRange.from, "yyyy-MM-dd")}
+            onChange={(e) => setDateRange(prev => ({ ...prev, from: new Date(e.target.value) }))}
+          />
+        </div>
 
-        <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select Student" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Select Student</SelectItem> {/* Added placeholder item */}
-            {filteredStudents.map((student) => (
-              <SelectItem key={student.id} value={student.id}>
-                {student.name} - Grade {student.grade}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">To</label>
+          <Input
+            type="date"
+            className="w-[150px]"
+            value={safeFormatDate(dateRange.to, "yyyy-MM-dd")}
+            onChange={(e) => setDateRange(prev => ({ ...prev, to: new Date(e.target.value) }))}
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Subject</label>
+          <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Subject" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Subjects</SelectItem>
+              {subjects.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Student</label>
+          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select Student" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">All Students</SelectItem>
+              {filteredStudents.map((student) => (
+                <SelectItem key={student.id} value={student.id}>
+                  {student.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       </Card>
 
-      {selectedStudentId !== "none" && selectedStudent && ( // Only render report if a student is selected
+      {isLoading ? (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(7)].map((_, i) => (
+              <Card key={i} className="border-none shadow-soft p-6">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-12 w-12 rounded-xl" />
+                </div>
+              </Card>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Skeleton className="h-64 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-xl" />
+          </div>
+        </div>
+      ) : reportLevel !== "student" ? (
+        <SummaryDashboard />
+      ) : selectedStudent && (
         <div id="printable-report" className="space-y-8">
           {/* Finance Summary */}
           <Card className="border-none shadow-medium overflow-hidden">
