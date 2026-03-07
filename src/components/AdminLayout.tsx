@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
-import { useState } from "react";
+import React, { useState } from "react";
 
 const navItems: Array<{
   to: string;

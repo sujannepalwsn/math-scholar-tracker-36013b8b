@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, GraduationCap, ShieldCheck, FileText, X } from "lucide-react";
 import { cn } from "@/lib/utils";
