@@ -240,7 +240,7 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
-                      {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
+                      {event.is_holiday && <span className="text-xs text-destructive font-medium">Holiday</span>}
                       {isToday(new Date(event.event_date)) && <Badge className="ml-2">Today</Badge>}
                     </div>
                   </div>
