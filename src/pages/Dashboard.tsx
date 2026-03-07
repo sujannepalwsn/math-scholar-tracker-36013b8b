@@ -176,6 +176,38 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
+  const { data: recentTestResults = [] } = useQuery({
+    queryKey: ["recent-test-results-dashboard", centerId, dateRange.from, dateRange.to],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase
+        .from("test_results")
+        .select("*, students(name, grade), tests(name, total_marks, subject)")
+        .gte("date_taken", dateRange.from)
+        .lte("date_taken", dateRange.to)
+        .order("date_taken", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: invoicesInRange = [] } = useQuery({
+    queryKey: ["invoices-dashboard", centerId, dateRange.from, dateRange.to],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("center_id", centerId)
+        .gte("invoice_date", dateRange.from)
+        .lte("invoice_date", dateRange.to);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
   const { data: historicalAttendance = [] } = useQuery({
     queryKey: ["attendance-historical", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
@@ -350,6 +382,35 @@ export default function Dashboard() {
   const evaluationRate = evaluationStats.length > 0 ? Math.round((ratedEvaluations / evaluationStats.length) * 100) : 0;
 
   const avgTestScore = performanceTrend.length > 0 ? performanceTrend[performanceTrend.length - 1].value : 0;
+
+  const feeCollection = invoicesInRange.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
+  const totalInvoiced = invoicesInRange.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
+  const collectionRate = totalInvoiced > 0 ? Math.round((feeCollection / totalInvoiced) * 100) : 0;
+
+  const highestPerformers = useMemo(() => {
+    return [...recentTestResults]
+      .sort((a: any, b: any) => {
+        const aP = (a.marks_obtained / (a.tests?.total_marks || 100)) * 100;
+        const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
+        return bP - aP;
+      })
+      .slice(0, 5);
+  }, [recentTestResults]);
+
+  const lowestPerformers = useMemo(() => {
+    return [...recentTestResults]
+      .filter((r: any) => (r.marks_obtained / (r.tests?.total_marks || 100)) < 0.4)
+      .sort((a: any, b: any) => {
+        const aP = (a.marks_obtained / (a.tests?.total_marks || 100)) * 100;
+        const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
+        return aP - bP;
+      })
+      .slice(0, 5);
+  }, [recentTestResults]);
+
+  const absentTeachers = teachers.filter(t =>
+    teacherAttendance.some(ta => ta.teacher_id === t.id && ta.status === "absent")
+  );
 
   const todayClasses = periodSchedules.map((ps: any) => ({
     id: ps.id,
@@ -572,7 +633,121 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Activities & Discipline Row */}
+          {/* Performers Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+              <CardHeader className="bg-green-500/5 border-b border-green-500/10">
+                 <CardTitle className="text-sm font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" /> Top Performers
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                 <div className="divide-y divide-green-500/5">
+                    {highestPerformers.length === 0 ? (
+                       <p className="p-8 text-center text-xs italic text-muted-foreground">No data available</p>
+                    ) : (
+                       highestPerformers.map((r: any) => (
+                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-green-500/5 transition-colors">
+                             <div>
+                                <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">{r.tests?.name}</p>
+                             </div>
+                             <Badge className="bg-green-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                          </div>
+                       ))
+                    )}
+                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+              <CardHeader className="bg-rose-500/5 border-b border-rose-500/10">
+                 <CardTitle className="text-sm font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" /> Critical Attention
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                 <div className="divide-y divide-rose-500/5">
+                    {lowestPerformers.length === 0 ? (
+                       <p className="p-8 text-center text-xs italic text-muted-foreground">No critical alerts</p>
+                    ) : (
+                       lowestPerformers.map((r: any) => (
+                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-rose-500/5 transition-colors">
+                             <div>
+                                <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">{r.tests?.name}</p>
+                             </div>
+                             <Badge className="bg-rose-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                          </div>
+                       ))
+                    )}
+                 </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Teacher Status & Fee Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+                <CardHeader>
+                   <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <Users className="h-5 w-5 text-indigo-600" /> Teacher Attendance
+                   </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                   <div className="divide-y divide-slate-100">
+                      {absentTeachers.length === 0 ? (
+                         <p className="p-8 text-center text-xs italic text-muted-foreground text-green-600 font-bold">All teachers are present!</p>
+                      ) : (
+                         absentTeachers.map(t => (
+                            <div key={t.id} className="p-4 flex justify-between items-center">
+                               <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
+                                     <Users className="h-4 w-4 text-rose-600" />
+                                  </div>
+                                  <div>
+                                     <p className="text-sm font-bold text-slate-800">{t.name}</p>
+                                     <p className="text-[10px] text-slate-400 font-medium">{t.subject}</p>
+                                  </div>
+                               </div>
+                               <Badge variant="destructive" className="font-black text-[9px] uppercase">Absent</Badge>
+                            </div>
+                         ))
+                      )}
+                   </div>
+                </CardContent>
+             </Card>
+
+             <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+                <CardHeader>
+                   <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-emerald-600" /> Financial Health
+                   </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                   <div className="flex justify-between items-end">
+                      <div>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Collection Ratio</p>
+                         <p className="text-4xl font-black text-slate-800 tracking-tight">{collectionRate}%</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Invoiced</p>
+                         <p className="text-xl font-bold text-slate-700">{formatCurrency(totalInvoiced)}</p>
+                      </div>
+                   </div>
+                   <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-bold">
+                         <span className="text-slate-500">Amount Collected</span>
+                         <span className="text-emerald-600">{formatCurrency(feeCollection)}</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                         <div className="h-full bg-emerald-500" style={{ width: `${collectionRate}%` }} />
+                      </div>
+                   </div>
+                </CardContent>
+             </Card>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 md:gap-6">
             <KPICard
               title="Activities"
@@ -595,41 +770,12 @@ export default function Dashboard() {
               secondaryIconColor="text-rose-500"
             />
           </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <Button onClick={() => navigate("/take-attendance")} className="bg-[#22c55e] hover:bg-[#1eb054] text-white font-bold h-12 rounded-xl shadow-md border-none text-xs sm:text-sm">
-              <Plus className="h-4 w-4 mr-2" /> Mark Attendance
-            </Button>
-            <Button onClick={() => navigate("/homework-management")} className="bg-[#f97316] hover:bg-[#e86a14] text-white font-bold h-12 rounded-xl shadow-md border-none">
-              <Plus className="h-4 w-4 mr-2" /> Add Homework
-            </Button>
-            <Button onClick={() => navigate("/activities")} className="bg-[#6366f1] hover:bg-[#585ce5] text-white font-bold h-12 rounded-xl shadow-md border-none">
-              <Plus className="h-4 w-4 mr-2" /> Add Activity
-            </Button>
-          </div>
-
-          {/* Quick Actions & Today's Classes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
-              <CardHeader>
-                  <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 gap-4">
-                  <QuickAction label="Mark Attendance" icon={Plus} onClick={() => navigate("/take-attendance")} />
-                  <QuickAction label="Add Homework" icon={Plus} onClick={() => navigate("/homework-management")} />
-                  <QuickAction label="Add Activity" icon={Plus} onClick={() => navigate("/activities")} />
-                  <QuickAction label="Create Report" icon={FileText} onClick={() => navigate("/student-report")} />
-              </CardContent>
-            </Card>
-            <ClassSchedule classes={todayClasses} />
-          </div>
         </div>
 
         {/* Right Column / Sidebar */}
         <div className="lg:col-span-4 space-y-6">
           <AlertList alerts={recentAlerts} />
-          <ClassSchedule classes={todayClasses} title="Today's Classes" />
+          <ClassSchedule classes={todayClasses} title="Instructional Grid" />
         </div>
       </div>
     </div>

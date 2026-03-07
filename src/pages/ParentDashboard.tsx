@@ -330,11 +330,38 @@ const ParentDashboardContent = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-         <QuickAction label="View Performance" icon={TrendingUp} onClick={() => navigate("/parent/student-report")} className="text-xs sm:text-sm px-4" />
-         <QuickAction label="Homework Hub" icon={Book} onClick={() => navigate("/parent/homework")} />
-         <QuickAction label="Fee Payments" icon={Wallet} onClick={() => navigate("/parent/finance")} />
-         <QuickAction label="Messages" icon={MessageSquare} onClick={() => navigate("/parent-messages")} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+            <CardHeader className="bg-indigo-500/5 border-b border-indigo-500/10">
+               <CardTitle className="text-sm font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" /> Evaluation Synopsis
+               </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+               <div className="divide-y divide-indigo-500/5">
+                  {testResults.slice(0, 5).map((r: any) => (
+                     <div key={r.id} className="p-4 flex justify-between items-center hover:bg-indigo-500/5 transition-colors">
+                        <div>
+                           <p className="text-sm font-bold text-slate-800">{r.tests?.name}</p>
+                           <p className="text-[10px] text-slate-400 font-medium">{format(new Date(r.date_taken), "MMM dd, yyyy")}</p>
+                        </div>
+                        <Badge className="bg-indigo-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                     </div>
+                  ))}
+               </div>
+            </CardContent>
+         </Card>
+
+         <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 p-6 flex flex-col justify-center items-center text-center space-y-4">
+            <div className="p-4 bg-primary/10 rounded-full">
+               <TrendingUp className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+               <h4 className="text-xl font-black text-slate-800">Academic Standing</h4>
+               <p className="text-sm text-muted-foreground italic">Continuous monitoring of institutional progress and student growth trajectory.</p>
+            </div>
+            <Button variant="outline" className="rounded-xl font-bold uppercase text-[10px] tracking-widest" onClick={() => navigate("/parent/student-report")}>Detailed Analytics</Button>
+         </Card>
       </div>
 
       <ParentChapterDetailModal open={showChapterDetailModal} onOpenChange={setShowChapterDetailModal} chapterGroup={selectedChapterGroup} />

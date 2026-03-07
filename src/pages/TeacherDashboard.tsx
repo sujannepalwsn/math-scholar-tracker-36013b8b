@@ -59,6 +59,22 @@ export default function TeacherDashboard() {
     enabled: !!teacherId,
   });
 
+  const { data: classResults = [] } = useQuery({
+    queryKey: ["teacher-class-performance", teacherId, dateRange.from, dateRange.to],
+    queryFn: async () => {
+      if (!teacherId) return [];
+      const { data, error } = await supabase
+        .from("test_results")
+        .select("*, students(name, grade), tests(name, total_marks, teacher_id)")
+        .eq("tests.teacher_id", teacherId)
+        .gte("date_taken", dateRange.from)
+        .lte("date_taken", dateRange.to);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!teacherId,
+  });
+
   const { data: teacherSchedule = [] } = useQuery({
     queryKey: ["teacher-schedule-dashboard", teacherId, dateRange.to],
     queryFn: async () => {
@@ -138,6 +154,20 @@ export default function TeacherDashboard() {
       return { date: format(day, "MMM d"), value: dayRecords.length > 0 ? Math.round((present / dayRecords.length) * 100) : 0 };
     });
   }, [historicalAttendance]);
+
+  const avgPerformance = classResults.length > 0
+    ? Math.round(classResults.reduce((acc, curr: any) => acc + (curr.marks_obtained / (curr.tests?.total_marks || 100)) * 100, 0) / classResults.length)
+    : 0;
+
+  const topStudents = useMemo(() => {
+    return [...classResults]
+      .sort((a: any, b: any) => {
+        const aP = (a.marks_obtained / (a.tests?.total_marks || 100)) * 100;
+        const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
+        return bP - aP;
+      })
+      .slice(0, 5);
+  }, [classResults]);
 
   const todayClasses = teacherSchedule.map((ps: any) => ({
     id: ps.id,
@@ -223,13 +253,32 @@ export default function TeacherDashboard() {
       {/* Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-           <KPICard title="Student Performance" value="82%" description="Average across classes" icon={TrendingUp} color="purple" trendData={attendanceTrend} />
-           <div className="grid grid-cols-2 gap-4 md:gap-6">
-             <QuickAction label="Take Attendance" icon={Plus} onClick={() => navigate("/teacher/take-attendance")} />
-             <QuickAction label="Update Lesson Progress" icon={Plus} onClick={() => navigate("/teacher/lesson-tracking")} />
-             <QuickAction label="Add Homework" icon={Plus} onClick={() => navigate("/teacher/homework-management")} />
-             <QuickAction label="New Meeting" icon={Video} onClick={() => navigate("/teacher-meetings")} />
-           </div>
+           <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Average performance index" icon={TrendingUp} color="purple" trendData={attendanceTrend} />
+
+           <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+              <CardHeader className="bg-primary/5 border-b border-primary/10">
+                 <CardTitle className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" /> Academic Leaders
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                 <div className="divide-y divide-primary/5">
+                    {topStudents.length === 0 ? (
+                       <p className="p-8 text-center text-xs italic text-muted-foreground">No evaluation data available</p>
+                    ) : (
+                       topStudents.map((r: any) => (
+                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-primary/5 transition-colors">
+                             <div>
+                                <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">Grade {r.students?.grade} • {r.tests?.name}</p>
+                             </div>
+                             <Badge className="bg-indigo-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                          </div>
+                       ))
+                    )}
+                 </div>
+              </CardContent>
+           </Card>
         </div>
         <AlertList alerts={teacherAlerts} />
       </div>
