@@ -267,16 +267,16 @@ export default function Dashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
-            <Card key={i} className="border-none shadow-soft p-4 md:p-6 rounded-2xl">
+            <Card key={i} className="p-5">
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
-                  <Skeleton className="h-3 w-16 md:h-4 md:w-24 rounded-full" />
-                  <Skeleton className="h-6 w-12 md:h-8 md:w-16 rounded-lg" />
-                  <Skeleton className="h-2 w-20 md:h-3 md:w-32 rounded-full" />
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-6 w-14" />
+                  <Skeleton className="h-3 w-28" />
                 </div>
-                <Skeleton className="h-8 w-8 md:h-12 md:w-12 rounded-lg md:rounded-2xl" />
+                <Skeleton className="h-10 w-10 rounded-lg" />
               </div>
             </Card>
           ))}
