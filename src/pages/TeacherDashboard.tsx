@@ -108,24 +108,20 @@ export default function TeacherDashboard() {
     enabled: !!user?.center_id,
   });
 
-  const StatCard = ({ title, value, icon: Icon, description, colorClass, bgColor, link }: any) => (
+  const StatCard = ({ title, value, icon: Icon, description, bgColor, link }: any) => (
     <Card
       onClick={() => link && navigate(link)}
-      className={cn(
-        "group relative border-none shadow-strong overflow-hidden transition-all duration-500 rounded-[2rem] bg-white/40 backdrop-blur-md border border-white/20",
-        link && "cursor-pointer hover:shadow-xl hover:-translate-y-1 active:scale-[0.98]"
-      )}
+      className={cn("group transition-all duration-200", link && "cursor-pointer hover:-translate-y-0.5")}
     >
-      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
-      <CardContent className="p-6 relative z-10">
+      <CardContent className="p-5">
         <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{title}</p>
-            <h3 className="text-3xl font-black tracking-tighter group-hover:text-primary transition-colors duration-300">{value}</h3>
-            {description && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-70">{description}</p>}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">{title}</p>
+            <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
           </div>
-          <div className={cn("p-3 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-soft", bgColor)}>
-            <Icon className={cn("h-6 w-6 text-primary")} />
+          <div className={cn("p-2.5 rounded-lg", bgColor)}>
+            <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
       </CardContent>
@@ -133,111 +129,35 @@ export default function TeacherDashboard() {
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-1000">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div className="space-y-2">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-primary to-violet-600 uppercase">
-            Instructor Console
-          </h1>
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-bold uppercase tracking-[0.2em] opacity-70">
-              Welcome, Agent {user?.username?.split('@')[0].toUpperCase() || 'FACULTY'}
-            </p>
-          </div>
-        </div>
-        <div className="bg-white/40 backdrop-blur-md px-6 py-3 rounded-[2rem] border border-white/40 shadow-soft flex items-center gap-4">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <Clock className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground leading-none">Temporal Marker</span>
-            <span className="font-black text-slate-700 text-sm">{format(new Date(), 'EEEE, MMMM d')}</span>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Teacher Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
+          Welcome, {user?.username?.split('@')[0] || 'Teacher'} · {format(new Date(), 'EEEE, MMMM d')}
+        </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Daily Assemblies"
-          value={todaysMeetings.length}
-          icon={Video}
-          bgColor="bg-blue-500/10"
-          description="sessions today"
-          link="/teacher/meetings"
-        />
-        <StatCard
-          title="Calendar Events"
-          value={todaysEvents.length}
-          icon={CalendarDays}
-          bgColor="bg-green-500/10"
-          description={todaysEvents.some((e: any) => e.is_holiday) ? 'Institutional Holiday' : 'active events'}
-          link="/teacher/calendar"
-        />
-        <StatCard
-          title="Neural Comms"
-          value={unreadCount}
-          icon={MessageSquare}
-          bgColor="bg-purple-500/10"
-          description="unread signals"
-          link="/teacher/messaging"
-        />
-        <StatCard
-          title="Upcoming Queue"
-          value={upcomingMeetings.length}
-          icon={Bell}
-          bgColor="bg-orange-500/10"
-          description="pending sessions"
-          link="/teacher/meetings"
-        />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Today's Meetings" value={todaysMeetings.length} icon={Video} bgColor="bg-primary/10" description="sessions today" link="/teacher-meetings" />
+        <StatCard title="Calendar Events" value={todaysEvents.length} icon={CalendarDays} bgColor="bg-primary/10" description={todaysEvents.some((e: any) => e.is_holiday) ? 'Holiday' : 'active events'} link="/teacher/calendar" />
+        <StatCard title="Messages" value={unreadCount} icon={MessageSquare} bgColor="bg-primary/10" description="unread" link="/teacher-messages" />
+        <StatCard title="Upcoming" value={upcomingMeetings.length} icon={Bell} bgColor="bg-primary/10" description="pending sessions" link="/teacher-meetings" />
       </div>
 
-      {/* Feature Access Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          {
-            title: "Roll Call",
-            icon: CheckSquare,
-            color: "text-indigo-600",
-            bgColor: "bg-indigo-500/10",
-            desc: "Verify daily student presence.",
-            perm: user?.teacherPermissions?.take_attendance,
-            link: "/teacher/take-attendance"
-          },
-          {
-            title: "Syllabus Pulse",
-            icon: BookOpen,
-            color: "text-emerald-600",
-            bgColor: "bg-emerald-500/10",
-            desc: "Update instructional milestones.",
-            perm: user?.teacherPermissions?.lesson_tracking,
-            link: "/teacher/lesson-tracking"
-          },
-          {
-            title: "Analytics Hub",
-            icon: Users,
-            color: "text-violet-600",
-            bgColor: "bg-violet-500/10",
-            desc: "Deep-dive into student performance.",
-            perm: user?.teacherPermissions?.student_report_access,
-            link: "/teacher/student-report"
-          }
+          { title: "Take Attendance", icon: CheckSquare, desc: "Mark daily attendance", perm: user?.teacherPermissions?.take_attendance, link: "/teacher/take-attendance" },
+          { title: "Lesson Tracking", icon: BookOpen, desc: "Update lesson progress", perm: user?.teacherPermissions?.lesson_tracking, link: "/teacher/lesson-tracking" },
+          { title: "Student Reports", icon: Users, desc: "View student performance", perm: user?.teacherPermissions?.student_report_access, link: "/teacher/student-report" },
         ].filter(f => f.perm).map((feature) => (
-          <Card
-            key={feature.title}
-            className="group cursor-pointer border-none shadow-strong rounded-[2.5rem] bg-white/40 backdrop-blur-md border border-white/20 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98]"
-            onClick={() => navigate(feature.link)}
-          >
-            <CardContent className="p-8">
-              <div className="flex flex-col items-center text-center gap-4">
-                <div className={cn("p-5 rounded-[2rem] shadow-soft transition-all duration-500 group-hover:scale-110 group-hover:rotate-6", feature.bgColor)}>
-                  <feature.icon className={cn("h-10 w-10", feature.color)} />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-black text-xl text-slate-800 tracking-tight uppercase">{feature.title}</h4>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">{feature.desc}</p>
-                </div>
+          <Card key={feature.title} className="group cursor-pointer hover:-translate-y-0.5 transition-all duration-200" onClick={() => navigate(feature.link)}>
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-primary/10 shrink-0">
+                <feature.icon className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold">{feature.title}</h4>
+                <p className="text-xs text-muted-foreground">{feature.desc}</p>
               </div>
             </CardContent>
           </Card>
@@ -246,10 +166,10 @@ export default function TeacherDashboard() {
 
       {/* Today's Meetings Detail */}
       {todaysMeetings.length > 0 && (
-        <Card className="border-blue-200 bg-blue-50/50">
+        <Card className="border-primary/20 bg-primary/55">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-blue-600" /> Today's Meetings
+              <Bell className="h-5 w-5 textprimary0" /> Today's Meetings
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -320,7 +240,7 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
-                      {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
+                      {event.is_holiday && <span className="text-xs text-destructive font-medium">Holiday</span>}
                       {isToday(new Date(event.event_date)) && <Badge className="ml-2">Today</Badge>}
                     </div>
                   </div>

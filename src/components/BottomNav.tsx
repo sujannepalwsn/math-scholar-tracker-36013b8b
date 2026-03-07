@@ -44,7 +44,6 @@ export default function BottomNav({ navItems }: BottomNavProps) {
     }
   };
 
-  // Close menu and navigate
   const handleNavigation = (to: string, e: React.MouseEvent) => {
     e.preventDefault();
     setActiveMenu(null);
@@ -57,7 +56,7 @@ export default function BottomNav({ navItems }: BottomNavProps) {
   };
 
   React.useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
+    const handlePopState = () => {
       if (activeMenu) {
         setActiveMenu(null);
       }
@@ -69,13 +68,13 @@ export default function BottomNav({ navItems }: BottomNavProps) {
   const renderSubMenu = (category: string, items: NavItem[]) => (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-16 bg-card border-t shadow-lg p-4 grid grid-cols-4 gap-4 transition-transform duration-300 z-30",
-        activeMenu === category ? "translate-y-0" : "translate-y-full pointer-events-none opacity-0"
+        "fixed inset-x-0 bottom-16 bg-card border-t shadow-elevated p-4 grid grid-cols-4 gap-3 transition-all duration-200 z-30",
+        activeMenu === category ? "translate-y-0 opacity-100" : "translate-y-full pointer-events-none opacity-0"
       )}
     >
       <div className="col-span-4 flex justify-between items-center mb-2">
-        <span className="text-xs font-bold uppercase text-muted-foreground">{category}</span>
-        <button onClick={closeMenu} className="p-1 hover:bg-muted rounded-full">
+        <span className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">{category}</span>
+        <button onClick={closeMenu} className="p-1 hover:bg-muted rounded-md transition-colors">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -87,12 +86,12 @@ export default function BottomNav({ navItems }: BottomNavProps) {
             key={item.to}
             onClick={(e) => handleNavigation(item.to, e)}
             className={cn(
-              "flex flex-col items-center gap-1 p-2 rounded-xl transition-all active:scale-95",
-              isActive ? "bg-primary text-primary-foreground shadow-medium" : "text-muted-foreground hover:bg-muted"
+              "flex flex-col items-center gap-1 p-2 rounded-lg transition-all active:scale-95",
+              isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
             )}
           >
             <Icon className="h-5 w-5" />
-            <span className="text-[10px] font-bold text-center leading-tight truncate w-full">{item.label}</span>
+            <span className="text-[10px] font-medium text-center leading-tight truncate w-full">{item.label}</span>
           </button>
         );
       })}
@@ -101,14 +100,11 @@ export default function BottomNav({ navItems }: BottomNavProps) {
 
   return (
     <>
-      {/* Sub-menus */}
       {renderSubMenu('Academics', academicsItems)}
       {renderSubMenu('Administration', administrationItems)}
       {renderSubMenu('Reports and Communications', reportsItems)}
 
-      {/* Main Bottom Nav */}
-      <div className="fixed bottom-0 inset-x-0 h-16 bg-white/80 backdrop-blur-xl border-t border-white/20 flex items-center justify-between px-2 z-40 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        {/* Dashboard */}
+      <div className="fixed bottom-0 inset-x-0 h-16 bg-card border-t flex items-center justify-between px-2 z-40 md:hidden">
         {dashboardItem && (
           <button
             onClick={(e) => handleNavigation(dashboardItem.to, e)}
@@ -117,12 +113,11 @@ export default function BottomNav({ navItems }: BottomNavProps) {
               location.pathname === dashboardItem.to ? "text-primary" : "text-muted-foreground"
             )}
           >
-            <Home className={cn("h-6 w-6 transition-transform", location.pathname === dashboardItem.to && "scale-110")} />
-            <span className="text-[10px] font-bold">Dashboard</span>
+            <Home className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Dashboard</span>
           </button>
         )}
 
-        {/* Academics */}
         {academicsItems.length > 0 && (
           <button
             onClick={() => handleMenuToggle('Academics')}
@@ -131,15 +126,14 @@ export default function BottomNav({ navItems }: BottomNavProps) {
               activeMenu === 'Academics' ? "text-primary" : "text-muted-foreground"
             )}
           >
-            <GraduationCap className={cn("h-6 w-6 transition-transform", activeMenu === 'Academics' && "scale-110")} />
-            <span className="text-[10px] font-bold">Academics</span>
+            <GraduationCap className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Academics</span>
             {academicsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
               <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
             )}
           </button>
         )}
 
-        {/* Administration */}
         {administrationItems.length > 0 && (
           <button
             onClick={() => handleMenuToggle('Administration')}
@@ -148,15 +142,11 @@ export default function BottomNav({ navItems }: BottomNavProps) {
               activeMenu === 'Administration' ? "text-primary" : "text-muted-foreground"
             )}
           >
-            <ShieldCheck className={cn("h-6 w-6 transition-transform", activeMenu === 'Administration' && "scale-110")} />
-            <span className="text-[10px] font-bold">Admin</span>
-            {administrationItems.some(i => i.unreadCount && i.unreadCount > 0) && (
-              <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
-            )}
+            <ShieldCheck className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Admin</span>
           </button>
         )}
 
-        {/* Reports */}
         {reportsItems.length > 0 && (
           <button
             onClick={() => handleMenuToggle('Reports and Communications')}
@@ -165,8 +155,8 @@ export default function BottomNav({ navItems }: BottomNavProps) {
               activeMenu === 'Reports and Communications' ? "text-primary" : "text-muted-foreground"
             )}
           >
-            <FileText className={cn("h-6 w-6 transition-transform", activeMenu === 'Reports and Communications' && "scale-110")} />
-            <span className="text-[10px] font-bold text-center leading-tight">Reports</span>
+            <FileText className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Reports</span>
             {reportsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
               <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
             )}
@@ -174,10 +164,9 @@ export default function BottomNav({ navItems }: BottomNavProps) {
         )}
       </div>
 
-      {/* Backdrop for sub-menus */}
       {activeMenu && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-20 md:hidden"
+          className="fixed inset-0 bg-foreground/10 backdrop-blur-sm z-20 md:hidden"
           onClick={closeMenu}
         />
       )}
