@@ -282,7 +282,7 @@ export default function Dashboard() {
           ))}
         </div>
       ) : (
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Students Attendance"
           value={`${totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0}%`}
