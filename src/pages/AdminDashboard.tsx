@@ -14,6 +14,7 @@ import { Edit, Plus, Power, PowerOff, Shield, Users } from "lucide-react";
 import * as bcrypt from 'bcryptjs';
 import CenterFeaturePermissions from '@/components/admin/CenterFeaturePermissions';
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 
 const AdminDashboard = () => {
