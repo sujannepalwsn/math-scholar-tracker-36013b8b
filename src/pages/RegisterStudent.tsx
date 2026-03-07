@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/co
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Pencil, Trash2, Save, X, UserPlus, Upload, Download, Users, Search, GraduationCap, School, Phone, User as UserIcon } from "lucide-react";
+import { Pencil, Trash2, Save, X, UserPlus, Upload, Download, Users, Search, GraduationCap, School, Phone, User as UserIcon, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import LinkChildToParent from "@/components/center/LinkChildToParent";

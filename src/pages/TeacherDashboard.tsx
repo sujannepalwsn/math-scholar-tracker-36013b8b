@@ -6,6 +6,7 @@ import { Home, BookOpen, CheckSquare, Users, CalendarDays, MessageSquare, Bell, 
 import { format, isToday, isFuture, startOfDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
 
 export default function TeacherDashboard() {
   const { user } = useAuth();

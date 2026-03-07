@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, Check, CreditCard, DollarSign, Download, Eye, FileText, TrendingUp, History, Receipt, Wallet, PieChart } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, CreditCard, DollarSign, Download, Eye, FileText, TrendingUp, History, Receipt, Wallet, PieChart, Info } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
