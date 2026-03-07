@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
 import { Invoice, Payment } from "@/integrations/supabase/finance-types";
-import { safeFormatDate, cn, formatCurrency } from '@/lib/utils'; // Import safeFormatDate, cn, formatCurrency
+import { safeFormatDate, formatCurrency } from '@/lib/utils'; // Import safeFormatDate, formatCurrency
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;

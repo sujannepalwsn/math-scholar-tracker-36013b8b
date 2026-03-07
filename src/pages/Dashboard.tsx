@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { useState, useMemo } from "react";
 import {
   BookOpen,
   CalendarIcon,
@@ -21,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay } from "date-fns";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { AlertList } from "@/components/dashboard/AlertList";
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
