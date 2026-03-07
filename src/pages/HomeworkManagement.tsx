@@ -252,55 +252,75 @@ export default function HomeworkManagement() {
               <p className="text-muted-foreground font-medium">No homework found for selected filters.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {homeworkList.map((hw: any) => (
-                <div
-                  key={hw.id}
-                  className="rounded-3xl border border-white/40 bg-white/50 p-6 shadow-medium group relative hover:shadow-strong transition-all duration-300 backdrop-blur-sm"
-                >
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80" onClick={() => handleEditClick(hw)}>
-                      <Edit className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-destructive/10" onClick={() => deleteHomeworkMutation.mutate(hw.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-muted/10">
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Title & Description</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subject</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Grade</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Due Date</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {homeworkList.map((hw: any) => (
+                    <TableRow key={hw.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                      <TableCell className="py-4">
+                        <div className="space-y-1">
+                          <p className="font-bold text-slate-800 leading-none">{hw.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{hw.description}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                           {hw.subject}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                          Grade {hw.grade}
+                          {hw.grade}
                         </Badge>
-                      </div>
-                      <h3 className="font-black text-xl leading-tight text-slate-800">{hw.title}</h3>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{hw.description}</p>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-destructive/5 text-destructive font-bold text-xs">
-                        <Clock className="h-3.5 w-3.5" />
-                        {format(new Date(hw.due_date), "MMM d, yyyy")}
-                      </div>
-
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="rounded-xl shadow-soft hover:shadow-medium transition-all px-4"
-                        onClick={() => handleManageStatusClick(hw)}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Track
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                          <Clock className="h-3.5 w-3.5 text-rose-500" />
+                          {format(new Date(hw.due_date), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 rounded-xl bg-white shadow-soft text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => handleManageStatusClick(hw)}
+                          >
+                            <Users className="h-4 w-4 mr-1" />
+                            Track
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => handleEditClick(hw)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => deleteHomeworkMutation.mutate(hw.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

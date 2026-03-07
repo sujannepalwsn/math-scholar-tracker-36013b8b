@@ -145,7 +145,7 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
-  const { data: recentDiscipline = [] } = useQuery({
+  const { data: recentDiscipline = [], isLoading: isDisciplineLoading } = useQuery({
     queryKey: ["recent-discipline-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
@@ -164,7 +164,7 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
-  const { data: upcomingLessons = [] } = useQuery({
+  const { data: upcomingLessons = [], isLoading: isUpcomingLessonsLoading } = useQuery({
     queryKey: ["upcoming-lessons-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
@@ -436,7 +436,7 @@ export default function Dashboard() {
     }))
   ].slice(0, 5);
 
-  const isLoading = isStudentsLoading || isTeachersLoading || isAttendanceLoading || isTeacherAttendanceLoading || isHomeworkStatsLoading || isEvaluationStatsLoading;
+  const isLoading = isStudentsLoading || isTeachersLoading || isAttendanceLoading || isTeacherAttendanceLoading || isHomeworkStatsLoading || isEvaluationStatsLoading || isAllActivitiesLoading || isDisciplineLoading || isUpcomingLessonsLoading;
 
   if (isLoading) {
     return (

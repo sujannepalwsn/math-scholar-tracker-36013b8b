@@ -433,76 +433,78 @@ export default function PreschoolActivities() {
               <p className="text-muted-foreground font-medium">No activities recorded for selected filters.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activities.map((activity: any) => (
-                <div
-                  key={activity.id}
-                  className="rounded-3xl border border-white/40 bg-white/50 p-6 shadow-medium group relative hover:shadow-strong transition-all duration-300 backdrop-blur-sm"
-                >
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleEditClick(activity)}>
-                      <Edit className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-5">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                          {activity.activity_types?.name || 'Milestone'}
-                        </Badge>
-                        <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                          Grade {activity.students?.grade}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <h3 className="font-black text-xl leading-tight text-slate-800 group-hover:text-primary transition-colors">{activity.students?.name}</h3>
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{activity.activities?.title}</p>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed border-l-2 border-primary/10 pl-3">
-                      {activity.activities?.description || 'Creative details pending...'}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        {format(new Date(activity.activities?.activity_date || activity.created_at), "MMM d, yyyy")}
-                      </div>
-
-                      {activity.involvement_score && (
-                        <div className="flex items-center gap-1.5 bg-orange-500/10 text-orange-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter">
-                          <Star className="h-3.5 w-3.5 fill-current" />
-                          Lvl {activity.involvement_score}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-muted/10">
+                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Student & Title</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Type & Grade</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Activity Date</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Involvement</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Media & Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activities.map((activity: any) => (
+                    <TableRow key={activity.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                      <TableCell className="pl-6 py-4">
+                        <div className="space-y-1">
+                          <p className="font-bold text-slate-800 leading-none">{activity.students?.name}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{activity.activities?.title}</p>
                         </div>
-                      )}
-                    </div>
-
-                    {(activity.activities?.photo_url || activity.activities?.video_url) && (
-                      <div className="flex gap-2 pt-2">
-                        {activity.activities?.photo_url && (
-                          <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2 h-9 text-xs font-bold" asChild>
-                            <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                              <Camera className="h-3.5 w-3.5 mr-2" /> PHOTO
-                            </a>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                            {activity.activity_types?.name || 'Milestone'}
+                          </Badge>
+                          <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                            {activity.students?.grade}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                          <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+                          {format(new Date(activity.activities?.activity_date || activity.created_at), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {activity.involvement_score ? (
+                          <div className="inline-flex items-center gap-1 bg-orange-500/10 text-orange-600 px-2 py-1 rounded-lg text-[10px] font-black">
+                            <Star className="h-3 w-3 fill-current" />
+                            {activity.involvement_score}
+                          </div>
+                        ) : <span className="text-xs text-slate-400 font-bold">N/A</span>}
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <div className="flex justify-end gap-2">
+                          {activity.activities?.photo_url && (
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary" asChild>
+                               <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                                 <Camera className="h-4 w-4" />
+                               </a>
+                             </Button>
+                          )}
+                          {activity.activities?.video_url && (
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary" asChild>
+                               <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                                 <Video className="h-4 w-4" />
+                               </a>
+                             </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(activity)}>
+                            <Edit className="h-4 w-4" />
                           </Button>
-                        )}
-                        {activity.activities?.video_url && (
-                          <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2 h-9 text-xs font-bold" asChild>
-                            <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                              <Video className="h-3.5 w-3.5 mr-2" /> VIDEO
-                            </a>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
