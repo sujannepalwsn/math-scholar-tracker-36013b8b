@@ -9,23 +9,22 @@ import {
   Users,
   AlertTriangle,
   Book,
-  Plus,
   Bell,
   Search,
   ChevronDown,
   Calendar,
-  Home
+  Home,
+  Wallet
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { AlertList } from "@/components/dashboard/AlertList";
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
-import { QuickAction } from "@/components/dashboard/QuickAction";
 import CenterLogo from "@/components/CenterLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

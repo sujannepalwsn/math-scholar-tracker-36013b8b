@@ -9,20 +9,11 @@ import {
   Users,
   AlertTriangle,
   Book,
-  Plus,
   Bell,
-  Search,
-  ChevronDown,
   Calendar,
   Home,
-  MessageSquare,
-  Video,
   Wallet,
-  Zap,
-  GraduationCap,
-  LayoutDashboard,
-  LogOut,
-  ClipboardCheck
+  GraduationCap
 } from "lucide-react";
 import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,8 +23,6 @@ import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay, isPa
 import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { AlertList } from "@/components/dashboard/AlertList";
-import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
-import { QuickAction } from "@/components/dashboard/QuickAction";
 import CenterLogo from "@/components/CenterLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
