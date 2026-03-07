@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Users } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +41,7 @@ export default function DisciplineIssues() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
 
-  const [studentId, setStudentId] = useState("select-student");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [disciplineCategoryId, setDisciplineCategoryId] = useState("select-category");
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<DisciplineIssue['severity']>("medium");
@@ -106,7 +109,7 @@ export default function DisciplineIssues() {
   });
 
   const resetForm = () => {
-    setStudentId("select-student");
+    setSelectedStudentIds([]);
     setDisciplineCategoryId("select-category");
     setDescription("");
     setSeverity("medium");
@@ -119,17 +122,19 @@ export default function DisciplineIssues() {
 
   const createIssueMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.center_id || studentId === "select-student" || disciplineCategoryId === "select-category") throw new Error("Please select a student and category."); // Validation
+      if (!user?.center_id || selectedStudentIds.length === 0 || disciplineCategoryId === "select-category") throw new Error("Please select at least one student and category."); // Validation
 
-      const { error } = await supabase.from("discipline_issues").insert({
+      const issueRecords = selectedStudentIds.map(sid => ({
         center_id: user.center_id,
-        student_id: studentId,
+        student_id: sid,
         discipline_category_id: disciplineCategoryId,
         description,
         severity,
         reported_by: user.id,
         issue_date: issueDate,
-      });
+      }));
+
+      const { error } = await supabase.from("discipline_issues").insert(issueRecords);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -145,10 +150,10 @@ export default function DisciplineIssues() {
 
   const updateIssueMutation = useMutation({
     mutationFn: async () => {
-      if (!editingIssue || !user?.center_id || studentId === "select-student" || disciplineCategoryId === "select-category") throw new Error("Please select a student and category.");
+      if (!editingIssue || !user?.center_id || selectedStudentIds.length === 0 || disciplineCategoryId === "select-category") throw new Error("Please select a student and category.");
 
       const { error } = await supabase.from("discipline_issues").update({
-        student_id: studentId,
+        student_id: selectedStudentIds[0],
         discipline_category_id: disciplineCategoryId,
         description,
         severity,
@@ -185,7 +190,7 @@ export default function DisciplineIssues() {
 
   const handleEditClick = (issue: DisciplineIssue) => {
     setEditingIssue(issue);
-    setStudentId(issue.student_id);
+    setSelectedStudentIds([issue.student_id]);
     setDisciplineCategoryId(issue.discipline_category_id || "select-category");
     setDescription(issue.description);
     setSeverity(issue.severity);
@@ -277,21 +282,34 @@ export default function DisciplineIssues() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="student">Student *</Label>
-                  <Select value={studentId} onValueChange={setStudentId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Student" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="select-student" disabled>Select Student</SelectItem> {/* Added placeholder item */}
-                      {filteredStudentsForModal.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name} - {s.grade}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                     <Label className="flex items-center gap-2"><Users className="h-4 w-4" /> Selected Students ({selectedStudentIds.length})</Label>
+                     <div className="flex gap-2">
+                        <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest" onClick={() => setSelectedStudentIds(filteredStudentsForModal.map(s => s.id))}>Select All</Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest" onClick={() => setSelectedStudentIds([])}>Clear</Button>
+                     </div>
+                  </div>
+                  <div className="border border-muted/20 rounded-xl p-3 max-h-48 overflow-y-auto space-y-2 bg-muted/5">
+                     {filteredStudentsForModal.map((s) => (
+                       <div key={s.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white transition-colors border border-transparent hover:border-muted/10">
+                          <Checkbox
+                            id={`student-${s.id}`}
+                            checked={selectedStudentIds.includes(s.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) setSelectedStudentIds(prev => [...prev, s.id]);
+                              else setSelectedStudentIds(prev => prev.filter(id => id !== s.id));
+                            }}
+                          />
+                          <label htmlFor={`student-${s.id}`} className="text-sm font-bold text-slate-700 cursor-pointer flex-1">
+                            {s.name} <span className="text-[10px] text-muted-foreground uppercase ml-2 tracking-tighter">{s.grade}</span>
+                          </label>
+                       </div>
+                     ))}
+                     {filteredStudentsForModal.length === 0 && (
+                       <p className="text-center py-4 text-xs italic text-muted-foreground">No students found for selected grade.</p>
+                     )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="category">Category *</Label>
@@ -361,10 +379,10 @@ export default function DisciplineIssues() {
                 )}
                 <Button
                   onClick={handleSubmit}
-                  disabled={studentId === "select-student" || disciplineCategoryId === "select-category" || !description || !severity || !issueDate || createIssueMutation.isPending || updateIssueMutation.isPending}
+                  disabled={selectedStudentIds.length === 0 || disciplineCategoryId === "select-category" || !description || !severity || !issueDate || createIssueMutation.isPending || updateIssueMutation.isPending}
                   className="w-full"
                 >
-                  {editingIssue ? (updateIssueMutation.isPending ? "Updating..." : "Update Issue") : (createIssueMutation.isPending ? "Logging..." : "Log Issue")}
+                  {editingIssue ? (updateIssueMutation.isPending ? "Updating..." : "Update Issue") : (createIssueMutation.isPending ? "Logging..." : `Log Issue for ${selectedStudentIds.length} Students`)}
                 </Button>
               </div>
             </DialogContent>
@@ -381,7 +399,7 @@ export default function DisciplineIssues() {
             Recorded Incidents
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           {issuesLoading ? (
             <div className="flex justify-center py-12">
               <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
@@ -394,70 +412,70 @@ export default function DisciplineIssues() {
               <p className="text-muted-foreground font-medium">No behavioral records found for selected filters.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {issues.map((issue: any) => (
-                <div
-                  key={issue.id}
-                  className="rounded-3xl border border-white/40 bg-white/50 p-6 shadow-medium group relative hover:shadow-strong transition-all duration-300 backdrop-blur-sm"
-                >
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 shadow-soft" onClick={() => handleEditClick(issue)}>
-                      <Edit className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 shadow-soft hover:bg-destructive/10" onClick={() => deleteIssueMutation.mutate(issue.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-5">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                          {issue.discipline_categories?.name}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-muted/10">
+                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Student & Incident</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Category & Priority</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Status</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {issues.map((issue: any) => (
+                    <TableRow key={issue.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                      <TableCell className="pl-6 py-4">
+                        <div className="space-y-1">
+                          <p className="font-bold text-slate-800 leading-none">{issue.students?.name}</p>
+                          <p className="text-xs text-muted-foreground italic line-clamp-1">"{issue.description}"</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                            {issue.discipline_categories?.name}
+                          </Badge>
+                          <Badge
+                            className={cn(
+                              "rounded-lg px-2 py-0.5 text-[10px] font-black uppercase border-none tracking-wider",
+                              issue.severity === 'high' ? "bg-red-500/20 text-red-600" :
+                              issue.severity === 'medium' ? "bg-orange-500/20 text-orange-600" : "bg-green-500/20 text-green-600"
+                            )}
+                          >
+                            {issue.severity}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                          <Clock className="h-3.5 w-3.5 text-primary" />
+                          {format(new Date(issue.issue_date), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge className={cn(
+                          "rounded-xl px-3 py-1 font-bold text-[10px] uppercase border-none shadow-soft",
+                          issue.status === 'resolved' ? "bg-green-500 text-white" : "bg-slate-700 text-white"
+                        )}>
+                          {issue.status || 'open'}
                         </Badge>
-                        <Badge
-                          className={cn(
-                            "rounded-lg px-2 py-0.5 text-[10px] font-black uppercase border-none tracking-wider",
-                            issue.severity === 'high' ? "bg-red-500/20 text-red-600" :
-                            issue.severity === 'medium' ? "bg-orange-500/20 text-orange-600" : "bg-green-500/20 text-green-600"
-                          )}
-                        >
-                          {issue.severity} Priority
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <h3 className="font-black text-xl leading-tight text-slate-800 group-hover:text-primary transition-colors">{issue.students?.name}</h3>
-                        <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Grade {issue.students?.grade}</p>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed italic border-l-2 border-primary/10 pl-3">
-                      "{issue.description}"
-                    </p>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">
-                        <Clock className="h-3.5 w-3.5" />
-                        {format(new Date(issue.issue_date), "MMM d, yyyy")}
-                      </div>
-
-                      <Badge className={cn(
-                        "rounded-xl px-3 py-1 font-bold text-[10px] uppercase border-none shadow-soft",
-                        issue.status === 'resolved' ? "bg-green-500 text-white" : "bg-slate-700 text-white"
-                      )}>
-                        {issue.status || 'open'}
-                      </Badge>
-                    </div>
-
-                    {issue.resolution && (
-                      <div className="p-3 rounded-2xl bg-green-500/5 text-xs font-medium border border-green-500/10 text-green-700 animate-in slide-in-from-bottom-2">
-                        <span className="font-black uppercase text-green-600 block mb-1 text-[9px] tracking-tighter">Resolution Matrix</span>
-                        {issue.resolution}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(issue)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteIssueMutation.mutate(issue.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

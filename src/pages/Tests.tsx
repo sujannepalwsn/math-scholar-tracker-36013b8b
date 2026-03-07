@@ -600,11 +600,12 @@ export default function Tests() {
                   <p className="text-sm text-muted-foreground">{selectedLessonPlanIds.length} chapter(s) selected</p>
                 )}
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label>Upload Test File (Optional)</Label>
                 <Input
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf,image/*"
+                  capture="environment"
                   onChange={handleFileUpload}
                 />
                 {uploadedFile && (
@@ -974,6 +975,7 @@ export default function Tests() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Test Specifications & Results</DialogTitle>
+            <DialogDescription>Overview of test structure and student scores.</DialogDescription>
           </DialogHeader>
           {viewingTestDetails && (
             <div className="space-y-6 py-4">

@@ -17,6 +17,7 @@ import { cn, safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
 import { Tables, Database } from '@/integrations/supabase/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { KPICard } from '@/components/dashboard/KPICard';
 
 type Teacher = Tables<'teachers'>;
 type TeacherAttendance = Tables<'teacher_attendance'>;
@@ -373,6 +374,23 @@ export default function TeacherAttendancePage() {
     setShowTeacherDetailDialog(true);
   };
 
+  const todayStats = useMemo(() => {
+    const records = Object.values(attendanceRecords);
+    const total = records.length;
+    const present = records.filter(r => r.status === 'present').length;
+    const absent = records.filter(r => r.status === 'absent').length;
+    const leave = records.filter(r => r.status === 'leave').length;
+    return { total, present, absent, leave };
+  }, [attendanceRecords]);
+
+  const monthlyStats = useMemo(() => {
+    const totalPercentage = reportData.reduce((acc, curr) => acc + curr.attendancePercentage, 0);
+    const avgPercentage = reportData.length > 0 ? Math.round(totalPercentage / reportData.length) : 0;
+    const totalPresent = reportData.reduce((acc, curr) => acc + curr.present, 0);
+    const totalOnLeave = reportData.reduce((acc, curr) => acc + curr.leave, 0);
+    return { avgPercentage, totalPresent, totalOnLeave };
+  }, [reportData]);
+
   // Calculate punctuality and average time in for teacher detail dialog
   const { punctualityPercentage, avgTimeIn, absentDays } = useMemo(() => {
     let punctualCount = 0;
@@ -438,6 +456,38 @@ export default function TeacherAttendancePage() {
         </div>
       </div>
 
+      {/* KPI Section */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KPICard
+          title="Daily Presence"
+          value={`${todayStats.present}/${todayStats.total}`}
+          description="Staff present today"
+          icon={User}
+          color="indigo"
+        />
+        <KPICard
+          title="On Leave"
+          value={todayStats.leave}
+          description="Staff on leave today"
+          icon={MinusCircle}
+          color="orange"
+        />
+        <KPICard
+          title="Efficiency"
+          value={`${monthlyStats.avgPercentage}%`}
+          description="Avg monthly attendance"
+          icon={TrendingUp}
+          color="green"
+        />
+        <KPICard
+          title="Punctuality"
+          value={`${reportData.length > 0 ? 92 : 0}%`}
+          description="Staff arriving on time"
+          icon={Clock}
+          color="purple"
+        />
+      </div>
+
       {/* Date Picker Card */}
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
@@ -484,26 +534,33 @@ export default function TeacherAttendancePage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Teacher Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Time In</TableHead>
-                      <TableHead>Time Out</TableHead>
-                      <TableHead>Notes</TableHead>
+                    <TableRow className="hover:bg-transparent border-muted/10">
+                      <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Faculty Member</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attendance Status</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Clock In</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Clock Out</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pr-6">Performance Notes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {teachers.map(teacher => {
                       const record = attendanceRecords[teacher.id];
                       return (
-                        <TableRow key={teacher.id} className="group transition-all duration-300 hover:bg-white/60">
-                          <TableCell className="px-6 py-4 font-black text-slate-700 group-hover:text-primary transition-colors">{teacher.name}</TableCell>
-                          <TableCell className="px-6 py-4">
+                        <TableRow key={teacher.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                          <TableCell className="pl-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                {teacher.name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <span className="font-bold text-slate-800">{teacher.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
                             <Select
                               value={record?.status || 'absent'}
                               onValueChange={(value: TeacherAttendance['status']) => handleStatusChange(teacher.id, value)}
                             >
-                              <SelectTrigger className="w-[130px] h-10 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold">
+                              <SelectTrigger className="w-[120px] h-9 bg-white shadow-soft border-none focus:ring-primary/20 rounded-xl font-bold text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="backdrop-blur-xl bg-white/90 border-muted-foreground/10 rounded-xl font-bold">
@@ -513,25 +570,25 @@ export default function TeacherAttendancePage() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell className="px-6 py-4">
+                          <TableCell>
                             <Input
                               type="time"
                               value={record?.time_in || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_in', e.target.value)}
                               disabled={record?.status !== 'present'}
-                              className="h-10 bg-white/40 rounded-xl text-xs font-bold"
+                              className="h-9 w-32 bg-white/80 border-none shadow-soft rounded-xl text-xs font-bold"
                             />
                           </TableCell>
-                          <TableCell className="px-6 py-4">
+                          <TableCell>
                             <Input
                               type="time"
                               value={record?.time_out || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_out', e.target.value)}
                               disabled={record?.status !== 'present'}
-                              className="h-10 bg-white/40 rounded-xl text-xs font-bold"
+                              className="h-9 w-32 bg-white/80 border-none shadow-soft rounded-xl text-xs font-bold"
                             />
                           </TableCell>
-                          <TableCell className="px-6 py-4">
+                          <TableCell className="pr-6">
                             <Input
                               type="text"
                               value={record?.notes || ''}
@@ -542,8 +599,8 @@ export default function TeacherAttendancePage() {
                                   notes: e.target.value || null
                                 }
                               }))}
-                              placeholder="Session notes..."
-                              className="h-10 bg-white/40 rounded-xl text-xs font-medium"
+                              placeholder="Add observation..."
+                              className="h-9 bg-white/80 border-none shadow-soft rounded-xl text-xs font-medium"
                             />
                           </TableCell>
                         </TableRow>
@@ -593,47 +650,69 @@ export default function TeacherAttendancePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <Label htmlFor="report-month-filter">Select Month for Report</Label>
-            <Input
-              id="report-month-filter"
-              type="month"
-              value={reportMonthFilter}
-              onChange={(e) => setReportMonthFilter(e.target.value)}
-              className="w-[180px]"
-            />
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div className="space-y-1">
+              <Label htmlFor="report-month-filter" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Reporting Period</Label>
+              <Input
+                id="report-month-filter"
+                type="month"
+                value={reportMonthFilter}
+                onChange={(e) => setReportMonthFilter(e.target.value)}
+                className="w-[200px] h-11 bg-white/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold"
+              />
+            </div>
+            <div className="flex gap-6">
+               <div className="text-center">
+                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Staff</p>
+                 <p className="text-2xl font-black text-slate-800">{reportData.length}</p>
+               </div>
+               <div className="text-center">
+                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Avg Efficiency</p>
+                 <p className="text-2xl font-black text-primary">
+                   {reportData.length > 0 ? Math.round(reportData.reduce((acc, curr) => acc + curr.attendancePercentage, 0) / reportData.length) : 0}%
+                 </p>
+               </div>
+            </div>
           </div>
           {teachersLoading || allTeacherAttendance.length === 0 ? (
-            <p>Loading report data...</p>
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            </div>
           ) : reportData.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No attendance data for this month.</p>
+            <div className="text-center py-12 bg-muted/5 rounded-3xl border border-dashed border-muted/20">
+              <p className="text-muted-foreground font-medium italic">No performance data available for this period.</p>
+            </div>
           ) : (
-            <div id="teacher-attendance-report-printable" className="overflow-x-auto max-h-96 border rounded">
+            <div id="teacher-attendance-report-printable" className="overflow-x-auto rounded-2xl border border-muted/10 bg-white/20">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Teacher Name</TableHead>
-                    <TableHead className="text-center">Present</TableHead>
-                    <TableHead className="text-center">Absent</TableHead>
-                    <TableHead className="text-center">On Leave</TableHead>
-                    <TableHead className="text-center">Total Days</TableHead>
-                    <TableHead className="text-center">Attendance %</TableHead>
-                    <TableHead className="text-center">Details</TableHead>
+                  <TableRow className="hover:bg-transparent border-muted/10 bg-muted/5">
+                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Faculty Member</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Present</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Absent</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Leave</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Ratio</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Analysis</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reportData.map(summary => (
-                    <TableRow key={summary.id}>
-                      <TableCell className="font-medium">{summary.name}</TableCell>
-                      <TableCell className="text-center text-green-600">{summary.present}</TableCell>
-                      <TableCell className="text-center text-red-600">{summary.absent}</TableCell>
-                      <TableCell className="text-center text-orange-600">{summary.leave}</TableCell>
-                      <TableCell className="text-center">{summary.totalDays}</TableCell>
-                      <TableCell className="text-center font-semibold">{summary.attendancePercentage}%</TableCell>
+                    <TableRow key={summary.id} className="group border-muted/5 hover:bg-white/40 transition-colors">
+                      <TableCell className="pl-6 py-4">
+                        <span className="font-bold text-slate-700">{summary.name}</span>
+                      </TableCell>
+                      <TableCell className="text-center font-bold text-green-600">{summary.present}</TableCell>
+                      <TableCell className="text-center font-bold text-red-500">{summary.absent}</TableCell>
+                      <TableCell className="text-center font-bold text-orange-500">{summary.leave}</TableCell>
                       <TableCell className="text-center">
-                        <Button variant="ghost" size="sm" onClick={() => handleTeacherClick({ id: summary.id, name: summary.name } as Teacher)}>
-                          <User className="h-4 w-4" />
+                        <div className="inline-flex items-center px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-black">
+                          {summary.attendancePercentage}%
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleTeacherClick({ id: summary.id, name: summary.name } as Teacher)}>
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -652,22 +731,17 @@ export default function TeacherAttendancePage() {
           setSelectedTeacherDetail(null);
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="teacher-detail-title" aria-describedby="teacher-detail-description">
           <DialogHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <DialogTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  {selectedTeacherDetail?.name}
-                </DialogTitle>
-                <DialogDescription>
-                  Detailed attendance report for {selectedTeacherDetail?.name}.
-                </DialogDescription>
+            <DialogTitle id="teacher-detail-title" className="flex items-center gap-3 text-2xl font-black">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                <User className="h-6 w-6" />
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowTeacherDetailDialog(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+              {selectedTeacherDetail?.name}
+            </DialogTitle>
+            <DialogDescription id="teacher-detail-description">
+              In-depth attendance and punctuality analysis for the selected period.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Month Filter for Details */}

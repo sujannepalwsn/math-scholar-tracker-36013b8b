@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Trash2, Users, Plus, ChevronDown, ChevronUp, BookOpen, Edit, Star, User, FileText, CheckCircle, XCircle, Clock, Book, Eye } from "lucide-react";
 import { format } from "date-fns";
@@ -54,6 +55,10 @@ export default function LessonTracking() {
   // State for editing individual student lesson records
   const [showEditStudentRecordDialog, setShowEditStudentRecordDialog] = useState(false);
   const [editingStudentChapterId, setEditingStudentChapterId] = useState<string | null>(null);
+
+  const [bulkEvaluationSelected, setBulkEvaluationSelected] = useState<string[]>([]);
+  const [bulkRating, setBulkRating] = useState<number>(5);
+  const [bulkTeacherNotes, setBulkTeacherNotes] = useState("");
 
   const [showViewLessonDialog, setShowViewLessonDialog] = useState(false);
   const [viewingLessonGroup, setViewingLessonGroup] = useState<GroupedLessonRecord | null>(null);
@@ -287,6 +292,26 @@ export default function LessonTracking() {
     },
   });
 
+  const bulkEvaluateMutation = useMutation({
+    mutationFn: async () => {
+      if (bulkEvaluationSelected.length === 0) return;
+      const { error } = await supabase
+        .from("student_chapters")
+        .update({
+          evaluation_rating: bulkRating,
+          teacher_notes: bulkTeacherNotes || null,
+        })
+        .in("id", bulkEvaluationSelected);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-lesson-records"] });
+      toast.success(`Evaluated ${bulkEvaluationSelected.length} students`);
+      setBulkEvaluationSelected([]);
+      setBulkTeacherNotes("");
+    },
+  });
+
   // Helpers
   const toggleStudentSelection = (studentId: string) => {
     setSelectedStudentIds((prev) =>
@@ -506,65 +531,128 @@ export default function LessonTracking() {
             Instructional History
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {groupedLessonRecords.map((group) => (
-              <div key={group.lessonPlan.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">
-                      {group.lessonPlan.subject}: {group.lessonPlan.chapter} - {group.lessonPlan.topic}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Taught on {format(new Date(group.lessonPlan.lesson_date), "PPP")} {group.lessonPlan.grade && `(Grade: ${group.lessonPlan.grade})`}
-                    </p>
-                    {group.lessonPlan.notes && <p className="text-sm">Lesson Notes: {group.lessonPlan.notes}</p>}
-                    {group.lessonPlan.lesson_file_url && (
-                      <Button variant="outline" size="sm" asChild className="mt-2">
-                        <a href={supabase.storage.from("lesson-files").getPublicUrl(group.lessonPlan.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                          <BookOpen className="h-4 w-4 mr-1" /> Lesson File
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setViewingLessonGroup(group);
-                        setShowViewLessonDialog(true);
-                      }}
-                      title="View lesson details and students"
-                    >
-                      <Eye className="h-4 w-4 mr-1" /> View
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleShowStudents(group.lessonPlan.id)}
-                    >
-                      {showStudentsMap[group.lessonPlan.id] ? (
-                        <ChevronUp className="h-4 w-4 mr-1" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 mr-1" />
-                      )}
-                      {group.students.length} Students
-                    </Button>
-                  </div>
-                </div>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/10">
+                  <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Session Details</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subject</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Cohort Size</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Management</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {groupedLessonRecords.map((group) => (
+                  <React.Fragment key={group.lessonPlan.id}>
+                    <TableRow className="group border-muted/5 hover:bg-primary/5 transition-colors cursor-pointer" onClick={() => toggleShowStudents(group.lessonPlan.id)}>
+                      <TableCell className="pl-6 py-4">
+                        <div className="space-y-1">
+                          <p className="font-bold text-slate-800 leading-none">{group.lessonPlan.chapter}</p>
+                          <p className="text-xs text-muted-foreground italic">{group.lessonPlan.topic}</p>
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                             <Clock className="h-3 w-3" />
+                             {format(new Date(group.lessonPlan.lesson_date), "MMM d, yyyy")}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          {group.lessonPlan.subject}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                         <div className="inline-flex items-center gap-1.5 bg-indigo-500/10 text-indigo-600 px-3 py-1 rounded-full text-xs font-black">
+                            <Users className="h-3 w-3" />
+                            {group.students.length}
+                         </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                         <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10"
+                             onClick={() => {
+                               setViewingLessonGroup(group);
+                               setShowViewLessonDialog(true);
+                             }}
+                           >
+                             <Eye className="h-4 w-4" />
+                           </Button>
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             className={cn(
+                               "h-8 w-8 rounded-xl bg-white shadow-soft transition-all",
+                               showStudentsMap[group.lessonPlan.id] ? "bg-primary text-white rotate-180" : "text-slate-600"
+                             )}
+                             onClick={() => toggleShowStudents(group.lessonPlan.id)}
+                           >
+                             <ChevronDown className="h-4 w-4" />
+                           </Button>
+                         </div>
+                      </TableCell>
+                    </TableRow>
 
                 {showStudentsMap[group.lessonPlan.id] && (
-                  <div className="mt-6 border-t border-muted/10 pt-6 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                  <TableRow className="bg-muted/5 border-none hover:bg-muted/5">
+                    <TableCell colSpan={4} className="p-6">
+                       <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
                     <div className="flex items-center justify-between px-2">
                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Cohort Participation Matrix</h4>
                        <span className="text-[10px] font-bold text-primary">{group.students.length} Students Logged</span>
                     </div>
+
+                    {/* Bulk Evaluation Section */}
+                    <div className="bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10 space-y-4 mx-2">
+                       <div className="flex items-center gap-3">
+                          <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600"><Star className="h-4 w-4" /></div>
+                          <h4 className="text-sm font-black uppercase tracking-widest">Bulk Evaluation Portal</h4>
+                       </div>
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                          <div className="space-y-2">
+                             <Label className="text-[10px] font-bold uppercase ml-1">Assign Rating</Label>
+                             <Select value={bulkRating.toString()} onValueChange={(v) => setBulkRating(parseInt(v))}>
+                                <SelectTrigger className="bg-white rounded-xl h-10 shadow-sm border-none"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                   {[1, 2, 3, 4, 5].map(r => <SelectItem key={r} value={r.toString()}>{r} Stars</SelectItem>)}
+                                </SelectContent>
+                             </Select>
+                          </div>
+                          <div className="space-y-2">
+                             <Label className="text-[10px] font-bold uppercase ml-1">Shared Remarks</Label>
+                             <Input
+                                placeholder="Excellent participation!"
+                                value={bulkTeacherNotes}
+                                onChange={e => setBulkTeacherNotes(e.target.value)}
+                                className="bg-white rounded-xl h-10 shadow-sm border-none"
+                             />
+                          </div>
+                          <Button
+                            onClick={() => bulkEvaluateMutation.mutate()}
+                            disabled={bulkEvaluationSelected.length === 0 || bulkEvaluateMutation.isPending}
+                            className="rounded-xl h-10 font-bold bg-amber-500 hover:bg-amber-600"
+                          >
+                            Rate {bulkEvaluationSelected.length} Students
+                          </Button>
+                       </div>
+                    </div>
+
                     <div className="overflow-x-auto border border-white/40 rounded-2xl bg-white/20 backdrop-blur-sm">
                       <Table>
                         <TableHeader>
                           <TableRow className="hover:bg-transparent border-muted/10">
-                            <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Student</TableHead>
+                            <TableHead className="w-[50px] text-center">
+                               <Checkbox
+                                 checked={bulkEvaluationSelected.length === group.students.length}
+                                 onCheckedChange={(checked) => {
+                                   if (checked) setBulkEvaluationSelected(group.students.map(s => s.id));
+                                   else setBulkEvaluationSelected([]);
+                                 }}
+                               />
+                            </TableHead>
+                            <TableHead className="pl-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Student</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rating & Remarks</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Academic Links</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Actions</TableHead>
@@ -573,7 +661,16 @@ export default function LessonTracking() {
                         <TableBody>
                           {group.students.map((record) => (
                             <TableRow key={record.id} className="group/row border-muted/5 hover:bg-white/40 transition-colors">
-                              <TableCell className="pl-6 py-4">
+                              <TableCell className="text-center">
+                                 <Checkbox
+                                   checked={bulkEvaluationSelected.includes(record.id)}
+                                   onCheckedChange={(checked) => {
+                                     if (checked) setBulkEvaluationSelected(prev => [...prev, record.id]);
+                                     else setBulkEvaluationSelected(prev => prev.filter(id => id !== record.id));
+                                   }}
+                                 />
+                              </TableCell>
+                              <TableCell className="pl-2 py-4">
                                 <div className="space-y-0.5">
                                   <p className="font-bold text-slate-700 leading-none">{record.students?.name}</p>
                                   <p className="text-[9px] font-bold text-muted-foreground uppercase">Grade {record.students?.grade}</p>
@@ -637,11 +734,19 @@ export default function LessonTracking() {
                         </TableBody>
                       </Table>
                     </div>
-                  </div>
+                       </div>
+                    </TableCell>
+                  </TableRow>
                 )}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+            {groupedLessonRecords.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-sm text-muted-foreground italic font-medium">No instructional history recorded yet.</p>
               </div>
-            ))}
-            {groupedLessonRecords.length === 0 && <p className="text-sm text-muted-foreground">No lesson records found yet.</p>}
+            )}
           </div>
         </CardContent>
       </Card>
@@ -651,6 +756,7 @@ export default function LessonTracking() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Lesson Tracking Details</DialogTitle>
+            <DialogDescription>Complete log of student performance for this session.</DialogDescription>
           </DialogHeader>
           {viewingLessonGroup && (
             <div className="space-y-6 py-4">
