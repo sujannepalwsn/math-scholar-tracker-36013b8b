@@ -2,10 +2,19 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Bell, LucideIcon } from "lucide-react";
+import { Bell, LucideIcon, ArrowRight, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-interface AlertItem {
+export interface AlertItem {
   id: string;
   title: string;
   description?: string;
@@ -18,14 +27,18 @@ interface AlertListProps {
   title?: string;
   className?: string;
   onItemClick?: (alert: AlertItem) => void;
+  onViewAll?: () => void;
 }
 
 export const AlertList = ({
   alerts,
   title = "Recent Alerts",
   className,
-  onItemClick
+  onItemClick,
+  onViewAll: externalOnViewAll
 }: AlertListProps) => {
+  const [showAll, setShowAll] = React.useState(false);
+
   const typeIcons: Record<string, LucideIcon> = {
     success: Bell,
     warning: Bell,
@@ -42,10 +55,71 @@ export const AlertList = ({
 
   return (
     <Card className={cn("overflow-hidden border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20", className)}>
-      <CardHeader className="py-4 border-b border-muted/20">
+      <CardHeader className="py-4 border-b border-muted/20 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
           {title}
         </CardTitle>
+
+        <Dialog open={showAll} onOpenChange={setShowAll}>
+          <DialogTrigger asChild>
+            {alerts.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-xl px-3 h-8"
+              >
+                View All <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            )}
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl bg-white/90 backdrop-blur-xl border-none shadow-strong rounded-[2rem] p-0 overflow-hidden">
+            <DialogHeader className="p-8 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10">
+                    <Bell className="h-6 w-6 text-primary" />
+                  </div>
+                  System Notifications
+                </DialogTitle>
+                <DialogDescription className="sr-only">List of all recent notifications and alerts</DialogDescription>
+              </div>
+            </DialogHeader>
+            <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="p-4 rounded-2xl bg-white border border-slate-100 flex gap-4 hover:shadow-md transition-all group"
+                >
+                  <div className={cn("p-3 rounded-xl shrink-0 h-fit group-hover:scale-110 transition-transform", typeStyles[alert.type])}>
+                    <Bell className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-bold text-slate-800">{alert.title}</h4>
+                    {alert.description && (
+                      <p className="text-sm text-slate-500 font-medium">{alert.description}</p>
+                    )}
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-1">
+                      {formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {externalOnViewAll && (
+              <div className="p-6 border-t border-slate-100 bg-slate-50/30 flex justify-center">
+                <Button
+                  onClick={() => {
+                    setShowAll(false);
+                    externalOnViewAll();
+                  }}
+                  className="rounded-xl font-black uppercase text-xs tracking-widest px-8"
+                >
+                  Go to Message Center
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent className="p-0">
         {alerts.length === 0 ? (
@@ -53,7 +127,7 @@ export const AlertList = ({
             No recent alerts.
           </div>
         ) : (
-          <div className="divide-y divide-muted/10">
+          <div className="divide-y divide-muted/10 max-h-[400px] overflow-y-auto custom-scrollbar">
             {alerts.map((alert) => (
               <div
                 key={alert.id}

@@ -393,7 +393,7 @@ export default function Dashboard() {
         const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
         return bP - aP;
       })
-      .slice(0, 5);
+      .slice(0, 50);
   }, [recentTestResults]);
 
   const lowestPerformers = useMemo(() => {
@@ -404,7 +404,7 @@ export default function Dashboard() {
         const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
         return aP - bP;
       })
-      .slice(0, 5);
+      .slice(0, 50);
   }, [recentTestResults]);
 
   const absentTeachers = teachers.filter(t =>
@@ -641,12 +641,16 @@ export default function Dashboard() {
                  </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                 <div className="divide-y divide-green-500/5">
+                 <div className="divide-y divide-green-500/5 max-h-[400px] overflow-y-auto custom-scrollbar">
                     {highestPerformers.length === 0 ? (
                        <p className="p-8 text-center text-xs italic text-muted-foreground">No data available</p>
                     ) : (
                        highestPerformers.map((r: any) => (
-                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-green-500/5 transition-colors">
+                          <div
+                            key={r.id}
+                            className="p-4 flex justify-between items-center hover:bg-green-500/5 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/student-report?studentId=${r.student_id}`)}
+                          >
                              <div>
                                 <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
                                 <p className="text-[10px] text-slate-400 font-medium">{r.tests?.name}</p>
@@ -666,12 +670,16 @@ export default function Dashboard() {
                  </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                 <div className="divide-y divide-rose-500/5">
+                 <div className="divide-y divide-rose-500/5 max-h-[400px] overflow-y-auto custom-scrollbar">
                     {lowestPerformers.length === 0 ? (
                        <p className="p-8 text-center text-xs italic text-muted-foreground">No critical alerts</p>
                     ) : (
                        lowestPerformers.map((r: any) => (
-                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-rose-500/5 transition-colors">
+                          <div
+                            key={r.id}
+                            className="p-4 flex justify-between items-center hover:bg-rose-500/5 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/student-report?studentId=${r.student_id}`)}
+                          >
                              <div>
                                 <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
                                 <p className="text-[10px] text-slate-400 font-medium">{r.tests?.name}</p>
@@ -699,7 +707,11 @@ export default function Dashboard() {
                          <p className="p-8 text-center text-xs italic text-muted-foreground text-green-600 font-bold">All teachers are present!</p>
                       ) : (
                          absentTeachers.map(t => (
-                            <div key={t.id} className="p-4 flex justify-between items-center">
+                            <div
+                              key={t.id}
+                              className="p-4 flex justify-between items-center hover:bg-rose-50 transition-colors cursor-pointer"
+                              onClick={() => navigate("/teachers")}
+                            >
                                <div className="flex items-center gap-3">
                                   <div className="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
                                      <Users className="h-4 w-4 text-rose-600" />
@@ -717,7 +729,10 @@ export default function Dashboard() {
                 </CardContent>
              </Card>
 
-             <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+             <Card
+               className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 cursor-pointer hover:shadow-md transition-shadow"
+               onClick={() => navigate("/admin/finance")}
+             >
                 <CardHeader>
                    <CardTitle className="text-lg font-bold flex items-center gap-2">
                       <Wallet className="h-5 w-5 text-emerald-600" /> Financial Health
@@ -773,8 +788,12 @@ export default function Dashboard() {
 
         {/* Right Column / Sidebar */}
         <div className="lg:col-span-4 space-y-6">
-          <AlertList alerts={recentAlerts} />
-          <ClassSchedule classes={todayClasses} title="Instructional Grid" />
+          <AlertList alerts={recentAlerts} onViewAll={() => navigate("/messaging")} />
+          <ClassSchedule
+            classes={todayClasses}
+            title="Instructional Grid"
+            onViewRoutine={() => navigate("/class-routine")}
+          />
         </div>
       </div>
     </div>

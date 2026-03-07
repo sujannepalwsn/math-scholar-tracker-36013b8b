@@ -297,7 +297,7 @@ const ParentDashboardContent = () => {
 
       {/* Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+        <Card className="lg:col-span-2 border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
             <CardHeader className="bg-primary/5 border-b border-slate-100 p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <CardTitle className="text-lg font-black flex items-center gap-3">
@@ -311,11 +311,13 @@ const ParentDashboardContent = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6">
-              <ParentChapterPerformanceTable chapterPerformanceData={chapterPerformanceData} onViewDetails={handleViewChapterDetails} />
+            <CardContent className="p-0">
+              <div className="max-h-[500px] overflow-y-auto custom-scrollbar p-6 pt-0">
+                <ParentChapterPerformanceTable chapterPerformanceData={chapterPerformanceData} onViewDetails={handleViewChapterDetails} />
+              </div>
             </CardContent>
           </Card>
-        <AlertList alerts={parentAlerts} />
+        <AlertList alerts={parentAlerts} onViewAll={() => navigate("/parent/messaging")} />
       </div>
 
       {/* Bottom Section */}
@@ -327,9 +329,13 @@ const ParentDashboardContent = () => {
                </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-               <div className="divide-y divide-indigo-500/5">
-                  {testResults.slice(0, 5).map((r: any) => (
-                     <div key={r.id} className="p-4 flex justify-between items-center hover:bg-indigo-500/5 transition-colors">
+               <div className="divide-y divide-indigo-500/5 max-h-[400px] overflow-y-auto custom-scrollbar">
+                  {testResults.map((r: any) => (
+                     <div
+                        key={r.id}
+                        className="p-4 flex justify-between items-center hover:bg-indigo-500/5 transition-colors cursor-pointer"
+                        onClick={() => navigate("/parent/student-report")}
+                     >
                         <div>
                            <p className="text-sm font-bold text-slate-800">{r.tests?.name}</p>
                            <p className="text-[10px] text-slate-400 font-medium">{format(new Date(r.date_taken), "MMM dd, yyyy")}</p>
@@ -337,6 +343,9 @@ const ParentDashboardContent = () => {
                         <Badge className="bg-indigo-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
                      </div>
                   ))}
+                  {testResults.length === 0 && (
+                     <p className="p-8 text-center text-xs italic text-muted-foreground">No evaluation data available</p>
+                  )}
                </div>
             </CardContent>
          </Card>
