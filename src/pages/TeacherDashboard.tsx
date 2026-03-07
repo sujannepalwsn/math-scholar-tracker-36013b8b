@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch upcoming center events
   const { data: upcomingEvents = [] } = useQuery({
