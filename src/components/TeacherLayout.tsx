@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, CheckSquare, BookOpen, Book, Paintbrush, AlertTriangle, FileText, ClipboardCheck, User, LogOut, KeyRound, Video, MessageSquare, Calendar, Clock, TrendingUp, Brain, DollarSign, BarChart3, LayoutList, CalendarDays, Menu } from "lucide-react";
+import { Home, CheckSquare, BookOpen, Book, Paintbrush, AlertTriangle, FileText, ClipboardCheck, User, LogOut, KeyRound, Video, MessageSquare, Calendar, Clock, TrendingUp, Brain, DollarSign, BarChart3, LayoutList, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,6 @@ const navItems: Array<{
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const },
-
-  // Academics Group
   { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance', category: 'Academics' },
   { to: "/teacher/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'teacher' as const, featureName: 'lesson_plans', category: 'Academics' },
   { to: "/teacher/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'teacher' as const, featureName: 'lesson_tracking', category: 'Academics' },
@@ -29,12 +27,8 @@ const navItems: Array<{
   { to: "/teacher/test-management", label: "Tests", icon: ClipboardCheck, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
   { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'activities', category: 'Academics' },
   { to: "/teacher/discipline-issues", label: "Discipline", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues', category: 'Academics' },
-
-  // Administration Group
   { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance', category: 'Administration' },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'teacher' as const, category: 'Administration' },
-
-  // Reports and Communications Group
   { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
   { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communications' },
   { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communications' },
@@ -96,7 +90,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 text-sm">
         <User className="h-4 w-4 text-muted-foreground" />
-        <span className="text-muted-foreground">{user?.username}</span>
+        <span className="text-muted-foreground truncate">{user?.username}</span>
       </div>
       <Button variant="ghost" size="sm" onClick={handleLogout}>
         <LogOut className="h-4 w-4" />
@@ -114,7 +108,6 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={filteredTeacherNavItems}
         headerContent={headerContent}
@@ -124,35 +117,25 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         onMobileOpenChange={setMobileMenuOpen}
       />
 
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
-        <div className="flex-1">
-          <CenterLogo size="sm" showName={true} />
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="md:hidden hover:bg-muted"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-        </div>
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
+        <CenterLogo size="sm" showName={true} />
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
+          <LogOut className="h-4 w-4" />
+        </Button>
       </header>
 
-      {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-y-auto bg-background transition-all duration-300",
+        "flex-1 overflow-y-auto bg-background transition-all duration-200",
         "md:h-screen",
-        "pt-20 md:pt-0",
-        "px-4 pb-20 md:p-8",
+        "pt-16 md:pt-0",
+        "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
-        {children}
+        <div className="page-enter max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
       <BottomNav navItems={filteredTeacherNavItems} />
     </div>
   );

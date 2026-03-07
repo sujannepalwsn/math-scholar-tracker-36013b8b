@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, DollarSign, LogOut, User, Book, Paintbrush, AlertTriangle, KeyRound, Video, MessageSquare, Star, BookOpen, Calendar, Menu } from "lucide-react";
+import { Home, DollarSign, LogOut, User, Book, Paintbrush, AlertTriangle, KeyRound, Video, MessageSquare, Star, BookOpen, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -19,14 +19,10 @@ const navItems: Array<{
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
-
-  // Academics Group
   { to: "/parent-lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-homework", label: "Homework", icon: Book, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const, category: 'Academics' },
-
-  // Reports and Communications Group
   { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communications' },
   { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communications' },
   { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communications' },
@@ -83,7 +79,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 text-sm">
         <User className="h-4 w-4 text-muted-foreground" />
-        <span className="text-muted-foreground">{user?.username}</span>
+        <span className="text-muted-foreground truncate">{user?.username}</span>
       </div>
       <Button variant="ghost" size="sm" onClick={handleLogout}>
         <LogOut className="h-4 w-4" />
@@ -93,7 +89,6 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={updatedNavItems}
         headerContent={headerContent}
@@ -103,43 +98,25 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         onMobileOpenChange={setMobileMenuOpen}
       />
 
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
-        <div className="flex-1">
-          <CenterLogo size="sm" showName={true} />
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="md:hidden hover:bg-muted"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden hover:bg-muted"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
+        <CenterLogo size="sm" showName={true} />
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
+          <LogOut className="h-4 w-4" />
+        </Button>
       </header>
 
-      {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-y-auto bg-background transition-all duration-300",
+        "flex-1 overflow-y-auto bg-background transition-all duration-200",
         "md:h-screen",
-        "pt-20 md:pt-0",
-        "px-4 pb-20 md:p-8",
+        "pt-16 md:pt-0",
+        "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
-        {children}
+        <div className="page-enter max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
       <BottomNav navItems={updatedNavItems} />
     </div>
   );
