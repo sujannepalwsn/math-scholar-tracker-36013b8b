@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   BookOpen,
   CalendarIcon,
@@ -159,7 +159,7 @@ export default function TeacherDashboard() {
         const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
         return bP - aP;
       })
-      .slice(0, 5);
+      .slice(0, 50);
   }, [classResults]);
 
   const todayClasses = teacherSchedule.map((ps: any) => ({
@@ -255,12 +255,16 @@ export default function TeacherDashboard() {
                  </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                 <div className="divide-y divide-primary/5">
+                 <div className="divide-y divide-primary/5 max-h-[400px] overflow-y-auto custom-scrollbar">
                     {topStudents.length === 0 ? (
                        <p className="p-8 text-center text-xs italic text-muted-foreground">No evaluation data available</p>
                     ) : (
                        topStudents.map((r: any) => (
-                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-primary/5 transition-colors">
+                          <div
+                            key={r.id}
+                            className="p-4 flex justify-between items-center hover:bg-primary/5 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/teacher/student-report?studentId=${r.student_id}`)}
+                          >
                              <div>
                                 <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
                                 <p className="text-[10px] text-slate-400 font-medium">Grade {r.students?.grade} • {r.tests?.name}</p>
@@ -273,12 +277,15 @@ export default function TeacherDashboard() {
               </CardContent>
            </Card>
         </div>
-        <AlertList alerts={teacherAlerts} />
+        <AlertList alerts={teacherAlerts} onViewAll={() => navigate("/teacher-messaging")} />
       </div>
 
       {/* Bottom Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <ClassSchedule classes={todayClasses} />
+        <ClassSchedule
+          classes={todayClasses}
+          onViewRoutine={() => navigate("/teacher/class-routine")}
+        />
         <Card className="lg:col-span-2 border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
            <CardHeader><CardTitle className="text-lg font-bold">Upcoming Professional Milestones</CardTitle></CardHeader>
            <CardContent>
@@ -287,7 +294,11 @@ export default function TeacherDashboard() {
               ) : (
                 <div className="space-y-4">
                    {upcomingMeetings.map((att: any) => (
-                     <div key={att.id} className="p-4 rounded-xl bg-white border border-slate-100 flex justify-between items-center shadow-sm">
+                     <div
+                        key={att.id}
+                        className="p-4 rounded-xl bg-white border border-slate-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate("/teacher/meetings")}
+                     >
                         <div className="space-y-1">
                            <p className="text-sm font-bold text-slate-800">{att.meetings?.title}</p>
                            <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">{att.meetings?.meeting_type}</p>

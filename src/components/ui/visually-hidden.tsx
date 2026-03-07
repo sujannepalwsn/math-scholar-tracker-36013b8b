@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+import React, { Slot } from "@radix-ui/react-slot";
 
 interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLSpanElement> {
   asChild?: boolean;

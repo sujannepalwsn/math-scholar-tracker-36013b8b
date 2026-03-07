@@ -2,8 +2,9 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Clock } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface ClassItem {
   id: string;
@@ -19,13 +20,15 @@ interface ClassScheduleProps {
   title?: string;
   className?: string;
   onItemClick?: (item: ClassItem) => void;
+  onViewRoutine?: () => void;
 }
 
 export const ClassSchedule = ({
   classes,
   title = "Today's Classes",
   className,
-  onItemClick
+  onItemClick,
+  onViewRoutine
 }: ClassScheduleProps) => {
   const statusStyles: Record<string, string> = {
     completed: "bg-green-500/10 text-green-600 border-green-600/20",
@@ -35,7 +38,7 @@ export const ClassSchedule = ({
 
   return (
     <Card className={cn("overflow-hidden border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20", className)}>
-      <CardHeader className="py-4 border-b border-muted/20 bg-muted/5">
+      <CardHeader className="py-4 border-b border-muted/20 bg-muted/5 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-bold flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-indigo-500/10">
@@ -44,6 +47,16 @@ export const ClassSchedule = ({
             {title}
           </div>
         </CardTitle>
+        {onViewRoutine && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onViewRoutine}
+            className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-xl px-3 h-8"
+          >
+            Routine <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="p-0 max-h-[400px] overflow-y-auto">
         {classes.length === 0 ? (

@@ -8,7 +8,7 @@ import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import React, { useState } from "react";
 
 const navItems: Array<{
   to: string;

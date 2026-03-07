@@ -1,4 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, subMonths, addMonths, isValid } from 'date-fns';
 import { CalendarIcon, Check, CheckCircle2, Clock, Download, MinusCircle, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
-import { cn, safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
+import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
 import { Tables, Database } from '@/integrations/supabase/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';

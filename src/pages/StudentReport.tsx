@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,14 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle , DialogDescription} from "@/components/ui/dialog";
 import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, Users, XCircle, BarChart3 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subYears, isPast } from "date-fns"; // Added subYears, isPast
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
 import { Invoice, Payment } from "@/integrations/supabase/finance-types";
-import { safeFormatDate, cn, formatCurrency } from '@/lib/utils'; // Import safeFormatDate, cn, formatCurrency
+import { safeFormatDate, formatCurrency } from '@/lib/utils'; // Import safeFormatDate, formatCurrency
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
