@@ -1,287 +1,248 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Home, BookOpen, CheckSquare, Users, CalendarDays, MessageSquare, Bell, Clock, AlertTriangle, Video } from 'lucide-react';
-import { format, isToday, isFuture, startOfDay } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useMemo } from "react";
+import {
+  BookOpen,
+  CalendarIcon,
+  CheckCircle2,
+  Clock,
+  FileText,
+  TrendingUp,
+  Users,
+  AlertTriangle,
+  Book,
+  Plus,
+  Bell,
+  Search,
+  ChevronDown,
+  Calendar,
+  Home,
+  MessageSquare,
+  Video
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useNavigate } from 'react-router-dom';
+import { KPICard } from "@/components/dashboard/KPICard";
+import { AlertList } from "@/components/dashboard/AlertList";
+import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
+import { QuickAction } from "@/components/dashboard/QuickAction";
+import CenterLogo from "@/components/CenterLogo";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const today = new Date().toISOString().split("T")[0];
+  const teacherId = user?.teacher_id;
+  const centerId = user?.center_id;
 
-  // Fetch upcoming center events
-  const { data: upcomingEvents = [] } = useQuery({
-    queryKey: ['teacher-upcoming-events', user?.center_id],
-    queryFn: async () => {
-      if (!user?.center_id) return [];
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const { data, error } = await supabase
-        .from('center_events')
-        .select('*')
-        .eq('center_id', user.center_id)
-        .gte('event_date', today)
-        .order('event_date', { ascending: true })
-        .limit(5);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.center_id,
+  const [dateRange, setDateRange] = useState({
+    from: subDays(new Date(), 7).toISOString().split("T")[0],
+    to: today
   });
 
-  // Today's events
-  const todaysEvents = upcomingEvents.filter((e: any) => isToday(new Date(e.event_date)));
+  // Data Fetching
+  const { data: teacherStudents = [], isLoading: isStudentsLoading } = useQuery({
+    queryKey: ["teacher-students", teacherId],
+    queryFn: async () => {
+      if (!teacherId) return [];
+      // This is a simplification; ideally we fetch students assigned to teacher's classes
+      const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!teacherId,
+  });
 
-  // Fetch teacher's upcoming meetings
+  const { data: teacherSchedule = [] } = useQuery({
+    queryKey: ["teacher-schedule-today", teacherId],
+    queryFn: async () => {
+      if (!teacherId) return [];
+      const dayOfWeek = new Date().getDay();
+      const { data, error } = await supabase.from("period_schedules").select("*, class_periods(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!teacherId,
+  });
+
   const { data: upcomingMeetings = [] } = useQuery({
-    queryKey: ['teacher-upcoming-meetings', user?.teacher_id, user?.id],
+    queryKey: ['teacher-upcoming-meetings', teacherId],
     queryFn: async () => {
-      if (!user?.teacher_id && !user?.id) return [];
-      
-      let { data, error } = await supabase
-        .from('meeting_attendees')
-        .select(`
-          *,
-          meetings(id, title, meeting_date, meeting_type, status, location, agenda)
-        `)
-        .eq('teacher_id', user.teacher_id!)
-        .order('created_at', { ascending: false });
-
+      if (!teacherId) return [];
+      const { data, error } = await supabase.from('meeting_attendees').select('*, meetings(*)').eq('teacher_id', teacherId).order('created_at', { ascending: false });
       if (error) throw error;
-      
-      const upcomingOnly = (data || []).filter((att: any) => {
-        if (!att.meetings?.meeting_date) return false;
-        const meetingDate = new Date(att.meetings.meeting_date);
-        return isFuture(meetingDate) || isToday(meetingDate);
-      });
-      
-      return upcomingOnly.slice(0, 5);
+      return (data || []).filter((att: any) => att.meetings?.meeting_date && (isFuture(new Date(att.meetings.meeting_date)) || isToday(new Date(att.meetings.meeting_date)))).slice(0, 5);
     },
-    enabled: !!user?.teacher_id || !!user?.id,
+    enabled: !!teacherId,
   });
 
-  // Today's meetings
-  const todaysMeetings = upcomingMeetings.filter((att: any) => 
-    att.meetings?.meeting_date && isToday(new Date(att.meetings.meeting_date))
-  );
-
-  // Unread messages count
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['teacher-unread-messages-dashboard', user?.id, user?.center_id],
+    queryKey: ['teacher-unread-messages', user?.id],
     queryFn: async () => {
-      if (!user?.id || !user?.center_id) return 0;
-      const { data: conversation } = await supabase
-        .from('chat_conversations')
-        .select('id')
-        .eq('parent_user_id', user.id)
-        .eq('center_id', user.center_id)
-        .maybeSingle();
+      if (!user?.id) return 0;
+      const { data: conversation } = await supabase.from('chat_conversations').select('id').eq('parent_user_id', user.id).maybeSingle();
       if (!conversation) return 0;
-      const { count } = await supabase
-        .from('chat_messages')
-        .select('id', { count: 'exact' })
-        .eq('conversation_id', conversation.id)
-        .eq('is_read', false)
-        .neq('sender_user_id', user.id);
+      const { count } = await supabase.from('chat_messages').select('id', { count: 'exact' }).eq('conversation_id', conversation.id).eq('is_read', false).neq('sender_user_id', user.id);
       return count || 0;
     },
-    enabled: !!user?.id && !!user?.center_id,
+    enabled: !!user?.id,
   });
 
-  // Recent broadcast messages
-  const { data: recentBroadcasts = [] } = useQuery({
-    queryKey: ['teacher-broadcasts', user?.center_id],
+  const { data: homeworkToGrade = [] } = useQuery({
+    queryKey: ["teacher-homework-to-grade", teacherId],
     queryFn: async () => {
-      if (!user?.center_id) return [];
-      const { data, error } = await supabase
-        .from('broadcast_messages')
-        .select('*')
-        .eq('center_id', user.center_id)
-        .in('target_audience', ['all_teachers', `teacher_${user.teacher_id}`])
-        .order('sent_at', { ascending: false })
-        .limit(3);
+      if (!teacherId) return [];
+      const { data, error } = await supabase.from("student_homework_records").select("*, students(name, grade), homework!inner(title, teacher_id)").eq("homework.teacher_id", teacherId).eq("status", "submitted").limit(5);
       if (error) throw error;
-      return data;
+      return data || [];
     },
-    enabled: !!user?.center_id,
+    enabled: !!teacherId,
   });
 
-  const StatCard = ({ title, value, icon: Icon, description, bgColor, link }: any) => (
-    <Card
-      onClick={() => link && navigate(link)}
-      className={cn("group transition-all duration-200", link && "cursor-pointer hover:-translate-y-0.5")}
-    >
-      <CardContent className="p-5">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">{title}</p>
-            <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
-          </div>
-          <div className={cn("p-2.5 rounded-lg", bgColor)}>
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const { data: historicalAttendance = [] } = useQuery({
+    queryKey: ["teacher-student-attendance-historical", teacherId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
+      const { data, error } = await supabase.from("attendance").select("date, status").eq("center_id", centerId).gte("date", sevenDaysAgo).order("date");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const attendanceTrend = useMemo(() => {
+    const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
+    return last7Days.map(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const dayRecords = historicalAttendance.filter(a => a.date === dayStr);
+      const present = dayRecords.filter(a => a.status === "present").length;
+      return { date: format(day, "MMM d"), value: dayRecords.length > 0 ? Math.round((present / dayRecords.length) * 100) : 0 };
+    });
+  }, [historicalAttendance]);
+
+  const todayClasses = teacherSchedule.map((ps: any) => ({
+    id: ps.id,
+    time: ps.class_periods ? `${ps.class_periods.start_time.slice(0, 5)} - ${ps.class_periods.end_time.slice(0, 5)}` : "N/A",
+    grade: ps.grade,
+    teacher: user?.username?.split('@')[0] || "Me",
+    subject: ps.subject,
+    status: "upcoming" as const
+  }));
+
+  const teacherAlerts = [
+    ...homeworkToGrade.map(h => ({
+      id: `hw-${h.id}`,
+      title: `Grading needed: ${h.students?.name}`,
+      description: h.homework?.title,
+      type: "info" as const,
+      timestamp: h.created_at
+    })),
+    ...upcomingMeetings.filter((att: any) => isToday(new Date(att.meetings?.meeting_date))).map((att: any) => ({
+      id: `meeting-${att.id}`,
+      title: `Meeting today: ${att.meetings?.title}`,
+      type: "warning" as const,
+      timestamp: att.meetings?.meeting_date
+    }))
+  ];
+
+  const isLoading = isStudentsLoading;
+
+  if (isLoading) {
+    return <div className="p-8"><Skeleton className="h-64 rounded-2xl" /></div>;
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Teacher Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Welcome, {user?.username?.split('@')[0] || 'Teacher'} · {format(new Date(), 'EEEE, MMMM d')}
-        </p>
+    <div className="min-h-screen bg-[#f8faff] p-4 md:p-8 space-y-8 pb-24 md:pb-8">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <CenterLogo size="lg" />
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="relative bg-white shadow-soft rounded-xl">
+            <Bell className="h-5 w-5 text-slate-600" />
+            <span className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-full border-2 border-white" />
+          </Button>
+          <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl shadow-soft">
+            <div className="h-9 w-9 bg-indigo-100 rounded-xl flex items-center justify-center overflow-hidden">
+               <Users className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-slate-800 leading-none">{user?.username?.split('@')[0]}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Teacher</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Today's Meetings" value={todaysMeetings.length} icon={Video} bgColor="bg-primary/10" description="sessions today" link="/teacher-meetings" />
-        <StatCard title="Calendar Events" value={todaysEvents.length} icon={CalendarDays} bgColor="bg-primary/10" description={todaysEvents.some((e: any) => e.is_holiday) ? 'Holiday' : 'active events'} link="/teacher/calendar" />
-        <StatCard title="Messages" value={unreadCount} icon={MessageSquare} bgColor="bg-primary/10" description="unread" link="/teacher-messages" />
-        <StatCard title="Upcoming" value={upcomingMeetings.length} icon={Bell} bgColor="bg-primary/10" description="pending sessions" link="/teacher-meetings" />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
+          <div className="p-2 bg-indigo-500 text-white rounded-lg">
+            <Home className="h-4 w-4" />
+          </div>
+          <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
+             <Calendar className="h-4 w-4 text-slate-400" />
+             <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
+           <Input type="date" value={dateRange.to} readOnly className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700" />
+           <ChevronDown className="h-4 w-4 text-slate-400 mr-2" />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { title: "Take Attendance", icon: CheckSquare, desc: "Mark daily attendance", perm: user?.teacherPermissions?.take_attendance, link: "/teacher/take-attendance" },
-          { title: "Lesson Tracking", icon: BookOpen, desc: "Update lesson progress", perm: user?.teacherPermissions?.lesson_tracking, link: "/teacher/lesson-tracking" },
-          { title: "Student Reports", icon: Users, desc: "View student performance", perm: user?.teacherPermissions?.student_report_access, link: "/teacher/student-report" },
-        ].filter(f => f.perm).map((feature) => (
-          <Card key={feature.title} className="group cursor-pointer hover:-translate-y-0.5 transition-all duration-200" onClick={() => navigate(feature.link)}>
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-primary/10 shrink-0">
-                <feature.icon className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold">{feature.title}</h4>
-                <p className="text-xs text-muted-foreground">{feature.desc}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* KPI Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard title="My Students" value={teacherStudents.length} description="Total assigned" icon={Users} color="indigo" onClick={() => navigate("/teacher/student-report")} />
+        <KPICard title="Today's Classes" value={todayClasses.length} description="Scheduled for today" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />
+        <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Submissions to grade" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />
+        <KPICard title="Unread Messages" value={unreadCount} description="New communications" icon={MessageSquare} color="green" onClick={() => navigate("/teacher-messages")} />
       </div>
 
-      {/* Today's Meetings Detail */}
-      {todaysMeetings.length > 0 && (
-        <Card className="border-primary/20 bg-primary/55">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 textprimary0" /> Today's Meetings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {todaysMeetings.map((attendee: any) => (
-                <div key={attendee.id} className="p-3 rounded-lg border bg-background">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">{attendee.meetings?.title}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {attendee.meetings?.meeting_type?.charAt(0).toUpperCase() + attendee.meetings?.meeting_type?.slice(1)} Meeting
-                        {attendee.meetings?.location && ` • ${attendee.meetings.location}`}
-                      </p>
-                      {attendee.meetings?.agenda && (
-                        <p className="text-xs text-muted-foreground mt-1">Agenda: {attendee.meetings.agenda}</p>
-                      )}
-                    </div>
-                    <Badge variant="secondary">{format(new Date(attendee.meetings?.meeting_date), 'p')}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Middle Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+           <KPICard title="Student Performance" value="82%" description="Average across classes" icon={TrendingUp} color="purple" trendData={attendanceTrend} />
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <QuickAction label="Take Attendance" icon={Plus} onClick={() => navigate("/teacher/take-attendance")} />
+             <QuickAction label="Update Lesson Progress" icon={Plus} onClick={() => navigate("/teacher/lesson-tracking")} />
+             <QuickAction label="Add Homework" icon={Plus} onClick={() => navigate("/teacher/homework-management")} />
+             <QuickAction label="New Meeting" icon={Video} onClick={() => navigate("/teacher-meetings")} />
+           </div>
+        </div>
+        <AlertList alerts={teacherAlerts} />
+      </div>
 
-      {/* Recent Broadcasts */}
-      {recentBroadcasts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" /> Recent Announcements
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentBroadcasts.map((msg: any) => (
-                <div key={msg.id} className="p-3 rounded-lg border bg-muted/50">
-                  <p className="text-sm whitespace-pre-wrap">{msg.message_text}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(msg.sent_at), 'MMM d, h:mm a')}
-                  </p>
+      {/* Bottom Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <ClassSchedule classes={todayClasses} />
+        <Card className="lg:col-span-2 border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+           <CardHeader><CardTitle className="text-lg font-bold">Upcoming Professional Milestones</CardTitle></CardHeader>
+           <CardContent>
+              {upcomingMeetings.length === 0 ? (
+                <p className="text-sm italic text-muted-foreground">No upcoming meetings or events.</p>
+              ) : (
+                <div className="space-y-4">
+                   {upcomingMeetings.map((att: any) => (
+                     <div key={att.id} className="p-4 rounded-xl bg-white border border-slate-100 flex justify-between items-center shadow-sm">
+                        <div className="space-y-1">
+                           <p className="text-sm font-bold text-slate-800">{att.meetings?.title}</p>
+                           <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">{att.meetings?.meeting_type}</p>
+                        </div>
+                        <Badge variant="secondary" className="font-bold">{format(new Date(att.meetings?.meeting_date), "MMM d, p")}</Badge>
+                     </div>
+                   ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
+              )}
+           </CardContent>
         </Card>
-      )}
-
-      {/* Upcoming Events */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" /> Upcoming Events
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {upcomingEvents.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No upcoming events.</p>
-          ) : (
-            <div className="space-y-3">
-              {upcomingEvents.map((event: any) => (
-                <div key={event.id} className={`p-3 rounded-lg border ${event.is_holiday ? 'bg-red-50 border-red-200' : 'bg-muted/50'}`}>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">{event.title}</h4>
-                      <p className="text-sm text-muted-foreground">{event.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
-                      {event.is_holiday && <span className="text-xs text-destructive font-medium">Holiday</span>}
-                      {isToday(new Date(event.event_date)) && <Badge className="ml-2">Today</Badge>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Upcoming Meetings */}
-      {user?.teacherPermissions?.meetings_management && upcomingMeetings.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Video className="h-5 w-5" /> Upcoming Meetings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {upcomingMeetings.map((attendee: any) => (
-                <div key={attendee.id} className="p-3 rounded-lg border bg-muted/50">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">{attendee.meetings?.title}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {attendee.meetings?.meeting_type?.charAt(0).toUpperCase() + attendee.meetings?.meeting_type?.slice(1)} Meeting
-                        {attendee.meetings?.location && ` • ${attendee.meetings.location}`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{format(new Date(attendee.meetings?.meeting_date), 'PPP')}</p>
-                      <p className="text-xs text-muted-foreground">{format(new Date(attendee.meetings?.meeting_date), 'p')}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      </div>
     </div>
   );
 }

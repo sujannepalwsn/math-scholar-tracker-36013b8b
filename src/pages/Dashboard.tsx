@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from "react";
 import {
   BookOpen,
   CalendarIcon,
@@ -6,32 +7,43 @@ import {
   FileText,
   TrendingUp,
   Users,
-  XCircle,
   AlertTriangle,
   Book,
-  GraduationCap,
-  LayoutDashboard,
-  Paintbrush,
-  Printer,
-  Star,
-  Video,
-  ClipboardCheck,
-  DollarSign
+  Plus,
+  Bell,
+  Search,
+  ChevronDown,
+  Calendar,
+  Home
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { cn, formatCurrency } from "@/lib/utils";
+import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
+import { KPICard } from "@/components/dashboard/KPICard";
+import { AlertList } from "@/components/dashboard/AlertList";
+import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
+import { QuickAction } from "@/components/dashboard/QuickAction";
+import CenterLogo from "@/components/CenterLogo";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart
+} from "recharts";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -40,9 +52,12 @@ export default function Dashboard() {
   const centerId = user?.center_id;
   const role = user?.role;
 
-  const [gradeFilter, setGradeFilter] = useState<string>("all");
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [dateRange, setDateRange] = useState({
+    from: subDays(new Date(), 7).toISOString().split("T")[0],
+    to: today
+  });
 
+  // Data Fetching
   const { data: students = [], isLoading: isStudentsLoading } = useQuery({
     queryKey: ["students", centerId],
     queryFn: async () => {
@@ -65,8 +80,6 @@ export default function Dashboard() {
     },
     enabled: !!centerId,
   });
-
-  const grades = [...new Set(students.map((s) => s.grade))];
 
   const { data: allAttendance = [], isLoading: isAttendanceLoading } = useQuery({
     queryKey: ["attendance-today", centerId, today],
@@ -94,12 +107,11 @@ export default function Dashboard() {
     queryKey: ["homework-stats-dashboard", centerId],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("student_homework_records").select("status").eq("student_id", students[0]?.id).limit(1); // dummy check for RLS
       const { data: allRecords, error: allErr } = await supabase.from("student_homework_records").select("status, homework!inner(center_id)").eq("homework.center_id", centerId);
       if (allErr) throw allErr;
       return allRecords || [];
     },
-    enabled: !!centerId && students.length > 0,
+    enabled: !!centerId,
   });
 
   const { data: evaluationStats = [], isLoading: isEvaluationStatsLoading } = useQuery({
@@ -118,28 +130,6 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!centerId) return [];
       const { data, error } = await supabase.from("activities").select("id").eq("center_id", centerId);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!centerId,
-  });
-
-  const { data: recentTestResults = [] } = useQuery({
-    queryKey: ["recent-test-results-dashboard", centerId],
-    queryFn: async () => {
-      if (!centerId) return [];
-      const { data, error } = await supabase.from("test_results").select("*, students(name, grade), tests(name, total_marks, subject)").order("date_taken", { ascending: false }).limit(20);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!centerId,
-  });
-
-  const { data: homeworkDefaulters = [] } = useQuery({
-    queryKey: ["homework-defaulters-dashboard", centerId],
-    queryFn: async () => {
-      if (!centerId) return [];
-      const { data, error } = await supabase.from("student_homework_records").select("*, students(name, grade), homework(title, subject, due_date)").eq("status", "assigned").order("created_at", { ascending: false }).limit(15);
       if (error) throw error;
       return data || [];
     },
@@ -168,16 +158,171 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
+  const { data: historicalAttendance = [] } = useQuery({
+    queryKey: ["attendance-historical", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("date, status")
+        .eq("center_id", centerId)
+        .gte("date", sevenDaysAgo)
+        .order("date");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: historicalTeacherAttendance = [] } = useQuery({
+    queryKey: ["teacher-attendance-historical", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("teacher_attendance")
+        .select("date, status")
+        .eq("center_id", centerId)
+        .gte("date", sevenDaysAgo)
+        .order("date");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: testTrend = [] } = useQuery({
+    queryKey: ["test-performance-trend", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("test_results")
+        .select("date_taken, marks_obtained, tests(total_marks)")
+        .gte("date_taken", thirtyDaysAgo)
+        .order("date_taken");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: periods = [] } = useQuery({
+    queryKey: ["class-periods", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("class_periods").select("*").eq("center_id", centerId).eq("is_active", true).order("period_number");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: periodSchedules = [] } = useQuery({
+    queryKey: ["period-schedules-today", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const dayOfWeek = new Date().getDay();
+      const { data, error } = await supabase.from("period_schedules").select("*, teachers(name), class_periods(*)").eq("center_id", centerId).eq("day_of_week", dayOfWeek);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: homeworkDefaulters = [] } = useQuery({
+    queryKey: ["homework-defaulters-dashboard", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("student_homework_records").select("*, students(name, grade), homework(title, subject, due_date)").eq("status", "assigned").order("created_at", { ascending: false }).limit(5);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  // Memos for Stats and Trends
+  const attendanceTrend = useMemo(() => {
+    const last7Days = eachDayOfInterval({
+      start: subDays(new Date(), 6),
+      end: new Date(),
+    });
+
+    return last7Days.map(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const dayRecords = historicalAttendance.filter(a => a.date === dayStr);
+      const present = dayRecords.filter(a => a.status === "present").length;
+      const total = dayRecords.length;
+      return {
+        date: format(day, "MMM d"),
+        value: total > 0 ? Math.round((present / total) * 100) : 0,
+        fullDate: dayStr
+      };
+    });
+  }, [historicalAttendance]);
+
+  const teacherAttendanceTrend = useMemo(() => {
+    const last7Days = eachDayOfInterval({
+      start: subDays(new Date(), 6),
+      end: new Date(),
+    });
+
+    return last7Days.map(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const dayRecords = historicalTeacherAttendance.filter(a => a.date === dayStr);
+      const present = dayRecords.filter(a => a.status === "present").length;
+      const total = dayRecords.length;
+      return {
+        date: format(day, "MMM d"),
+        value: total > 0 ? Math.round((present / total) * 100) : 0,
+        fullDate: dayStr
+      };
+    });
+  }, [historicalTeacherAttendance]);
+
+  const performanceTrend = useMemo(() => {
+    const grouped = testTrend.reduce((acc: any, curr: any) => {
+      const date = curr.date_taken;
+      if (!acc[date]) acc[date] = { total: 0, count: 0 };
+      const percentage = (curr.marks_obtained / (curr.tests?.total_marks || 100)) * 100;
+      acc[date].total += percentage;
+      acc[date].count += 1;
+      return acc;
+    }, {});
+
+    return Object.keys(grouped).map(date => ({
+      date: format(new Date(date), "MMM d"),
+      value: Math.round(grouped[date].total / grouped[date].count),
+    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(-7);
+  }, [testTrend]);
+
+  const overviewTrend = useMemo(() => {
+     const last7Days = eachDayOfInterval({
+      start: subDays(new Date(), 6),
+      end: new Date(),
+    });
+    return last7Days.map(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const sRecs = historicalAttendance.filter(a => a.date === dayStr);
+      const tRecs = historicalTeacherAttendance.filter(a => a.date === dayStr);
+
+      const sPres = sRecs.filter(a => a.status === "present").length;
+      const tPres = tRecs.filter(a => a.status === "present").length;
+
+      return {
+        name: format(day, "eee"),
+        Students: sRecs.length > 0 ? Math.round((sPres / sRecs.length) * 100) : 0,
+        Teachers: tRecs.length > 0 ? Math.round((tPres / tRecs.length) * 100) : 0,
+      };
+    });
+  }, [historicalAttendance, historicalTeacherAttendance]);
+
   const totalStudents = students.length;
   const presentCount = allAttendance.filter(a => a.status === "present").length;
-  const absentCount = allAttendance.filter(a => a.status === "absent").length;
-  const unmarkedCount = totalStudents - presentCount - absentCount;
-  const absentRate = totalStudents ? Math.round((absentCount / totalStudents) * 100) : 0;
-
-  const isLoading = isStudentsLoading || isTeachersLoading || isAttendanceLoading || isTeacherAttendanceLoading || isHomeworkStatsLoading || isEvaluationStatsLoading || isAllActivitiesLoading;
-
   const teacherPresentCount = teacherAttendance.filter(a => a.status === "present").length;
 
+  const studentAttendanceRate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
   const teacherAttendanceRate = teachers.length > 0 ? Math.round((teacherPresentCount / teachers.length) * 100) : 0;
 
   const completedHomework = homeworkStats.filter(h => ["completed", "checked"].includes(h.status || "")).length;
@@ -186,398 +331,291 @@ export default function Dashboard() {
   const ratedEvaluations = evaluationStats.filter(e => e.evaluation_rating !== null).length;
   const evaluationRate = evaluationStats.length > 0 ? Math.round((ratedEvaluations / evaluationStats.length) * 100) : 0;
 
-  const avgTestScore = recentTestResults.length > 0
-    ? Math.round(recentTestResults.reduce((acc, r: any) => acc + (r.marks_obtained / (r.tests?.total_marks || 100)) * 100, 0) / recentTestResults.length)
-    : 0;
+  const avgTestScore = performanceTrend.length > 0 ? performanceTrend[performanceTrend.length - 1].value : 0;
 
-  const absentToday = students.filter((s) => allAttendance.some((a) => a.student_id === s.id && a.status === "absent"));
+  const todayClasses = periodSchedules.map((ps: any) => ({
+    id: ps.id,
+    time: ps.class_periods ? `${ps.class_periods.start_time.slice(0, 5)} - ${ps.class_periods.end_time.slice(0, 5)}` : "N/A",
+    grade: ps.grade,
+    teacher: ps.teachers?.name || "Unassigned",
+    subject: ps.subject,
+    status: "upcoming" as const // Simplification
+  }));
 
-  const lowPerformers = recentTestResults.filter((r: any) => {
-    const total = r.tests?.total_marks || 100;
-    return r.marks_obtained < total * 0.4;
-  }).slice(0, 10);
+  const recentAlerts = [
+    ...allAttendance.filter(a => a.status === "absent").slice(0, 3).map(a => ({
+      id: `absent-${a.student_id}`,
+      title: `${students.find(s => s.id === a.student_id)?.name || 'Student'} absent today`,
+      type: "warning" as const,
+      timestamp: new Date().toISOString()
+    })),
+    ...homeworkDefaulters.slice(0, 2).map(h => ({
+      id: `hw-${h.id}`,
+      title: `Homework pending for Grade ${h.students?.grade}`,
+      description: h.students?.name,
+      type: "info" as const,
+      timestamp: h.created_at
+    }))
+  ].slice(0, 5);
 
-  const topPerformers = [...recentTestResults].sort((a: any, b: any) => {
-    const aP = (a.marks_obtained / (a.tests?.total_marks || 100)) * 100;
-    const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
-    return bP - aP;
-  }).slice(0, 5);
+  const isLoading = isStudentsLoading || isTeachersLoading || isAttendanceLoading || isTeacherAttendanceLoading || isHomeworkStatsLoading || isEvaluationStatsLoading;
 
-  const studentId = selectedStudent?.id;
-  const { data: attendanceData = [] } = useQuery({
-    queryKey: ["student-attendance", studentId], queryFn: async () => { if (!studentId) return []; const { data } = await supabase.from("attendance").select("*").eq("student_id", studentId).order("date"); return data || []; }, enabled: !!studentId,
-  });
-  const { data: chapterProgress = [] } = useQuery({
-    queryKey: ["student-chapters", studentId], queryFn: async () => { if (!studentId) return []; const { data } = await supabase.from("student_chapters").select("*, lesson_plans(*)").eq("student_id", studentId).order("completed_at", { ascending: false }); return data || []; }, enabled: !!studentId,
-  });
-  const { data: testResults = [] } = useQuery({
-    queryKey: ["student-test-results", studentId], queryFn: async () => { if (!studentId) return []; const { data } = await supabase.from("test_results").select("*, tests(*)").eq("student_id", studentId).order("date_taken", { ascending: false }); return data || []; }, enabled: !!studentId,
-  });
-
-  const totalDays = attendanceData.length;
-  const presentDays = attendanceData.filter((a) => a.status === "present").length;
-  const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-  const completedChaptersCount = chapterProgress.filter((c) => c.completed).length;
-
-  // Clickable card handler
-  const handleCardClick = (path: string) => navigate(path);
-
-  const StatCard = ({ title, value, icon: Icon, description, colorClass, path }: any) => (
-    <Card
-      onClick={() => handleCardClick(path)}
-      className="group cursor-pointer hover:-translate-y-0.5 transition-all duration-200"
-    >
-      <CardContent className="p-5">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">{title}</p>
-            <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
-          </div>
-          <div className={cn("p-2.5 rounded-lg", colorClass)}>
-            <Icon className="h-5 w-5 text-primary" />
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-8">
+        <div className="flex justify-between items-center mb-8">
+          <Skeleton className="h-10 w-64" />
+          <div className="flex gap-4">
+             <Skeleton className="h-10 w-10 rounded-full" />
+             <Skeleton className="h-10 w-10 rounded-full" />
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Welcome back, {user?.username?.split('@')[0] || 'User'} · {format(new Date(), "EEEE, MMM d, yyyy")}
-          </p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i} className="p-5">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-6 w-14" />
-                  <Skeleton className="h-3 w-28" />
-                </div>
-                <Skeleton className="h-10 w-10 rounded-lg" />
-              </div>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-2xl" />
           ))}
         </div>
-      ) : (
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Students Attendance"
-          value={`${totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0}%`}
-          icon={Users}
-          colorClass="bg-blue-500/10"
-          description={`Present: ${presentCount} / Total: ${totalStudents}`}
-          path="/attendance-summary"
-        />
-        <StatCard
-          title="Teachers Attendance"
-          value={`${teacherAttendanceRate}%`}
-          icon={Clock}
-          colorClass="bg-green-500/10"
-          description={`Present: ${teacherPresentCount} / Total: ${teachers.length}`}
-          path="/teacher-attendance"
-        />
-        <StatCard
-          title="Homework Completion"
-          value={`${homeworkRate}%`}
-          icon={Book}
-          colorClass="bg-orange-500/10"
-          description="Global completion rate"
-          path="/homework"
-        />
-        <StatCard
-          title="Evaluation Rate"
-          value={`${evaluationRate}%`}
-          icon={CheckCircle2}
-          colorClass="bg-yellow-500/10"
-          description="Syllabus coverage"
-          path="/lesson-tracking"
-        />
-        <StatCard
-          title="Test Performance"
-          value={`${avgTestScore}%`}
-          icon={TrendingUp}
-          colorClass="bg-purple-500/10"
-          description="Average student score"
-          path="/tests"
-        />
-        <StatCard
-          title="Activities"
-          value={allActivities.length}
-          icon={BookOpen}
-          colorClass="bg-pink-500/10"
-          description="Total activities conducted"
-          path="/activities"
-        />
-        <StatCard
-          title="Discipline Issues"
-          value={recentDiscipline.length}
-          icon={AlertTriangle}
-          colorClass="bg-red-500/10"
-          description="Open discipline cases"
-          path="/discipline"
-        />
-        <StatCard
-          title="Upcoming Lessons"
-          value={upcomingLessons.length}
-          icon={FileText}
-          colorClass="bg-indigo-500/10"
-          description="Planned for this week"
-          path="/lesson-plans"
-        />
       </div>
-      )}
+    );
+  }
 
-      <Select value={gradeFilter} onValueChange={setGradeFilter}>
-        <SelectTrigger className="w-[140px]"><SelectValue placeholder="All Grades" /></SelectTrigger>
-        <SelectContent><SelectItem value="all">All Grades</SelectItem>{grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-      </Select>
-
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <Card className="overflow-hidden cursor-pointer" onClick={() => handleCardClick("/attendance-summary")}>
-          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
-            <CardTitle className="text-lg font-bold flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-red-500/10">
-                  <Users className="h-5 w-5 text-red-600" />
-                </div>
-                Absent Today
-              </div>
-              <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest">{absentToday.length} students</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Name</TableHead>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Grade</TableHead>
-                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {absentToday.filter(s => gradeFilter === "all" || s.grade === gradeFilter).length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">Everyone is present!</TableCell></TableRow>
-                ) : (
-                  absentToday.filter(s => gradeFilter === "all" || s.grade === gradeFilter).map((s) => (
-                    <TableRow key={s.id} className="group/row hover:bg-primary/5 transition-colors cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedStudent(s); }}>
-                      <TableCell className="font-bold text-sm py-3">{s.name}</TableCell>
-                      <TableCell><Badge variant="secondary" className="text-[10px]">{s.grade}</Badge></TableCell>
-                      <TableCell className="text-right text-[10px] font-bold text-primary group-hover/row:underline">View Profile</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Pending Homework */}
-        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl" onClick={() => handleCardClick("/homework")}>
-          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
-            <CardTitle className="text-lg font-bold flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-orange-500/10">
-                  <Book className="h-5 w-5 text-orange-600" />
-                </div>
-                Pending Homework
-              </div>
-              <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest text-orange-600 border-orange-600/20">{homeworkDefaulters.length} pending</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Student</TableHead>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Task</TableHead>
-                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Due</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {homeworkDefaulters.length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">All caught up!</TableCell></TableRow>
-                ) : (
-                  homeworkDefaulters.map((h: any) => (
-                    <TableRow key={h.id} className="hover:bg-orange-50/50 transition-colors">
-                      <TableCell className="font-bold text-sm py-3">{h.students?.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground font-medium">{h.homework?.title}</TableCell>
-                      <TableCell className="text-right text-[10px] font-black text-orange-600 uppercase">{h.homework?.due_date ? format(new Date(h.homework.due_date), "MMM d") : "-"}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+  return (
+    <div className="min-h-screen bg-[#f8faff] p-4 md:p-8 space-y-6 pb-24 md:pb-8">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <CenterLogo size="lg" />
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="relative bg-white shadow-soft rounded-xl hover:bg-white/80">
+            <Bell className="h-5 w-5 text-slate-600" />
+            <span className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-full border-2 border-white" />
+          </Button>
+          <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl shadow-soft border border-white/40">
+            <div className="h-9 w-9 bg-indigo-100 rounded-xl flex items-center justify-center overflow-hidden">
+               <Users className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-xs font-black text-slate-800 leading-none">{user?.username?.split('@')[0]}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{role}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
-        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl" onClick={() => handleCardClick("/tests")}>
-          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
-            <CardTitle className="text-lg font-bold flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-purple-500/10">
-                  <TrendingUp className="h-5 w-5 text-purple-600" />
-                </div>
-                Performance Alerts
-              </div>
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">Critical Attention</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Student</TableHead>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Test</TableHead>
-                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Score</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lowPerformers.length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">No critical performance alerts.</TableCell></TableRow>
-                ) : (
-                  lowPerformers.map((r: any) => (
-                    <TableRow key={r.id} className="hover:bg-red-50/50 transition-colors">
-                      <TableCell className="font-bold text-sm py-3">{r.students?.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground line-clamp-1">{r.tests?.name}</TableCell>
-                      <TableCell className="text-right">
-                        <span className="text-sm font-black text-red-600">{r.marks_obtained}</span>
-                        <span className="text-[10px] text-muted-foreground">/{r.tests?.total_marks}</span>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      {/* Sub Header / Filters */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
+          <div className="p-2 bg-indigo-500 text-white rounded-lg">
+            <Home className="h-4 w-4" />
+          </div>
+          <Badge variant="ghost" className="text-xs font-bold text-indigo-600">Ralue</Badge>
+          <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
+             <Calendar className="h-4 w-4 text-slate-400" />
+             <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
+          </div>
+        </div>
 
-        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl" onClick={() => handleCardClick("/discipline")}>
-          <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
-            <CardTitle className="text-lg font-bold flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-red-600/10">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
-                </div>
-                Open Discipline Cases
-              </div>
-              <Badge className="bg-red-600 text-white font-black text-[10px]">{recentDiscipline.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 max-h-[350px] overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Student</TableHead>
-                  <TableHead className="text-[10px] uppercase font-bold tracking-widest py-2">Issue</TableHead>
-                  <TableHead className="text-right text-[10px] uppercase font-bold tracking-widest py-2">Severity</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentDiscipline.length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic text-sm">No open discipline issues.</TableCell></TableRow>
-                ) : (
-                  recentDiscipline.map((d: any) => (
-                    <TableRow key={d.id} className="hover:bg-red-50/50 transition-colors">
-                      <TableCell className="font-bold text-sm py-3">{d.students?.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground truncate max-w-[150px]">{d.description}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={d.severity === 'high' ? 'destructive' : 'secondary'} className="text-[10px] font-black uppercase tracking-tighter">
-                          {d.severity}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
+           <Input
+             type="date"
+             value={dateRange.to}
+             onChange={(e) => setDateRange({...dateRange, to: e.target.value})}
+             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700"
+           />
+           <ChevronDown className="h-4 w-4 text-slate-400 mr-2" />
+        </div>
       </div>
 
-      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl group" onClick={() => handleCardClick("/lesson-plans")}>
-        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-          <CardTitle className="text-xl font-black flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10 group-hover:scale-110 transition-transform">
-              <BookOpen className="h-6 w-6 text-primary" />
-            </div>
-            Academic Roadmap: Upcoming Lessons
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8">
-          {upcomingLessons.length === 0 ? (
-            <div className="text-center py-12 space-y-3">
-              <div className="p-3 rounded-full bg-muted/10 inline-block">
-                <CalendarIcon className="h-8 w-8 text-muted-foreground/30" />
-              </div>
-              <p className="text-sm text-muted-foreground font-medium italic">No upcoming lessons planned for this week.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {upcomingLessons.map((lp: any) => (
-                <div key={lp.id} className="relative p-5 rounded-2xl bg-white border border-muted/20 shadow-soft hover:shadow-medium hover:-translate-y-1 transition-all space-y-3 group/plan">
-                  <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary/40 group-hover/plan:animate-ping" />
-                  <div className="space-y-1">
-                    <Badge variant="outline" className="text-[10px] font-black uppercase text-primary border-primary/20 bg-primary/5">{lp.subject}</Badge>
-                    <h4 className="font-bold text-lg leading-tight group-hover/plan:text-primary transition-colors">{lp.chapter}</h4>
-                    <p className="text-xs text-muted-foreground font-medium line-clamp-1">{lp.topic}</p>
-                  </div>
-                  <div className="pt-3 border-t border-muted/10 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase">
-                      <CalendarIcon className="h-3 w-3" />
-                      {lp.lesson_date && format(new Date(lp.lesson_date), "MMM d")}
-                    </div>
-                    {lp.grade && <Badge className="text-[9px] font-black h-5">{lp.grade}</Badge>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left/Main Column */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* KPI Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <KPICard
+              title="Student Attendance"
+              value={`${studentAttendanceRate}%`}
+              description={`${presentCount} / ${totalStudents} Present`}
+              icon={Users}
+              color="green"
+              trendData={attendanceTrend}
+              onClick={() => navigate("/attendance-summary")}
+              secondaryIcon={CheckCircle2}
+              secondaryIconColor="text-green-500"
+            />
+            <KPICard
+              title="Teacher Attendance"
+              value={`${teacherAttendanceRate}%`}
+              description={`${teacherPresentCount} / ${teachers.length} Present`}
+              icon={Clock}
+              color="blue"
+              trendData={teacherAttendanceTrend}
+              onClick={() => navigate("/teacher-attendance")}
+              secondaryIcon={Search}
+              secondaryIconColor="text-blue-500"
+            />
+            <KPICard
+              title="Test Performance"
+              value={`${avgTestScore}%`}
+              description="Average Score"
+              icon={TrendingUp}
+              color="purple"
+              trendData={performanceTrend}
+              onClick={() => navigate("/tests")}
+              secondaryIcon={TrendingUp}
+              secondaryIconColor="text-purple-500"
+            />
+            <KPICard
+              title="Homework Completion"
+              value={`${homeworkRate}%`}
+              description="Global completion rate"
+              icon={Book}
+              color="orange"
+              onClick={() => navigate("/homework")}
+              secondaryIcon={BookOpen}
+              secondaryIconColor="text-orange-500"
+            />
+            <KPICard
+              title="Evaluation Rate"
+              value={`${evaluationRate}%`}
+              description="Syllabus coverage"
+              icon={CheckCircle2}
+              color="rose"
+              onClick={() => navigate("/lesson-tracking")}
+              secondaryIcon={CheckCircle2}
+              secondaryIconColor="text-rose-500"
+            />
+            <KPICard
+              title="Upcoming Lessons"
+              value={upcomingLessons.length}
+              description="Planned for this week"
+              icon={FileText}
+              color="indigo"
+              onClick={() => navigate("/lesson-plans")}
+              secondaryIcon={CalendarIcon}
+              secondaryIconColor="text-indigo-500"
+            />
+          </div>
 
-      {selectedStudent && (
-        <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
-          <DialogContent className="max-w-2xl w-full max-h-[85vh] overflow-auto">
-            <DialogHeader><DialogTitle>{selectedStudent.name} - Grade {selectedStudent.grade}</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><CalendarIcon className="h-4 w-4" />Attendance</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    <div><p className="text-xs text-muted-foreground">Present</p><p className="text-xl font-bold text-green-600">{presentDays}</p></div>
-                    <div><p className="text-xs text-muted-foreground">Absent</p><p className="text-xl font-bold text-destructive">{totalDays - presentDays}</p></div>
-                    <div><p className="text-xs text-muted-foreground">%</p><p className="text-xl font-bold">{attendancePercentage}%</p></div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4" />Chapters ({completedChaptersCount}/{chapterProgress.length})</CardTitle></CardHeader>
-                <CardContent><div className="max-h-40 overflow-y-auto space-y-1">{chapterProgress.map((cp: any) => (
-                  <div key={cp.id} className="flex items-center justify-between text-sm py-1 border-b last:border-0"><span>{cp.lesson_plans?.chapter} ({cp.lesson_plans?.subject})</span><Badge variant={cp.completed ? "default" : "secondary"} className="text-[10px]">{cp.completed ? "Done" : "In Progress"}</Badge></div>
-                ))}</div></CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" />Test Results</CardTitle></CardHeader>
-                <CardContent><div className="max-h-40 overflow-y-auto space-y-1">{testResults.map((tr: any) => (
-                  <div key={tr.id} className="flex items-center justify-between text-sm py-1 border-b last:border-0"><span>{tr.tests?.name} ({tr.tests?.subject})</span><span className="font-semibold">{tr.marks_obtained}/{tr.tests?.total_marks}</span></div>
-                ))}</div></CardContent>
-              </Card>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          {/* Attendance Overview Chart */}
+          <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between">
+               <CardTitle className="text-lg font-bold">Attendance Overview</CardTitle>
+               <Badge variant="secondary" className="rounded-lg font-bold cursor-pointer">Weekly <ChevronDown className="h-3 w-3 ml-1" /></Badge>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={overviewTrend}>
+                    <defs>
+                      <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorTeachers" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{fontSize: 12, fontWeight: 600, fill: '#94a3b8'}}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{fontSize: 12, fontWeight: 600, fill: '#94a3b8'}}
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <Tooltip
+                      contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Students"
+                      stroke="#22c55e"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorStudents)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Teachers"
+                      stroke="#3b82f6"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorTeachers)"
+                    />
+                    <Legend verticalAlign="top" align="left" iconType="circle" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Activities & Discipline Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <KPICard
+              title="Activities"
+              value={allActivities.length}
+              description="Total activities"
+              icon={BookOpen}
+              color="pink"
+              onClick={() => navigate("/activities")}
+              secondaryIcon={BookOpen}
+              secondaryIconColor="text-pink-500"
+            />
+            <KPICard
+              title="Discipline Issues"
+              value={recentDiscipline.length}
+              description="Open cases"
+              icon={AlertTriangle}
+              color="rose"
+              onClick={() => navigate("/discipline")}
+              secondaryIcon={FileText}
+              secondaryIconColor="text-rose-500"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Button onClick={() => navigate("/take-attendance")} className="bg-[#22c55e] hover:bg-[#1eb054] text-white font-bold h-12 rounded-xl shadow-md border-none">
+              <Plus className="h-4 w-4 mr-2" /> Mark Attendance
+            </Button>
+            <Button onClick={() => navigate("/homework-management")} className="bg-[#f97316] hover:bg-[#e86a14] text-white font-bold h-12 rounded-xl shadow-md border-none">
+              <Plus className="h-4 w-4 mr-2" /> Add Homework
+            </Button>
+            <Button onClick={() => navigate("/activities")} className="bg-[#6366f1] hover:bg-[#585ce5] text-white font-bold h-12 rounded-xl shadow-md border-none">
+              <Plus className="h-4 w-4 mr-2" /> Add Activity
+            </Button>
+          </div>
+
+          {/* Quick Actions & Today's Classes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+              <CardHeader>
+                  <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 gap-4">
+                  <QuickAction label="Mark Attendance" icon={Plus} onClick={() => navigate("/take-attendance")} />
+                  <QuickAction label="Add Homework" icon={Plus} onClick={() => navigate("/homework-management")} />
+                  <QuickAction label="Add Activity" icon={Plus} onClick={() => navigate("/activities")} />
+                  <QuickAction label="Create Report" icon={FileText} onClick={() => navigate("/student-report")} />
+              </CardContent>
+            </Card>
+            <ClassSchedule classes={todayClasses} />
+          </div>
+        </div>
+
+        {/* Right Column / Sidebar */}
+        <div className="lg:col-span-4 space-y-6">
+          <AlertList alerts={recentAlerts} />
+          <ClassSchedule classes={todayClasses} title="Today's Classes" />
+        </div>
+      </div>
     </div>
   );
 }
