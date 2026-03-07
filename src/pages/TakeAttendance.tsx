@@ -1,20 +1,20 @@
-import { CalendarIcon, ChevronDown, Lock, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
-import { cn } from "@/lib/utils";
+import React, { useEffect, useState } from "react";
+import { Calendar, CalendarIcon, ChevronDown, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface Student {
   id: string;
@@ -48,8 +48,7 @@ export default function TakeAttendance() {
       if (error) throw error;
       return data.map(d => d.grade);
     },
-    enabled: !!user?.teacher_id && user?.role === 'teacher',
-  });
+    enabled: !!user?.teacher_id && user?.role === 'teacher' });
 
   const isTeacher = user?.role === 'teacher';
   const isCenter = user?.role === 'center';
@@ -64,8 +63,7 @@ export default function TakeAttendance() {
       const { data, error } = await query;
       if (error) throw error;
       return data as Student[];
-    },
-  });
+    } });
 
   const { data: existingAttendance } = useQuery({
     queryKey: ["attendance", dateStr, user?.center_id],
@@ -79,8 +77,7 @@ export default function TakeAttendance() {
       if (error) throw error;
       return data;
     },
-    enabled: !!dateStr && !!user?.center_id,
-  });
+    enabled: !!dateStr && !!user?.center_id });
 
   // Check if attendance is locked for this date
   const isLocked = existingAttendance?.some((a: any) => a.is_locked) || false;
@@ -106,8 +103,7 @@ export default function TakeAttendance() {
           present: record ? record.status === "present" : false,
           timeIn: record?.time_in || "",
           timeOut: record?.time_out || "",
-          studentId: student.id,
-        };
+          studentId: student.id };
       });
       setAttendance(newAttendance);
     }
@@ -125,15 +121,13 @@ export default function TakeAttendance() {
   const handleToggle = (studentId: string) => {
     setAttendance((prev) => ({
       ...prev,
-      [studentId]: { ...prev[studentId], present: !prev[studentId]?.present },
-    }));
+      [studentId]: { ...prev[studentId], present: !prev[studentId]?.present } }));
   };
 
   const handleTimeChange = (studentId: string, field: "timeIn" | "timeOut", value: string) => {
     setAttendance((prev) => ({
       ...prev,
-      [studentId]: { ...prev[studentId], [field]: value },
-    }));
+      [studentId]: { ...prev[studentId], [field]: value } }));
   };
 
   const markAllPresent = () => {
@@ -176,8 +170,7 @@ export default function TakeAttendance() {
       queryClient.invalidateQueries({ queryKey: ["attendance"] });
       toast.success("Attendance saved and locked!");
     },
-    onError: () => toast.error("Failed to save attendance"),
-  });
+    onError: () => toast.error("Failed to save attendance") });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

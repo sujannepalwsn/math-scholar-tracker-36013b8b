@@ -1,19 +1,19 @@
 "use client";
-
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { CalendarIcon, Clock, Edit, Plus, Trash2 } from "lucide-react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 
 // Sunday(0) to Friday(5) only
 const DAYS_OF_WEEK = [
@@ -66,8 +66,7 @@ export default function ClassRoutine() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
     queryKey: ["period-schedules", user?.center_id, selectedGrade],
@@ -77,8 +76,7 @@ export default function ClassRoutine() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const { data: teachers = [] } = useQuery({
     queryKey: ["teachers-list", user?.center_id],
@@ -88,8 +86,7 @@ export default function ClassRoutine() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const createPeriodMutation = useMutation({
     mutationFn: async () => {
@@ -98,8 +95,7 @@ export default function ClassRoutine() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["class-periods"] }); toast.success("Period created!"); resetPeriodForm(); setShowPeriodDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to create period"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to create period") });
 
   const updatePeriodMutation = useMutation({
     mutationFn: async () => {
@@ -108,14 +104,12 @@ export default function ClassRoutine() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["class-periods"] }); toast.success("Period updated!"); resetPeriodForm(); setShowPeriodDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to update period"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to update period") });
 
   const deletePeriodMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("class_periods").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["class-periods"] }); toast.success("Period deleted!"); },
-    onError: (error: any) => toast.error(error.message || "Failed to delete period"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to delete period") });
 
   const createScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -129,8 +123,7 @@ export default function ClassRoutine() {
           grade: scheduleGrade,
           day_of_week: dayNum,
           subject: scheduleSubject,
-          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null,
-        }));
+          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null }));
         const { error } = await supabase.from("period_schedules").insert(entries);
         if (error) throw error;
       } else {
@@ -142,14 +135,12 @@ export default function ClassRoutine() {
           grade: scheduleGrade,
           day_of_week: dayNum,
           subject: scheduleSubject,
-          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null,
-        });
+          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null });
         if (error) throw error;
       }
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["period-schedules"] }); toast.success("Schedule created!"); resetScheduleForm(); setShowScheduleDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to create schedule"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to create schedule") });
 
   const updateScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -160,14 +151,12 @@ export default function ClassRoutine() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["period-schedules"] }); toast.success("Schedule updated!"); resetScheduleForm(); setShowScheduleDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to update schedule"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to update schedule") });
 
   const deleteScheduleMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("period_schedules").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["period-schedules"] }); toast.success("Schedule deleted!"); },
-    onError: (error: any) => toast.error(error.message || "Failed to delete schedule"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to delete schedule") });
 
   const resetPeriodForm = () => { setPeriodNumber(""); setStartTime(""); setEndTime(""); setEditingPeriod(null); };
   const resetScheduleForm = () => { setScheduleGrade(""); setSchedulePeriodId(""); setScheduleDay(""); setScheduleSubject(""); setScheduleTeacherId("none"); setEditingSchedule(null); };
@@ -181,8 +170,7 @@ export default function ClassRoutine() {
   // Only show Sun-Fri
   const schedulesByDay = DAYS_OF_WEEK.map(day => ({
     ...day,
-    schedules: schedules.filter((s: any) => s.day_of_week === day.value).sort((a: any, b: any) => a.class_periods?.period_number - b.class_periods?.period_number),
-  }));
+    schedules: schedules.filter((s: any) => s.day_of_week === day.value).sort((a: any, b: any) => a.class_periods?.period_number - b.class_periods?.period_number) }));
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">

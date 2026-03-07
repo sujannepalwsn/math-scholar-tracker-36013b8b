@@ -1,15 +1,14 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn, useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Star, BookOpen, User, Info, Target, Zap, TrendingUp, Calendar } from 'lucide-react';
-import { Tables } from '@/integrations/supabase/types';
-import { safeFormatDate, cn } from '@/lib/utils';
+import React, { cn, useMemo, useState } from "react";
+import { BookOpen, Calendar, Info, Star, Target, TrendingUp, User, Zap } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Tables } from "@/integrations/supabase/types"
+import { cn, safeFormatDate } from "@/lib/utils"
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentChapter = Tables<'student_chapters'>;
@@ -47,8 +46,7 @@ export default function ParentChapterRating() {
         filteredData = data.filter((record: any) => record.lesson_plans?.subject === subjectFilter);
       }
       return filteredData;
-    },
-  });
+    } });
 
   // Chapter Rating Calculations
   const chapterRatingsBySubject = useMemo(() => {
@@ -70,8 +68,7 @@ export default function ParentChapterRating() {
     return Array.from(subjectMap.entries()).map(([subject, data]) => ({
       subject,
       averageRating: data.count > 0 ? (data.totalRating / data.count).toFixed(1) : 'N/A',
-      chapters: data.chapters.sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()),
-    }));
+      chapters: data.chapters.sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()) }));
   }, [lessonRecords]);
 
   const allSubjects = useMemo(() => {

@@ -1,17 +1,16 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Book, CheckCircle, XCircle, Clock, FileUp, Download, Calendar, Info } from 'lucide-react';
-import { format, isPast } from 'date-fns';
-import { Tables } from '@/integrations/supabase/types';
-import { cn } from "@/lib/utils";
+import React, { useState } from "react";
+import { Book, Calendar, CheckCircle, Clock, Download, FileUp, Info, XCircle } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { format, isPast } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { cn } from "@/lib/utils"
 
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
 
@@ -41,8 +40,7 @@ export default function ParentHomework() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user.student_id,
-  });
+    enabled: !!user.student_id });
 
   const getStatusStyles = (status: StudentHomeworkRecord['status']) => {
     switch (status) {

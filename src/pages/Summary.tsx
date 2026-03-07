@@ -1,16 +1,16 @@
-import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
 import { Download, Users } from "lucide-react";
-import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
-import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate and cn
+import { cn } from "@/lib/utils"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { endOfMonth, format, isWithinInterval, parseISO, startOfMonth } from "date-fns"
+import { cn, safeFormatDate } from "@/lib/utils" // Import safeFormatDate and cn
 
 interface StudentSummary {
   id: string;
@@ -37,8 +37,7 @@ export default function Summary() {
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   // Fetch attendance
   const studentIds = students?.map((s) => s.id) || [];
@@ -53,8 +52,7 @@ export default function Summary() {
       if (error) throw error;
       return data;
     },
-    enabled: !!studentIds.length,
-  });
+    enabled: !!studentIds.length });
 
   const grades = [...new Set(students?.map((s) => s.grade) || [])];
 
@@ -89,8 +87,7 @@ export default function Summary() {
           absent,
           total,
           percentage,
-          absentDates,
-        };
+          absentDates };
       })
       .filter((s) => gradeFilter === "all" || s.grade === gradeFilter) || [];
 

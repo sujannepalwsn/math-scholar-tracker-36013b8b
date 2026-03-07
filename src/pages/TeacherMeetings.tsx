@@ -1,16 +1,16 @@
 "use client";
+import React, { useState } from "react";
+import { CheckCircle2, Eye, FileText, Users, XCircle } from "lucide-react";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { CalendarDays, Users, FileText, CheckCircle2, XCircle, Eye } from "lucide-react";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { Button } from "@/components/ui/button"
 
 type Meeting = Tables<'meetings'>;
 type MeetingAttendee = Tables<'meeting_attendees'>;
@@ -64,8 +64,7 @@ export default function TeacherMeetings() {
       
       return data || [];
     },
-    enabled: !!user.teacher_id || !!user.id,
-  });
+    enabled: !!user.teacher_id || !!user.id });
 
   const getStatusColor = (status: Meeting['status']) => {
     switch (status) {

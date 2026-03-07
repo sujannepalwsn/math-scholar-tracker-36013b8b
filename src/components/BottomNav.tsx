@@ -1,10 +1,10 @@
 "use client";
-
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, GraduationCap, ShieldCheck, FileText, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { FileText, GraduationCap, Home, ShieldCheck, X } from "lucide-react";
+
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 interface NavItem {
   to: string;

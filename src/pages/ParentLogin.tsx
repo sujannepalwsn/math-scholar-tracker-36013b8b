@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Lock } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { User } from "lucide-react";
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 const ParentLogin = () => {
   const [username, setUsername] = useState('');
@@ -29,15 +29,13 @@ const ParentLogin = () => {
         toast({
           title: 'Login Failed',
           description: result.error || 'Invalid credentials',
-          variant: 'destructive',
-        });
+          variant: 'destructive' });
       }
     } catch (error: any) {
       toast({
         title: 'Error',
         description: error.message || 'An error occurred during login',
-        variant: 'destructive',
-      });
+        variant: 'destructive' });
     } finally {
       setLoading(false);
     }

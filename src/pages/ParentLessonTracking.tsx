@@ -1,17 +1,17 @@
-import { Table, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead, TableBody as TableBody_UI } from '@/components/ui/table';
-import { BookOpen, FileText, User, GraduationCap, Calendar, Download, Info } from 'lucide-react';
-import { Tables } from '@/integrations/supabase/types';
-import { safeFormatDate } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from "@/lib/utils";
+import React, { useMemo, useState } from "react";
+import { BookOpen, Calendar, Download, FileText, GraduationCap, Info, User } from "lucide-react";
+import { Table, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableBody as TableBody_UI, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tables } from "@/integrations/supabase/types"
+import { safeFormatDate } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 export default function ParentLessonTracking() {
   const { user } = useAuth();
@@ -46,8 +46,7 @@ export default function ParentLessonTracking() {
         filteredData = data.filter((lr: any) => lr.lesson_plans?.subject === subjectFilter);
       }
       return filteredData;
-    },
-  });
+    } });
 
   const allSubjects = useMemo(() => {
     // Need a separate query for all subjects to populate filter correctly if lessonRecords is filtered

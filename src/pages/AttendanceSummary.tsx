@@ -1,13 +1,13 @@
+import React, { useState } from "react";
 import { Calendar, TrendingUp } from "lucide-react";
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
 
 interface AttendanceStats {
   studentId: string;
@@ -34,8 +34,7 @@ export default function AttendanceSummary() {
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   const classes = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
@@ -58,8 +57,7 @@ export default function AttendanceSummary() {
       if (error) throw error;
       return data;
     },
-    enabled: students.length > 0,
-  });
+    enabled: students.length > 0 });
 
   const filteredStudents = students.filter(s => selectedClass === 'all' || s.grade === selectedClass);
 
@@ -99,8 +97,7 @@ export default function AttendanceSummary() {
         totalDays,
         presentDays,
         absentDays,
-        attendancePercentage,
-      });
+        attendancePercentage });
     });
 
     return Array.from(statsMap.values());
@@ -110,8 +107,7 @@ export default function AttendanceSummary() {
 
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(selectedMonth),
-    end: endOfMonth(selectedMonth),
-  });
+    end: endOfMonth(selectedMonth) });
 
   const getAttendanceStatus = (date: string, studentId: string) => {
     const record = attendanceData.find((a: any) => format(new Date(a.date), 'yyyy-MM-dd') === date && a.student_id === studentId);
@@ -211,8 +207,7 @@ export default function AttendanceSummary() {
                     className="aspect-square rounded-lg flex items-center justify-center text-sm font-medium"
                     style={{
                       backgroundColor: status === 'present' ? colors.present : status === 'absent' ? colors.absent : colors.none,
-                      color: status !== 'none' ? 'white' : 'inherit',
-                    }}
+                      color: status !== 'none' ? 'white' : 'inherit' }}
                   >
                     {format(date, 'd')}
                   </div>

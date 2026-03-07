@@ -1,14 +1,14 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, CheckSquare, BookOpen, Book, Paintbrush, AlertTriangle, FileText, ClipboardCheck, User, LogOut, KeyRound, Video, MessageSquare, Calendar, Clock, TrendingUp, Brain, DollarSign, BarChart3, LayoutList, CalendarDays } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Brain, Calendar, CheckSquare, ClipboardCheck, Clock, FileText, Home, LogOut, MessageSquare, Paintbrush, TrendingUp, User, Video } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
 const navItems: Array<{
   to: string;
@@ -75,8 +75,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       return count || 0;
     },
     enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000,
-  });
+    refetchInterval: 10000 });
 
   const updatedNavItems = navItems.map(item =>
     item.to === "/teacher-messages" ? { ...item, unreadCount: unreadMessageCount } : item

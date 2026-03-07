@@ -1,8 +1,7 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
+import React from "react";
+import { Slot } from "@radix-ui/react-slot"
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
 const Breadcrumb = React.forwardRef<
   HTMLElement,
@@ -86,5 +85,4 @@ export {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
-};
+  BreadcrumbEllipsis };

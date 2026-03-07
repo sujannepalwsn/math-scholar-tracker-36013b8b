@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "./AuthContext"
 
 interface CenterTheme {
   primary: string;
@@ -21,15 +21,13 @@ interface ThemeContextType {
 const defaultTheme: CenterTheme = {
   primary: '#6366f1',
   background: '#ffffff',
-  sidebar: '#1e293b',
-};
+  sidebar: '#1e293b' };
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: null,
   logoUrl: null,
   loading: true,
-  refreshTheme: () => {},
-});
+  refreshTheme: () => {} });
 
 const hexToHsl = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -90,8 +88,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             sidebar: centerTheme.sidebar || defaultTheme.sidebar,
             foreground: centerTheme.foreground,
             cardBackground: centerTheme.cardBackground,
-            mutedForeground: centerTheme.mutedForeground,
-          });
+            mutedForeground: centerTheme.mutedForeground });
         } else {
           setTheme(defaultTheme);
         }

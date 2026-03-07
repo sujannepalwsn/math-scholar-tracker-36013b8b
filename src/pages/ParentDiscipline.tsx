@@ -1,15 +1,14 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ShieldCheck, History, Info, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
-import { Tables } from '@/integrations/supabase/types';
-import { cn } from "@/lib/utils";
+import React, { useState } from "react";
+import { AlertTriangle, Calendar, Info, ShieldCheck } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { cn } from "@/lib/utils"
 
 type DisciplineIssue = Tables<'discipline_issues'>;
 
@@ -39,8 +38,7 @@ export default function ParentDiscipline() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user.student_id,
-  });
+    enabled: !!user.student_id });
 
   const getSeverityStyles = (severity: DisciplineIssue['severity']) => {
     switch (severity) {

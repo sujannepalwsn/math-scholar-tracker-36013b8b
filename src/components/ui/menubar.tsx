@@ -1,8 +1,8 @@
-import * as React from "react";
+import React from "react";
+import { Menu } from "lucide-react";
 import * as MenubarPrimitive from "@radix-ui/react-menubar";
-import { Check, ChevronRight, Circle, Menu } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
 const MenubarMenu = MenubarPrimitive.Menu;
 
@@ -203,5 +203,4 @@ export {
   MenubarSubTrigger,
   MenubarGroup,
   MenubarSub,
-  MenubarShortcut,
-};
+  MenubarShortcut };

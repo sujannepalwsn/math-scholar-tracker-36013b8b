@@ -1,26 +1,24 @@
-import { cn } from "@/lib/utils";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import React, { useState, useEffect, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { toast } from 'sonner';
-import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, subMonths, addMonths, isValid } from 'date-fns';
-import { CalendarIcon, Check, CheckCircle2, Clock, Download, MinusCircle, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
-import { safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
-import { Tables, Database } from '@/integrations/supabase/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { KPICard } from '@/components/dashboard/KPICard';
+import React, { useEffect, useMemo, useState } from "react";
+import { Calendar, CalendarIcon, CheckCircle2, Clock, Download, Eye, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { toast } from "sonner"
+import { addMonths, endOfMonth, format, isValid, isWithinInterval, parseISO, startOfMonth, subMonths } from "date-fns"
+import { safeFormatDate } from "@/lib/utils" // Import safeFormatDate
+import { Database, Tables } from "@/integrations/supabase/types"
+import { Badge } from "@/components/ui/badge"
+import { KPICard } from "@/components/dashboard/KPICard"
 
 type Teacher = Tables<'teachers'>;
 type TeacherAttendance = Tables<'teacher_attendance'>;
@@ -69,8 +67,7 @@ export default function TeacherAttendancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch existing attendance for the selected date
   const { data: existingAttendance = [], isLoading: attendanceLoading } = useQuery({
@@ -86,8 +83,7 @@ export default function TeacherAttendancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && teachers.length > 0,
-  });
+    enabled: !!user?.center_id && teachers.length > 0 });
 
   // Fetch all attendance for report
   const { data: allTeacherAttendance = [] } = useQuery({
@@ -101,8 +97,7 @@ export default function TeacherAttendancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch all attendance for a specific teacher for the detail dialog
   const { data: teacherDetailAttendance = [], refetch: refetchTeacherDetailAttendance } = useQuery({
@@ -145,8 +140,7 @@ export default function TeacherAttendancePage() {
         time_in: null,
         time_out: null,
         notes: null,
-        created_at: new Date().toISOString(),
-      };
+        created_at: new Date().toISOString() };
     });
     setAttendanceRecords(initialRecords);
   }, [teachers, existingAttendance, dateStr]);
@@ -158,8 +152,7 @@ export default function TeacherAttendancePage() {
         ...prev[teacherId],
         status,
         time_in: status === 'present' ? (prev[teacherId]?.time_in || format(new Date(), 'HH:mm')) : null,
-        time_out: status === 'present' ? (prev[teacherId]?.time_out || null) : null,
-      }
+        time_out: status === 'present' ? (prev[teacherId]?.time_out || null) : null }
     }));
   };
 
@@ -168,8 +161,7 @@ export default function TeacherAttendancePage() {
       ...prev,
       [teacherId]: {
         ...prev[teacherId],
-        [field]: value || null,
-      }
+        [field]: value || null }
     }));
   };
 
@@ -194,8 +186,7 @@ export default function TeacherAttendancePage() {
             status: record.status,
             time_in: record.time_in,
             time_out: record.time_out,
-            notes: record.notes,
-          });
+            notes: record.notes });
         }
       }
 
@@ -211,8 +202,7 @@ export default function TeacherAttendancePage() {
             status: record.status,
             time_in: record.time_in,
             time_out: record.time_out,
-            notes: record.notes,
-          }).eq("id", record.id);
+            notes: record.notes }).eq("id", record.id);
           if (updateError) throw updateError;
         }
       }
@@ -224,8 +214,7 @@ export default function TeacherAttendancePage() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to save attendance");
-    },
-  });
+    } });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,8 +228,7 @@ export default function TeacherAttendancePage() {
         ...updatedRecords[teacher.id],
         status: 'present',
         time_in: updatedRecords[teacher.id]?.time_in || format(new Date(), 'HH:mm'),
-        time_out: updatedRecords[teacher.id]?.time_out || null,
-      };
+        time_out: updatedRecords[teacher.id]?.time_out || null };
     });
     setAttendanceRecords(updatedRecords);
   };
@@ -252,8 +240,7 @@ export default function TeacherAttendancePage() {
         ...updatedRecords[teacher.id],
         status: 'absent',
         time_in: null,
-        time_out: null,
-      };
+        time_out: null };
     });
     setAttendanceRecords(updatedRecords);
   };
@@ -295,8 +282,7 @@ export default function TeacherAttendancePage() {
         absent: 0,
         leave: 0,
         totalDays: 0,
-        attendancePercentage: 0,
-      });
+        attendancePercentage: 0 });
     });
 
     filteredByMonth.forEach((att: any) => {

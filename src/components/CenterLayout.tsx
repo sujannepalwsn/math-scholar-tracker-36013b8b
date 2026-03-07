@@ -1,14 +1,14 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, UserPlus, CheckSquare, FileText, BarChart3, BookOpen, ClipboardCheck, User, Brain, LogOut, Shield, Calendar, DollarSign, LayoutList, Book, Paintbrush, AlertTriangle, Users, UserCheck, KeyRound, Video, MessageSquare, Clock, TrendingUp, Settings, CalendarDays } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Brain, Calendar, CheckSquare, ClipboardCheck, Clock, FileText, Home, LogOut, MessageSquare, Paintbrush, Settings, TrendingUp, User, Users, Video } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
 const navItems: Array<{
   to: string;
@@ -86,8 +86,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
       return count || 0;
     },
     enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000,
-  });
+    refetchInterval: 10000 });
 
   const updatedNavItems = navItems.map(item =>
     item.to === "/messages" ? { ...item, unreadCount: unreadMessageCount } : item

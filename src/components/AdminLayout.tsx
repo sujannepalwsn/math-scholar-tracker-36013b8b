@@ -1,11 +1,11 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, DollarSign, Settings, LogOut, User, Shield, KeyRound } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { Home, LogOut, Settings, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
-import React, { useState } from "react";
 
 const navItems: Array<{
   to: string;

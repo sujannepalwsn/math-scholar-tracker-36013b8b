@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Upload, Download } from "lucide-react";
+import { Download } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 import Papa from "papaparse";
 
 interface Student {
@@ -34,14 +34,12 @@ export default function BulkMarksEntry({
   students,
   testId,
   totalMarks,
-  onSave,
-}: BulkMarksEntryProps) {
+  onSave }: BulkMarksEntryProps) {
   const [bulkMarks, setBulkMarks] = useState<BulkMarks[]>(
     students.map((s) => ({
       studentId: s.id,
       studentName: s.name,
-      marks: "",
-    }))
+      marks: "" }))
   );
 
   const handleMarksChange = (studentId: string, value: string) => {
@@ -79,8 +77,7 @@ export default function BulkMarksEntry({
       },
       error: () => {
         toast.error("Failed to parse CSV");
-      },
-    });
+      } });
   };
 
   const downloadTemplate = () => {
@@ -88,8 +85,7 @@ export default function BulkMarksEntry({
       students.map((s) => ({
         student_id: s.id,
         student_name: s.name,
-        marks: "",
-      }))
+        marks: "" }))
     );
 
     const blob = new Blob([csv], { type: "text/csv" });

@@ -1,22 +1,22 @@
-import { cn } from "@/lib/utils";
-import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle , DialogDescription} from "@/components/ui/dialog";
-import { AlertTriangle, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, Users, XCircle, BarChart3 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, subYears, isPast } from "date-fns"; // Added subYears, isPast
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { Tables } from "@/integrations/supabase/types";
-import { Invoice, Payment } from "@/integrations/supabase/finance-types";
-import { safeFormatDate, formatCurrency } from '@/lib/utils'; // Import safeFormatDate, formatCurrency
+import React, { useMemo, useState } from "react";
+import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, Download, FileText, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { endOfMonth, format, isPast, startOfMonth, subYears } from "date-fns" // Added subYears, isPast
+import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
+import { Tables } from "@/integrations/supabase/types"
+import { Invoice, Payment } from "@/integrations/supabase/finance-types"
+import { formatCurrency, safeFormatDate } from "@/lib/utils" // Import safeFormatDate, formatCurrency
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -40,8 +40,7 @@ export default function StudentReport() {
   const [selectedStudentId, setSelectedStudentId] = useState<string>("none"); // Changed initial state to "none"
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: subYears(new Date(), 1), // Default to last year
-    to: endOfMonth(new Date()),
-  });
+    to: endOfMonth(new Date()) });
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [aiSummary, setAiSummary] = useState<string>("");
@@ -56,8 +55,7 @@ export default function StudentReport() {
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   const filteredStudents = students.filter(s => gradeFilter === "all" || s.grade === gradeFilter);
 
@@ -89,8 +87,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch lesson plans (needed for grouping)
   const { data: allLessonPlans = [] } = useQuery({
@@ -105,8 +102,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch student_chapters (lesson evaluations)
   const { data: studentChapters = [], isLoading: isChaptersLoading } = useQuery({
@@ -137,8 +133,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: studentIds.length > 0,
-  });
+    enabled: studentIds.length > 0 });
 
   // Fetch test results
   const { data: testResults = [], isLoading: isTestsLoading } = useQuery({
@@ -164,8 +159,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: studentIds.length > 0,
-  });
+    enabled: studentIds.length > 0 });
 
   // Fetch homework status
   const { data: homeworkStatus = [], isLoading: isHomeworkLoading } = useQuery({
@@ -191,8 +185,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: studentIds.length > 0,
-  });
+    enabled: studentIds.length > 0 });
 
   // Fetch activities (distinct from student participations)
   const { data: activities = [], isLoading: isAllActivitiesLoading } = useQuery({
@@ -213,8 +206,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch preschool activities (student participations)
   const { data: preschoolActivities = [], isLoading: isActivitiesLoading } = useQuery({
@@ -236,8 +228,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: studentIds.length > 0,
-  });
+    enabled: studentIds.length > 0 });
 
   // Fetch discipline issues
   const { data: disciplineIssues = [], isLoading: isDisciplineLoading } = useQuery({
@@ -259,8 +250,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch finance data (keep student-specific for now, or generalize if needed)
   const { data: invoices = [] } = useQuery({
@@ -273,8 +263,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data as Invoice[];
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none",
-  });
+    enabled: !!selectedStudentId && selectedStudentId !== "none" });
 
   const { data: payments = [] } = useQuery({
     queryKey: ["student-payments-report", selectedStudentId, dateRange],
@@ -296,8 +285,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data as Payment[];
     },
-    enabled: !!selectedStudentId && selectedStudentId !== "none",
-  });
+    enabled: !!selectedStudentId && selectedStudentId !== "none" });
 
   // Calculate finance summary
   const totalInvoiced = useMemo(() => {
@@ -403,8 +391,7 @@ export default function StudentReport() {
         return;
       }
       const { data, error } = await supabase.functions.invoke("ai-student-summary", {
-        body: { studentId: selectedStudentId },
-      });
+        body: { studentId: selectedStudentId } });
       if (error) throw error;
       return data;
     },
@@ -415,8 +402,7 @@ export default function StudentReport() {
     onError: (error: any) => {
       console.error("Error generating summary:", error);
       toast.error("Failed to generate AI summary");
-    },
-  });
+    } });
 
   // Chapter-wise Performance Data Grouping
   const chapterPerformanceData: ChapterPerformance[] = useMemo(() => {
@@ -430,8 +416,7 @@ export default function StudentReport() {
             lessonPlan: sc.lesson_plans,
             studentChapters: [],
             testResults: [],
-            homeworkRecords: [],
-          });
+            homeworkRecords: [] });
         }
         dataMap.get(sc.lesson_plan_id)?.studentChapters.push(sc);
       }
@@ -447,8 +432,7 @@ export default function StudentReport() {
               lessonPlan: correspondingLessonPlan as any,
               studentChapters: [],
               testResults: [],
-              homeworkRecords: [],
-            });
+              homeworkRecords: [] });
           } else {
             return; // Skip if no corresponding lesson plan found
           }

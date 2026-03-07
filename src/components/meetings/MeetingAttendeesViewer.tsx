@@ -1,11 +1,10 @@
 "use client";
-
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
+
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 interface MeetingAttendeesViewerProps {
   meetingId: string;
@@ -27,8 +26,7 @@ export default function MeetingAttendeesViewer({ meetingId }: MeetingAttendeesVi
       if (error) throw error;
       return data;
     },
-    enabled: !!meetingId,
-  });
+    enabled: !!meetingId });
 
   const getStatusColorClass = (status: string | null) => {
     switch (status) {

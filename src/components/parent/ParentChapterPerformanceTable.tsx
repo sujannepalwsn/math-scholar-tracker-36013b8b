@@ -1,12 +1,11 @@
 "use client";
+import { Calendar, Eye, Star } from "lucide-react";
 
-import React from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Eye, Star, Calendar } from "lucide-react";
-import { safeFormatDate, cn } from "@/lib/utils";
-import { Tables } from "@/integrations/supabase/types";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { cn, safeFormatDate } from "@/lib/utils"
+import { Tables } from "@/integrations/supabase/types"
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentChapter = Tables<'student_chapters'>;

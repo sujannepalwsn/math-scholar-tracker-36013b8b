@@ -1,49 +1,22 @@
-import { cn } from "@/lib/utils";
-import { useState, useMemo } from "react";
-import {
-  BookOpen,
-  CalendarIcon,
-  CheckCircle2,
-  Clock,
-  FileText,
-  TrendingUp,
-  Users,
-  AlertTriangle,
-  Book,
-  Bell,
-  Search,
-  ChevronDown,
-  Calendar,
-  Home,
-  Wallet
-} from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay } from "date-fns";
-import { formatCurrency } from "@/lib/utils";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { AlertList } from "@/components/dashboard/AlertList";
-import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
+import React, { useMemo, useState } from "react";
+import { AlertTriangle, Bell, Book, BookOpen, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Search, TrendingUp, Users, Wallet } from "lucide-react";
+import { cn } from "@/lib/utils"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
+import { eachDayOfInterval, format, isFuture, isToday, startOfDay, subDays } from "date-fns"
+import { formatCurrency } from "@/lib/utils"
+import { KPICard } from "@/components/dashboard/KPICard"
+import { AlertList } from "@/components/dashboard/AlertList"
+import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
 import CenterLogo from "@/components/CenterLogo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart
-} from "recharts";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Area, AreaChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -67,8 +40,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user && !loading,
-  });
+    enabled: !!user && !loading });
 
   const { data: teachers = [], isLoading: isTeachersLoading } = useQuery({
     queryKey: ["teachers", centerId],
@@ -78,8 +50,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: allAttendance = [], isLoading: isAttendanceLoading } = useQuery({
     queryKey: ["attendance-dashboard", centerId, dateRange.to],
@@ -89,8 +60,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: teacherAttendance = [], isLoading: isTeacherAttendanceLoading } = useQuery({
     queryKey: ["teacher-attendance-dashboard", centerId, dateRange.to],
@@ -100,8 +70,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: homeworkStats = [], isLoading: isHomeworkStatsLoading } = useQuery({
     queryKey: ["homework-stats-dashboard", centerId, dateRange.from, dateRange.to],
@@ -116,8 +85,7 @@ export default function Dashboard() {
       if (allErr) throw allErr;
       return allRecords || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: evaluationStats = [], isLoading: isEvaluationStatsLoading } = useQuery({
     queryKey: ["evaluation-stats-dashboard", centerId, dateRange.from, dateRange.to],
@@ -132,8 +100,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: allActivities = [], isLoading: isAllActivitiesLoading } = useQuery({
     queryKey: ["center-activities-dashboard", centerId],
@@ -143,8 +110,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: recentDiscipline = [], isLoading: isDisciplineLoading } = useQuery({
     queryKey: ["recent-discipline-dashboard", centerId, dateRange.from, dateRange.to],
@@ -162,8 +128,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: upcomingLessons = [], isLoading: isUpcomingLessonsLoading } = useQuery({
     queryKey: ["upcoming-lessons-dashboard", centerId, dateRange.to],
@@ -173,8 +138,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: recentTestResults = [] } = useQuery({
     queryKey: ["recent-test-results-dashboard", centerId, dateRange.from, dateRange.to],
@@ -189,8 +153,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: invoicesInRange = [] } = useQuery({
     queryKey: ["invoices-dashboard", centerId, dateRange.from, dateRange.to],
@@ -205,8 +168,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: historicalAttendance = [] } = useQuery({
     queryKey: ["attendance-historical", centerId, dateRange.from, dateRange.to],
@@ -222,8 +184,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: historicalTeacherAttendance = [] } = useQuery({
     queryKey: ["teacher-attendance-historical", centerId, dateRange.from, dateRange.to],
@@ -239,8 +200,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: testTrend = [] } = useQuery({
     queryKey: ["test-performance-trend", centerId, dateRange.from, dateRange.to],
@@ -255,8 +215,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: periods = [] } = useQuery({
     queryKey: ["class-periods", centerId],
@@ -266,8 +225,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: periodSchedules = [] } = useQuery({
     queryKey: ["period-schedules-dashboard", centerId, dateRange.to],
@@ -278,8 +236,7 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const { data: homeworkDefaulters = [] } = useQuery({
     queryKey: ["homework-defaulters-dashboard", centerId],
@@ -289,15 +246,13 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   // Memos for Stats and Trends
   const attendanceTrend = useMemo(() => {
     const range = eachDayOfInterval({
       start: new Date(dateRange.from),
-      end: new Date(dateRange.to),
-    });
+      end: new Date(dateRange.to) });
 
     return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
@@ -315,8 +270,7 @@ export default function Dashboard() {
   const teacherAttendanceTrend = useMemo(() => {
     const range = eachDayOfInterval({
       start: new Date(dateRange.from),
-      end: new Date(dateRange.to),
-    });
+      end: new Date(dateRange.to) });
 
     return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
@@ -343,15 +297,13 @@ export default function Dashboard() {
 
     return Object.keys(grouped).map(date => ({
       date: format(new Date(date), "MMM d"),
-      value: Math.round(grouped[date].total / grouped[date].count),
-    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(-7);
+      value: Math.round(grouped[date].total / grouped[date].count) })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(-7);
   }, [testTrend]);
 
   const overviewTrend = useMemo(() => {
      const range = eachDayOfInterval({
       start: new Date(dateRange.from),
-      end: new Date(dateRange.to),
-    });
+      end: new Date(dateRange.to) });
     return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const sRecs = historicalAttendance.filter(a => a.date === dayStr);
@@ -363,8 +315,7 @@ export default function Dashboard() {
       return {
         name: format(day, "eee"),
         Students: sRecs.length > 0 ? Math.round((sPres / sRecs.length) * 100) : 0,
-        Teachers: tRecs.length > 0 ? Math.round((tPres / tRecs.length) * 100) : 0,
-      };
+        Teachers: tRecs.length > 0 ? Math.round((tPres / tRecs.length) * 100) : 0 };
     });
   }, [historicalAttendance, historicalTeacherAttendance]);
 

@@ -1,8 +1,6 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
-import { LucideIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 interface KPICardProps {
   title: string;
@@ -37,8 +35,7 @@ export const KPICard = ({
     purple: "bg-purple-500/10 text-purple-600",
     rose: "bg-rose-500/10 text-rose-600",
     yellow: "bg-yellow-500/10 text-yellow-600",
-    pink: "bg-pink-500/10 text-pink-600",
-  };
+    pink: "bg-pink-500/10 text-pink-600" };
 
   const chartColors: Record<string, string> = {
     indigo: "#6366f1",
@@ -48,8 +45,7 @@ export const KPICard = ({
     purple: "#a855f7",
     rose: "#f43f5e",
     yellow: "#eab308",
-    pink: "#ec4899",
-  };
+    pink: "#ec4899" };
 
   return (
     <Card

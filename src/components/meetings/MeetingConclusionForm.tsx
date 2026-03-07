@@ -1,12 +1,12 @@
 "use client";
-
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 
 interface MeetingConclusionFormProps {
   meetingId: string;
@@ -38,8 +38,7 @@ export default function MeetingConclusionForm({ meetingId, onSave, onClose }: Me
           .from("meeting_conclusions")
           .update({
             conclusion_notes: conclusionNotes,
-            updated_at: new Date().toISOString(),
-          })
+            updated_at: new Date().toISOString() })
           .eq("id", existingConclusion.id);
         if (error) throw error;
       } else {
@@ -48,8 +47,7 @@ export default function MeetingConclusionForm({ meetingId, onSave, onClose }: Me
           .from("meeting_conclusions")
           .insert({
             meeting_id: meetingId,
-            conclusion_notes: conclusionNotes,
-          });
+            conclusion_notes: conclusionNotes });
         if (error) throw error;
       }
     },
@@ -61,8 +59,7 @@ export default function MeetingConclusionForm({ meetingId, onSave, onClose }: Me
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to save conclusion");
-    },
-  });
+    } });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

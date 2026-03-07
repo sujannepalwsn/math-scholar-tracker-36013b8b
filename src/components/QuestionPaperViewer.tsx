@@ -1,13 +1,12 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import React, { useEffect, useState } from "react";
+import { AlertCircle, Download, Eye, FileText, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 "use client";
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Download, FileText, Eye, Loader2, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { supabase } from "@/integrations/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { format } from "date-fns"
 
 interface QuestionPaperViewerProps {
   testId: string;
@@ -20,8 +19,7 @@ export default function QuestionPaperViewer({
   testId,
   testName,
   fileName,
-  onClose,
-}: QuestionPaperViewerProps) {
+  onClose }: QuestionPaperViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<'pdf' | 'image' | 'unknown'>('unknown');

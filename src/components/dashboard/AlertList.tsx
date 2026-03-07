@@ -1,18 +1,11 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Bell, LucideIcon, ArrowRight, X } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { ArrowRight, Bell, X } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { formatDistanceToNow } from "date-fns"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 export interface AlertItem {
   id: string;
@@ -43,15 +36,13 @@ export const AlertList = ({
     success: Bell,
     warning: Bell,
     info: Bell,
-    error: Bell,
-  };
+    error: Bell };
 
   const typeStyles: Record<string, string> = {
     success: "bg-green-500/10 text-green-600 border-green-600/20",
     warning: "bg-amber-500/10 text-amber-600 border-amber-600/20",
     info: "bg-blue-500/10 text-blue-600 border-blue-600/20",
-    error: "bg-rose-500/10 text-rose-600 border-rose-600/20",
-  };
+    error: "bg-rose-500/10 text-rose-600 border-rose-600/20" };
 
   return (
     <Card className={cn("overflow-hidden border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20", className)}>

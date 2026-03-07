@@ -1,20 +1,20 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { Pencil, Trash2, Save, X, UserPlus, Upload, Download, Users, Search, GraduationCap, School, Phone, User as UserIcon, AlertTriangle } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Download, GraduationCap, Search, Trash2, User, Users, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 import LinkChildToParent from "@/components/center/LinkChildToParent";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
 interface Student {
   id: string;
@@ -43,8 +43,7 @@ export default function RegisterStudent() {
     grade: "",
     school_name: "",
     parent_name: "",
-    contact_number: "",
-  });
+    contact_number: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Student | null>(null);
   const [isCreatingParent, setIsCreatingParent] = useState(false);
@@ -64,15 +63,14 @@ export default function RegisterStudent() {
   const { data: students, isLoading } = useQuery({
     queryKey: ["students", user?.center_id],
     queryFn: async () => {
-      let query = supabase.from("students").select("*").order("created_at", { ascending: false, });
+      let query = supabase.from("students").select("*").order("created_at", { ascending: false });
       if (user?.role !== "admin" && user?.center_id) {
         query = query.eq("center_id", user.center_id);
       }
       const { data, error } = await query;
       if (error) throw error;
       return data as Student[];
-    },
-  });
+    } });
 
   // Filter students based on grade and search
   const filteredStudents = students?.filter(s => 
@@ -91,8 +89,7 @@ export default function RegisterStudent() {
       const { error } = await supabase.from("students").insert([
         {
           ...student,
-          center_id: user?.center_id,
-        },
+          center_id: user?.center_id },
       ]);
       if (error) throw error;
     },
@@ -103,14 +100,12 @@ export default function RegisterStudent() {
         grade: "",
         school_name: "",
         parent_name: "",
-        contact_number: "",
-      });
+        contact_number: "" });
       toast.success("Student registered successfully!");
     },
     onError: () => {
       toast.error("Failed to register student");
-    },
-  });
+    } });
 
   // Update
   const updateMutation = useMutation({
@@ -122,8 +117,7 @@ export default function RegisterStudent() {
           grade: student.grade,
           school_name: student.school_name,
           parent_name: student.parent_name,
-          contact_number: student.contact_number,
-        })
+          contact_number: student.contact_number })
         .eq("id", student.id);
       if (error) throw error;
     },
@@ -135,8 +129,7 @@ export default function RegisterStudent() {
     },
     onError: () => {
       toast.error("Failed to update student");
-    },
-  });
+    } });
 
   // Delete
   const deleteMutation = useMutation({
@@ -150,8 +143,7 @@ export default function RegisterStudent() {
     },
     onError: () => {
       toast.error("Failed to delete student");
-    },
-  });
+    } });
 
   // Create parent account
   const createParentMutation = useMutation({
@@ -164,9 +156,7 @@ export default function RegisterStudent() {
           username: parentUsername,
           password: parentPassword,
           studentId: selectedStudentForParent.id,
-          centerId: user.center_id,
-        },
-      });
+          centerId: user.center_id } });
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Failed to create parent account via Edge Function');
       return data;
@@ -180,8 +170,7 @@ export default function RegisterStudent() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create parent account");
-    },
-  });
+    } });
 
   // Bulk insert
   const bulkInsertMutation = useMutation({
@@ -189,8 +178,7 @@ export default function RegisterStudent() {
       if (!rows.length) return;
       const rowsWithCenter = rows.map((r) => ({
         ...r,
-        center_id: user?.center_id || null,
-      }));
+        center_id: user?.center_id || null }));
       const { error } = await supabase.from("students").insert(rowsWithCenter);
       if (error) throw error;
     },
@@ -203,8 +191,7 @@ export default function RegisterStudent() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Bulk insert failed");
-    },
-  });
+    } });
 
   // CSV Parsing
   const parseCSV = (csv: string): string[][] => {
@@ -278,8 +265,7 @@ export default function RegisterStudent() {
           grade: (rowObj["grade"] || "").trim(),
           school_name: (rowObj["school_name"] || rowObj["school"] || "").trim(),
           parent_name: (rowObj["parent_name"] || rowObj["parent"] || "").trim(),
-          contact_number: (rowObj["contact_number"] || rowObj["contact"] || "").trim(),
-        };
+          contact_number: (rowObj["contact_number"] || rowObj["contact"] || "").trim() };
       } else {
         const [name = "", grade = "", school_name = "", parent_name = "", contact_number = ""] = cols;
         student = {
@@ -287,8 +273,7 @@ export default function RegisterStudent() {
           grade: grade.trim(),
           school_name: school_name.trim(),
           parent_name: parent_name.trim(),
-          contact_number: contact_number.trim(),
-        };
+          contact_number: contact_number.trim() };
       }
       const rowNumber = i + 1;
       const rowErrors: string[] = [];

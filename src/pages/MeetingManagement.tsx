@@ -1,18 +1,18 @@
-import { CalendarDays, CheckCircle2, Edit, Eye, FileText, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Tables, TablesInsert } from "@/integrations/supabase/types";
+import React, { useState } from "react";
+import { CheckCircle2, Edit, Eye, FileText, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import { Tables, TablesInsert } from "@/integrations/supabase/types"
 import MeetingForm from "@/components/meetings/MeetingForm";
 import MeetingAttendanceRecorder from "@/components/meetings/MeetingAttendanceRecorder";
 import MeetingConclusionForm from "@/components/meetings/MeetingConclusionForm";
@@ -48,8 +48,7 @@ export default function MeetingManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const deleteMeetingMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -77,8 +76,7 @@ export default function MeetingManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete meeting");
-    },
-  });
+    } });
 
   const handleMeetingSave = async (meetingData: Tables<'meetings'>, selectedStudentIds: string[], selectedTeacherIds: string[]) => {
     // This function is called by MeetingForm after meeting is created/updated
@@ -110,8 +108,7 @@ export default function MeetingManagement() {
             meeting_id: meetingData.id,
             student_id: pu.student_id,
             user_id: pu.id, // Link parent user ID
-            attendance_status: 'pending',
-          });
+            attendance_status: 'pending' });
         }
       });
 
@@ -135,8 +132,7 @@ export default function MeetingManagement() {
             meeting_id: meetingData.id,
             teacher_id: tu.teacher_id,
             user_id: tu.id, // Link teacher user ID
-            attendance_status: 'pending',
-          });
+            attendance_status: 'pending' });
         }
       });
     }
