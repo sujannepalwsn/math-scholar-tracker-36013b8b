@@ -130,11 +130,12 @@ export default function OCRModal({ open, onOpenChange, onSave }: OCRModalProps) 
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
+          <div className="space-y-1.5">
             <Label>Upload File (PDF, JPG, PNG)</Label>
             <Input
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf,image/*"
+              capture="environment"
               onChange={handleFileChange}
             />
             {file && (

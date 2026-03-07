@@ -1,4 +1,4 @@
-import { Book, CheckCircle, Clock, Edit, FileUp, Image, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
+import { Book, CheckCircle, Clock, Edit, FileUp, Image, Loader2, Plus, Trash2, Users, XCircle, CheckSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,9 @@ export default function HomeworkManagement() {
 
   const [selectedHomeworkForStatus, setSelectedHomeworkForStatus] = useState<Homework | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [bulkSelectedStudents, setBulkSelectedStudents] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<StudentHomeworkRecord['status']>("completed");
+  const [bulkRemarks, setBulkRemarks] = useState("");
 
   const { data: homeworkList = [], isLoading } = useQuery({
     queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter],
@@ -165,6 +169,27 @@ export default function HomeworkManagement() {
     onSuccess: () => { refetchStudentStatuses(); toast.success("Status updated!"); },
   });
 
+  const bulkUpdateHomeworkMutation = useMutation({
+    mutationFn: async () => {
+      if (bulkSelectedStudents.length === 0) return;
+      const { error } = await supabase
+        .from("student_homework_records")
+        .update({
+          status: bulkStatus,
+          teacher_remarks: bulkRemarks || null,
+          submission_date: bulkStatus === 'completed' || bulkStatus === 'checked' ? format(new Date(), "yyyy-MM-dd") : null
+        })
+        .in("id", bulkSelectedStudents);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchStudentStatuses();
+      toast.success(`Updated ${bulkSelectedStudents.length} records`);
+      setBulkSelectedStudents([]);
+      setBulkRemarks("");
+    },
+  });
+
   const handleEditClick = (hw: Homework) => {
     setEditingHomework(hw); setTitle(hw.title); setSubject(hw.subject); setGrade(hw.grade);
     setDescription(hw.description || ""); setDueDate(hw.due_date); setLessonPlanId(hw.lesson_plan_id); setIsDialogOpen(true);
@@ -225,6 +250,15 @@ export default function HomeworkManagement() {
               </div>
               <Label>Link Lesson Plan</Label><Select value={lessonPlanId || "none"} onValueChange={v => setLessonPlanId(v === "none" ? null : v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No Lesson Plan</SelectItem>{lessonPlans.map(lp => <SelectItem key={lp.id} value={lp.id}>{lp.subject}: {lp.chapter}</SelectItem>)}</SelectContent></Select>
               <Label>Description</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} />
+              <div className="space-y-1.5">
+                <Label>Attachment (PDF, Image)</Label>
+                <Input
+                  type="file"
+                  accept=".pdf,image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                />
+              </div>
               <Label>Due Date *</Label><Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
               <Button onClick={() => (editingHomework ? updateHomeworkMutation.mutate() : createHomeworkMutation.mutate())} disabled={!title || !subject || grade === "select-grade"}>{editingHomework ? "Update" : "Create"}</Button>
             </div></DialogContent></Dialog>
@@ -325,14 +359,127 @@ export default function HomeworkManagement() {
           )}
         </CardContent>
       </Card>
-      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}><DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Status for: {selectedHomeworkForStatus?.title}</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-4">{studentStatuses.length === 0 ? <p className="text-center">No students assigned.</p> :
-          <Table><TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Status</TableHead><TableHead>Remarks</TableHead><TableHead>Action</TableHead></TableRow></TableHeader><TableBody>{studentStatuses.map((s: any) => (
-            <TableRow key={s.id}><TableCell>{s.students?.name}</TableCell>
-              <TableCell><Select value={s.status} onValueChange={(v: any) => updateStudentHomeworkRecordMutation.mutate({ id: s.id, status: v, teacher_remarks: s.teacher_remarks })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="assigned">Assigned</SelectItem><SelectItem value="in_progress">In Progress</SelectItem><SelectItem value="completed">Completed</SelectItem><SelectItem value="checked">Checked</SelectItem></SelectContent></Select></TableCell>
-              <TableCell><Input defaultValue={s.teacher_remarks || ""} onBlur={e => updateStudentHomeworkRecordMutation.mutate({ id: s.id, status: s.status, teacher_remarks: e.target.value })} /></TableCell>
-              <TableCell>{(s.status === 'completed' || s.status === 'checked') ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-red-600" />}</TableCell></TableRow>
-          ))}</TableBody></Table>}</div></DialogContent></Dialog>
+      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Submission Track: {selectedHomeworkForStatus?.title}</DialogTitle>
+            <DialogDescription>Manage individual or bulk submission statuses.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {studentStatuses.length > 0 && (
+              <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 space-y-4">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 bg-primary/10 rounded-lg text-primary"><CheckSquare className="h-4 w-4" /></div>
+                   <h4 className="text-sm font-black uppercase tracking-widest">Bulk Action Portal</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                   <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase ml-1">Set Status</Label>
+                      <Select value={bulkStatus} onValueChange={(v: any) => setBulkStatus(v)}>
+                        <SelectTrigger className="bg-white rounded-xl h-10 shadow-sm border-none"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="assigned">Assigned</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="checked">Checked</SelectItem>
+                        </SelectContent>
+                      </Select>
+                   </div>
+                   <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase ml-1">Global Remarks</Label>
+                      <Input
+                        placeholder="Well done!"
+                        value={bulkRemarks}
+                        onChange={e => setBulkRemarks(e.target.value)}
+                        className="bg-white rounded-xl h-10 shadow-sm border-none"
+                      />
+                   </div>
+                   <Button
+                     onClick={() => bulkUpdateHomeworkMutation.mutate()}
+                     disabled={bulkSelectedStudents.length === 0 || bulkUpdateHomeworkMutation.isPending}
+                     className="rounded-xl h-10 font-bold"
+                   >
+                     Update {bulkSelectedStudents.length} Students
+                   </Button>
+                </div>
+              </div>
+            )}
+
+            {studentStatuses.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground italic">No students assigned to this homework.</p>
+            ) : (
+              <div className="border border-muted/20 rounded-2xl overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/5">
+                    <TableRow>
+                      <TableHead className="w-[50px] text-center">
+                        <Checkbox
+                          checked={bulkSelectedStudents.length === studentStatuses.length}
+                          onCheckedChange={(checked) => {
+                            if (checked) setBulkSelectedStudents(studentStatuses.map((s: any) => s.id));
+                            else setBulkSelectedStudents([]);
+                          }}
+                        />
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest">Student</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest">Status</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest">Remarks</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-center">Verified</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {studentStatuses.map((s: any) => (
+                      <TableRow key={s.id} className="hover:bg-muted/5 transition-colors">
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={bulkSelectedStudents.includes(s.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) setBulkSelectedStudents(prev => [...prev, s.id]);
+                              else setBulkSelectedStudents(prev => prev.filter(id => id !== s.id));
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className="font-bold text-slate-700">{s.students?.name}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={s.status}
+                            onValueChange={(v: any) => updateStudentHomeworkRecordMutation.mutate({ id: s.id, status: v, teacher_remarks: s.teacher_remarks })}
+                          >
+                            <SelectTrigger className="h-8 text-xs font-bold rounded-lg border-muted/20 w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="assigned">Assigned</SelectItem>
+                              <SelectItem value="in_progress">In Progress</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="checked">Checked</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            defaultValue={s.teacher_remarks || ""}
+                            placeholder="Add remark..."
+                            className="h-8 text-xs rounded-lg border-muted/20"
+                            onBlur={e => updateStudentHomeworkRecordMutation.mutate({ id: s.id, status: s.status, teacher_remarks: e.target.value })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(s.status === 'completed' || s.status === 'checked') ? (
+                            <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
+                          ) : (
+                            <Clock className="h-5 w-5 text-slate-300 mx-auto" />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

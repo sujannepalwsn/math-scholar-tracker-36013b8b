@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { CalendarIcon, Camera, Edit, Plus, Settings, Star, Trash2, Video } from "lucide-react";
+import { CalendarIcon, Camera, Edit, Plus, Settings, Star, Trash2, Video, CheckSquare, Users } from "lucide-react";
 import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tables } from "@/integrations/supabase/types";
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +32,7 @@ export default function PreschoolActivities() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [showActivityTypeManagement, setShowActivityTypeManagement] = useState(false);
 
-  const [studentId, setStudentId] = useState("select-student"); // Changed initial state
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [activityTypeId, setActivityTypeId] = useState("select-activity-type"); // Changed initial state
   const [title, setTitle] = useState(""); // New state for activity title
   const [description, setDescription] = useState("");
@@ -103,7 +105,7 @@ export default function PreschoolActivities() {
   });
 
   const resetForm = () => {
-    setStudentId("select-student"); // Reset to default placeholder value
+    setSelectedStudentIds([]);
     setActivityTypeId("select-activity-type"); // Reset to default placeholder value
     setTitle("");
     setDescription("");
@@ -139,7 +141,7 @@ export default function PreschoolActivities() {
 
   const createActivityMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.center_id || studentId === "select-student" || activityTypeId === "select-activity-type" || !title) throw new Error("Please select a student, activity type, and provide a title."); // Validation
+      if (!user?.center_id || selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title) throw new Error("Please select at least one student, activity type, and provide a title."); // Validation
 
       let photoUrl: string | null = null;
       let videoUrl: string | null = null;
@@ -155,16 +157,20 @@ export default function PreschoolActivities() {
         description,
         activity_date: activityDate,
         activity_type_id: activityTypeId,
+        photo_url: photoUrl,
+        video_url: videoUrl,
       }).select().single();
       if (activityError) throw activityError;
 
-      // Then create student_activity record
-      const { error: saError } = await supabase.from("student_activities").insert({
-        student_id: studentId,
+      // Then create student_activity records for all selected students
+      const studentActivityRecords = selectedStudentIds.map(sid => ({
+        student_id: sid,
         activity_id: activity.id,
         activity_type_id: activityTypeId,
-        rating: involvementRating,
-      });
+        involvement_score: involvementRating,
+      }));
+
+      const { error: saError } = await supabase.from("student_activities").insert(studentActivityRecords);
       if (saError) throw saError;
     },
     onSuccess: () => {
@@ -180,7 +186,7 @@ export default function PreschoolActivities() {
 
   const updateActivityMutation = useMutation({
     mutationFn: async () => {
-      if (!editingActivity || !user?.center_id || studentId === "select-student" || activityTypeId === "select-activity-type" || !title) throw new Error("Please select a student, activity type, and provide a title."); // Validation
+      if (!editingActivity || !user?.center_id || selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title) throw new Error("Please select a student, activity type, and provide a title."); // Validation
 
       let photoUrl: string | null = (editingActivity as any).activities?.photo_url;
       let videoUrl: string | null = (editingActivity as any).activities?.video_url;
@@ -199,9 +205,9 @@ export default function PreschoolActivities() {
       }).eq("id", (editingActivity as any).activities?.id);
       if (activityUpdateError) throw activityUpdateError;
 
-      // Update the student_activity record
+      // Update the student_activity record (Updates only the current record being edited)
       const { error: saUpdateError } = await supabase.from("student_activities").update({
-        student_id: studentId,
+        student_id: selectedStudentIds[0],
         involvement_score: involvementRating,
       }).eq("id", editingActivity.id);
       if (saUpdateError) throw saUpdateError;
@@ -240,7 +246,7 @@ export default function PreschoolActivities() {
 
   const handleEditClick = (activity: any) => {
     setEditingActivity(activity);
-    setStudentId(activity.student_id);
+    setSelectedStudentIds([activity.student_id]);
     setActivityTypeId(activity.activities?.activity_type_id || "select-activity-type"); // Set to placeholder if null
     setTitle(activity.activities?.title || "");
     setDescription(activity.activities?.description || "");
@@ -328,21 +334,34 @@ export default function PreschoolActivities() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="student">Student *</Label>
-                <Select value={studentId} onValueChange={setStudentId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="select-student" disabled>Select Student</SelectItem> {/* Added placeholder item */}
-                    {filteredStudentsForModal.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name} - {s.grade}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                   <Label className="flex items-center gap-2"><Users className="h-4 w-4" /> Selected Students ({selectedStudentIds.length})</Label>
+                   <div className="flex gap-2">
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest" onClick={() => setSelectedStudentIds(filteredStudentsForModal.map(s => s.id))}>Select All</Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest" onClick={() => setSelectedStudentIds([])}>Clear</Button>
+                   </div>
+                </div>
+                <div className="border border-muted/20 rounded-xl p-3 max-h-48 overflow-y-auto space-y-2 bg-muted/5">
+                   {filteredStudentsForModal.map((s) => (
+                     <div key={s.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white transition-colors border border-transparent hover:border-muted/10">
+                        <Checkbox
+                          id={`student-${s.id}`}
+                          checked={selectedStudentIds.includes(s.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedStudentIds(prev => [...prev, s.id]);
+                            else setSelectedStudentIds(prev => prev.filter(id => id !== s.id));
+                          }}
+                        />
+                        <label htmlFor={`student-${s.id}`} className="text-sm font-bold text-slate-700 cursor-pointer flex-1">
+                          {s.name} <span className="text-[10px] text-muted-foreground uppercase ml-2 tracking-tighter">{s.grade}</span>
+                        </label>
+                     </div>
+                   ))}
+                   {filteredStudentsForModal.length === 0 && (
+                     <p className="text-center py-4 text-xs italic text-muted-foreground">No students found for selected grade.</p>
+                   )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="activityTypeId">Activity Type *</Label>
@@ -374,14 +393,26 @@ export default function PreschoolActivities() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="photo">Upload Photo (Optional)</Label>
-                <Input id="photo" type="file" accept="image/*" onChange={handlePhotoChange} />
+                <Input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handlePhotoChange}
+                />
                 {editingActivity && (editingActivity as any).activities?.photo_url && !photo && (
                   <p className="text-sm text-muted-foreground">Current photo attached</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="video">Upload Video (Optional)</Label>
-                <Input id="video" type="file" accept="video/*" onChange={handleVideoChange} />
+                <Input
+                  id="video"
+                  type="file"
+                  accept="video/*"
+                  capture="environment"
+                  onChange={handleVideoChange}
+                />
                 {editingActivity && (editingActivity as any).activities?.video_url && !video && (
                   <p className="text-sm text-muted-foreground">Current video attached</p>
                 )}
@@ -400,10 +431,10 @@ export default function PreschoolActivities() {
               </div>
               <Button
                 onClick={handleSubmit}
-                disabled={studentId === "select-student" || activityTypeId === "select-activity-type" || !title || !description || !activityDate || createActivityMutation.isPending || updateActivityMutation.isPending}
+                disabled={selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title || !description || !activityDate || createActivityMutation.isPending || updateActivityMutation.isPending}
                 className="w-full"
               >
-                {editingActivity ? (updateActivityMutation.isPending ? "Updating..." : "Update Activity") : (createActivityMutation.isPending ? "Logging..." : "Log Activity")}
+                {editingActivity ? (updateActivityMutation.isPending ? "Updating..." : "Update Activity") : (createActivityMutation.isPending ? "Logging..." : `Log Activity for ${selectedStudentIds.length} Students`)}
               </Button>
             </div>
           </DialogContent>

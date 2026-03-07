@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -182,8 +183,13 @@ export default function LessonPlans() {
                 </div>
                 <div className="space-y-1.5"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Key points..." /></div>
                 <div className="space-y-1.5">
-                  <Label>File (PDF, DOCX)</Label>
-                  <Input type="file" accept=".pdf,.doc,.docx" onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
+                  <Label>File (PDF, DOCX, Image)</Label>
+                  <Input
+                    type="file"
+                    accept=".pdf,.doc,.docx,image/*"
+                    capture="environment"
+                    onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }}
+                  />
                 </div>
                 <Button onClick={() => editingLessonPlan ? updateLessonPlanMutation.mutate() : createLessonPlanMutation.mutate()} disabled={!subject || !chapter || !topic || !lessonDate} className="w-full">
                   {editingLessonPlan ? "Update" : "Create"}
@@ -287,6 +293,7 @@ export default function LessonPlans() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Lesson Plan Details</DialogTitle>
+            <DialogDescription>In-depth look at the pedagogical roadmap.</DialogDescription>
           </DialogHeader>
           {viewingLessonPlan && (
             <div className="space-y-4 py-2">

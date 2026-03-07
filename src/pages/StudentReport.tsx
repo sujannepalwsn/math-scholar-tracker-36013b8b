@@ -1636,12 +1636,15 @@ export default function StudentReport() {
 
       {/* Discipline Detail Dialog */}
       <Dialog open={!!selectedDisciplineIssue} onOpenChange={() => setSelectedDisciplineIssue(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="discipline-detail-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
               Discipline Issue Details
             </DialogTitle>
+            <DialogDescription id="discipline-detail-description">
+              In-depth view of the behavioral incident and its current resolution status.
+            </DialogDescription>
           </DialogHeader>
           {selectedDisciplineIssue && (
             <div className="space-y-4 py-2">
