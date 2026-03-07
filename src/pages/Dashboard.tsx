@@ -342,8 +342,8 @@ export default function Dashboard() {
         <SelectContent><SelectItem value="all">All Grades</SelectItem>{grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
       </Select>
 
-      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
-        <Card className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/40 backdrop-blur-md border border-white/20 transition-all hover:shadow-xl group" onClick={() => handleCardClick("/attendance-summary")}>
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <Card className="overflow-hidden cursor-pointer" onClick={() => handleCardClick("/attendance-summary")}>
           <CardHeader className="border-b border-muted/20 bg-muted/5 py-4">
             <CardTitle className="text-lg font-bold flex items-center justify-between">
               <div className="flex items-center gap-2">
