@@ -9,23 +9,22 @@ import {
   Users,
   AlertTriangle,
   Book,
-  Plus,
   Bell,
   Search,
   ChevronDown,
   Calendar,
-  Home
+  Home,
+  Wallet
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { AlertList } from "@/components/dashboard/AlertList";
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
-import { QuickAction } from "@/components/dashboard/QuickAction";
 import CenterLogo from "@/components/CenterLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -82,10 +81,10 @@ export default function Dashboard() {
   });
 
   const { data: allAttendance = [], isLoading: isAttendanceLoading } = useQuery({
-    queryKey: ["attendance-today", centerId, today],
+    queryKey: ["attendance-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("attendance").select("student_id, status, date").eq("center_id", centerId).eq("date", today);
+      const { data, error } = await supabase.from("attendance").select("student_id, status, date").eq("center_id", centerId).eq("date", dateRange.to);
       if (error) throw error;
       return data || [];
     },
@@ -93,10 +92,10 @@ export default function Dashboard() {
   });
 
   const { data: teacherAttendance = [], isLoading: isTeacherAttendanceLoading } = useQuery({
-    queryKey: ["teacher-attendance-today", centerId, today],
+    queryKey: ["teacher-attendance-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("teacher_attendance").select("*").eq("center_id", centerId).eq("date", today);
+      const { data, error } = await supabase.from("teacher_attendance").select("*").eq("center_id", centerId).eq("date", dateRange.to);
       if (error) throw error;
       return data || [];
     },
@@ -104,10 +103,15 @@ export default function Dashboard() {
   });
 
   const { data: homeworkStats = [], isLoading: isHomeworkStatsLoading } = useQuery({
-    queryKey: ["homework-stats-dashboard", centerId],
+    queryKey: ["homework-stats-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data: allRecords, error: allErr } = await supabase.from("student_homework_records").select("status, homework!inner(center_id)").eq("homework.center_id", centerId);
+      const { data: allRecords, error: allErr } = await supabase
+        .from("student_homework_records")
+        .select("status, created_at, homework!inner(center_id)")
+        .eq("homework.center_id", centerId)
+        .gte("created_at", `${dateRange.from}T00:00:00`)
+        .lte("created_at", `${dateRange.to}T23:59:59`);
       if (allErr) throw allErr;
       return allRecords || [];
     },
@@ -115,10 +119,15 @@ export default function Dashboard() {
   });
 
   const { data: evaluationStats = [], isLoading: isEvaluationStatsLoading } = useQuery({
-    queryKey: ["evaluation-stats-dashboard", centerId],
+    queryKey: ["evaluation-stats-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("student_chapters").select("completed, evaluation_rating, lesson_plans!inner(center_id)").eq("lesson_plans.center_id", centerId);
+      const { data, error } = await supabase
+        .from("student_chapters")
+        .select("completed, completed_at, evaluation_rating, lesson_plans!inner(center_id)")
+        .eq("lesson_plans.center_id", centerId)
+        .gte("completed_at", `${dateRange.from}T00:00:00`)
+        .lte("completed_at", `${dateRange.to}T23:59:59`);
       if (error) throw error;
       return data || [];
     },
@@ -137,10 +146,18 @@ export default function Dashboard() {
   });
 
   const { data: recentDiscipline = [] } = useQuery({
-    queryKey: ["recent-discipline-dashboard", centerId],
+    queryKey: ["recent-discipline-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("discipline_issues").select("*, students(name, grade)").eq("center_id", centerId).eq("status", "open").order("issue_date", { ascending: false }).limit(10);
+      const { data, error } = await supabase
+        .from("discipline_issues")
+        .select("*, students(name, grade)")
+        .eq("center_id", centerId)
+        .eq("status", "open")
+        .gte("issue_date", dateRange.from)
+        .lte("issue_date", dateRange.to)
+        .order("issue_date", { ascending: false })
+        .limit(10);
       if (error) throw error;
       return data || [];
     },
@@ -148,10 +165,42 @@ export default function Dashboard() {
   });
 
   const { data: upcomingLessons = [] } = useQuery({
-    queryKey: ["upcoming-lessons-dashboard", centerId],
+    queryKey: ["upcoming-lessons-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("lesson_plans").select("*").eq("center_id", centerId).gte("lesson_date", today).order("lesson_date").limit(8);
+      const { data, error } = await supabase.from("lesson_plans").select("*").eq("center_id", centerId).gte("lesson_date", dateRange.to).order("lesson_date").limit(8);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: recentTestResults = [] } = useQuery({
+    queryKey: ["recent-test-results-dashboard", centerId, dateRange.from, dateRange.to],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase
+        .from("test_results")
+        .select("*, students(name, grade), tests(name, total_marks, subject)")
+        .gte("date_taken", dateRange.from)
+        .lte("date_taken", dateRange.to)
+        .order("date_taken", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: invoicesInRange = [] } = useQuery({
+    queryKey: ["invoices-dashboard", centerId, dateRange.from, dateRange.to],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("center_id", centerId)
+        .gte("invoice_date", dateRange.from)
+        .lte("invoice_date", dateRange.to);
       if (error) throw error;
       return data || [];
     },
@@ -159,15 +208,15 @@ export default function Dashboard() {
   });
 
   const { data: historicalAttendance = [] } = useQuery({
-    queryKey: ["attendance-historical", centerId],
+    queryKey: ["attendance-historical", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("attendance")
         .select("date, status")
         .eq("center_id", centerId)
-        .gte("date", sevenDaysAgo)
+        .gte("date", dateRange.from)
+        .lte("date", dateRange.to)
         .order("date");
       if (error) throw error;
       return data || [];
@@ -176,15 +225,15 @@ export default function Dashboard() {
   });
 
   const { data: historicalTeacherAttendance = [] } = useQuery({
-    queryKey: ["teacher-attendance-historical", centerId],
+    queryKey: ["teacher-attendance-historical", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("teacher_attendance")
         .select("date, status")
         .eq("center_id", centerId)
-        .gte("date", sevenDaysAgo)
+        .gte("date", dateRange.from)
+        .lte("date", dateRange.to)
         .order("date");
       if (error) throw error;
       return data || [];
@@ -193,14 +242,14 @@ export default function Dashboard() {
   });
 
   const { data: testTrend = [] } = useQuery({
-    queryKey: ["test-performance-trend", centerId],
+    queryKey: ["test-performance-trend", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const thirtyDaysAgo = subDays(new Date(), 30).toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("test_results")
         .select("date_taken, marks_obtained, tests(total_marks)")
-        .gte("date_taken", thirtyDaysAgo)
+        .gte("date_taken", dateRange.from)
+        .lte("date_taken", dateRange.to)
         .order("date_taken");
       if (error) throw error;
       return data || [];
@@ -220,10 +269,10 @@ export default function Dashboard() {
   });
 
   const { data: periodSchedules = [] } = useQuery({
-    queryKey: ["period-schedules-today", centerId],
+    queryKey: ["period-schedules-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const dayOfWeek = new Date().getDay();
+      const dayOfWeek = new Date(dateRange.to).getDay();
       const { data, error } = await supabase.from("period_schedules").select("*, teachers(name), class_periods(*)").eq("center_id", centerId).eq("day_of_week", dayOfWeek);
       if (error) throw error;
       return data || [];
@@ -244,12 +293,12 @@ export default function Dashboard() {
 
   // Memos for Stats and Trends
   const attendanceTrend = useMemo(() => {
-    const last7Days = eachDayOfInterval({
-      start: subDays(new Date(), 6),
-      end: new Date(),
+    const range = eachDayOfInterval({
+      start: new Date(dateRange.from),
+      end: new Date(dateRange.to),
     });
 
-    return last7Days.map(day => {
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const dayRecords = historicalAttendance.filter(a => a.date === dayStr);
       const present = dayRecords.filter(a => a.status === "present").length;
@@ -263,12 +312,12 @@ export default function Dashboard() {
   }, [historicalAttendance]);
 
   const teacherAttendanceTrend = useMemo(() => {
-    const last7Days = eachDayOfInterval({
-      start: subDays(new Date(), 6),
-      end: new Date(),
+    const range = eachDayOfInterval({
+      start: new Date(dateRange.from),
+      end: new Date(dateRange.to),
     });
 
-    return last7Days.map(day => {
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const dayRecords = historicalTeacherAttendance.filter(a => a.date === dayStr);
       const present = dayRecords.filter(a => a.status === "present").length;
@@ -298,11 +347,11 @@ export default function Dashboard() {
   }, [testTrend]);
 
   const overviewTrend = useMemo(() => {
-     const last7Days = eachDayOfInterval({
-      start: subDays(new Date(), 6),
-      end: new Date(),
+     const range = eachDayOfInterval({
+      start: new Date(dateRange.from),
+      end: new Date(dateRange.to),
     });
-    return last7Days.map(day => {
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const sRecs = historicalAttendance.filter(a => a.date === dayStr);
       const tRecs = historicalTeacherAttendance.filter(a => a.date === dayStr);
@@ -332,6 +381,35 @@ export default function Dashboard() {
   const evaluationRate = evaluationStats.length > 0 ? Math.round((ratedEvaluations / evaluationStats.length) * 100) : 0;
 
   const avgTestScore = performanceTrend.length > 0 ? performanceTrend[performanceTrend.length - 1].value : 0;
+
+  const feeCollection = invoicesInRange.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
+  const totalInvoiced = invoicesInRange.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
+  const collectionRate = totalInvoiced > 0 ? Math.round((feeCollection / totalInvoiced) * 100) : 0;
+
+  const highestPerformers = useMemo(() => {
+    return [...recentTestResults]
+      .sort((a: any, b: any) => {
+        const aP = (a.marks_obtained / (a.tests?.total_marks || 100)) * 100;
+        const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
+        return bP - aP;
+      })
+      .slice(0, 5);
+  }, [recentTestResults]);
+
+  const lowestPerformers = useMemo(() => {
+    return [...recentTestResults]
+      .filter((r: any) => (r.marks_obtained / (r.tests?.total_marks || 100)) < 0.4)
+      .sort((a: any, b: any) => {
+        const aP = (a.marks_obtained / (a.tests?.total_marks || 100)) * 100;
+        const bP = (b.marks_obtained / (b.tests?.total_marks || 100)) * 100;
+        return aP - bP;
+      })
+      .slice(0, 5);
+  }, [recentTestResults]);
+
+  const absentTeachers = teachers.filter(t =>
+    teacherAttendance.some(ta => ta.teacher_id === t.id && ta.status === "absent")
+  );
 
   const todayClasses = periodSchedules.map((ps: any) => ({
     id: ps.id,
@@ -407,7 +485,6 @@ export default function Dashboard() {
           <div className="p-2 bg-indigo-500 text-white rounded-lg">
             <Home className="h-4 w-4" />
           </div>
-          <Badge variant="ghost" className="text-xs font-bold text-indigo-600">Ralue</Badge>
           <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
              <Calendar className="h-4 w-4 text-slate-400" />
              <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
@@ -419,9 +496,8 @@ export default function Dashboard() {
              type="date"
              value={dateRange.to}
              onChange={(e) => setDateRange({...dateRange, to: e.target.value})}
-             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700"
+             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700 focus-visible:ring-0"
            />
-           <ChevronDown className="h-4 w-4 text-slate-400 mr-2" />
         </div>
       </div>
 
@@ -429,7 +505,7 @@ export default function Dashboard() {
         {/* Left/Main Column */}
         <div className="lg:col-span-8 space-y-6">
           {/* KPI Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <KPICard
               title="Student Attendance"
               value={`${studentAttendanceRate}%`}
@@ -556,8 +632,122 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Activities & Discipline Row */}
+          {/* Performers Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+              <CardHeader className="bg-green-500/5 border-b border-green-500/10">
+                 <CardTitle className="text-sm font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" /> Top Performers
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                 <div className="divide-y divide-green-500/5">
+                    {highestPerformers.length === 0 ? (
+                       <p className="p-8 text-center text-xs italic text-muted-foreground">No data available</p>
+                    ) : (
+                       highestPerformers.map((r: any) => (
+                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-green-500/5 transition-colors">
+                             <div>
+                                <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">{r.tests?.name}</p>
+                             </div>
+                             <Badge className="bg-green-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                          </div>
+                       ))
+                    )}
+                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+              <CardHeader className="bg-rose-500/5 border-b border-rose-500/10">
+                 <CardTitle className="text-sm font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" /> Critical Attention
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                 <div className="divide-y divide-rose-500/5">
+                    {lowestPerformers.length === 0 ? (
+                       <p className="p-8 text-center text-xs italic text-muted-foreground">No critical alerts</p>
+                    ) : (
+                       lowestPerformers.map((r: any) => (
+                          <div key={r.id} className="p-4 flex justify-between items-center hover:bg-rose-500/5 transition-colors">
+                             <div>
+                                <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">{r.tests?.name}</p>
+                             </div>
+                             <Badge className="bg-rose-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                          </div>
+                       ))
+                    )}
+                 </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Teacher Status & Fee Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+                <CardHeader>
+                   <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <Users className="h-5 w-5 text-indigo-600" /> Teacher Attendance
+                   </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                   <div className="divide-y divide-slate-100">
+                      {absentTeachers.length === 0 ? (
+                         <p className="p-8 text-center text-xs italic text-muted-foreground text-green-600 font-bold">All teachers are present!</p>
+                      ) : (
+                         absentTeachers.map(t => (
+                            <div key={t.id} className="p-4 flex justify-between items-center">
+                               <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
+                                     <Users className="h-4 w-4 text-rose-600" />
+                                  </div>
+                                  <div>
+                                     <p className="text-sm font-bold text-slate-800">{t.name}</p>
+                                     <p className="text-[10px] text-slate-400 font-medium">{t.subject}</p>
+                                  </div>
+                               </div>
+                               <Badge variant="destructive" className="font-black text-[9px] uppercase">Absent</Badge>
+                            </div>
+                         ))
+                      )}
+                   </div>
+                </CardContent>
+             </Card>
+
+             <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+                <CardHeader>
+                   <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-emerald-600" /> Financial Health
+                   </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                   <div className="flex justify-between items-end">
+                      <div>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Collection Ratio</p>
+                         <p className="text-4xl font-black text-slate-800 tracking-tight">{collectionRate}%</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Invoiced</p>
+                         <p className="text-xl font-bold text-slate-700">{formatCurrency(totalInvoiced)}</p>
+                      </div>
+                   </div>
+                   <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-bold">
+                         <span className="text-slate-500">Amount Collected</span>
+                         <span className="text-emerald-600">{formatCurrency(feeCollection)}</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                         <div className="h-full bg-emerald-500" style={{ width: `${collectionRate}%` }} />
+                      </div>
+                   </div>
+                </CardContent>
+             </Card>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 md:gap-6">
             <KPICard
               title="Activities"
               value={allActivities.length}
@@ -579,41 +769,12 @@ export default function Dashboard() {
               secondaryIconColor="text-rose-500"
             />
           </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Button onClick={() => navigate("/take-attendance")} className="bg-[#22c55e] hover:bg-[#1eb054] text-white font-bold h-12 rounded-xl shadow-md border-none">
-              <Plus className="h-4 w-4 mr-2" /> Mark Attendance
-            </Button>
-            <Button onClick={() => navigate("/homework-management")} className="bg-[#f97316] hover:bg-[#e86a14] text-white font-bold h-12 rounded-xl shadow-md border-none">
-              <Plus className="h-4 w-4 mr-2" /> Add Homework
-            </Button>
-            <Button onClick={() => navigate("/activities")} className="bg-[#6366f1] hover:bg-[#585ce5] text-white font-bold h-12 rounded-xl shadow-md border-none">
-              <Plus className="h-4 w-4 mr-2" /> Add Activity
-            </Button>
-          </div>
-
-          {/* Quick Actions & Today's Classes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
-              <CardHeader>
-                  <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 gap-4">
-                  <QuickAction label="Mark Attendance" icon={Plus} onClick={() => navigate("/take-attendance")} />
-                  <QuickAction label="Add Homework" icon={Plus} onClick={() => navigate("/homework-management")} />
-                  <QuickAction label="Add Activity" icon={Plus} onClick={() => navigate("/activities")} />
-                  <QuickAction label="Create Report" icon={FileText} onClick={() => navigate("/student-report")} />
-              </CardContent>
-            </Card>
-            <ClassSchedule classes={todayClasses} />
-          </div>
         </div>
 
         {/* Right Column / Sidebar */}
         <div className="lg:col-span-4 space-y-6">
           <AlertList alerts={recentAlerts} />
-          <ClassSchedule classes={todayClasses} title="Today's Classes" />
+          <ClassSchedule classes={todayClasses} title="Instructional Grid" />
         </div>
       </div>
     </div>

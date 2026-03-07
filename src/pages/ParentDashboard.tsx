@@ -9,20 +9,11 @@ import {
   Users,
   AlertTriangle,
   Book,
-  Plus,
   Bell,
-  Search,
-  ChevronDown,
   Calendar,
   Home,
-  MessageSquare,
-  Video,
   Wallet,
-  Zap,
-  GraduationCap,
-  LayoutDashboard,
-  LogOut,
-  ClipboardCheck
+  GraduationCap
 } from "lucide-react";
 import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,8 +23,6 @@ import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay, isPa
 import { cn } from "@/lib/utils";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { AlertList } from "@/components/dashboard/AlertList";
-import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
-import { QuickAction } from "@/components/dashboard/QuickAction";
 import CenterLogo from "@/components/CenterLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -112,10 +101,16 @@ const ParentDashboardContent = () => {
   });
 
   const { data: attendance = [] } = useQuery({
-    queryKey: ['attendance', activeStudentId],
+    queryKey: ['attendance', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('attendance').select('*').eq('student_id', activeStudentId).order('date', { ascending: true });
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', activeStudentId)
+        .gte('date', dateRange.from)
+        .lte('date', dateRange.to)
+        .order('date', { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -123,10 +118,16 @@ const ParentDashboardContent = () => {
   });
 
   const { data: testResults = [] } = useQuery({
-    queryKey: ['test-results-parent-dashboard', activeStudentId],
+    queryKey: ['test-results-parent-dashboard', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('test_results').select('*, tests(*)').eq('student_id', activeStudentId).order('date_taken', { ascending: false });
+      const { data, error } = await supabase
+        .from('test_results')
+        .select('*, tests(*)')
+        .eq('student_id', activeStudentId)
+        .gte('date_taken', dateRange.from)
+        .lte('date_taken', dateRange.to)
+        .order('date_taken', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -134,10 +135,16 @@ const ParentDashboardContent = () => {
   });
 
   const { data: homeworkStatus = [] } = useQuery({
-    queryKey: ['student-homework-records', activeStudentId],
+    queryKey: ['student-homework-records', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('student_homework_records').select('*, homework(*)').eq('student_id', activeStudentId).order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('student_homework_records')
+        .select('*, homework(*)')
+        .eq('student_id', activeStudentId)
+        .gte('created_at', `${dateRange.from}T00:00:00`)
+        .lte('created_at', `${dateRange.to}T23:59:59`)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -167,13 +174,13 @@ const ParentDashboardContent = () => {
   });
 
   const attendanceTrend = useMemo(() => {
-    const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
-    return last7Days.map(day => {
+    const range = eachDayOfInterval({ start: new Date(dateRange.from), end: new Date(dateRange.to) });
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const record = attendance.find(a => a.date === dayStr);
       return { date: format(day, "MMM d"), value: record ? (record.status === "present" ? 100 : 0) : 0 };
     });
-  }, [attendance]);
+  }, [attendance, dateRange]);
 
   const performanceTrend = useMemo(() => {
     return testResults.map(tr => ({
@@ -270,10 +277,18 @@ const ParentDashboardContent = () => {
              <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
           </div>
         </div>
+        <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
+           <Input
+             type="date"
+             value={dateRange.to}
+             onChange={(e) => setDateRange({...dateRange, to: e.target.value, from: subDays(new Date(e.target.value), 30).toISOString().split('T')[0]})}
+             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700 focus-visible:ring-0"
+           />
+        </div>
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard title="Attendance Rate" value={`${attendanceRate}%`} description="Presence Index" icon={Clock} color="green" trendData={attendanceTrend} onClick={() => navigate("/parent/attendance")} />
         <KPICard title="Avg Performance" value={`${avgPerformance}%`} description="Evaluation Synthesis" icon={TrendingUp} color="purple" trendData={performanceTrend} onClick={() => navigate("/parent/student-report")} />
         <KPICard title="Homework Pending" value={homeworkPendingCount} description="Active Assignments" icon={Book} color="orange" onClick={() => navigate("/parent/homework")} />
@@ -304,11 +319,38 @@ const ParentDashboardContent = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         <QuickAction label="View Performance" icon={TrendingUp} onClick={() => navigate("/parent/student-report")} />
-         <QuickAction label="Homework Hub" icon={Book} onClick={() => navigate("/parent/homework")} />
-         <QuickAction label="Fee Payments" icon={Wallet} onClick={() => navigate("/parent/finance")} />
-         <QuickAction label="Messages" icon={MessageSquare} onClick={() => navigate("/parent-messages")} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+            <CardHeader className="bg-indigo-500/5 border-b border-indigo-500/10">
+               <CardTitle className="text-sm font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" /> Evaluation Synopsis
+               </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+               <div className="divide-y divide-indigo-500/5">
+                  {testResults.slice(0, 5).map((r: any) => (
+                     <div key={r.id} className="p-4 flex justify-between items-center hover:bg-indigo-500/5 transition-colors">
+                        <div>
+                           <p className="text-sm font-bold text-slate-800">{r.tests?.name}</p>
+                           <p className="text-[10px] text-slate-400 font-medium">{format(new Date(r.date_taken), "MMM dd, yyyy")}</p>
+                        </div>
+                        <Badge className="bg-indigo-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                     </div>
+                  ))}
+               </div>
+            </CardContent>
+         </Card>
+
+         <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 p-6 flex flex-col justify-center items-center text-center space-y-4">
+            <div className="p-4 bg-primary/10 rounded-full">
+               <TrendingUp className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+               <h4 className="text-xl font-black text-slate-800">Academic Standing</h4>
+               <p className="text-sm text-muted-foreground italic">Continuous monitoring of institutional progress and student growth trajectory.</p>
+            </div>
+            <Button variant="outline" className="rounded-xl font-bold uppercase text-[10px] tracking-widest" onClick={() => navigate("/parent/student-report")}>Detailed Analytics</Button>
+         </Card>
       </div>
 
       <ParentChapterDetailModal open={showChapterDetailModal} onOpenChange={setShowChapterDetailModal} chapterGroup={selectedChapterGroup} />
