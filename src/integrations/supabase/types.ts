@@ -2419,6 +2419,4 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
-  },
-} as const
+    Enums: {} } } as const

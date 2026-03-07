@@ -1,18 +1,18 @@
 "use client";
+import React, { useState } from "react";
+import { CheckCircle2, Clock, Eye, FileText, Info, Users, Video, XCircle } from "lucide-react";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Users, FileText, CheckCircle2, XCircle, Eye, Info, Clock, MapPin, Video } from "lucide-react";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 type Meeting = Tables<'meetings'>;
 type MeetingAttendee = Tables<'meeting_attendees'>;
@@ -52,8 +52,7 @@ export default function ParentMeetings() {
       if (error) throw error;
       return data?.filter((d: any) => d.meetings) || [];
     },
-    enabled: !!user.student_id,
-  });
+    enabled: !!user.student_id });
 
   const getStatusStyles = (status: Meeting['status']) => {
     switch (status) {

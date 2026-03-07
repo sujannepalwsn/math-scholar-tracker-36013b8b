@@ -1,32 +1,20 @@
-import { useState, useMemo } from "react";
-import {
-  BookOpen,
-  CalendarIcon,
-  Clock,
-  TrendingUp,
-  Users,
-  AlertTriangle,
-  Book,
-  Bell,
-  Calendar,
-  Home,
-  MessageSquare
-} from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay } from "date-fns";
-import { cn } from "@/lib/utils";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { AlertList } from "@/components/dashboard/AlertList";
-import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
+import React, { useMemo, useState } from "react";
+import { AlertTriangle, Bell, Book, BookOpen, Calendar, CalendarIcon, Clock, Home, MessageSquare, TrendingUp, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
+import { eachDayOfInterval, format, isFuture, isToday, startOfDay, subDays } from "date-fns"
+import { cn } from "@/lib/utils"
+import { KPICard } from "@/components/dashboard/KPICard"
+import { AlertList } from "@/components/dashboard/AlertList"
+import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
 import CenterLogo from "@/components/CenterLogo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
@@ -49,8 +37,7 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!teacherId,
-  });
+    enabled: !!teacherId });
 
   const { data: classResults = [], isLoading: isClassResultsLoading } = useQuery({
     queryKey: ["teacher-class-performance", teacherId, dateRange.from, dateRange.to],
@@ -65,8 +52,7 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!teacherId,
-  });
+    enabled: !!teacherId });
 
   const { data: teacherSchedule = [], isLoading: isScheduleLoading } = useQuery({
     queryKey: ["teacher-schedule-dashboard", teacherId, dateRange.to],
@@ -77,8 +63,7 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!teacherId,
-  });
+    enabled: !!teacherId });
 
   const { data: upcomingMeetings = [], isLoading: isMeetingsLoading } = useQuery({
     queryKey: ['teacher-upcoming-meetings', teacherId],
@@ -88,8 +73,7 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return (data || []).filter((att: any) => att.meetings?.meeting_date && (isFuture(new Date(att.meetings.meeting_date)) || isToday(new Date(att.meetings.meeting_date)))).slice(0, 5);
     },
-    enabled: !!teacherId,
-  });
+    enabled: !!teacherId });
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['teacher-unread-messages', user?.id],
@@ -100,8 +84,7 @@ export default function TeacherDashboard() {
       const { count } = await supabase.from('chat_messages').select('id', { count: 'exact' }).eq('conversation_id', conversation.id).eq('is_read', false).neq('sender_user_id', user.id);
       return count || 0;
     },
-    enabled: !!user?.id,
-  });
+    enabled: !!user?.id });
 
   const { data: homeworkToGrade = [], isLoading: isHomeworkLoading } = useQuery({
     queryKey: ["teacher-homework-to-grade", teacherId, dateRange.from, dateRange.to],
@@ -118,8 +101,7 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!teacherId,
-  });
+    enabled: !!teacherId });
 
   const { data: historicalAttendance = [] } = useQuery({
     queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to],
@@ -135,8 +117,7 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const attendanceTrend = useMemo(() => {
     const range = eachDayOfInterval({ start: new Date(dateRange.from), end: new Date(dateRange.to) });

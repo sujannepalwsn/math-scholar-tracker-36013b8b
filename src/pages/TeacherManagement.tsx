@@ -1,22 +1,22 @@
-import { Check, Clock, DollarSign, Edit, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { Tables } from '@/integrations/supabase/types';
+import React, { useState } from "react";
+import { Clock, Edit, GraduationCap, Loader2, Plus, Settings, Trash2, Users, X } from "lucide-react";
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
 import * as bcrypt from 'bcryptjs';
 import TeacherFeaturePermissions from '@/components/center/TeacherFeaturePermissions';
 
@@ -73,8 +73,7 @@ export default function TeacherManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch students for unique grades
   const { data: students = [] } = useQuery({
@@ -85,8 +84,7 @@ export default function TeacherManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
   const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
   // Fetch class teacher assignments
@@ -101,8 +99,7 @@ export default function TeacherManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const getClassTeacherGrades = (teacherId: string) => {
     return classTeacherAssignments.filter((a: any) => a.teacher_id === teacherId).map((a: any) => a.grade);
@@ -134,19 +131,16 @@ export default function TeacherManagement() {
       const { error, data: newTeacher } = await supabase.from("teachers").insert({
         center_id: user.center_id, name, contact_number: contactNumber || null, email: email || null,
         hire_date: hireDate, is_active: true, monthly_salary: parseFloat(monthlySalary) || 0,
-        regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
-      } as any).select().single();
+        regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00' } as any).select().single();
       if (error) throw error;
       const { error: permError } = await supabase.from('teacher_feature_permissions').insert({
         teacher_id: newTeacher.id, take_attendance: true, lesson_tracking: true, homework_management: true,
-        preschool_activities: true, discipline_issues: true, test_management: true, student_report_access: true, meetings_management: true,
-      });
+        preschool_activities: true, discipline_issues: true, test_management: true, student_report_access: true, meetings_management: true });
       if (permError) console.error('Error seeding default permissions:', permError);
       return newTeacher;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher added successfully!"); setIsDialogOpen(false); resetForm(); },
-    onError: (error: any) => toast.error(error.message || "Failed to add teacher"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to add teacher") });
 
   const bulkCreateTeachersMutation = useMutation({
     mutationFn: async () => {
@@ -155,8 +149,7 @@ export default function TeacherManagement() {
       const teachersToInsert = parsedBulkEntries.map(entry => ({
         center_id: user.center_id, name: entry.name, contact_number: entry.contactNumber || null, email: entry.email || null,
         hire_date: format(new Date(), "yyyy-MM-dd"), is_active: true, monthly_salary: entry.monthlySalary || 0,
-        regular_in_time: entry.regularInTime || '09:00', regular_out_time: entry.regularOutTime || '17:00',
-      }));
+        regular_in_time: entry.regularInTime || '09:00', regular_out_time: entry.regularOutTime || '17:00' }));
       const { data: newTeachers, error } = await supabase.from("teachers").insert(teachersToInsert as any).select();
       if (error) throw error;
       if (newTeachers && newTeachers.length > 0) {
@@ -166,21 +159,18 @@ export default function TeacherManagement() {
       return newTeachers;
     },
     onSuccess: (data) => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success(`${data?.length || 0} teachers added!`); setIsDialogOpen(false); resetForm(); },
-    onError: (error: any) => toast.error(error.message || "Failed to add teachers"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to add teachers") });
 
   const updateTeacherMutation = useMutation({
     mutationFn: async () => {
       if (!editingTeacher || !user?.center_id) throw new Error("Teacher or Center ID not found");
       const { error } = await supabase.from("teachers").update({
         name, contact_number: contactNumber || null, email: email || null, hire_date: hireDate,
-        monthly_salary: parseFloat(monthlySalary) || 0, regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
-      } as any).eq("id", editingTeacher.id);
+        monthly_salary: parseFloat(monthlySalary) || 0, regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00' } as any).eq("id", editingTeacher.id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher updated!"); setIsDialogOpen(false); resetForm(); },
-    onError: (error: any) => toast.error(error.message || "Failed to update"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to update") });
 
   const toggleTeacherStatusMutation = useMutation({
     mutationFn: async (teacher: Teacher) => {
@@ -188,14 +178,12 @@ export default function TeacherManagement() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Status updated!"); },
-    onError: (error: any) => toast.error(error.message),
-  });
+    onError: (error: any) => toast.error(error.message) });
 
   const deleteTeacherMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("teachers").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher deleted!"); },
-    onError: (error: any) => toast.error(error.message),
-  });
+    onError: (error: any) => toast.error(error.message) });
 
   const createTeacherLoginMutation = useMutation({
     mutationFn: async () => {
@@ -208,8 +196,7 @@ export default function TeacherManagement() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Login created!"); setIsCreatingTeacherLogin(false); setSelectedTeacherForLogin(null); setTeacherUsername(""); setTeacherPassword(""); },
-    onError: (error: any) => toast.error(error.message),
-  });
+    onError: (error: any) => toast.error(error.message) });
 
   // Class teacher assignment mutation
   const assignClassTeacherMutation = useMutation({
@@ -219,8 +206,7 @@ export default function TeacherManagement() {
       const { error } = await supabase.from("class_teacher_assignments").upsert({
         teacher_id: selectedTeacherForClassAssign.id,
         grade: classTeacherGrade,
-        center_id: user.center_id,
-      }, { onConflict: 'grade,center_id' });
+        center_id: user.center_id }, { onConflict: 'grade,center_id' });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -229,8 +215,7 @@ export default function TeacherManagement() {
       setShowClassTeacherDialog(false);
       setClassTeacherGrade("select-grade");
     },
-    onError: (error: any) => toast.error(error.message),
-  });
+    onError: (error: any) => toast.error(error.message) });
 
   const handleEditClick = (teacher: any) => {
     setEditingTeacher(teacher); setName(teacher.name);

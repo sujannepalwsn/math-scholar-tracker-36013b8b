@@ -1,25 +1,24 @@
-import { AlertTriangle, Clock, Edit, Plus, Settings, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Users } from "lucide-react";
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
+import React, { useState } from "react";
+import { AlertTriangle, Clock, Edit, Plus, Settings, Trash2, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
 import DisciplineCategoryManagement from "@/components/center/DisciplineCategoryManagement"; // Import the new component
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
 
 
@@ -63,8 +62,7 @@ export default function DisciplineIssues() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Filtered students for the modal's student select dropdown
   const filteredStudentsForModal = students.filter(s => modalGradeFilter === "all" || s.grade === modalGradeFilter);
@@ -83,8 +81,7 @@ export default function DisciplineIssues() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch discipline issues
   const { data: issues = [], isLoading: issuesLoading } = useQuery({ // Destructure isLoading here
@@ -105,8 +102,7 @@ export default function DisciplineIssues() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const resetForm = () => {
     setSelectedStudentIds([]);
@@ -131,8 +127,7 @@ export default function DisciplineIssues() {
         description,
         severity,
         reported_by: user.id,
-        issue_date: issueDate,
-      }));
+        issue_date: issueDate }));
 
       const { error } = await supabase.from("discipline_issues").insert(issueRecords);
       if (error) throw error;
@@ -145,8 +140,7 @@ export default function DisciplineIssues() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to log issue");
-    },
-  });
+    } });
 
   const updateIssueMutation = useMutation({
     mutationFn: async () => {
@@ -159,8 +153,7 @@ export default function DisciplineIssues() {
         severity,
         issue_date: issueDate,
         resolution: resolution || null,
-        status: status,
-      }).eq("id", editingIssue.id);
+        status: status }).eq("id", editingIssue.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -171,8 +164,7 @@ export default function DisciplineIssues() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update issue");
-    },
-  });
+    } });
 
   const deleteIssueMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -185,8 +177,7 @@ export default function DisciplineIssues() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete issue");
-    },
-  });
+    } });
 
   const handleEditClick = (issue: DisciplineIssue) => {
     setEditingIssue(issue);

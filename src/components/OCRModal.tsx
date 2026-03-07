@@ -1,13 +1,13 @@
 "use client";
-
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 import Tesseract from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
 
@@ -39,8 +39,7 @@ export default function OCRModal({ open, onOpenChange, onSave }: OCRModalProps) 
         if (m.status === "recognizing text") {
           setProgress(Math.round(m.progress * 100));
         }
-      },
-    });
+      } });
     return result.data.text;
   };
 
@@ -61,8 +60,7 @@ export default function OCRModal({ open, onOpenChange, onSave }: OCRModalProps) 
       if (context) {
         await page.render({
           canvasContext: context,
-          viewport: viewport,
-        } as any).promise;
+          viewport: viewport } as any).promise;
         const blob = await new Promise<Blob>((resolve) => {
           canvas.toBlob((b) => resolve(b!), "image/png");
         });

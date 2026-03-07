@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
+import React, { useState } from "react";
 import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
-import { Badge } from "@/components/ui/badge";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { Badge } from "@/components/ui/badge"
 
 type LessonPlan = Tables<'lesson_plans'>;
 
@@ -44,8 +44,7 @@ export default function LessonPlans() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
   const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
   const { data: lessonPlans = [], isLoading } = useQuery({
@@ -59,8 +58,7 @@ export default function LessonPlans() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const resetForm = () => { setSubject(""); setChapter(""); setTopic(""); setSelectedGrade("all"); setLessonDate(format(new Date(), "yyyy-MM-dd")); setNotes(""); setFile(null); setEditingLessonPlan(null); };
 
@@ -85,13 +83,11 @@ export default function LessonPlans() {
         grade: selectedGrade === "all" ? null : selectedGrade,
         lesson_date: lessonDate,
         notes: notes || null,
-        lesson_file_url: fileUrl,
-      });
+        lesson_file_url: fileUrl });
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans"] }); toast.success("Lesson Plan created!"); setIsDialogOpen(false); resetForm(); },
-    onError: (error: any) => toast.error(error.message || "Failed to create"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to create") });
 
   const updateLessonPlanMutation = useMutation({
     mutationFn: async () => {
@@ -100,19 +96,16 @@ export default function LessonPlans() {
       if (file) fileUrl = await uploadFile(file, "lesson-files");
       const { error } = await supabase.from("lesson_plans").update({
         subject, chapter, topic, lesson_date: lessonDate, notes: notes || null, lesson_file_url: fileUrl,
-        grade: selectedGrade === "all" ? null : selectedGrade,
-      }).eq("id", editingLessonPlan.id);
+        grade: selectedGrade === "all" ? null : selectedGrade }).eq("id", editingLessonPlan.id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans"] }); toast.success("Updated!"); setIsDialogOpen(false); resetForm(); },
-    onError: (error: any) => toast.error(error.message || "Failed to update"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to update") });
 
   const deleteLessonPlanMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("lesson_plans").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans"] }); toast.success("Deleted!"); },
-    onError: (error: any) => toast.error(error.message || "Failed to delete"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to delete") });
 
   const handleEditClick = (lp: LessonPlan) => {
     setEditingLessonPlan(lp); setSubject(lp.subject); setChapter(lp.chapter); setTopic(lp.topic);

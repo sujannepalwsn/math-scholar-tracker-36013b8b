@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 const CenterLogin = () => {
   const [username, setUsername] = useState('');
@@ -26,8 +26,7 @@ const CenterLogin = () => {
     if (result.success) {
       toast({
         title: 'Login successful',
-        description: 'Welcome back!',
-      });
+        description: 'Welcome back!' });
       // ProtectedRoute will handle the specific dashboard redirection
       // We can navigate to a generic protected route or the root, and ProtectedRoute will take over.
       navigate('/'); 
@@ -35,8 +34,7 @@ const CenterLogin = () => {
       toast({
         title: 'Login failed',
         description: result.error || 'Invalid username or password',
-        variant: 'destructive',
-      });
+        variant: 'destructive' });
     }
 
     setLoading(false);

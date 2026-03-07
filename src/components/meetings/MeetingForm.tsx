@@ -1,21 +1,21 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
-import { format } from "date-fns";
+import React, { useEffect, useState } from "react";
 import { User, Users } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
-import { Progress } from "@/components/ui/progress";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { Progress } from "@/components/ui/progress"
 
 
 interface MeetingFormProps {
@@ -69,8 +69,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch all active teachers for the current center
   const { data: allTeachers = [], isLoading: teachersLoading } = useQuery({
@@ -86,8 +85,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch previous meetings for "follow-up" linking
   const { data: previousMeetings = [] } = useQuery({
@@ -103,8 +101,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Filter students based on search input
   const filteredStudents = allStudents.filter(student =>
@@ -207,8 +204,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         meeting_type: meetingType,
         status,
         agenda: `[Category: ${agendaCategory}] ${description || ''}`,
-        related_meeting_id: relatedMeetingId,
-      } as any).select().single();
+        related_meeting_id: relatedMeetingId } as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -219,8 +215,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create meeting");
-    },
-  });
+    } });
 
   const updateMeetingMutation = useMutation({
     mutationFn: async () => {
@@ -233,8 +228,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         meeting_type: meetingType,
         status,
         agenda: `[Category: ${agendaCategory}] ${description || ''}`,
-        related_meeting_id: relatedMeetingId,
-      } as any).eq("id", meeting.id).select().single();
+        related_meeting_id: relatedMeetingId } as any).eq("id", meeting.id).select().single();
       if (error) throw error;
       return data;
     },
@@ -245,8 +239,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update meeting");
-    },
-  });
+    } });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

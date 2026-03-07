@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js"
 import type { Database } from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
@@ -8,8 +8,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     storage: typeof window !== 'undefined' ? localStorage : undefined,
     persistSession: true,
-    autoRefreshToken: true,
-  },
+    autoRefreshToken: true },
   global: {
     headers: {
       'X-Client-Info': '@supabase/supabase-js'

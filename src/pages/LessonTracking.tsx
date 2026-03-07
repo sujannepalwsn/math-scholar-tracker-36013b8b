@@ -1,24 +1,24 @@
-import { cn } from "@/lib/utils";
+import React, { useEffect, useMemo, useState } from "react";
+import { Book, BookOpen, CheckCircle, ChevronDown, ChevronUp, Clock, Edit, Eye, FileText, Plus, Star, Trash2, User, Users, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils"
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
-import { Trash2, Users, Plus, ChevronDown, ChevronUp, BookOpen, Edit, Star, User, FileText, CheckCircle, XCircle, Clock, Book, Eye } from "lucide-react";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
 import EditStudentLessonRecord from "@/components/center/EditStudentLessonRecord"; // Import the new component
 
 type LessonPlan = Tables<'lesson_plans'>;
@@ -125,8 +125,7 @@ export default function LessonTracking() {
       // Filter out records where student or lesson_plan data might be missing
       return data?.filter((d: any) => d.students && d.lesson_plans) || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // NEW: Fetch all test results for the center, including test details and linked lesson_plan_id
   const { data: allTestResults = [] } = useQuery({
@@ -145,8 +144,7 @@ export default function LessonTracking() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // NEW: Fetch all student homework records for the center, including homework details and linked lesson_plan_id
   const { data: allHomeworkRecords = [] } = useQuery({
@@ -166,8 +164,7 @@ export default function LessonTracking() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Group studentLessonRecords by lesson_plan
   const groupedLessonRecords: GroupedLessonRecord[] = useMemo(() => {
@@ -182,8 +179,7 @@ export default function LessonTracking() {
       if (!groups.has(lessonPlan.id)) {
         groups.set(lessonPlan.id, {
           lessonPlan: lessonPlan,
-          students: [],
-        });
+          students: [] });
       }
       
       // Filter relevant test results for this specific student and lesson plan
@@ -217,8 +213,7 @@ export default function LessonTracking() {
       groups.get(lessonPlan.id)?.students.push({
         ...record,
         linked_test_results: linkedTestResults,
-        linked_homework_records: linkedHomeworkRecords,
-      });
+        linked_homework_records: linkedHomeworkRecords });
     });
 
     return Array.from(groups.values());
@@ -239,8 +234,7 @@ export default function LessonTracking() {
       if (error) throw error;
       return data || [];
     },
-    enabled: students.length > 0 && !!date,
-  });
+    enabled: students.length > 0 && !!date });
 
   // Mutations
   const recordLessonMutation = useMutation({
@@ -276,8 +270,7 @@ export default function LessonTracking() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to record lesson");
-    },
-  });
+    } });
 
   const deleteStudentLessonRecordMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -290,8 +283,7 @@ export default function LessonTracking() {
     },
     onError: () => {
       toast.error("Failed to delete student lesson record");
-    },
-  });
+    } });
 
   const bulkEvaluateMutation = useMutation({
     mutationFn: async () => {
@@ -300,8 +292,7 @@ export default function LessonTracking() {
         .from("student_chapters")
         .update({
           evaluation_rating: bulkRating,
-          teacher_notes: bulkTeacherNotes || null,
-        })
+          teacher_notes: bulkTeacherNotes || null })
         .in("id", bulkEvaluationSelected);
       if (error) throw error;
     },
@@ -310,8 +301,7 @@ export default function LessonTracking() {
       toast.success(`Evaluated ${bulkEvaluationSelected.length} students`);
       setBulkEvaluationSelected([]);
       setBulkTeacherNotes("");
-    },
-  });
+    } });
 
   // Helpers
   const toggleStudentSelection = (studentId: string) => {

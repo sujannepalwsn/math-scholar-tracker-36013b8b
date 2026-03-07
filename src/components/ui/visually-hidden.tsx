@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import React, { Slot } from "@radix-ui/react-slot";
 
 interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -20,8 +20,7 @@ const VisuallyHidden = React.forwardRef<HTMLSpanElement, VisuallyHiddenProps>(
           overflow: "hidden",
           clip: "rect(0, 0, 0, 0)",
           whiteSpace: "nowrap",
-          borderWidth: "0",
-        }}
+          borderWidth: "0" }}
         {...props}
       />
     );

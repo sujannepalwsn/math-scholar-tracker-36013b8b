@@ -1,20 +1,20 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { Plus, Trash2, Edit, CalendarDays, PartyPopper, GraduationCap, Users } from "lucide-react";
-import { format, isSameDay, parseISO } from "date-fns";
+import { Calendar, Edit, GraduationCap, Plus, Trash2, Users } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
+import { format, isSameDay, parseISO } from "date-fns"
 
 const EVENT_TYPES = [
   { value: "holiday", label: "Holiday", icon: PartyPopper, color: "bg-red-100 text-red-800" },
@@ -50,8 +50,7 @@ export default function CalendarEvents() {
       if (error) throw error;
       return data;
     },
-    enabled: isParent && !!(user?.student_id || user?.linked_students?.[0]?.id),
-  });
+    enabled: isParent && !!(user?.student_id || user?.linked_students?.[0]?.id) });
 
   // Determine center_id: use user's center_id for center/teacher/admin, or student's center_id for parents
   const centerId = isParent ? student?.center_id : user?.center_id;
@@ -69,8 +68,7 @@ export default function CalendarEvents() {
       if (error) throw error;
       return data;
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const resetForm = () => {
     setTitle("");
@@ -91,8 +89,7 @@ export default function CalendarEvents() {
         event_date: eventDate,
         event_type: eventType,
         is_holiday: isHoliday,
-        created_by: user.id,
-      } as any);
+        created_by: user.id } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -103,8 +100,7 @@ export default function CalendarEvents() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create event");
-    },
-  });
+    } });
 
   const updateEventMutation = useMutation({
     mutationFn: async () => {
@@ -114,8 +110,7 @@ export default function CalendarEvents() {
         description: description || null,
         event_date: eventDate,
         event_type: eventType,
-        is_holiday: isHoliday,
-      } as any).eq("id", editingEvent.id);
+        is_holiday: isHoliday } as any).eq("id", editingEvent.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -126,8 +121,7 @@ export default function CalendarEvents() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update event");
-    },
-  });
+    } });
 
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -140,8 +134,7 @@ export default function CalendarEvents() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete event");
-    },
-  });
+    } });
 
   const handleEditEvent = (event: any) => {
     setEditingEvent(event);
@@ -295,14 +288,11 @@ export default function CalendarEvents() {
               onSelect={setSelectedDate}
               className="rounded-3xl border border-white/40 bg-white/30 backdrop-blur-sm p-4 shadow-soft mx-auto"
               modifiers={{
-                hasEvent: eventDates,
-              }}
+                hasEvent: eventDates }}
               modifiersStyles={{
                 hasEvent: {
                   backgroundColor: 'hsl(var(--primary) / 0.2)',
-                  fontWeight: 'bold',
-                },
-              }}
+                  fontWeight: 'bold' } }}
             />
           </CardContent>
         </Card>

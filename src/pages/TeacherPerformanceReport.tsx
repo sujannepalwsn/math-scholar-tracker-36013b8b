@@ -1,18 +1,18 @@
 "use client";
-
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
+import React, { useState } from "react";
 import { BarChart3, BookOpen, CheckCircle, ClipboardCheck, Users } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { endOfMonth, endOfWeek, format, startOfMonth, startOfWeek, subDays } from "date-fns"
+import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
 
 export default function TeacherPerformanceReport() {
   const { user } = useAuth();
@@ -38,8 +38,7 @@ export default function TeacherPerformanceReport() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Teacher attendance
   const { data: teacherAttendance = [] } = useQuery({
@@ -52,8 +51,7 @@ export default function TeacherPerformanceReport() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Lesson plans created
   const { data: lessonPlans = [] } = useQuery({
@@ -66,8 +64,7 @@ export default function TeacherPerformanceReport() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Homework assigned
   const { data: homework = [] } = useQuery({
@@ -80,8 +77,7 @@ export default function TeacherPerformanceReport() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Student chapters (evaluations)
   const { data: evaluations = [] } = useQuery({
@@ -94,8 +90,7 @@ export default function TeacherPerformanceReport() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Build per-teacher stats
   const teacherStats = teachers.map(t => {
@@ -114,8 +109,7 @@ export default function TeacherPerformanceReport() {
       attendancePct: totalAttDays > 0 ? Math.round((presentDays / totalAttDays) * 100) : 0,
       lessonPlans: lps.length,
       homework: hws.length,
-      evaluations: evals.length,
-    };
+      evaluations: evals.length };
   }).filter(t => selectedTeacher === "all" || t.id === selectedTeacher);
 
   return (

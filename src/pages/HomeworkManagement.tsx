@@ -1,23 +1,23 @@
-import { Book, CheckCircle, Clock, Edit, FileUp, Image, Loader2, Plus, Trash2, Users, XCircle, CheckSquare } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
-import { cn } from "@/lib/utils";
+import { Book, CheckCircle, CheckSquare, Clock, Edit, FileUp, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { cn } from "@/lib/utils"
 
 type Homework = Tables<'homework'>;
 type Student = Tables<'students'>;
@@ -58,8 +58,7 @@ export default function HomeworkManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const { data: lessonPlans = [] } = useQuery({
     queryKey: ["lesson-plans-for-homework", user?.center_id],
@@ -69,8 +68,7 @@ export default function HomeworkManagement() {
       if (error) throw error;
       return data as LessonPlan[];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-for-homework", user?.center_id],
@@ -80,8 +78,7 @@ export default function HomeworkManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const { data: studentStatuses = [], refetch: refetchStudentStatuses } = useQuery({
     queryKey: ["student-homework-records", selectedHomeworkForStatus?.id],
@@ -91,8 +88,7 @@ export default function HomeworkManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedHomeworkForStatus?.id,
-  });
+    enabled: !!selectedHomeworkForStatus?.id });
 
   const resetForm = () => {
     setTitle(""); setSubject(""); setGrade("select-grade"); setDescription(""); setDueDate(format(new Date(), "yyyy-MM-dd"));
@@ -126,8 +122,7 @@ export default function HomeworkManagement() {
       const { data: newHomework, error } = await supabase.from("homework").insert({
         center_id: user.center_id, title, subject, class: grade, grade, description: description || null,
         due_date: dueDate, attachment_url: fileUrl || imageUrl, attachment_name: file?.name || image?.name || null,
-        teacher_id: user.teacher_id || null, lesson_plan_id: lessonPlanId,
-      }).select().single();
+        teacher_id: user.teacher_id || null, lesson_plan_id: lessonPlanId }).select().single();
       if (error) throw error;
       const studentsInGrade = students.filter(s => s.grade === grade);
       if (studentsInGrade.length > 0) {
@@ -137,8 +132,7 @@ export default function HomeworkManagement() {
       }
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["homework"] }); toast.success("Homework created!"); setIsDialogOpen(false); resetForm(); },
-    onError: (error: any) => toast.error(error.message || "Failed to create homework"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to create homework") });
 
   const updateHomeworkMutation = useMutation({
     mutationFn: async () => {
@@ -149,25 +143,21 @@ export default function HomeworkManagement() {
       if (file) { attachmentUrl = await uploadFile(file, "homework-files"); attachmentName = file.name; }
       else if (image) { attachmentUrl = await uploadFile(image, "homework-images"); attachmentName = image.name; }
       const { error } = await supabase.from("homework").update({
-        title, subject, grade, description, due_date: dueDate, attachment_url: attachmentUrl, attachment_name: attachmentName, lesson_plan_id: lessonPlanId,
-      }).eq("id", editingHomework.id);
+        title, subject, grade, description, due_date: dueDate, attachment_url: attachmentUrl, attachment_name: attachmentName, lesson_plan_id: lessonPlanId }).eq("id", editingHomework.id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["homework"] }); toast.success("Updated!"); setIsDialogOpen(false); resetForm(); },
-    onError: (error: any) => toast.error(error.message),
-  });
+    onError: (error: any) => toast.error(error.message) });
 
   const deleteHomeworkMutation = useMutation({
     mutationFn: async (id: string) => { await supabase.from("homework").delete().eq("id", id); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["homework"] }); toast.success("Deleted!"); },
-  });
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["homework"] }); toast.success("Deleted!"); } });
 
   const updateStudentHomeworkRecordMutation = useMutation({
     mutationFn: async ({ id, status, teacher_remarks }: { id: string; status: StudentHomeworkRecord['status']; teacher_remarks: string }) => {
       await supabase.from("student_homework_records").update({ status, teacher_remarks, submission_date: status === 'completed' || status === 'checked' ? format(new Date(), "yyyy-MM-dd") : null }).eq("id", id);
     },
-    onSuccess: () => { refetchStudentStatuses(); toast.success("Status updated!"); },
-  });
+    onSuccess: () => { refetchStudentStatuses(); toast.success("Status updated!"); } });
 
   const bulkUpdateHomeworkMutation = useMutation({
     mutationFn: async () => {
@@ -187,8 +177,7 @@ export default function HomeworkManagement() {
       toast.success(`Updated ${bulkSelectedStudents.length} records`);
       setBulkSelectedStudents([]);
       setBulkRemarks("");
-    },
-  });
+    } });
 
   const handleEditClick = (hw: Homework) => {
     setEditingHomework(hw); setTitle(hw.title); setSubject(hw.subject); setGrade(hw.grade);

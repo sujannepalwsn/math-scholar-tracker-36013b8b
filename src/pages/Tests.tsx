@@ -1,24 +1,24 @@
+import React, { useEffect, useState } from "react";
 import { BookOpen, Bot, CalendarIcon, ClipboardCheck, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { format } from "date-fns"
 import OCRModal from "@/components/OCRModal";
 import BulkMarksEntry from "@/components/BulkMarksEntry";
 import QuestionPaperViewer from "@/components/QuestionPaperViewer";
-import { Tables } from "@/integrations/supabase/types";
-import { cn } from "@/lib/utils";
+import { Tables } from "@/integrations/supabase/types"
+import { cn } from "@/lib/utils"
 "use client";
 
 
@@ -89,8 +89,7 @@ export default function Tests() {
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   // Fetch lesson plans for the dropdown
   const { data: lessonPlans = [] } = useQuery({
@@ -105,8 +104,7 @@ export default function Tests() {
       if (error) throw error;
       return data as LessonPlan[];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -124,8 +122,7 @@ export default function Tests() {
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   // Fetch test results for selected test
   const { data: testResults = [], isLoading: testResultsLoading } = useQuery({
@@ -140,8 +137,7 @@ export default function Tests() {
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedTest,
-  });
+    enabled: !!selectedTest });
 
   // Effect to update questionMarks when selectedTest changes
   useEffect(() => {
@@ -159,8 +155,7 @@ export default function Tests() {
         questionId: q.id,
         marksObtained: 0,
         studentAnswer: '',
-        feedback: '',
-      })));
+        feedback: '' })));
     } else {
       setQuestions([]);
       setQuestionMarks([]);
@@ -218,8 +213,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("Error creating test:", error);
       toast.error("Failed to create test");
-    },
-  });
+    } });
 
   // Add test result mutation
   const addResultMutation = useMutation({
@@ -261,8 +255,7 @@ export default function Tests() {
       } else {
         toast.error(error.message || "Failed to record marks");
       }
-    },
-  });
+    } });
 
   // Bulk marks entry mutation
   const bulkMarksMutation = useMutation({
@@ -306,8 +299,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("Error in bulkMarksMutation:", error);
       toast.error(error.message || "Failed to save bulk marks");
-    },
-  });
+    } });
 
   // Delete test result
   const deleteResultMutation = useMutation({
@@ -325,8 +317,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("Error deleting test result:", error);
       toast.error(error.message || "Failed to delete result");
-    },
-  });
+    } });
 
   // Delete test mutation
   const deleteTestMutation = useMutation({
@@ -359,8 +350,7 @@ export default function Tests() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete test");
-    },
-  });
+    } });
 
   // AI Grade Answer Mutation
   const aiGradeAnswerMutation = useMutation({
@@ -370,9 +360,7 @@ export default function Tests() {
           questionText,
           correctAnswer,
           studentAnswer,
-          totalMarks: maxMarks,
-        },
-      });
+          totalMarks: maxMarks } });
       if (error) throw error;
       return data;
     },
@@ -387,8 +375,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("AI grading error:", error);
       toast.error(error.message || "Failed to get AI grade");
-    },
-  });
+    } });
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -843,8 +830,7 @@ export default function Tests() {
                                 questionText: q.questionText,
                                 correctAnswer: q.correctAnswer!,
                                 studentAnswer: currentQuestionMark?.studentAnswer || '',
-                                maxMarks: q.maxMarks,
-                              })}
+                                maxMarks: q.maxMarks })}
                               disabled={aiGradeAnswerMutation.isPending || !currentQuestionMark?.studentAnswer}
                             >
                               <Bot className="h-4 w-4 mr-1" /> AI Grade

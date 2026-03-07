@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Tables } from '@/integrations/supabase/types';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client"
+import { Tables } from "@/integrations/supabase/types"
 // Auth context for managing user authentication state
 
 // Define linked student interface
@@ -63,8 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('AuthContext: Preparing to invoke auth-login Edge Function...'); // Added this line
       const { data, error: invokeError } = await supabase.functions.invoke('auth-login', {
-        body: { username, password },
-      });
+        body: { username, password } });
       console.log('AuthContext: Edge Function invocation completed.');
 
       if (invokeError) {

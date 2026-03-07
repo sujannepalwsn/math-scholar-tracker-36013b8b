@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Shield } from 'lucide-react';
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -25,15 +24,13 @@ const AdminLogin = () => {
     if (result.success) {
       toast({
         title: 'Admin login successful',
-        description: 'Welcome, administrator!',
-      });
+        description: 'Welcome, administrator!' });
       navigate('/admin-dashboard');
     } else {
       toast({
         title: 'Login failed',
         description: result.error || 'Invalid admin credentials',
-        variant: 'destructive',
-      });
+        variant: 'destructive' });
     }
 
     setLoading(false);

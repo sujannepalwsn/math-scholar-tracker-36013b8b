@@ -1,36 +1,21 @@
-import { useState, useMemo, useEffect } from "react";
-import {
-  BookOpen,
-  CalendarIcon,
-  CheckCircle2,
-  Clock,
-  FileText,
-  TrendingUp,
-  Users,
-  AlertTriangle,
-  Book,
-  Bell,
-  Calendar,
-  Home,
-  Wallet,
-  GraduationCap
-} from "lucide-react";
-import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { format, subDays, eachDayOfInterval, isToday, isFuture, startOfDay, isPast } from "date-fns";
-import { cn } from "@/lib/utils";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { AlertList } from "@/components/dashboard/AlertList";
+import React, { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Bell, Book, BookOpen, Calendar, CalendarIcon, CheckCircle2, Clock, FileText, GraduationCap, Home, TrendingUp, Users, Wallet } from "lucide-react";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
+import { eachDayOfInterval, format, isFuture, isPast, isToday, startOfDay, subDays } from "date-fns"
+import { cn } from "@/lib/utils"
+import { KPICard } from "@/components/dashboard/KPICard"
+import { AlertList } from "@/components/dashboard/AlertList"
 import CenterLogo from "@/components/CenterLogo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tables } from '@/integrations/supabase/types';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Tables } from "@/integrations/supabase/types"
 import ParentChapterPerformanceTable from '@/components/parent/ParentChapterPerformanceTable';
 import ParentChapterDetailModal from '@/components/parent/ParentChapterDetailModal';
 
@@ -39,10 +24,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60,
-      retry: 1,
-    },
-  },
-});
+      retry: 1 } } });
 
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
 type LessonPlan = Tables<'lesson_plans'>;
@@ -97,8 +79,7 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['attendance', activeStudentId, dateRange.from, dateRange.to],
@@ -114,8 +95,7 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
   const { data: testResults = [] } = useQuery({
     queryKey: ['test-results-parent-dashboard', activeStudentId, dateRange.from, dateRange.to],
@@ -131,8 +111,7 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
   const { data: homeworkStatus = [] } = useQuery({
     queryKey: ['student-homework-records', activeStudentId, dateRange.from, dateRange.to],
@@ -148,8 +127,7 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['student-invoices-dashboard', activeStudentId],
@@ -159,8 +137,7 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
   const { data: lessonRecords = [] } = useQuery({
     queryKey: ['student-lesson-records', activeStudentId],
@@ -170,8 +147,7 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
   const attendanceTrend = useMemo(() => {
     const range = eachDayOfInterval({ start: new Date(dateRange.from), end: new Date(dateRange.to) });

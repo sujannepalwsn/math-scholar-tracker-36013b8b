@@ -1,10 +1,9 @@
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Clock, ArrowRight } from "lucide-react";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Clock } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { Button } from "@/components/ui/button"
 
 interface ClassItem {
   id: string;
@@ -33,8 +32,7 @@ export const ClassSchedule = ({
   const statusStyles: Record<string, string> = {
     completed: "bg-green-500/10 text-green-600 border-green-600/20",
     running: "bg-amber-500/10 text-amber-600 border-amber-600/20",
-    upcoming: "bg-blue-500/10 text-blue-600 border-blue-600/20",
-  };
+    upcoming: "bg-blue-500/10 text-blue-600 border-blue-600/20" };
 
   return (
     <Card className={cn("overflow-hidden border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20", className)}>

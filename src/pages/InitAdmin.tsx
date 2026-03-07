@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Shield, CheckCircle2 } from 'lucide-react';
+import React, { useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 const InitAdmin = () => {
   const [loading, setLoading] = useState(false);
@@ -21,21 +21,18 @@ const InitAdmin = () => {
         setSuccess(true);
         toast({
           title: 'Admin initialized',
-          description: 'Admin user has been created successfully',
-        });
+          description: 'Admin user has been created successfully' });
       } else {
         toast({
           title: 'Info',
-          description: data.message || 'Admin already exists',
-        });
+          description: data.message || 'Admin already exists' });
       }
     } catch (error: any) {
       console.error('Init error:', error);
       toast({
         title: 'Initialization failed',
         description: error.message,
-        variant: 'destructive',
-      });
+        variant: 'destructive' });
     } finally {
       setLoading(false);
     }

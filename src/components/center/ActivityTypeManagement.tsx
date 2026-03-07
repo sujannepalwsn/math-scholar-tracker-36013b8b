@@ -1,18 +1,16 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
-import { Tables } from '@/integrations/supabase/types';
+import React, { useState } from "react";
+import { Edit, Plus, Trash2, X } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from "sonner"
+import { Tables } from "@/integrations/supabase/types"
 
 type ActivityType = Tables<'activity_types'>;
 
@@ -38,8 +36,7 @@ export default function ActivityTypeManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const resetForm = () => {
     setName("");
@@ -54,8 +51,7 @@ export default function ActivityTypeManagement() {
         center_id: user.center_id,
         name,
         description: description || null,
-        is_active: true,
-      });
+        is_active: true });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -66,16 +62,14 @@ export default function ActivityTypeManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create activity type");
-    },
-  });
+    } });
 
   const updateActivityTypeMutation = useMutation({
     mutationFn: async () => {
       if (!editingType || !user?.center_id) throw new Error("Activity Type or Center ID not found");
       const { error } = await supabase.from("activity_types").update({
         name,
-        description: description || null,
-      }).eq("id", editingType.id);
+        description: description || null }).eq("id", editingType.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -86,14 +80,12 @@ export default function ActivityTypeManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update activity type");
-    },
-  });
+    } });
 
   const toggleActivityTypeStatusMutation = useMutation({
     mutationFn: async (type: ActivityType) => {
       const { error } = await supabase.from("activity_types").update({
-        is_active: !type.is_active,
-      }).eq("id", type.id);
+        is_active: !type.is_active }).eq("id", type.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -102,8 +94,7 @@ export default function ActivityTypeManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update activity type status");
-    },
-  });
+    } });
 
   const deleteActivityTypeMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -116,8 +107,7 @@ export default function ActivityTypeManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete activity type");
-    },
-  });
+    } });
 
   const handleEditClick = (type: ActivityType) => {
     setEditingType(type);

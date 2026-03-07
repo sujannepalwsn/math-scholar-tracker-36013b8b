@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Building, Image, MapPin, Palette, Phone, Save, Settings, User } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Settings, User } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 
 interface CenterTheme {
   primary: string;
@@ -34,8 +34,7 @@ export default function CenterSettings() {
     sidebar: "#1e293b",
     foreground: "#1e293b",
     cardBackground: "#ffffff",
-    mutedForeground: "#64748b",
-  });
+    mutedForeground: "#64748b" });
 
   // Fetch center details
   const { data: center, isLoading } = useQuery({
@@ -50,8 +49,7 @@ export default function CenterSettings() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Populate form when center data loads
   useEffect(() => {
@@ -70,8 +68,7 @@ export default function CenterSettings() {
           sidebar: savedTheme.sidebar || "#1e293b",
           foreground: savedTheme.foreground || "#1e293b",
           cardBackground: savedTheme.cardBackground || "#ffffff",
-          mutedForeground: savedTheme.mutedForeground || "#64748b",
-        });
+          mutedForeground: savedTheme.mutedForeground || "#64748b" });
         // Do NOT apply theme here - it should only be applied on Save
       }
     }
@@ -146,8 +143,7 @@ export default function CenterSettings() {
           email: email || null,
           contact_person: contactPerson || null,
           logo_url: logoUrl || null,
-          theme,
-        } as any)
+          theme } as any)
         .eq("id", user.center_id);
       if (error) throw error;
       // Apply theme after saving
@@ -159,8 +155,7 @@ export default function CenterSettings() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update settings");
-    },
-  });
+    } });
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -477,8 +472,7 @@ export default function CenterSettings() {
               sidebar: "#1e293b",
               foreground: "#1e293b",
               cardBackground: "#ffffff",
-              mutedForeground: "#64748b",
-            };
+              mutedForeground: "#64748b" };
             setTheme(defaultTheme);
             // Remove all inline CSS overrides to restore stylesheet defaults
             const root = document.documentElement;

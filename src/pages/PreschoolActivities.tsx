@@ -1,22 +1,22 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
-import { CalendarIcon, Camera, Edit, Plus, Settings, Star, Trash2, Video, CheckSquare, Users } from "lucide-react";
-import { format } from "date-fns";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tables } from "@/integrations/supabase/types";
+import { CalendarIcon, Camera, CheckSquare, Edit, Plus, Settings, Star, Trash2, Users, Video } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Tables } from "@/integrations/supabase/types"
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge"
 
 
 type Activity = Tables<'activities'>;
@@ -55,8 +55,7 @@ export default function PreschoolActivities() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Filtered students for the modal's student select dropdown
   const filteredStudentsForModal = students.filter(s => modalGradeFilter === "all" || s.grade === modalGradeFilter);
@@ -74,8 +73,7 @@ export default function PreschoolActivities() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch activities - now properly filtered by center
   const { data: activities = [], isLoading } = useQuery({
@@ -101,8 +99,7 @@ export default function PreschoolActivities() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const resetForm = () => {
     setSelectedStudentIds([]);
@@ -158,8 +155,7 @@ export default function PreschoolActivities() {
         activity_date: activityDate,
         activity_type_id: activityTypeId,
         photo_url: photoUrl,
-        video_url: videoUrl,
-      }).select().single();
+        video_url: videoUrl }).select().single();
       if (activityError) throw activityError;
 
       // Then create student_activity records for all selected students
@@ -167,8 +163,7 @@ export default function PreschoolActivities() {
         student_id: sid,
         activity_id: activity.id,
         activity_type_id: activityTypeId,
-        involvement_score: involvementRating,
-      }));
+        involvement_score: involvementRating }));
 
       const { error: saError } = await supabase.from("student_activities").insert(studentActivityRecords);
       if (saError) throw saError;
@@ -181,8 +176,7 @@ export default function PreschoolActivities() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to log activity");
-    },
-  });
+    } });
 
   const updateActivityMutation = useMutation({
     mutationFn: async () => {
@@ -201,15 +195,13 @@ export default function PreschoolActivities() {
         activity_date: activityDate,
         photo_url: photoUrl,
         video_url: videoUrl,
-        activity_type_id: activityTypeId,
-      }).eq("id", (editingActivity as any).activities?.id);
+        activity_type_id: activityTypeId }).eq("id", (editingActivity as any).activities?.id);
       if (activityUpdateError) throw activityUpdateError;
 
       // Update the student_activity record (Updates only the current record being edited)
       const { error: saUpdateError } = await supabase.from("student_activities").update({
         student_id: selectedStudentIds[0],
-        involvement_score: involvementRating,
-      }).eq("id", editingActivity.id);
+        involvement_score: involvementRating }).eq("id", editingActivity.id);
       if (saUpdateError) throw saUpdateError;
     },
     onSuccess: () => {
@@ -220,8 +212,7 @@ export default function PreschoolActivities() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update activity");
-    },
-  });
+    } });
 
   const deleteActivityMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -241,8 +232,7 @@ export default function PreschoolActivities() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete activity");
-    },
-  });
+    } });
 
   const handleEditClick = (activity: any) => {
     setEditingActivity(activity);

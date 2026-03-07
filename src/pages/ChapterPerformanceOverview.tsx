@@ -1,16 +1,16 @@
 "use client";
-
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import React, { useMemo, useState } from "react";
 import { BookOpen } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
-import { safeFormatDate } from '@/lib/utils';
-import { Progress } from "@/components/ui/progress";
+
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tables } from "@/integrations/supabase/types"
+import { safeFormatDate } from "@/lib/utils"
+import { Progress } from "@/components/ui/progress"
 
 
 // Re-using types from ParentChapterDetailModal for consistency
@@ -55,8 +55,7 @@ export default function ChapterPerformanceOverview() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
   const uniqueGrades = Array.from(new Set(allStudents.map(s => s.grade))).sort();
 
   // Fetch all lesson plans for subject filter and grouping
@@ -72,8 +71,7 @@ export default function ChapterPerformanceOverview() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch all student_chapters for the center, filtered by student/grade/subject
   const { data: studentChaptersRaw = [], isLoading: studentChaptersLoading } = useQuery({
@@ -103,8 +101,7 @@ export default function ChapterPerformanceOverview() {
       // Filter out records where student or lesson_plan data might be missing
       return data?.filter((d: any) => d.students && d.lesson_plans) || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // NEW: Fetch all test results for the center, including test details and linked lesson_plan_id
   const { data: allTestResults = [], isLoading: testResultsLoading } = useQuery({
@@ -123,8 +120,7 @@ export default function ChapterPerformanceOverview() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const allSubjects = useMemo(() => {
     return Array.from(new Set(allLessonPlans.map(lp => lp.subject).filter(Boolean))).sort();
@@ -163,8 +159,7 @@ export default function ChapterPerformanceOverview() {
         evaluationRating: sc.evaluation_rating,
         teacherNotes: sc.teacher_notes,
         recordedByTeacherName: sc.recorded_by_teacher?.name || null,
-        associatedTests: associatedTests,
-      });
+        associatedTests: associatedTests });
     });
 
     // Also add entries for tests that are linked to a lesson plan but have no student_chapter entry
@@ -200,8 +195,7 @@ export default function ChapterPerformanceOverview() {
               evaluationRating: null,
               teacherNotes: null,
               recordedByTeacherName: null,
-              associatedTests: [tr],
-            });
+              associatedTests: [tr] });
           }
         }
       }

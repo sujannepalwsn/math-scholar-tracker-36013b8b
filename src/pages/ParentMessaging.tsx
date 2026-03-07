@@ -1,18 +1,18 @@
 "use client";
+import React, { useEffect, useRef, useState } from "react";
+import { Info, MessageSquare } from "lucide-react";
 
-import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
-import { Send, MessageSquare, Shield, Check, Info } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 export default function ParentMessaging() {
   const { user } = useAuth();
@@ -37,8 +37,7 @@ export default function ParentMessaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
-  });
+    enabled: !!user?.id });
 
   // Fetch messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
@@ -57,8 +56,7 @@ export default function ParentMessaging() {
       return data;
     },
     enabled: !!conversation?.id,
-    refetchInterval: 5000,
-  });
+    refetchInterval: 5000 });
 
   // Scroll to bottom
   useEffect(() => {
@@ -91,8 +89,7 @@ export default function ParentMessaging() {
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: conversation.id,
         sender_user_id: user.id,
-        message_text: newMessage.trim(),
-      });
+        message_text: newMessage.trim() });
       if (error) throw error;
 
       await supabase
@@ -106,8 +103,7 @@ export default function ParentMessaging() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to send message");
-    },
-  });
+    } });
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

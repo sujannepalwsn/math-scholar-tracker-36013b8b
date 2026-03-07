@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Camera, Video, Star, Paintbrush, Info, ExternalLink, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
-import { Tables } from '@/integrations/supabase/types';
-import { cn } from "@/lib/utils";
+import React, { useState } from "react";
+import { Calendar, Camera, Info, Paintbrush, Star, Video } from "lucide-react";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { cn } from "@/lib/utils"
 
 type Activity = Tables<'activities'>;
 
@@ -38,8 +38,7 @@ export default function ParentActivities() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user.student_id,
-  });
+    enabled: !!user.student_id });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">

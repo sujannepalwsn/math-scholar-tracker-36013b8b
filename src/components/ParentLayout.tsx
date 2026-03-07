@@ -1,14 +1,14 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, DollarSign, LogOut, User, Book, Paintbrush, AlertTriangle, KeyRound, Video, MessageSquare, Star, BookOpen, Calendar } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { AlertTriangle, Book, BookOpen, Calendar, Home, LogOut, MessageSquare, Paintbrush, Star, User, Video } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
 const navItems: Array<{
   to: string;
@@ -64,8 +64,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       return count || 0;
     },
     enabled: !!user?.id,
-    refetchInterval: 10000,
-  });
+    refetchInterval: 10000 });
 
   const updatedNavItems = navItems.map(item =>
     item.to === "/parent-messages" ? { ...item, unreadCount: unreadMessageCount } : item

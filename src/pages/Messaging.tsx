@@ -1,20 +1,20 @@
 "use client";
+import React, { useEffect, useRef, useState } from "react";
+import { MessageSquare, Users } from "lucide-react";
 
-import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
-import { Check, MessageCircleMore, MessageSquare, Radio, Send, Users } from "lucide-react";
-import { format } from "date-fns";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function Messaging() {
   const { user } = useAuth();
@@ -48,8 +48,7 @@ export default function Messaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && user?.role === "center",
-  });
+    enabled: !!user?.center_id && user?.role === "center" });
 
   // Fetch conversations for parent users
   const { data: parentConversations = [] } = useQuery({
@@ -68,8 +67,7 @@ export default function Messaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id && user?.role === "parent",
-  });
+    enabled: !!user?.id && user?.role === "parent" });
 
   const activeConversations = user?.role === "parent" ? parentConversations : conversations;
 
@@ -124,8 +122,7 @@ export default function Messaging() {
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: selectedConversation.id,
         sender_user_id: user.id,
-        message_text: newMessage.trim(),
-      });
+        message_text: newMessage.trim() });
       if (error) throw error;
 
       // Update conversation updated_at
@@ -141,8 +138,7 @@ export default function Messaging() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to send message");
-    },
-  });
+    } });
 
   // Create new conversation (for centers)
   const { data: studentsWithParents = [] } = useQuery({
@@ -169,11 +165,9 @@ export default function Messaging() {
 
       return students?.map(s => ({
         ...s,
-        parentUser: parentUsers?.find(u => u.student_id === s.id),
-      })) || [];
+        parentUser: parentUsers?.find(u => u.student_id === s.id) })) || [];
     },
-    enabled: !!user?.center_id && user?.role === "center",
-  });
+    enabled: !!user?.center_id && user?.role === "center" });
 
   // Filtered students for starting new conversations
   const filteredStudentsForNewConversation = studentsWithParents.filter(s => 
@@ -203,8 +197,7 @@ export default function Messaging() {
         .insert({
           center_id: user.center_id,
           student_id: studentData.id,
-          parent_user_id: studentData.parentUser.id,
-        })
+          parent_user_id: studentData.parentUser.id })
         .select()
         .single();
       if (error) throw error;
@@ -217,8 +210,7 @@ export default function Messaging() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create conversation");
-    },
-  });
+    } });
 
   // Send Broadcast Message Mutation
   const sendBroadcastMessageMutation = useMutation({
@@ -233,9 +225,7 @@ export default function Messaging() {
           centerId: user.center_id,
           messageText: broadcastMessageText.trim(),
           targetAudience: broadcastTargetAudience,
-          targetGrade: broadcastTargetGrade === 'all' ? null : broadcastTargetGrade,
-        },
-      });
+          targetGrade: broadcastTargetGrade === 'all' ? null : broadcastTargetGrade } });
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Failed to send broadcast message via Edge Function');
@@ -251,8 +241,7 @@ export default function Messaging() {
     onError: (error: any) => {
       console.error("Broadcast message error:", error);
       toast.error(error.message || "Failed to send broadcast message");
-    },
-  });
+    } });
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
