@@ -166,10 +166,10 @@ export default function TeacherDashboard() {
 
       {/* Today's Meetings Detail */}
       {todaysMeetings.length > 0 && (
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="border-primary/20 bg-primary/55">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-blue-600" /> Today's Meetings
+              <Bell className="h-5 w-5 textprimary0" /> Today's Meetings
             </CardTitle>
           </CardHeader>
           <CardContent>
