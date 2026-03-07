@@ -560,76 +560,82 @@ export default function LessonTracking() {
                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Cohort Participation Matrix</h4>
                        <span className="text-[10px] font-bold text-primary">{group.students.length} Students Logged</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {group.students.map((record) => (
-                        <div key={record.id} className="group/student relative rounded-2xl border border-white/40 bg-white/40 p-4 shadow-soft hover:shadow-medium transition-all duration-300 backdrop-blur-sm">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="space-y-0.5">
-                              <p className="font-black text-slate-700 leading-none">{record.students?.name}</p>
-                              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Grade {record.students?.grade}</p>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              {record.evaluation_rating && (
-                                <Badge className="bg-yellow-500/10 text-yellow-700 border-none rounded-lg px-2 py-0.5 text-[9px] font-black">
-                                  <Star className="h-2.5 w-2.5 mr-1 fill-yellow-500" />
-                                  {record.evaluation_rating}/5
-                                </Badge>
-                              )}
-                              <div className="flex gap-1 opacity-0 group-hover/student:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 rounded-lg bg-white shadow-soft"
-                                  onClick={() => {
-                                    setEditingStudentChapterId(record.id);
-                                    setShowEditStudentRecordDialog(true);
-                                  }}
-                                >
-                                  <Edit className="h-3.5 w-3.5 text-primary" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 rounded-lg bg-white shadow-soft hover:bg-destructive/10"
-                                  onClick={() => deleteStudentLessonRecordMutation.mutate(record.id)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            {record.teacher_notes && (
-                              <p className="text-[11px] text-slate-600 italic bg-muted/30 p-2 rounded-xl border border-muted/10">
-                                "{record.teacher_notes}"
-                              </p>
-                            )}
-
-                            <div className="flex flex-wrap gap-2">
-                               {record.linked_test_results?.map(tr => (
-                                 <Badge key={tr.id} variant="outline" className="bg-primary/5 border-primary/10 text-primary text-[8px] font-black uppercase">
-                                   <FileText className="h-2 w-2 mr-1" />
-                                   {tr.marks_obtained}/{tr.tests?.total_marks}
-                                 </Badge>
-                               ))}
-                               {record.linked_homework_records?.map(hr => (
-                                 <Badge key={hr.id} variant="outline" className="bg-orange-500/5 border-orange-500/10 text-orange-600 text-[8px] font-black uppercase">
-                                   <Book className="h-2 w-2 mr-1" />
-                                   {hr.status}
-                                 </Badge>
-                               ))}
-                            </div>
-
-                            {record.recorded_by_teacher?.name && (
-                              <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest pt-2 border-t border-muted/5">
-                                <User className="h-2.5 w-2.5" />
-                                Verified by {record.recorded_by_teacher.name}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="overflow-x-auto border border-white/40 rounded-2xl bg-white/20 backdrop-blur-sm">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="hover:bg-transparent border-muted/10">
+                            <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Student</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rating & Remarks</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Academic Links</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {group.students.map((record) => (
+                            <TableRow key={record.id} className="group/row border-muted/5 hover:bg-white/40 transition-colors">
+                              <TableCell className="pl-6 py-4">
+                                <div className="space-y-0.5">
+                                  <p className="font-bold text-slate-700 leading-none">{record.students?.name}</p>
+                                  <p className="text-[9px] font-bold text-muted-foreground uppercase">Grade {record.students?.grade}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1.5 min-w-[200px]">
+                                  {record.evaluation_rating && (
+                                    <Badge className="bg-yellow-500/10 text-yellow-700 border-none rounded-lg px-2 py-0.5 text-[9px] font-black">
+                                      <Star className="h-2.5 w-2.5 mr-1 fill-yellow-500" />
+                                      {record.evaluation_rating}/5
+                                    </Badge>
+                                  )}
+                                  {record.teacher_notes && (
+                                    <p className="text-[11px] text-slate-600 italic line-clamp-1">"{record.teacher_notes}"</p>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {record.linked_test_results?.map(tr => (
+                                    <Badge key={tr.id} variant="outline" className="bg-primary/5 border-primary/10 text-primary text-[8px] font-black uppercase">
+                                      {tr.marks_obtained}/{tr.tests?.total_marks}
+                                    </Badge>
+                                  ))}
+                                  {record.linked_homework_records?.map(hr => (
+                                    <Badge key={hr.id} variant="outline" className="bg-orange-500/5 border-orange-500/10 text-orange-600 text-[8px] font-black uppercase">
+                                      {hr.status}
+                                    </Badge>
+                                  ))}
+                                  {!record.linked_test_results?.length && !record.linked_homework_records?.length && (
+                                    <span className="text-[10px] text-slate-400 font-bold">NONE</span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right pr-6">
+                                <div className="flex justify-end gap-1 opacity-0 group-row:opacity-100 group-hover/row:opacity-100 transition-opacity">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10"
+                                    onClick={() => {
+                                      setEditingStudentChapterId(record.id);
+                                      setShowEditStudentRecordDialog(true);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10"
+                                    onClick={() => deleteStudentLessonRecordMutation.mutate(record.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
                 )}

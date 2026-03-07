@@ -203,7 +203,7 @@ export default function LessonPlans() {
             Plan Library
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center py-12">
               <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
@@ -216,64 +216,68 @@ export default function LessonPlans() {
               <p className="text-muted-foreground font-medium">No lesson plans found for selected filters.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lessonPlans.map((lp) => (
-                <div
-                  key={lp.id}
-                  className="rounded-3xl border border-white/40 bg-white/50 p-6 shadow-medium group relative hover:shadow-strong transition-all duration-300 backdrop-blur-sm"
-                >
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 shadow-soft" onClick={() => handleViewClick(lp)}>
-                      <Eye className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 shadow-soft" onClick={() => handleEditClick(lp)}>
-                      <Edit className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 shadow-soft hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-muted/10">
+                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Chapter & Topic</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subject</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Grade</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lessonPlans.map((lp) => (
+                    <TableRow key={lp.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                      <TableCell className="pl-6 py-4">
+                        <div className="space-y-1">
+                          <p className="font-bold text-slate-800 leading-none">{lp.chapter}</p>
+                          <p className="text-xs text-muted-foreground italic line-clamp-1">{lp.topic}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                           {lp.subject}
                         </Badge>
-                        {lp.grade && (
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {lp.grade ? (
                           <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                            Grade {lp.grade}
+                            {lp.grade}
                           </Badge>
-                        )}
-                      </div>
-                      <h3 className="font-black text-xl leading-tight text-slate-800">{lp.chapter}</h3>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-tighter opacity-70 italic">{lp.topic}</p>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{lp.notes || 'Curriculum details pending...'}</p>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">
-                        <CalendarIcon className="h-3.5 w-3.5" />
-                        {format(new Date(lp.lesson_date), "MMM d, yyyy")}
-                      </div>
-
-                      {lp.lesson_file_url && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-10 w-10 rounded-xl bg-primary/5 border-primary/10 hover:bg-primary hover:text-white transition-all shadow-soft"
-                          asChild
-                        >
-                          <a href={supabase.storage.from("lesson-files").getPublicUrl(lp.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                        ) : <span className="text-xs font-bold text-slate-400">-</span>}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                          <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+                          {format(new Date(lp.lesson_date), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleViewClick(lp)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(lp)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {lp.lesson_file_url && (
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-indigo-600 hover:bg-indigo-50" asChild>
+                               <a href={supabase.storage.from("lesson-files").getPublicUrl(lp.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                                 <Download className="h-4 w-4" />
+                               </a>
+                             </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

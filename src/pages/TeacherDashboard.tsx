@@ -52,7 +52,7 @@ export default function TeacherDashboard() {
     enabled: !!teacherId,
   });
 
-  const { data: classResults = [] } = useQuery({
+  const { data: classResults = [], isLoading: isClassResultsLoading } = useQuery({
     queryKey: ["teacher-class-performance", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
@@ -68,7 +68,7 @@ export default function TeacherDashboard() {
     enabled: !!teacherId,
   });
 
-  const { data: teacherSchedule = [] } = useQuery({
+  const { data: teacherSchedule = [], isLoading: isScheduleLoading } = useQuery({
     queryKey: ["teacher-schedule-dashboard", teacherId, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
@@ -80,7 +80,7 @@ export default function TeacherDashboard() {
     enabled: !!teacherId,
   });
 
-  const { data: upcomingMeetings = [] } = useQuery({
+  const { data: upcomingMeetings = [], isLoading: isMeetingsLoading } = useQuery({
     queryKey: ['teacher-upcoming-meetings', teacherId],
     queryFn: async () => {
       if (!teacherId) return [];
@@ -103,7 +103,7 @@ export default function TeacherDashboard() {
     enabled: !!user?.id,
   });
 
-  const { data: homeworkToGrade = [] } = useQuery({
+  const { data: homeworkToGrade = [], isLoading: isHomeworkLoading } = useQuery({
     queryKey: ["teacher-homework-to-grade", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
@@ -187,7 +187,7 @@ export default function TeacherDashboard() {
     }))
   ];
 
-  const isLoading = isStudentsLoading;
+  const isLoading = isStudentsLoading || isClassResultsLoading || isScheduleLoading || isMeetingsLoading || isHomeworkLoading;
 
   if (isLoading) {
     return <div className="p-8"><Skeleton className="h-64 rounded-2xl" /></div>;

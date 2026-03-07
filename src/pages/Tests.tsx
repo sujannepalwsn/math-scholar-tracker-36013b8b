@@ -428,37 +428,45 @@ export default function Tests() {
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
       {testsWithFiles.length > 0 && (
-        <Card className="border-none shadow-medium overflow-hidden">
+        <Card className="border-none shadow-medium overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
           <CardHeader className="bg-muted/30 pb-4">
             <CardTitle className="text-xl flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
               Available Question Papers
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {testsWithFiles.map((test) => (
-                <div
-                  key={test.id}
-                  className="rounded-2xl border-2 border-primary/5 p-5 hover:bg-primary/5 transition-all hover:shadow-soft"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
-                      <FileText className="h-6 w-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-base leading-tight">{test.name}</h3>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="outline" className="text-[10px]">{test.subject}</Badge>
-                        <Badge className="text-[10px] bg-primary/10 text-primary border-none">
-                          {test.date ? format(new Date(test.date), "MMM d") : 'No date'}
-                        </Badge>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/10">
+                  <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Test Name</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subject</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {testsWithFiles.map((test) => (
+                  <TableRow key={test.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <span className="font-bold text-slate-800">{test.name}</span>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold">{test.subject}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="text-[10px] bg-primary/10 text-primary border-none font-bold">
+                        {test.date ? format(new Date(test.date), "MMM d, yyyy") : 'No date'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
@@ -672,77 +680,77 @@ export default function Tests() {
               Evaluation Catalog
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="space-y-3">
-              {tests.map((test) => (
-                <div
-                  key={test.id}
-                  className="group flex items-center gap-2"
-                >
-                  <button
-                    onClick={() => setSelectedTest(test.id)}
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/10">
+                  <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Assessment Name</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Score</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tests.map((test) => (
+                  <TableRow
+                    key={test.id}
                     className={cn(
-                      "flex-1 text-left p-5 rounded-2xl border-2 transition-all duration-300",
-                      selectedTest === test.id
-                        ? "bg-primary text-primary-foreground border-primary shadow-medium scale-[1.02]"
-                        : "bg-card border-primary/5 hover:border-primary/20 hover:bg-primary/5"
+                      "group border-muted/5 transition-colors cursor-pointer",
+                      selectedTest === test.id ? "bg-primary/10" : "hover:bg-primary/5"
                     )}
+                    onClick={() => setSelectedTest(test.id)}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-bold text-lg leading-tight">{test.name}</div>
-                      <Badge className={cn("text-[10px] font-black border-none", selectedTest === test.id ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
-                         {test.total_marks} PTS
-                      </Badge>
-                    </div>
-                    <div className={cn("text-xs flex flex-wrap gap-x-3 gap-y-2 font-medium uppercase tracking-wider", selectedTest === test.id ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                      <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {test.subject}</span>
-                      <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> {format(new Date(test.date), "MMM d, yyyy")}</span>
-
-                      {test.questions && (test.questions as unknown as Question[]).length > 0 && (
-                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(test.questions as unknown as Question[]).length} Qs</span>
-                      )}
-                    </div>
-
-                    {(test as any).lesson_plans?.chapter && (
-                      <div className={cn("mt-3 p-2 rounded-xl text-[10px] font-bold inline-flex items-center gap-1.5", selectedTest === test.id ? "bg-white/10 text-white" : "bg-primary/5 text-primary")}>
-                         <FileText className="h-3 w-3" />
-                         Chapter: {(test as any).lesson_plans.chapter}
+                    <TableCell className="pl-6 py-4">
+                      <div className="space-y-1">
+                        <p className="font-bold text-slate-800 leading-none">{test.name}</p>
+                        <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {test.subject}</span>
+                          <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> {format(new Date(test.date), "MMM d")}</span>
+                        </div>
                       </div>
-                    )}
-                  </button>
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setViewingTestDetails(test);
-                        setIsViewDetailsOpen(true);
-                      }}
-                      title="View test details"
-                    >
-                      <Eye className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
-                          deleteTestMutation.mutate(test.id);
-                        }
-                      }}
-                      title="Delete test"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              {tests.length === 0 && (
-                <p className="text-muted-foreground text-center py-8">
-                  No tests created yet
-                </p>
-              )}
-            </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge className="bg-primary/10 text-primary border-none font-black text-[10px]">
+                        {test.total_marks} PTS
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingTestDetails(test);
+                            setIsViewDetailsOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
+                              deleteTestMutation.mutate(test.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {tests.length === 0 && (
+              <p className="text-muted-foreground text-center py-12 font-medium">
+                No assessments in catalog
+              </p>
+            )}
           </CardContent>
         </Card>
 
