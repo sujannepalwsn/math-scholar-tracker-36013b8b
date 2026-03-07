@@ -225,18 +225,17 @@ export default function Dashboard() {
   const StatCard = ({ title, value, icon: Icon, description, colorClass, path }: any) => (
     <Card
       onClick={() => handleCardClick(path)}
-      className="group relative border-none shadow-strong overflow-hidden transition-all duration-500 cursor-pointer hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] rounded-[2rem] bg-white/40 backdrop-blur-md border border-white/20"
+      className="group cursor-pointer hover:-translate-y-0.5 transition-all duration-200"
     >
-      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-transparent")} />
-      <CardContent className="p-6 relative z-10">
+      <CardContent className="p-5">
         <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">{title}</p>
-            <h3 className="text-3xl font-black tracking-tighter group-hover:text-primary transition-colors duration-300">{value}</h3>
-            {description && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-70">{description}</p>}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">{title}</p>
+            <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
           </div>
-          <div className={cn("p-3 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-soft", colorClass)}>
-            <Icon className="h-6 w-6 text-primary" />
+          <div className={cn("p-2.5 rounded-lg", colorClass)}>
+            <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
       </CardContent>
@@ -244,25 +243,13 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-1000">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div className="space-y-2">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-primary to-violet-600 uppercase">
-            Command Center
-          </h1>
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-bold uppercase tracking-[0.2em] opacity-70">Institutional Performance Oversight</p>
-          </div>
-        </div>
-        <div className="bg-white/40 backdrop-blur-md px-6 py-3 rounded-[2rem] border border-white/40 shadow-soft flex items-center gap-4">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <CalendarIcon className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground leading-none">Fiscal/Temporal Marker</span>
-            <span className="font-black text-slate-700 text-sm">{format(new Date(), "EEEE, MMM do, yyyy")}</span>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Welcome back, {user?.username?.split('@')[0] || 'User'} · {format(new Date(), "EEEE, MMM d, yyyy")}
+          </p>
         </div>
       </div>
 
