@@ -82,10 +82,10 @@ export default function Dashboard() {
   });
 
   const { data: allAttendance = [], isLoading: isAttendanceLoading } = useQuery({
-    queryKey: ["attendance-today", centerId, today],
+    queryKey: ["attendance-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("attendance").select("student_id, status, date").eq("center_id", centerId).eq("date", today);
+      const { data, error } = await supabase.from("attendance").select("student_id, status, date").eq("center_id", centerId).eq("date", dateRange.to);
       if (error) throw error;
       return data || [];
     },
@@ -93,10 +93,10 @@ export default function Dashboard() {
   });
 
   const { data: teacherAttendance = [], isLoading: isTeacherAttendanceLoading } = useQuery({
-    queryKey: ["teacher-attendance-today", centerId, today],
+    queryKey: ["teacher-attendance-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("teacher_attendance").select("*").eq("center_id", centerId).eq("date", today);
+      const { data, error } = await supabase.from("teacher_attendance").select("*").eq("center_id", centerId).eq("date", dateRange.to);
       if (error) throw error;
       return data || [];
     },
@@ -104,10 +104,15 @@ export default function Dashboard() {
   });
 
   const { data: homeworkStats = [], isLoading: isHomeworkStatsLoading } = useQuery({
-    queryKey: ["homework-stats-dashboard", centerId],
+    queryKey: ["homework-stats-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data: allRecords, error: allErr } = await supabase.from("student_homework_records").select("status, homework!inner(center_id)").eq("homework.center_id", centerId);
+      const { data: allRecords, error: allErr } = await supabase
+        .from("student_homework_records")
+        .select("status, created_at, homework!inner(center_id)")
+        .eq("homework.center_id", centerId)
+        .gte("created_at", `${dateRange.from}T00:00:00`)
+        .lte("created_at", `${dateRange.to}T23:59:59`);
       if (allErr) throw allErr;
       return allRecords || [];
     },
@@ -115,10 +120,15 @@ export default function Dashboard() {
   });
 
   const { data: evaluationStats = [], isLoading: isEvaluationStatsLoading } = useQuery({
-    queryKey: ["evaluation-stats-dashboard", centerId],
+    queryKey: ["evaluation-stats-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("student_chapters").select("completed, evaluation_rating, lesson_plans!inner(center_id)").eq("lesson_plans.center_id", centerId);
+      const { data, error } = await supabase
+        .from("student_chapters")
+        .select("completed, completed_at, evaluation_rating, lesson_plans!inner(center_id)")
+        .eq("lesson_plans.center_id", centerId)
+        .gte("completed_at", `${dateRange.from}T00:00:00`)
+        .lte("completed_at", `${dateRange.to}T23:59:59`);
       if (error) throw error;
       return data || [];
     },
@@ -137,10 +147,18 @@ export default function Dashboard() {
   });
 
   const { data: recentDiscipline = [] } = useQuery({
-    queryKey: ["recent-discipline-dashboard", centerId],
+    queryKey: ["recent-discipline-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("discipline_issues").select("*, students(name, grade)").eq("center_id", centerId).eq("status", "open").order("issue_date", { ascending: false }).limit(10);
+      const { data, error } = await supabase
+        .from("discipline_issues")
+        .select("*, students(name, grade)")
+        .eq("center_id", centerId)
+        .eq("status", "open")
+        .gte("issue_date", dateRange.from)
+        .lte("issue_date", dateRange.to)
+        .order("issue_date", { ascending: false })
+        .limit(10);
       if (error) throw error;
       return data || [];
     },
@@ -148,10 +166,10 @@ export default function Dashboard() {
   });
 
   const { data: upcomingLessons = [] } = useQuery({
-    queryKey: ["upcoming-lessons-dashboard", centerId],
+    queryKey: ["upcoming-lessons-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("lesson_plans").select("*").eq("center_id", centerId).gte("lesson_date", today).order("lesson_date").limit(8);
+      const { data, error } = await supabase.from("lesson_plans").select("*").eq("center_id", centerId).gte("lesson_date", dateRange.to).order("lesson_date").limit(8);
       if (error) throw error;
       return data || [];
     },
@@ -159,15 +177,15 @@ export default function Dashboard() {
   });
 
   const { data: historicalAttendance = [] } = useQuery({
-    queryKey: ["attendance-historical", centerId],
+    queryKey: ["attendance-historical", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("attendance")
         .select("date, status")
         .eq("center_id", centerId)
-        .gte("date", sevenDaysAgo)
+        .gte("date", dateRange.from)
+        .lte("date", dateRange.to)
         .order("date");
       if (error) throw error;
       return data || [];
@@ -176,15 +194,15 @@ export default function Dashboard() {
   });
 
   const { data: historicalTeacherAttendance = [] } = useQuery({
-    queryKey: ["teacher-attendance-historical", centerId],
+    queryKey: ["teacher-attendance-historical", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("teacher_attendance")
         .select("date, status")
         .eq("center_id", centerId)
-        .gte("date", sevenDaysAgo)
+        .gte("date", dateRange.from)
+        .lte("date", dateRange.to)
         .order("date");
       if (error) throw error;
       return data || [];
@@ -193,14 +211,14 @@ export default function Dashboard() {
   });
 
   const { data: testTrend = [] } = useQuery({
-    queryKey: ["test-performance-trend", centerId],
+    queryKey: ["test-performance-trend", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const thirtyDaysAgo = subDays(new Date(), 30).toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("test_results")
         .select("date_taken, marks_obtained, tests(total_marks)")
-        .gte("date_taken", thirtyDaysAgo)
+        .gte("date_taken", dateRange.from)
+        .lte("date_taken", dateRange.to)
         .order("date_taken");
       if (error) throw error;
       return data || [];
@@ -220,10 +238,10 @@ export default function Dashboard() {
   });
 
   const { data: periodSchedules = [] } = useQuery({
-    queryKey: ["period-schedules-today", centerId],
+    queryKey: ["period-schedules-dashboard", centerId, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const dayOfWeek = new Date().getDay();
+      const dayOfWeek = new Date(dateRange.to).getDay();
       const { data, error } = await supabase.from("period_schedules").select("*, teachers(name), class_periods(*)").eq("center_id", centerId).eq("day_of_week", dayOfWeek);
       if (error) throw error;
       return data || [];
@@ -244,12 +262,12 @@ export default function Dashboard() {
 
   // Memos for Stats and Trends
   const attendanceTrend = useMemo(() => {
-    const last7Days = eachDayOfInterval({
-      start: subDays(new Date(), 6),
-      end: new Date(),
+    const range = eachDayOfInterval({
+      start: new Date(dateRange.from),
+      end: new Date(dateRange.to),
     });
 
-    return last7Days.map(day => {
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const dayRecords = historicalAttendance.filter(a => a.date === dayStr);
       const present = dayRecords.filter(a => a.status === "present").length;
@@ -263,12 +281,12 @@ export default function Dashboard() {
   }, [historicalAttendance]);
 
   const teacherAttendanceTrend = useMemo(() => {
-    const last7Days = eachDayOfInterval({
-      start: subDays(new Date(), 6),
-      end: new Date(),
+    const range = eachDayOfInterval({
+      start: new Date(dateRange.from),
+      end: new Date(dateRange.to),
     });
 
-    return last7Days.map(day => {
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const dayRecords = historicalTeacherAttendance.filter(a => a.date === dayStr);
       const present = dayRecords.filter(a => a.status === "present").length;
@@ -298,11 +316,11 @@ export default function Dashboard() {
   }, [testTrend]);
 
   const overviewTrend = useMemo(() => {
-     const last7Days = eachDayOfInterval({
-      start: subDays(new Date(), 6),
-      end: new Date(),
+     const range = eachDayOfInterval({
+      start: new Date(dateRange.from),
+      end: new Date(dateRange.to),
     });
-    return last7Days.map(day => {
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const sRecs = historicalAttendance.filter(a => a.date === dayStr);
       const tRecs = historicalTeacherAttendance.filter(a => a.date === dayStr);
@@ -407,7 +425,6 @@ export default function Dashboard() {
           <div className="p-2 bg-indigo-500 text-white rounded-lg">
             <Home className="h-4 w-4" />
           </div>
-          <Badge variant="ghost" className="text-xs font-bold text-indigo-600">Ralue</Badge>
           <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
              <Calendar className="h-4 w-4 text-slate-400" />
              <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
@@ -419,9 +436,8 @@ export default function Dashboard() {
              type="date"
              value={dateRange.to}
              onChange={(e) => setDateRange({...dateRange, to: e.target.value})}
-             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700"
+             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700 focus-visible:ring-0"
            />
-           <ChevronDown className="h-4 w-4 text-slate-400 mr-2" />
         </div>
       </div>
 
@@ -429,7 +445,7 @@ export default function Dashboard() {
         {/* Left/Main Column */}
         <div className="lg:col-span-8 space-y-6">
           {/* KPI Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <KPICard
               title="Student Attendance"
               value={`${studentAttendanceRate}%`}
@@ -557,7 +573,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Activities & Discipline Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4 md:gap-6">
             <KPICard
               title="Activities"
               value={allActivities.length}
@@ -581,8 +597,8 @@ export default function Dashboard() {
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Button onClick={() => navigate("/take-attendance")} className="bg-[#22c55e] hover:bg-[#1eb054] text-white font-bold h-12 rounded-xl shadow-md border-none">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <Button onClick={() => navigate("/take-attendance")} className="bg-[#22c55e] hover:bg-[#1eb054] text-white font-bold h-12 rounded-xl shadow-md border-none text-xs sm:text-sm">
               <Plus className="h-4 w-4 mr-2" /> Mark Attendance
             </Button>
             <Button onClick={() => navigate("/homework-management")} className="bg-[#f97316] hover:bg-[#e86a14] text-white font-bold h-12 rounded-xl shadow-md border-none">

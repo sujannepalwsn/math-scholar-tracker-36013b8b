@@ -112,10 +112,16 @@ const ParentDashboardContent = () => {
   });
 
   const { data: attendance = [] } = useQuery({
-    queryKey: ['attendance', activeStudentId],
+    queryKey: ['attendance', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('attendance').select('*').eq('student_id', activeStudentId).order('date', { ascending: true });
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', activeStudentId)
+        .gte('date', dateRange.from)
+        .lte('date', dateRange.to)
+        .order('date', { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -123,10 +129,16 @@ const ParentDashboardContent = () => {
   });
 
   const { data: testResults = [] } = useQuery({
-    queryKey: ['test-results-parent-dashboard', activeStudentId],
+    queryKey: ['test-results-parent-dashboard', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('test_results').select('*, tests(*)').eq('student_id', activeStudentId).order('date_taken', { ascending: false });
+      const { data, error } = await supabase
+        .from('test_results')
+        .select('*, tests(*)')
+        .eq('student_id', activeStudentId)
+        .gte('date_taken', dateRange.from)
+        .lte('date_taken', dateRange.to)
+        .order('date_taken', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -134,10 +146,16 @@ const ParentDashboardContent = () => {
   });
 
   const { data: homeworkStatus = [] } = useQuery({
-    queryKey: ['student-homework-records', activeStudentId],
+    queryKey: ['student-homework-records', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('student_homework_records').select('*, homework(*)').eq('student_id', activeStudentId).order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('student_homework_records')
+        .select('*, homework(*)')
+        .eq('student_id', activeStudentId)
+        .gte('created_at', `${dateRange.from}T00:00:00`)
+        .lte('created_at', `${dateRange.to}T23:59:59`)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -167,13 +185,13 @@ const ParentDashboardContent = () => {
   });
 
   const attendanceTrend = useMemo(() => {
-    const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
-    return last7Days.map(day => {
+    const range = eachDayOfInterval({ start: new Date(dateRange.from), end: new Date(dateRange.to) });
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const record = attendance.find(a => a.date === dayStr);
       return { date: format(day, "MMM d"), value: record ? (record.status === "present" ? 100 : 0) : 0 };
     });
-  }, [attendance]);
+  }, [attendance, dateRange]);
 
   const performanceTrend = useMemo(() => {
     return testResults.map(tr => ({
@@ -270,10 +288,18 @@ const ParentDashboardContent = () => {
              <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
           </div>
         </div>
+        <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
+           <Input
+             type="date"
+             value={dateRange.to}
+             onChange={(e) => setDateRange({...dateRange, to: e.target.value, from: subDays(new Date(e.target.value), 30).toISOString().split('T')[0]})}
+             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700 focus-visible:ring-0"
+           />
+        </div>
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard title="Attendance Rate" value={`${attendanceRate}%`} description="Presence Index" icon={Clock} color="green" trendData={attendanceTrend} onClick={() => navigate("/parent/attendance")} />
         <KPICard title="Avg Performance" value={`${avgPerformance}%`} description="Evaluation Synthesis" icon={TrendingUp} color="purple" trendData={performanceTrend} onClick={() => navigate("/parent/student-report")} />
         <KPICard title="Homework Pending" value={homeworkPendingCount} description="Active Assignments" icon={Book} color="orange" onClick={() => navigate("/parent/homework")} />
@@ -304,8 +330,8 @@ const ParentDashboardContent = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         <QuickAction label="View Performance" icon={TrendingUp} onClick={() => navigate("/parent/student-report")} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+         <QuickAction label="View Performance" icon={TrendingUp} onClick={() => navigate("/parent/student-report")} className="text-xs sm:text-sm px-4" />
          <QuickAction label="Homework Hub" icon={Book} onClick={() => navigate("/parent/homework")} />
          <QuickAction label="Fee Payments" icon={Wallet} onClick={() => navigate("/parent/finance")} />
          <QuickAction label="Messages" icon={MessageSquare} onClick={() => navigate("/parent-messages")} />

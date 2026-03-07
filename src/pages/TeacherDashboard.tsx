@@ -52,7 +52,6 @@ export default function TeacherDashboard() {
     queryKey: ["teacher-students", teacherId],
     queryFn: async () => {
       if (!teacherId) return [];
-      // This is a simplification; ideally we fetch students assigned to teacher's classes
       const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
       if (error) throw error;
       return data || [];
@@ -61,10 +60,10 @@ export default function TeacherDashboard() {
   });
 
   const { data: teacherSchedule = [] } = useQuery({
-    queryKey: ["teacher-schedule-today", teacherId],
+    queryKey: ["teacher-schedule-dashboard", teacherId, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
-      const dayOfWeek = new Date().getDay();
+      const dayOfWeek = new Date(dateRange.to).getDay();
       const { data, error } = await supabase.from("period_schedules").select("*, class_periods(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek);
       if (error) throw error;
       return data || [];
@@ -96,10 +95,17 @@ export default function TeacherDashboard() {
   });
 
   const { data: homeworkToGrade = [] } = useQuery({
-    queryKey: ["teacher-homework-to-grade", teacherId],
+    queryKey: ["teacher-homework-to-grade", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
-      const { data, error } = await supabase.from("student_homework_records").select("*, students(name, grade), homework!inner(title, teacher_id)").eq("homework.teacher_id", teacherId).eq("status", "submitted").limit(5);
+      const { data, error } = await supabase
+        .from("student_homework_records")
+        .select("*, students(name, grade), homework!inner(title, teacher_id)")
+        .eq("homework.teacher_id", teacherId)
+        .eq("status", "submitted")
+        .gte("created_at", `${dateRange.from}T00:00:00`)
+        .lte("created_at", `${dateRange.to}T23:59:59`)
+        .limit(5);
       if (error) throw error;
       return data || [];
     },
@@ -107,11 +113,16 @@ export default function TeacherDashboard() {
   });
 
   const { data: historicalAttendance = [] } = useQuery({
-    queryKey: ["teacher-student-attendance-historical", teacherId],
+    queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
-      const sevenDaysAgo = subDays(new Date(), 7).toISOString().split("T")[0];
-      const { data, error } = await supabase.from("attendance").select("date, status").eq("center_id", centerId).gte("date", sevenDaysAgo).order("date");
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("date, status")
+        .eq("center_id", centerId)
+        .gte("date", dateRange.from)
+        .lte("date", dateRange.to)
+        .order("date");
       if (error) throw error;
       return data || [];
     },
@@ -119,8 +130,8 @@ export default function TeacherDashboard() {
   });
 
   const attendanceTrend = useMemo(() => {
-    const last7Days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
-    return last7Days.map(day => {
+    const range = eachDayOfInterval({ start: new Date(dateRange.from), end: new Date(dateRange.to) });
+    return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
       const dayRecords = historicalAttendance.filter(a => a.date === dayStr);
       const present = dayRecords.filter(a => a.status === "present").length;
@@ -192,13 +203,17 @@ export default function TeacherDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
-           <Input type="date" value={dateRange.to} readOnly className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700" />
-           <ChevronDown className="h-4 w-4 text-slate-400 mr-2" />
+           <Input
+             type="date"
+             value={dateRange.to}
+             onChange={(e) => setDateRange({...dateRange, to: e.target.value})}
+             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700 focus-visible:ring-0"
+           />
         </div>
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard title="My Students" value={teacherStudents.length} description="Total assigned" icon={Users} color="indigo" onClick={() => navigate("/teacher/student-report")} />
         <KPICard title="Today's Classes" value={todayClasses.length} description="Scheduled for today" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />
         <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Submissions to grade" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />
@@ -209,7 +224,7 @@ export default function TeacherDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
            <KPICard title="Student Performance" value="82%" description="Average across classes" icon={TrendingUp} color="purple" trendData={attendanceTrend} />
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="grid grid-cols-2 gap-4 md:gap-6">
              <QuickAction label="Take Attendance" icon={Plus} onClick={() => navigate("/teacher/take-attendance")} />
              <QuickAction label="Update Lesson Progress" icon={Plus} onClick={() => navigate("/teacher/lesson-tracking")} />
              <QuickAction label="Add Homework" icon={Plus} onClick={() => navigate("/teacher/homework-management")} />
