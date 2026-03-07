@@ -74,7 +74,6 @@ export default function Sidebar({
     );
   };
 
-
   const filteredNavItems = navItems.filter(item => {
     if (item.role && user?.role !== item.role) return false;
     if (item.featureName) {
@@ -93,10 +92,10 @@ export default function Sidebar({
       const isExpanded = expandedCategories.includes(category);
       if (isMobile) {
         return (
-          <div key={`mob-cat-group-${category}`} className="space-y-1">
+          <div key={`mob-cat-group-${category}`} className="space-y-0.5">
             <button
               onClick={() => toggleCategory(category)}
-              className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-4 first:mt-0 hover:text-foreground transition-colors"
+              className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mt-4 first:mt-0 hover:text-foreground transition-colors"
             >
               {category}
               {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -106,17 +105,17 @@ export default function Sidebar({
         );
       } else {
         return (
-          <div key={`cat-group-${category}`} className="space-y-1">
+          <div key={`cat-group-${category}`} className="space-y-0.5">
             {!isCollapsed ? (
               <button
                 onClick={() => toggleCategory(category)}
-                className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-4 first:mt-0 hover:text-foreground transition-colors"
+                className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mt-5 first:mt-0 hover:text-foreground transition-colors"
               >
                 {category}
                 {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               </button>
             ) : (
-              <div className="mx-4 border-t border-muted my-4 first:hidden" />
+              <div className="mx-3 border-t border-border my-3 first:hidden" />
             )}
             {(isExpanded || isCollapsed) && children}
           </div>
@@ -150,7 +149,7 @@ export default function Sidebar({
           <span className="flex items-center justify-between flex-1 truncate">
             {item.label}
             {item.unreadCount && item.unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-auto px-1.5 py-0 text-[10px]">
+              <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
                 {item.unreadCount}
               </Badge>
             )}
@@ -163,7 +162,7 @@ export default function Sidebar({
               to={item.to}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 isCollapsed ? "justify-center px-0" : ""
               )}
             >
@@ -172,7 +171,7 @@ export default function Sidebar({
                 <span className="flex items-center justify-between w-full truncate">
                   {item.label}
                   {item.unreadCount && item.unreadCount > 0 && (
-                    <Badge variant="destructive" className="ml-auto px-1.5 py-0 text-[10px] min-w-[18px] h-[18px] flex items-center justify-center">
+                    <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
                       {item.unreadCount}
                     </Badge>
                   )}
@@ -185,7 +184,7 @@ export default function Sidebar({
               <span className="flex items-center gap-2">
                 {item.label}
                 {item.unreadCount && item.unreadCount > 0 && (
-                  <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
                     {item.unreadCount}
                   </Badge>
                 )}
@@ -214,18 +213,18 @@ export default function Sidebar({
       <div
         className={cn(
           "fixed top-0 left-0 h-screen z-20 hidden md:flex flex-col border-r print:hidden",
-          "bg-white/40 backdrop-blur-xl text-card-foreground shadow-soft",
-          mounted ? "transition-all duration-300" : "",
+          "bg-card text-card-foreground",
+          mounted ? "transition-all duration-200" : "",
           isCollapsed ? "w-20" : "w-64"
         )}
       >
-        <div className="flex items-center justify-between h-20 px-4">
-          {!isCollapsed && <div className="flex-1 animate-in fade-in slide-in-from-left-4">{headerContent}</div>}
-          <Button variant="ghost" size="icon" onClick={handleCollapseToggle} className="h-8 w-8 hover:bg-muted">
+        <div className="flex items-center justify-between h-16 px-4 border-b">
+          {!isCollapsed && <div className="flex-1 min-w-0">{headerContent}</div>}
+          <Button variant="ghost" size="icon" onClick={handleCollapseToggle} className="h-8 w-8 shrink-0">
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
           {renderNavLinks(filteredNavItems, false)}
         </nav>
         <div className="mt-auto p-4 border-t">
@@ -240,25 +239,25 @@ export default function Sidebar({
     <div
       className={cn(
         "fixed inset-0 z-40 md:hidden transition-opacity duration-200",
-        isMobileOpen ? "bg-black/50 backdrop-blur-sm" : "pointer-events-none opacity-0"
+        isMobileOpen ? "bg-foreground/20 backdrop-blur-sm" : "pointer-events-none opacity-0"
       )}
       onClick={handleMobileClose}
     >
       {isMobileOpen && <style>{`body { overflow: hidden; }`}</style>}
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen w-72 bg-white/90 backdrop-blur-2xl text-card-foreground shadow-lg flex flex-col transition-transform duration-300 ease-out z-50",
+          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-elevated flex flex-col transition-transform duration-200 ease-out z-50",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <div className="flex-1">{headerContent}</div>
-          <Button variant="ghost" size="icon" onClick={handleMobileClose} className="h-9 w-9 rounded-lg hover:bg-muted">
+          <div className="flex-1 min-w-0">{headerContent}</div>
+          <Button variant="ghost" size="icon" onClick={handleMobileClose} className="h-9 w-9 shrink-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
           {renderNavLinks(filteredNavItems, true)}
         </nav>
         <div className="border-t p-4">
