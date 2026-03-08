@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -45,6 +45,7 @@ export default function StudentReport() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [aiSummary, setAiSummary] = useState<string>("");
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
+  const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformance | null>(null);
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -374,6 +375,24 @@ export default function StudentReport() {
   const totalMarksObtained = dashboardStats.totalMarksObtained;
   const totalMaxMarks = dashboardStats.totalMaxMarks;
   const averagePercentage = dashboardStats.testPerformance;
+
+  const subjectPerformance = useMemo(() => {
+    const subjectsMap = new Map<string, { total: number; count: number }>();
+    testResults.forEach((tr: any) => {
+      const subject = tr.tests?.subject;
+      if (subject) {
+        if (!subjectsMap.has(subject)) subjectsMap.set(subject, { total: 0, count: 0 });
+        const pct = (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100;
+        const entry = subjectsMap.get(subject)!;
+        entry.total += pct;
+        entry.count += 1;
+      }
+    });
+    return Array.from(subjectsMap.entries()).map(([name, { total, count }]) => ({
+      name,
+      percentage: Math.round(total / count)
+    })).sort((a, b) => b.percentage - a.percentage);
+  }, [testResults]);
 
   const subjects = Array.from(new Set([
     ...allLessonPlans.map(lp => lp.subject).filter(Boolean),
@@ -886,6 +905,43 @@ export default function StudentReport() {
         )}
       </div>
 
+      {/* Subject Wise Performance Cards */}
+      {subjectPerformance.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Subject Performance</h3>
+          </div>
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+            {subjectPerformance.map((sp) => (
+              <Card key={sp.name} className="border-none shadow-soft bg-white/40 backdrop-blur-sm overflow-hidden group hover:shadow-medium transition-all duration-300">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground truncate max-w-[80px] md:max-w-none">{sp.name}</p>
+                      <p className="text-xl font-black group-hover:text-primary transition-colors">{sp.percentage}%</p>
+                    </div>
+                    <div className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      sp.percentage >= 75 ? "bg-green-500" : sp.percentage >= 50 ? "bg-orange-500" : "bg-red-500"
+                    )} />
+                  </div>
+                  <div className="mt-2 w-full h-1 bg-muted/30 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full transition-all duration-1000",
+                        sp.percentage >= 75 ? "bg-green-500" : sp.percentage >= 50 ? "bg-orange-500" : "bg-red-500"
+                      )}
+                      style={{ width: `${sp.percentage}%` }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Aggregate Tables for Grade/Subject */}
       {(reportLevel === "grade" || reportLevel === "subject" || reportLevel === "grade-subject" || reportLevel === "school") && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1272,68 +1328,75 @@ export default function StudentReport() {
                 Curricular Milestones
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {chapterPerformanceData.length === 0 ? (
-                <p className="text-muted-foreground">No chapter performance data available for the selected filters.</p>
+                <div className="p-8 text-center text-muted-foreground italic">No chapter performance data available for the selected filters.</div>
               ) : (
-                <div className="space-y-6">
-                  {chapterPerformanceData.map((chapterGroup) => (
-                    <div key={chapterGroup.lessonPlan.id} className="border rounded-lg p-4 space-y-3">
-                      <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <BookOpen className="h-5 w-5 text-blue-600" />
-                        {chapterGroup.lessonPlan.subject}: {chapterGroup.lessonPlan.chapter} - {chapterGroup.lessonPlan.topic}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Taught on: {safeFormatDate(chapterGroup.lessonPlan.lesson_date, "PPP")}
-                      </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-muted/50 border-b">
+                      <tr>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Subject</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Topic</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Evaluation</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Homework</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Result</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {chapterPerformanceData.map((chapterGroup) => {
+                        const evaluation = chapterGroup.studentChapters[0];
+                        const testResult = chapterGroup.testResults[0];
+                        const homework = chapterGroup.homeworkRecords[0];
 
-                      {/* Lesson Evaluation */}
-                      {chapterGroup.studentChapters.length > 0 && (
-                        <div className="ml-4 space-y-2">
-                          <p className="font-semibold flex items-center gap-1"><Star className="h-4 w-4" /> Lesson Evaluation:</p>
-                          {chapterGroup.studentChapters.map(sc => (
-                            <div key={sc.id} className="text-sm">
-                              <p>Rating: {getRatingStars(sc.evaluation_rating)}</p>
-                              <p>Teacher Notes: {sc.teacher_notes || '-'}</p>
-                              <p className="text-xs text-muted-foreground">Recorded by: {sc.recorded_by_teacher?.name || 'N/A'}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                        const avgPct = chapterGroup.testResults.length > 0
+                          ? Math.round(chapterGroup.testResults.reduce((acc, tr) => acc + (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100, 0) / chapterGroup.testResults.length)
+                          : null;
 
-                      {/* Associated Test Results */}
-                      {chapterGroup.testResults.length > 0 && (
-                        <div className="ml-4 space-y-2">
-                          <p className="font-semibold flex items-center gap-1"><FileText className="h-4 w-4" /> Associated Test Results:</p>
-                          {chapterGroup.testResults.map(tr => (
-                            <div key={tr.id} className="text-sm">
-                              <p>{tr.tests?.name}: {tr.marks_obtained}/{tr.tests?.total_marks} ({Math.round((tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100)}%)</p>
-                              <p className="text-xs text-muted-foreground">Date: {safeFormatDate(tr.date_taken, "PPP")}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Associated Homework Records */}
-                      {chapterGroup.homeworkRecords.length > 0 && (
-                        <div className="ml-4 space-y-2">
-                          <p className="font-semibold flex items-center gap-1"><Book className="h-4 w-4" /> Associated Homework:</p>
-                          {chapterGroup.homeworkRecords.map(hr => (
-                            <div key={hr.id} className="text-sm">
-                              <p className="flex items-center gap-1">
-                                {getHomeworkStatusIcon(hr.status)} {hr.homework?.title} (Due: {safeFormatDate(hr.homework?.due_date, "PPP")})
-                              </p>
-                              <p className="text-xs text-muted-foreground">Status: {hr.status}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {chapterGroup.studentChapters.length === 0 && chapterGroup.testResults.length === 0 && chapterGroup.homeworkRecords.length === 0 && (
-                        <p className="ml-4 text-sm text-muted-foreground italic">No specific records for this chapter.</p>
-                      )}
-                    </div>
-                  ))}
+                        return (
+                          <tr key={chapterGroup.lessonPlan.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-6 py-4 font-semibold">{chapterGroup.lessonPlan.subject}</td>
+                            <td className="px-6 py-4">
+                              <p className="font-medium">{chapterGroup.lessonPlan.topic}</p>
+                              <p className="text-[10px] text-muted-foreground">Chapter: {chapterGroup.lessonPlan.chapter}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              {evaluation ? getRatingStars(evaluation.evaluation_rating) : <span className="text-muted-foreground italic text-xs">N/A</span>}
+                            </td>
+                            <td className="px-6 py-4">
+                              {homework ? (
+                                <Badge variant={homework.status === 'completed' || homework.status === 'checked' ? 'success' : homework.status === 'in_progress' ? 'warning' : 'destructive'} className="text-[9px] uppercase font-bold">
+                                  {homework.status}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground italic text-xs">N/A</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 font-bold">
+                              {avgPct !== null ? (
+                                <span className={cn(avgPct >= 75 ? "text-green-600" : avgPct >= 50 ? "text-orange-600" : "text-red-600")}>
+                                  {avgPct}%
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground italic text-xs">N/A</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
+                                onClick={() => setSelectedChapterDetail(chapterGroup)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>
@@ -1618,6 +1681,116 @@ export default function StudentReport() {
           )}
         </div>
       )}
+
+      {/* Chapter Detail Dialog */}
+      <Dialog open={!!selectedChapterDetail} onOpenChange={() => setSelectedChapterDetail(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <BookOpen className="h-6 w-6 text-blue-600" />
+              Chapter Details
+            </DialogTitle>
+            <DialogDescription>
+              Detailed performance metrics and records for this curricular unit.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedChapterDetail && (
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl border">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Subject</p>
+                  <p className="font-bold">{selectedChapterDetail.lessonPlan.subject}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Lesson Date</p>
+                  <p className="font-semibold">{safeFormatDate(selectedChapterDetail.lessonPlan.lesson_date, "PPP")}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Topic</p>
+                  <p className="font-medium">{selectedChapterDetail.lessonPlan.chapter}: {selectedChapterDetail.lessonPlan.topic}</p>
+                </div>
+              </div>
+
+              {/* Lesson Evaluation */}
+              <div className="space-y-3">
+                <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-primary">
+                  <Star className="h-4 w-4" /> Teacher Evaluation
+                </h4>
+                {selectedChapterDetail.studentChapters.length > 0 ? (
+                  selectedChapterDetail.studentChapters.map((sc) => (
+                    <div key={sc.id} className="bg-white p-4 rounded-xl border shadow-sm space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold">Rating</span>
+                        <span>{getRatingStars(sc.evaluation_rating)}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground">Teacher Notes</span>
+                        <p className="text-sm italic leading-relaxed">{sc.teacher_notes || "No notes recorded."}</p>
+                      </div>
+                      <p className="text-[10px] text-right text-muted-foreground">Recorded by {sc.recorded_by_teacher?.name || "N/A"}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm italic text-muted-foreground">No evaluation recorded for this lesson.</p>
+                )}
+              </div>
+
+              {/* Tests */}
+              <div className="space-y-3">
+                <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-purple-600">
+                  <ClipboardCheck className="h-4 w-4" /> Academic Results
+                </h4>
+                {selectedChapterDetail.testResults.length > 0 ? (
+                  <div className="divide-y border rounded-xl overflow-hidden">
+                    {selectedChapterDetail.testResults.map((tr) => {
+                      const pct = Math.round((tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100);
+                      return (
+                        <div key={tr.id} className="p-4 flex justify-between items-center bg-white">
+                          <div>
+                            <p className="text-sm font-bold">{tr.tests?.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{safeFormatDate(tr.date_taken, "PPP")}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black">{tr.marks_obtained}/{tr.tests?.total_marks}</p>
+                            <p className={cn("text-[10px] font-bold", pct >= 75 ? "text-green-600" : pct >= 50 ? "text-orange-600" : "text-red-600")}>{pct}%</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm italic text-muted-foreground">No tests associated with this chapter.</p>
+                )}
+              </div>
+
+              {/* Homework */}
+              <div className="space-y-3">
+                <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-widest text-orange-600">
+                  <Book className="h-4 w-4" /> Homework Assignments
+                </h4>
+                {selectedChapterDetail.homeworkRecords.length > 0 ? (
+                  <div className="divide-y border rounded-xl overflow-hidden">
+                    {selectedChapterDetail.homeworkRecords.map((hr) => (
+                      <div key={hr.id} className="p-4 flex justify-between items-center bg-white">
+                        <div>
+                          <p className="text-sm font-bold">{hr.homework?.title}</p>
+                          <p className="text-[10px] text-muted-foreground">Due: {safeFormatDate(hr.homework?.due_date, "PPP")}</p>
+                        </div>
+                        <Badge variant={hr.status === 'completed' || hr.status === 'checked' ? 'success' : hr.status === 'in_progress' ? 'warning' : 'destructive'} className="text-[9px] uppercase font-bold">
+                          {hr.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm italic text-muted-foreground">No homework assigned for this chapter.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Discipline Detail Dialog */}
       <Dialog open={!!selectedDisciplineIssue} onOpenChange={() => setSelectedDisciplineIssue(null)}>
