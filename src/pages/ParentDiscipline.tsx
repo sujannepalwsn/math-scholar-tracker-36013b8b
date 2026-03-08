@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Calendar, Info, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Calendar, Clock, Info, ShieldCheck } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -83,7 +83,7 @@ export default function ParentDiscipline() {
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
             <CardTitle className="text-xl font-black flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/10">
-                <History className="h-6 w-6 text-primary" />
+          <Clock className="h-6 w-6 text-primary" />
               </div>
               Incident Chronology
             </CardTitle>

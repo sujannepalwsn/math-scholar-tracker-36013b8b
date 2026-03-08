@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Edit, Plus, Users } from "lucide-react";
+import { Edit, Plus, Power, PowerOff, Users } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/contexts/AuthContext"

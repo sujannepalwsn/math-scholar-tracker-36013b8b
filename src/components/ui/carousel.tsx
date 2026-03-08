@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
 
 import { cn } from "@/lib/utils"

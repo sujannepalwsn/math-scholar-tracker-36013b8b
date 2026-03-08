@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Clock, Edit, GraduationCap, Loader2, Plus, Settings, Trash2, Users, X } from "lucide-react";
+import { Clock, DollarSign, Edit, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

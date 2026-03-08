@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, CalendarIcon, ChevronDown, Users } from "lucide-react";
+import { CalendarIcon, ChevronDown, Lock, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"

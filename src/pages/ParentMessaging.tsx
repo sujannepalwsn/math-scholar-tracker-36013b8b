@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { Info, MessageSquare } from "lucide-react";
+import { Check, Info, MessageSquare, Send, Shield } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"

@@ -1,5 +1,5 @@
 "use client";
-import { Book, BookOpen, Calendar, CheckCircle, Clock, FileText, Info, Star, Target, User, XCircle } from "lucide-react";
+import { Book, BookOpen, Calendar, CheckCircle, Clock, ExternalLink, FileText, Info, Star, Target, User, XCircle } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

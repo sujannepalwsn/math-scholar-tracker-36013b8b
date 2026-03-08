@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
-import { DialogDescription } from "@/components/ui/dialog"
 
 const TEACHER_FEATURES = [
   { name: 'take_attendance', label: 'Take Attendance' },

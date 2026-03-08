@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Calendar, CalendarIcon, CheckCircle2, Clock, Download, Eye, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils"
+import { CalendarIcon, CheckCircle2, Clock, Download, Eye, MinusCircle, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
+import { cn, safeFormatDate } from "@/lib/utils"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { toast } from "sonner"
 import { addMonths, endOfMonth, format, isValid, isWithinInterval, parseISO, startOfMonth, subMonths } from "date-fns"
-import { safeFormatDate } from "@/lib/utils" // Import safeFormatDate
+
 import { Database, Tables } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { KPICard } from "@/components/dashboard/KPICard"

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { CheckCircle2, Clock, Eye, FileText, Info, Users, Video, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Eye, FileText, Info, MapPin, Users, Video, XCircle } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"

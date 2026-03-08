@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, Edit, GraduationCap, Plus, Trash2, Users } from "lucide-react";
+import { CalendarDays, Edit, GraduationCap, PartyPopper, Plus, Trash2, Users } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -285,7 +285,7 @@ export default function CalendarEvents() {
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={setSelectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
               className="rounded-3xl border border-white/40 bg-white/30 backdrop-blur-sm p-4 shadow-soft mx-auto"
               modifiers={{
                 hasEvent: eventDates }}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertCircle, FileText, TrendingUp, Wallet } from "lucide-react";
+import { AlertCircle, ArrowLeft, FileText, TrendingUp, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"

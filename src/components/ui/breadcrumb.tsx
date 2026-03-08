@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"

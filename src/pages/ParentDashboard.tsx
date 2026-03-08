@@ -247,7 +247,7 @@ const ParentDashboardContent = () => {
           <div className="p-2 bg-indigo-500 text-white rounded-lg">
             <GraduationCap className="h-4 w-4" />
           </div>
-          <Badge variant="ghost" className="text-xs font-black text-indigo-600 tracking-tight uppercase">{student?.name || "Learning Odyssey"}</Badge>
+          <Badge variant="outline" className="text-xs font-black text-indigo-600 tracking-tight uppercase">{student?.name || "Learning Odyssey"}</Badge>
           <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
              <Calendar className="h-4 w-4 text-slate-400" />
              <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>

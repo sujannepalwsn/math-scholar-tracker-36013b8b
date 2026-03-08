@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Settings, User } from "lucide-react";
+import { Building, ImageIcon, MapPin, Palette, Phone as PhoneIcon, Save, Settings, User } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -238,7 +238,7 @@ export default function CenterSettings() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone" className="flex items-center gap-1">
-                  <Phone className="h-4 w-4" />
+                  <PhoneIcon className="h-4 w-4" />
                   Phone
                 </Label>
                 <Input
@@ -267,7 +267,7 @@ export default function CenterSettings() {
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
             <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
               <div className="p-2 rounded-xl bg-primary/10">
-                <Image className="h-6 w-6 text-primary" />
+              <ImageIcon className="h-6 w-6 text-primary" />
               </div>
               Visual Assets
             </CardTitle>
