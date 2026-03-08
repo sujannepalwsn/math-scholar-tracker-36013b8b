@@ -492,9 +492,9 @@ const ParentDashboardContent = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-muted/50 border-b">
+              <div className="max-h-[400px] overflow-auto custom-scrollbar">
+                <table className="w-full text-sm text-left min-w-[700px]">
+                  <thead className="bg-muted/50 border-b sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Subject</th>
                       <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Topic</th>
@@ -606,9 +606,9 @@ const ParentDashboardContent = () => {
               {payments.length === 0 ? (
                 <p className="text-muted-foreground text-sm italic">No payments recorded.</p>
               ) : (
-                <div className="overflow-x-auto max-h-48 border rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50">
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[600px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                       <tr>
                         <th className="border-b px-4 py-2 text-left">Date</th>
                         <th className="border-b px-4 py-2 text-left">Amount</th>
@@ -649,9 +649,9 @@ const ParentDashboardContent = () => {
                 <div className="text-sm font-semibold text-rose-600">Absent: {attendance.filter(a => a.status === 'absent').length}</div>
                 <div className="text-sm font-bold">Attendance %: {attendanceRate}%</div>
               </div>
-              <div className="overflow-x-auto max-h-80 border rounded-xl overflow-hidden">
-                <table className="w-full border-collapse text-sm">
-                  <thead className="bg-slate-50">
+              <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                <table className="w-full border-collapse text-sm min-w-[600px]">
+                  <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="border-b px-4 py-2 text-left">Date</th>
                       <th className="border-b px-4 py-2 text-left">Status</th>
@@ -693,9 +693,9 @@ const ParentDashboardContent = () => {
                 <p className="text-muted-foreground text-sm italic">No test results found.</p>
               ) : (
                 <>
-                  <div className="overflow-x-auto max-h-80 border rounded-xl overflow-hidden mb-4">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50">
+                  <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar mb-4">
+                    <table className="w-full text-sm min-w-[700px]">
+                      <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                         <tr>
                           <th className="border-b px-4 py-2 text-left">Test Name</th>
                           <th className="border-b px-4 py-2 text-left">Subject</th>
@@ -743,9 +743,9 @@ const ParentDashboardContent = () => {
               {overdueHomeworks.length === 0 ? (
                 <p className="text-muted-foreground text-sm italic">No overdue homework found.</p>
               ) : (
-                <div className="overflow-x-auto max-h-80 border rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50">
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[600px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                       <tr>
                         <th className="border-b px-4 py-2 text-left">Title</th>
                         <th className="border-b px-4 py-2 text-left">Subject</th>
@@ -787,9 +787,9 @@ const ParentDashboardContent = () => {
               {preschoolActivities.length === 0 ? (
                 <p className="text-muted-foreground text-sm italic">No activity records found.</p>
               ) : (
-                <div className="overflow-x-auto max-h-80 border rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50">
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[700px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                       <tr>
                         <th className="border-b px-4 py-2 text-left">Type</th>
                         <th className="border-b px-4 py-2 text-left">Title</th>
@@ -839,9 +839,9 @@ const ParentDashboardContent = () => {
               {disciplineIssues.length === 0 ? (
                 <p className="text-muted-foreground text-sm italic">No discipline records found.</p>
               ) : (
-                <div className="overflow-x-auto max-h-80 border rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50">
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[700px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                       <tr>
                         <th className="border-b px-4 py-2 text-left">Category</th>
                         <th className="border-b px-4 py-2 text-left">Severity</th>
