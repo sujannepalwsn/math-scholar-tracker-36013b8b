@@ -41,6 +41,7 @@ import ParentDiscipline from "./pages/ParentDiscipline";
 import ParentMeetings from "./pages/ParentMeetings";
 import ParentChapterRating from "./pages/ParentChapterRating";
 import ParentLessonTracking from "./pages/ParentLessonTracking";
+import ParentStudentReport from "./pages/ParentStudentReport";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherMeetings from "./pages/TeacherMeetings";
 import TeacherMessaging from "./pages/TeacherMessaging";
@@ -53,8 +54,10 @@ import InitAdmin from "./pages/InitAdmin";
 import NotFound from "./pages/NotFound";
 import AdminSettings from "./pages/admin/Settings";
 import CenterSettings from "./pages/CenterSettings";
+import GeneralSettings from "./pages/GeneralSettings";
 import ChangePassword from "./pages/ChangePassword";
 import ChapterPerformanceOverview from "./pages/ChapterPerformanceOverview";
+import TeacherPerformanceReport from "./pages/TeacherPerformanceReport";
 
 const queryClient = new QueryClient();
 
@@ -85,7 +88,9 @@ const App = () => (
             <Route path="/parent-messages" element={<ProtectedRoute role="parent"><ParentLayout><ParentMessaging /></ParentLayout></ProtectedRoute>} />
             <Route path="/parent-chapter-rating" element={<ProtectedRoute role="parent"><ParentLayout><ParentChapterRating /></ParentLayout></ProtectedRoute>} />
             <Route path="/parent-lesson-tracking" element={<ProtectedRoute role="parent"><ParentLayout><ParentLessonTracking /></ParentLayout></ProtectedRoute>} />
+            <Route path="/parent-student-report" element={<ProtectedRoute role="parent"><ParentLayout><ParentStudentReport /></ParentLayout></ProtectedRoute>} />
             <Route path="/parent-calendar" element={<ProtectedRoute role="parent"><ParentLayout><CalendarEvents /></ParentLayout></ProtectedRoute>} />
+            <Route path="/parent-settings" element={<ProtectedRoute role="parent"><ParentLayout><GeneralSettings /></ParentLayout></ProtectedRoute>} />
 
             {/* Teacher Routes */}
             <Route path="/teacher-dashboard" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherDashboard /></TeacherLayout></ProtectedRoute>} />
@@ -108,6 +113,7 @@ const App = () => (
             <Route path="/teacher-messages" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMessaging /></TeacherLayout></ProtectedRoute>} />
             <Route path="/teacher/class-routine" element={<ProtectedRoute role="teacher"><TeacherLayout><ClassRoutine /></TeacherLayout></ProtectedRoute>} />
             <Route path="/teacher/calendar" element={<ProtectedRoute role="teacher"><TeacherLayout><CalendarEvents /></TeacherLayout></ProtectedRoute>} />
+            <Route path="/teacher/settings" element={<ProtectedRoute role="teacher"><TeacherLayout><GeneralSettings /></TeacherLayout></ProtectedRoute>} />
 
             {/* Center Routes */}
             <Route path="/" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
@@ -133,6 +139,7 @@ const App = () => (
             <Route path="/calendar" element={<ProtectedRoute role="center"><CenterLayout><CalendarEvents /></CenterLayout></ProtectedRoute>} />
             <Route path="/chapter-performance-overview" element={<ProtectedRoute role="center"><CenterLayout><ChapterPerformanceOverview /></CenterLayout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute role="center"><CenterLayout><CenterSettings /></CenterLayout></ProtectedRoute>} />
+            <Route path="/teacher-performance" element={<ProtectedRoute role="center"><CenterLayout><TeacherPerformanceReport /></CenterLayout></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
