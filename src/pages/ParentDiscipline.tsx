@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Calendar, Info, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Calendar, Clock, Info, ShieldCheck } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
