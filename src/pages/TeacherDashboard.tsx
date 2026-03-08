@@ -46,6 +46,11 @@ export default function TeacherDashboard() {
     to: today
   });
 
+  const [attendanceDateRange, setAttendanceDateRange] = useState({
+    from: today,
+    to: today
+  });
+
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformanceGroup | null>(null);
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
@@ -64,16 +69,22 @@ export default function TeacherDashboard() {
     queryKey: ["teacher-class-performance", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
+      // Join with tests and filter by created_by (User ID).
+      // The tests table uses created_by instead of teacher_id in this schema.
       const { data, error } = await supabase
         .from("test_results")
-        .select("*, students(name, grade), tests!inner(id, name, subject, total_marks, lesson_plan_id, questions, teacher_id)")
-        .eq("tests.teacher_id", teacherId)
+        .select("*, students(name, grade), tests!inner(*)")
+        .eq("tests.created_by", user?.id)
         .gte("date_taken", dateRange.from)
         .lte("date_taken", dateRange.to);
-      if (error) throw error;
+
+      if (error) {
+        console.error("Error in classResults query:", error);
+        return [];
+      }
       return data || [];
     },
-    enabled: !!teacherId });
+    enabled: !!teacherId && !!user?.id });
 
   const { data: teacherSchedule = [], isLoading: isScheduleLoading } = useQuery({
     queryKey: ["teacher-schedule-dashboard", teacherId, dateRange.to],
@@ -113,24 +124,44 @@ export default function TeacherDashboard() {
       if (!teacherId) return [];
       const { data, error } = await supabase
         .from("student_homework_records")
-        .select("*, students(name, grade), homework!inner(title, teacher_id)")
+        .select("*, students(name, grade), homework!inner(*)")
         .eq("homework.teacher_id", teacherId)
         .eq("status", "submitted")
         .gte("created_at", `${dateRange.from}T00:00:00`)
         .lte("created_at", `${dateRange.to}T23:59:59`)
         .limit(5);
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching homework to grade:", error);
+        return [];
+      }
       return data || [];
     },
     enabled: !!teacherId });
 
   const { data: attendanceData = [], isLoading: isAttendanceLoading } = useQuery({
+    queryKey: ["teacher-student-attendance-range", teacherId, attendanceDateRange.from, attendanceDateRange.to],
+    queryFn: async () => {
+      if (!centerId || !user?.id) return [];
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("*")
+        .eq("center_id", centerId)
+        .eq("marked_by", user.id)
+        .gte("date", attendanceDateRange.from)
+        .lte("date", attendanceDateRange.to)
+        .order("date");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId && !!user?.id });
+
+  const { data: historicalAttendance = [] } = useQuery({
     queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!centerId) return [];
       const { data, error } = await supabase
         .from("attendance")
-        .select("*")
+        .select("date, status")
         .eq("center_id", centerId)
         .gte("date", dateRange.from)
         .lte("date", dateRange.to)
@@ -141,14 +172,18 @@ export default function TeacherDashboard() {
     enabled: !!centerId });
 
   const { data: lessonRecords = [] } = useQuery({
-    queryKey: ['teacher-lesson-records', teacherId],
+    queryKey: ['teacher-lesson-records', teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
       const { data, error } = await supabase.from('student_chapters').select(`
         *,
         lesson_plans!inner(id, subject, chapter, topic, lesson_date, lesson_file_url, grade, notes),
         recorded_by_teacher:recorded_by_teacher_id(name)
-      `).eq('recorded_by_teacher_id', teacherId).order('completed_at', { ascending: false });
+      `)
+        .eq('recorded_by_teacher_id', teacherId)
+        .gte('completed_at', `${dateRange.from}T00:00:00`)
+        .lte('completed_at', `${dateRange.to}T23:59:59`)
+        .order('completed_at', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -162,6 +197,7 @@ export default function TeacherDashboard() {
         .from("lesson_plans")
         .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url")
         .eq("center_id", centerId)
+        .eq("teacher_id", teacherId)
         .order("lesson_date", { ascending: false });
       if (error) throw error;
       return data;
@@ -169,11 +205,12 @@ export default function TeacherDashboard() {
     enabled: !!teacherId });
 
   const { data: disciplineIssues = [] } = useQuery({
-    queryKey: ["teacher-discipline-issues", teacherId, dateRange],
+    queryKey: ["teacher-discipline-issues", user?.id, dateRange],
     queryFn: async () => {
-      if (!centerId) return [];
+      if (!centerId || !user?.id) return [];
       let query = supabase.from("discipline_issues").select("*, discipline_categories(name), students(name, grade)")
         .eq("center_id", centerId)
+        .eq("reported_by", user.id)
         .gte("issue_date", dateRange.from)
         .lte("issue_date", dateRange.to);
 
@@ -181,14 +218,15 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!centerId });
+    enabled: !!centerId && !!user?.id });
 
   const { data: preschoolActivities = [] } = useQuery({
-    queryKey: ["teacher-activities", teacherId, dateRange],
+    queryKey: ["teacher-activities", user?.id, dateRange],
     queryFn: async () => {
-      if (!centerId) return [];
-      let query = supabase.from("student_activities").select("*, activities!inner(title, description, activity_date, photo_url, video_url, activity_type_id, activity_types(name), center_id), students(name, grade)")
+      if (!centerId || !user?.id) return [];
+      let query = supabase.from("student_activities").select("*, activities!inner(*, activity_types(name)), students(name, grade)")
         .eq("activities.center_id", centerId)
+        .eq("activities.created_by", user.id)
         .gte("created_at", `${dateRange.from}T00:00:00`)
         .lte("created_at", `${dateRange.to}T23:59:59`);
 
@@ -196,19 +234,35 @@ export default function TeacherDashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!centerId });
+    enabled: !!centerId && !!user?.id });
 
   const attendanceTrend = useMemo(() => {
     const range = eachDayOfInterval({ start: new Date(dateRange.from), end: new Date(dateRange.to) });
     return range.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
-      const dayRecords = attendanceData.filter(a => a.date === dayStr);
+      const dayRecords = historicalAttendance.filter(a => a.date === dayStr);
       const present = dayRecords.filter(a => a.status === "present").length;
       return { date: format(day, "MMM d"), value: dayRecords.length > 0 ? Math.round((present / dayRecords.length) * 100) : 0 };
     });
-  }, [attendanceData, dateRange]);
+  }, [historicalAttendance, dateRange]);
 
   const attendanceRate = attendanceData.length > 0 ? Math.round((attendanceData.filter(a => a.status === 'present').length / attendanceData.length) * 100) : 0;
+
+  const dailyAttendanceSummary = useMemo(() => {
+    const summaryMap = new Map<string, { date: string; total: number; present: number; absent: number }>();
+
+    attendanceData.forEach(record => {
+      if (!summaryMap.has(record.date)) {
+        summaryMap.set(record.date, { date: record.date, total: 0, present: 0, absent: 0 });
+      }
+      const day = summaryMap.get(record.date)!;
+      day.total += 1;
+      if (record.status === 'present') day.present += 1;
+      else if (record.status === 'absent') day.absent += 1;
+    });
+
+    return Array.from(summaryMap.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [attendanceData]);
 
   const avgPerformance = classResults.length > 0
     ? Math.round(classResults.reduce((acc, curr: any) => acc + (curr.marks_obtained / (curr.tests?.total_marks || 100)) * 100, 0) / classResults.length)
@@ -371,10 +425,10 @@ export default function TeacherDashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <KPICard title="Class Attendance" value={`${attendanceRate}%`} description="Student Presence" icon={Users} color="indigo" onClick={() => scrollToSection("attendance-section")} />
-        <KPICard title="Today's Classes" value={todayClasses.length} description="Scheduled for today" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />
-        <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Submissions to grade" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />
-        <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Average Score" icon={TrendingUp} color="purple" trendData={attendanceTrend} onClick={() => scrollToSection("tests-section")} />
+        <KPICard title="Class Attendance" value={`${attendanceRate}%`} description="Presence Index" icon={Users} color="indigo" onClick={() => scrollToSection("attendance-section")} />
+        <KPICard title="Today's Classes" value={todayClasses.length} description="Instruction Units" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />
+        <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Active Submissions" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />
+        <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Score Synthesis" icon={TrendingUp} color="purple" trendData={attendanceTrend} onClick={() => scrollToSection("tests-section")} />
       </div>
 
       {/* Subject Wise Performance Cards */}
@@ -497,41 +551,50 @@ export default function TeacherDashboard() {
           {/* Attendance Overview */}
           <Card id="attendance-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/60 backdrop-blur-md">
             <CardHeader className="bg-green-500/5 pb-4 border-b border-green-500/10">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <Clock className="h-6 w-6 text-green-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <Clock className="h-6 w-6 text-green-600" />
+                  </div>
+                  Class Attendance Analytics
+                </CardTitle>
+                <div className="flex items-center gap-2 bg-white/60 p-1 rounded-xl border border-white/40 shadow-soft">
+                   <Input type="date" value={attendanceDateRange.from} onChange={e => setAttendanceDateRange({...attendanceDateRange, from: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
+                   <span className="text-[10px] font-black text-slate-300">TO</span>
+                   <Input type="date" value={attendanceDateRange.to} onChange={e => setAttendanceDateRange({...attendanceDateRange, to: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
                 </div>
-                Class Attendance Analytics
-              </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="text-sm font-semibold">Total Records: {attendanceData.length}</div>
-                <div className="text-sm font-semibold text-green-600">Present: {attendanceData.filter(a => a.status === 'present').length}</div>
-                <div className="text-sm font-semibold text-rose-600">Absent: {attendanceData.filter(a => a.status === 'absent').length}</div>
-                <div className="text-sm font-bold">Attendance %: {attendanceRate}%</div>
+                <div className="text-sm font-semibold">Days Tracked: {dailyAttendanceSummary.length}</div>
+                <div className="text-sm font-semibold text-green-600">Total Present: {dailyAttendanceSummary.reduce((acc, curr) => acc + curr.present, 0)}</div>
+                <div className="text-sm font-semibold text-rose-600">Total Absent: {dailyAttendanceSummary.reduce((acc, curr) => acc + curr.absent, 0)}</div>
+                <div className="text-sm font-bold">Avg Presence: {attendanceRate}%</div>
               </div>
               <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
                 <table className="w-full border-collapse text-sm min-w-[700px]">
                   <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="border-b px-4 py-2 text-left font-bold uppercase text-[10px] text-muted-foreground">Date</th>
-                      <th className="border-b px-4 py-2 text-left font-bold uppercase text-[10px] text-muted-foreground">Student</th>
-                      <th className="border-b px-4 py-2 text-left font-bold uppercase text-[10px] text-muted-foreground">Status</th>
-                      <th className="border-b px-4 py-2 text-left font-bold uppercase text-[10px] text-muted-foreground">Time In/Out</th>
+                      <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground">Total Students</th>
+                      <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground text-green-600">Present</th>
+                      <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground text-rose-600">Absent</th>
+                      <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground">Ratio</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {attendanceData.map((record) => (
-                      <tr key={record.id} className="hover:bg-slate-50/50">
-                        <td className="border-b px-4 py-2 font-medium">{safeFormatDate(record.date, "PPP")}</td>
-                        <td className="border-b px-4 py-2">{teacherStudents.find(s => s.id === record.student_id)?.name || 'Unknown Student'}</td>
-                        <td className="border-b px-4 py-2">
-                          <Badge variant={record.status === 'present' ? 'success' : 'destructive'} className="uppercase text-[9px]">
-                            {record.status}
+                    {dailyAttendanceSummary.map((summary) => (
+                      <tr key={summary.date} className="hover:bg-slate-50/50">
+                        <td className="border-b px-4 py-2 font-medium">{safeFormatDate(summary.date, "PPP")}</td>
+                        <td className="border-b px-4 py-2 text-center font-bold text-slate-700">{summary.total}</td>
+                        <td className="border-b px-4 py-2 text-center font-bold text-green-600">{summary.present}</td>
+                        <td className="border-b px-4 py-2 text-center font-bold text-rose-600">{summary.absent}</td>
+                        <td className="border-b px-4 py-2 text-center">
+                          <Badge variant="secondary" className="font-black text-[9px]">
+                            {Math.round((summary.present / summary.total) * 100)}%
                           </Badge>
                         </td>
-                        <td className="border-b px-4 py-2 text-muted-foreground">{record.time_in || "-"} / {record.time_out || "-"}</td>
                       </tr>
                     ))}
                   </tbody>
