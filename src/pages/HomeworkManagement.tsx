@@ -48,12 +48,17 @@ export default function HomeworkManagement() {
   const [bulkRemarks, setBulkRemarks] = useState("");
 
   const { data: homeworkList = [], isLoading } = useQuery({
-    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter],
+    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("homework").select("*, lesson_plans(*)").eq("center_id", user.center_id).order("due_date", { ascending: false });
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('teacher_id', user.teacher_id);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -61,10 +66,16 @@ export default function HomeworkManagement() {
     enabled: !!user?.center_id });
 
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-for-homework", user?.center_id],
+    queryKey: ["lesson-plans-for-homework", user?.center_id, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
+      let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
+
+      if (user?.role === 'teacher') {
+        query = query.eq('teacher_id', user.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as LessonPlan[];
     },

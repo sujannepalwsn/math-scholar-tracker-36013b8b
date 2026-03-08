@@ -75,7 +75,7 @@ export default function ChapterPerformanceOverview() {
 
   // Fetch all student_chapters for the center, filtered by student/grade/subject
   const { data: studentChaptersRaw = [], isLoading: studentChaptersLoading } = useQuery({
-    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter],
+    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("student_chapters").select(`
@@ -84,6 +84,10 @@ export default function ChapterPerformanceOverview() {
         lesson_plans(id, chapter, subject, topic, grade, lesson_date, lesson_file_url),
         recorded_by_teacher:recorded_by_teacher_id(name)
       `).eq("students.center_id", user.center_id);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('recorded_by_teacher_id', user.teacher_id);
+      }
 
       if (subjectFilter !== "all") {
         query = query.eq("lesson_plans.subject", subjectFilter);
@@ -105,18 +109,24 @@ export default function ChapterPerformanceOverview() {
 
   // NEW: Fetch all test results for the center, including test details and linked lesson_plan_id
   const { data: allTestResults = [], isLoading: testResultsLoading } = useQuery({
-    queryKey: ["all-test-results-for-chapter-overview", user?.center_id],
+    queryKey: ["all-test-results-for-chapter-overview", user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("test_results")
         .select(`
           id,
           student_id,
           marks_obtained,
-          tests(id, name, subject, total_marks, lesson_plan_id)
+          tests!inner(id, name, subject, total_marks, lesson_plan_id, created_by)
         `) // Removed lesson_plans(chapter) as it's not directly on tests
         .eq("tests.center_id", user.center_id); // Ensure tests belong to the same center
+
+      if (user?.role === 'teacher') {
+        query = query.eq('tests.created_by', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

@@ -68,7 +68,7 @@ export default function StudentReport() {
 
   // Fetch attendance
   const { data: attendanceData = [], isLoading: isAttendanceLoading } = useQuery({
-    queryKey: ["student-attendance", selectedStudentId, gradeFilter, dateRange, user?.center_id],
+    queryKey: ["student-attendance", selectedStudentId, gradeFilter, dateRange, user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
@@ -77,6 +77,10 @@ export default function StudentReport() {
         .eq("center_id", user.center_id)
         .gte("date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (user?.role === 'teacher') {
+        query = query.eq('marked_by', user.id);
+      }
 
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
@@ -107,7 +111,7 @@ export default function StudentReport() {
 
   // Fetch student_chapters (lesson evaluations)
   const { data: studentChapters = [], isLoading: isChaptersLoading } = useQuery({
-    queryKey: ["student-lesson-records-report", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds],
+    queryKey: ["student-lesson-records-report", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds, user?.role, user?.teacher_id],
     queryFn: async () => {
       let query = supabase.from("student_chapters").select(`
         *,
@@ -116,6 +120,10 @@ export default function StudentReport() {
       `)
         .gte("completed_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("completed_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('recorded_by_teacher_id', user.teacher_id);
+      }
 
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
@@ -138,11 +146,15 @@ export default function StudentReport() {
 
   // Fetch test results
   const { data: testResults = [], isLoading: isTestsLoading } = useQuery({
-    queryKey: ["student-test-results", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds],
+    queryKey: ["student-test-results", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds, user?.role, user?.id],
     queryFn: async () => {
-      let query = supabase.from("test_results").select("*, tests!inner(id, name, subject, total_marks, lesson_plan_id, questions)")
+      let query = supabase.from("test_results").select("*, tests!inner(id, name, subject, total_marks, lesson_plan_id, questions, created_by)")
         .gte("date_taken", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("date_taken", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (user?.role === 'teacher') {
+        query = query.eq('tests.created_by', user.id);
+      }
 
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
@@ -164,11 +176,15 @@ export default function StudentReport() {
 
   // Fetch homework status
   const { data: homeworkStatus = [], isLoading: isHomeworkLoading } = useQuery({
-    queryKey: ["student-homework-status-report", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds],
+    queryKey: ["student-homework-status-report", selectedStudentId, gradeFilter, subjectFilter, dateRange, studentIds, user?.role, user?.teacher_id],
     queryFn: async () => {
-      let query = supabase.from("student_homework_records").select("*, homework!inner(id, title, subject, due_date, lesson_plan_id)")
+      let query = supabase.from("student_homework_records").select("*, homework!inner(id, title, subject, due_date, lesson_plan_id, teacher_id)")
         .gte("homework.due_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("homework.due_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('homework.teacher_id', user.teacher_id);
+      }
 
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
@@ -211,11 +227,15 @@ export default function StudentReport() {
 
   // Fetch preschool activities (student participations)
   const { data: preschoolActivities = [], isLoading: isActivitiesLoading } = useQuery({
-    queryKey: ["student-preschool-activities-report", selectedStudentId, gradeFilter, dateRange, studentIds],
+    queryKey: ["student-preschool-activities-report", selectedStudentId, gradeFilter, dateRange, studentIds, user?.role, user?.id],
     queryFn: async () => {
-      let query = supabase.from("student_activities").select("*, activities(title, description, activity_date, photo_url, video_url, activity_type_id, activity_types(name))")
+      let query = supabase.from("student_activities").select("*, activities!inner(title, description, activity_date, photo_url, video_url, activity_type_id, created_by, activity_types(name))")
         .gte("created_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("created_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (user?.role === 'teacher') {
+        query = query.eq('activities.created_by', user.id);
+      }
 
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
@@ -233,13 +253,17 @@ export default function StudentReport() {
 
   // Fetch discipline issues
   const { data: disciplineIssues = [], isLoading: isDisciplineLoading } = useQuery({
-    queryKey: ["student-discipline-issues-report", selectedStudentId, gradeFilter, dateRange, user?.center_id],
+    queryKey: ["student-discipline-issues-report", selectedStudentId, gradeFilter, dateRange, user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("discipline_issues").select("*, discipline_categories(name)")
         .eq("center_id", user.center_id)
         .gte("issue_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("issue_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+
+      if (user?.role === 'teacher') {
+        query = query.eq('reported_by', user.id);
+      }
 
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);

@@ -48,12 +48,17 @@ export default function LessonPlans() {
   const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
   const { data: lessonPlans = [], isLoading } = useQuery({
-    queryKey: ["lesson-plans-for-tracking", user?.center_id, subjectFilter, gradeFilter],
+    queryKey: ["lesson-plans-for-tracking", user?.center_id, subjectFilter, gradeFilter, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('teacher_id', user.teacher_id);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;

@@ -75,9 +75,9 @@ export default function PreschoolActivities() {
     },
     enabled: !!user?.center_id });
 
-  // Fetch activities - now properly filtered by center
+  // Fetch activities - now properly filtered by center and teacher
   const { data: activities = [], isLoading } = useQuery({
-    queryKey: ["preschool-activities", user?.center_id, gradeFilter],
+    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       // First get student IDs for this center
@@ -90,11 +90,16 @@ export default function PreschoolActivities() {
       
       const studentIds = centerStudents.map(s => s.id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("student_activities")
-        .select("*, students(name, grade, center_id), activities(id, name, description, activity_date), activity_types(name)")
-        .in("student_id", studentIds)
-        .order("created_at", { ascending: false });
+        .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
+        .in("student_id", studentIds);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('activities.created_by', user.id);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -155,7 +160,8 @@ export default function PreschoolActivities() {
         activity_date: activityDate,
         activity_type_id: activityTypeId,
         photo_url: photoUrl,
-        video_url: videoUrl }).select().single();
+        video_url: videoUrl,
+        created_by: user.id }).select().single();
       if (activityError) throw activityError;
 
       // Then create student_activity records for all selected students

@@ -70,11 +70,11 @@ export default function ViewRecords() {
 
   // Fetch attendance records for selected date & filtered students
   const { data: records, isLoading } = useQuery({
-    queryKey: ["attendance-records", dateStr, gradeFilter, user?.center_id],
+    queryKey: ["attendance-records", dateStr, gradeFilter, user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       const studentIds = filteredStudents.map(s => s.id);
       if (studentIds.length === 0) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("attendance")
         .select(`
           id,
@@ -90,6 +90,12 @@ export default function ViewRecords() {
         `)
         .in("student_id", studentIds)
         .eq("date", dateStr);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('marked_by', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
       // Sort by student name in JavaScript after fetching
@@ -102,18 +108,23 @@ export default function ViewRecords() {
 
   // Fetch all attendance for a specific student for the detail dialog
   const { data: studentDetailAttendance = [], refetch: refetchStudentDetailAttendance } = useQuery({
-    queryKey: ["student-detail-attendance", selectedStudentDetail?.id, detailMonthFilter],
+    queryKey: ["student-detail-attendance", selectedStudentDetail?.id, detailMonthFilter, user?.role, user?.id],
     queryFn: async () => {
       if (!selectedStudentDetail?.id) return [];
       const start = startOfMonth(detailMonthFilter);
       const end = endOfMonth(detailMonthFilter);
-      const { data, error } = await supabase
+      let query = supabase
         .from("attendance")
         .select("id, date, status, time_in, time_out")
         .eq("student_id", selectedStudentDetail.id)
         .gte("date", format(start, "yyyy-MM-dd")) // Corrected format string
-        .lte("date", format(end, "yyyy-MM-dd"))
-        .order("date");
+        .lte("date", format(end, "yyyy-MM-dd"));
+
+      if (user?.role === 'teacher') {
+        query = query.eq('marked_by', user.id);
+      }
+
+      const { data, error } = await query.order("date");
       if (error) throw error;
       return data as StudentDetailAttendance[];
     },

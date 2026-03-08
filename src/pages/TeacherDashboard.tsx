@@ -56,10 +56,20 @@ export default function TeacherDashboard() {
 
   // Data Fetching
   const { data: teacherStudents = [], isLoading: isStudentsLoading } = useQuery({
-    queryKey: ["teacher-students", teacherId],
+    queryKey: ["teacher-students", teacherId, user?.role],
     queryFn: async () => {
       if (!teacherId) return [];
-      const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
+      let query = supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
+
+      if (user?.role === 'teacher') {
+        // Find teacher's grade and filter students
+        const { data: teacher } = await supabase.from('teachers').select('grade').eq('id', teacherId).single();
+        if (teacher?.grade) {
+          query = query.eq('grade', teacher.grade);
+        }
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -156,16 +166,21 @@ export default function TeacherDashboard() {
     enabled: !!centerId && !!user?.id });
 
   const { data: historicalAttendance = [] } = useQuery({
-    queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to],
+    queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to, user?.role, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("attendance")
         .select("date, status")
         .eq("center_id", centerId)
         .gte("date", dateRange.from)
-        .lte("date", dateRange.to)
-        .order("date");
+        .lte("date", dateRange.to);
+
+      if (user?.role === 'teacher' && user?.id) {
+        query = query.eq('marked_by', user.id);
+      }
+
+      const { data, error } = await query.order("date");
       if (error) throw error;
       return data || [];
     },
