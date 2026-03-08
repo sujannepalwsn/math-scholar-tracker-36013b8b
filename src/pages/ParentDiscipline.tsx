@@ -83,7 +83,7 @@ export default function ParentDiscipline() {
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
             <CardTitle className="text-xl font-black flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/10">
-          ClockHistory className="h-6 w-6 text-primary" />
+          <Clock className="h-6 w-6 text-primary" />
               </div>
               Incident Chronology
             </CardTitle>
