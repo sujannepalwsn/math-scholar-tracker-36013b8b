@@ -1,4 +1,4 @@
-import React, { cn, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { BookOpen, Calendar, Info, Star, Target, TrendingUp, User, Zap } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useQuery } from "@tanstack/react-query"

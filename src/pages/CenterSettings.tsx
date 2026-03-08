@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Settings, User } from "lucide-react";
+import { Building, ImageIcon, MapPin, Palette, Phone as PhoneIcon, Save, Settings, User } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"

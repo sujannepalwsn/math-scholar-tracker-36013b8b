@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, Bell, X } from "lucide-react";
+import { ArrowRight, Bell, X, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Home, LogOut, Settings, User } from "lucide-react";
+import { DollarSign, Home, KeyRound, LogOut, Settings, Shield, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"

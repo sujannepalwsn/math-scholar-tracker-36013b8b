@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"

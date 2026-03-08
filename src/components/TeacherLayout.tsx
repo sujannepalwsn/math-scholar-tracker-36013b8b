@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Brain, Calendar, CheckSquare, ClipboardCheck, Clock, FileText, Home, LogOut, MessageSquare, Paintbrush, TrendingUp, User, Video } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Brain, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, Home, KeyRound, LayoutList, LogOut, MessageSquare, Paintbrush, TrendingUp, User, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"

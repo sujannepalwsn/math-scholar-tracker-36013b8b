@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, Camera, Info, Paintbrush, Star, Video } from "lucide-react";
+import { Calendar, Camera, ExternalLink, Info, Paintbrush, Star, Video } from "lucide-react";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"

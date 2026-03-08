@@ -1,4 +1,5 @@
 import React from "react";
+import { Dot } from "lucide-react";
 import { OTPInput, OTPInputContext } from "input-otp"
 
 import { cn } from "@/lib/utils"

@@ -1,3 +1,4 @@
+import { type LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
