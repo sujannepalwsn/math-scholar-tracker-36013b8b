@@ -1,6 +1,7 @@
-import { Bell, Cpu, Database, Globe, Settings2, Shield } from "lucide-react";
+import { Bell, Cpu, Database, Globe, Palette, Settings2, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import ThemeSelector from "@/components/ThemeSelector";
 
 const Settings = () => (
   <div className="space-y-8 animate-in fade-in duration-1000">
@@ -18,6 +19,20 @@ const Settings = () => (
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+       <Card className="md:col-span-2 border-none shadow-strong rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Palette className="h-6 w-6 text-primary" />
+              </div>
+              Appearance Matrix
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            <ThemeSelector />
+          </CardContent>
+       </Card>
+
        <Card className="md:col-span-2 border-none shadow-strong rounded-3xl bg-white/40 backdrop-blur-md border border-white/20 overflow-hidden">
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
             <CardTitle className="text-xl font-black flex items-center gap-3">
