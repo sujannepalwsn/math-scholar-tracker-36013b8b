@@ -170,6 +170,24 @@ const ParentDashboardContent = () => {
   const homeworkPendingCount = homeworkStatus.filter(hs => !['completed', 'checked'].includes(hs.status)).length;
   const avgPerformance = performanceTrend.length > 0 ? Math.round(performanceTrend.reduce((a, b) => a + b.value, 0) / performanceTrend.length) : 0;
 
+  const subjectPerformance = useMemo(() => {
+    const subjectsMap = new Map<string, { total: number; count: number }>();
+    testResults.forEach((tr: any) => {
+      const subject = tr.tests?.subject;
+      if (subject) {
+        if (!subjectsMap.has(subject)) subjectsMap.set(subject, { total: 0, count: 0 });
+        const pct = (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100;
+        const entry = subjectsMap.get(subject)!;
+        entry.total += pct;
+        entry.count += 1;
+      }
+    });
+    return Array.from(subjectsMap.entries()).map(([name, { total, count }]) => ({
+      name,
+      percentage: Math.round(total / count)
+    })).sort((a, b) => b.percentage - a.percentage);
+  }, [testResults]);
+
   const parentAlerts = [
     ...homeworkStatus.filter(hs => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && !['completed', 'checked'].includes(hs.status)).map(hs => ({
       id: `hw-${hs.id}`,
@@ -270,6 +288,43 @@ const ParentDashboardContent = () => {
         <KPICard title="Homework Pending" value={homeworkPendingCount} description="Active Assignments" icon={Book} color="orange" onClick={() => navigate("/parent/homework")} />
         <KPICard title="Fees Payable" value={`₹${pendingFees}`} description="Outstanding Liability" icon={Wallet} color="rose" onClick={() => navigate("/parent/finance")} />
       </div>
+
+      {/* Subject Wise Performance Cards */}
+      {subjectPerformance.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Subject Performance</h3>
+          </div>
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+            {subjectPerformance.map((sp) => (
+              <Card key={sp.name} className="border-none shadow-soft bg-white/60 backdrop-blur-sm overflow-hidden group hover:shadow-medium transition-all duration-300">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground truncate max-w-[80px] md:max-w-none">{sp.name}</p>
+                      <p className="text-xl font-black group-hover:text-primary transition-colors">{sp.percentage}%</p>
+                    </div>
+                    <div className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      sp.percentage >= 75 ? "bg-green-500" : sp.percentage >= 50 ? "bg-orange-500" : "bg-red-500"
+                    )} />
+                  </div>
+                  <div className="mt-2 w-full h-1 bg-muted/30 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full transition-all duration-1000",
+                        sp.percentage >= 75 ? "bg-green-500" : sp.percentage >= 50 ? "bg-orange-500" : "bg-red-500"
+                      )}
+                      style={{ width: `${sp.percentage}%` }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
