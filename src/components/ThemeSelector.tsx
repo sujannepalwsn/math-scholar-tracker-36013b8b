@@ -44,7 +44,7 @@ export default function ThemeSelector({ onThemeChange }: ThemeSelectorProps) {
                 "relative group rounded-2xl border-2 p-4 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]",
                 userPreferences.theme === preset.name
                   ? "border-primary bg-primary/5 shadow-soft ring-4 ring-primary/10"
-                  : "border-border hover:border-primary/40 bg-white/40"
+                  : "border-border hover:border-primary/40 bg-card/40"
               )}
             >
               <div className="flex gap-2 mb-3">
@@ -70,7 +70,7 @@ export default function ThemeSelector({ onThemeChange }: ThemeSelectorProps) {
 
       {/* Toggles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <Card className="border-none shadow-soft rounded-3xl bg-white/60 backdrop-blur-md border border-white/20 overflow-hidden group hover:shadow-medium transition-all">
+        <Card className="border-none shadow-soft rounded-3xl bg-card/60 backdrop-blur-md border border-border/20 overflow-hidden group hover:shadow-medium transition-all">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className={cn(
@@ -80,7 +80,7 @@ export default function ThemeSelector({ onThemeChange }: ThemeSelectorProps) {
                 {userPreferences.darkMode ? <Moon className="h-6 w-6" /> : <Sun className="h-6 w-6" />}
               </div>
               <div>
-                <Label className="font-black text-slate-800 uppercase tracking-widest text-xs">Nocturnal Mode</Label>
+                <Label className="font-black text-foreground/90 uppercase tracking-widest text-xs">Nocturnal Mode</Label>
                 <p className="text-xs font-medium text-muted-foreground">High contrast dark appearance</p>
               </div>
             </div>
@@ -92,7 +92,7 @@ export default function ThemeSelector({ onThemeChange }: ThemeSelectorProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-soft rounded-3xl bg-white/60 backdrop-blur-md border border-white/20 overflow-hidden group hover:shadow-medium transition-all">
+        <Card className="border-none shadow-soft rounded-3xl bg-card/60 backdrop-blur-md border border-border/20 overflow-hidden group hover:shadow-medium transition-all">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className={cn(
@@ -102,7 +102,7 @@ export default function ThemeSelector({ onThemeChange }: ThemeSelectorProps) {
                 <Smartphone className="h-6 w-6" />
               </div>
               <div>
-                <Label className="font-black text-slate-800 uppercase tracking-widest text-xs">Information Density</Label>
+                <Label className="font-black text-foreground/90 uppercase tracking-widest text-xs">Information Density</Label>
                 <p className="text-xs font-medium text-muted-foreground">Tighter spacing for data clarity</p>
               </div>
             </div>

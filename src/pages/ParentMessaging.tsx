@@ -144,7 +144,7 @@ export default function ParentMessaging() {
             <p className="text-muted-foreground text-sm font-medium">Direct secure channel for academic and developmental synchronization.</p>
           </div>
         </div>
-        <div className="bg-white/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/40 shadow-soft flex items-center gap-3">
+        <div className="bg-card/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/40 shadow-soft flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/10">
             <Shield className="h-5 w-5 text-primary" />
           </div>
@@ -155,14 +155,14 @@ export default function ParentMessaging() {
         </div>
       </div>
 
-      <Card className="flex-1 flex flex-col border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-white/40 backdrop-blur-md border border-white/20">
-        <CardHeader className="bg-white/60 backdrop-blur-md py-6 px-8 border-b border-slate-100 flex-row items-center justify-between shrink-0">
+      <Card className="flex-1 flex flex-col border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="bg-card/60 backdrop-blur-md py-6 px-8 border-b border-slate-100 flex-row items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-lg shadow-primary/20">
                <MessageSquare className="h-6 w-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl font-black text-slate-800 tracking-tight">
+              <CardTitle className="text-xl font-black text-foreground/90 tracking-tight">
                 {conversation.centers?.name || "Institution Control"}
               </CardTitle>
               <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function ParentMessaging() {
               </div>
             </div>
           </div>
-          <Badge className="bg-indigo-50 text-indigo-700 border-none font-black text-[10px] px-3 py-1 uppercase tracking-widest hidden sm:flex">Liaison Profile</Badge>
+          <Badge className="bg-primary/5 text-primary/70 border-none font-black text-[10px] px-3 py-1 uppercase tracking-widest hidden sm:flex">Liaison Profile</Badge>
         </CardHeader>
 
         <CardContent className="flex-1 flex flex-col p-0 min-h-0">
@@ -225,7 +225,7 @@ export default function ParentMessaging() {
             </div>
           </ScrollArea>
 
-          <div className="p-6 bg-white/60 backdrop-blur-md border-t border-slate-100 shrink-0">
+          <div className="p-6 bg-card/60 backdrop-blur-md border-t border-slate-100 shrink-0">
             <form onSubmit={handleSendMessage} className="relative">
               <Textarea
                 value={newMessage}

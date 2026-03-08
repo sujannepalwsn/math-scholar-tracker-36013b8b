@@ -219,24 +219,33 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Primary
     applyVar('--primary', preset.primary);
     applyVar('--ring', preset.primary);
+    root.style.setProperty('--primary-hex', preset.primary);
 
-    // Secondary (Shadcn accent is often used for hovers)
+    // Secondary & Accent (Hover states and highlights)
+    applyVar('--secondary', preset.secondary);
+    root.style.setProperty('--secondary-foreground', '0 0% 100%');
     applyVar('--accent', preset.secondary);
     root.style.setProperty('--accent-foreground', '0 0% 100%');
 
-    // Neutral / Background
+    // Neutral (Backgrounds and cards)
     if (userPreferences.darkMode) {
       if (preset.name === "Graphite Dark") {
         applyVar('--background', preset.background);
         applyVar('--card', preset.background);
       } else {
+        // Standard dark mode palette if not Graphite Dark
         root.style.setProperty('--background', '222 47% 6%');
         root.style.setProperty('--card', '222 47% 9%');
       }
+      root.style.setProperty('--foreground', '210 40% 98%');
+      root.style.setProperty('--card-foreground', '210 40% 98%');
     } else {
       applyVar('--background', preset.background);
-      // Intelligence: use white for cards on tinted backgrounds for better contrast
+      // For light mode, we use white for cards for better elevation visibility,
+      // but we could also use a very light version of the background if preferred.
       applyVar('--card', '#ffffff');
+      root.style.setProperty('--foreground', '222 47% 11%');
+      root.style.setProperty('--card-foreground', '222 47% 11%');
     }
 
     // Sidebar

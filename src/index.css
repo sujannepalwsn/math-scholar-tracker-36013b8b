@@ -122,11 +122,11 @@
 @layer components {
   /* Glassmorphism system */
   .glass-card {
-    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-soft;
+    @apply bg-card/60 backdrop-blur-xl border border-border/40 shadow-soft;
   }
 
   .glass-card-dark {
-    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-strong;
+    @apply bg-slate-900/60 backdrop-blur-xl border border-border/10 shadow-strong;
   }
 
   /* Custom Scrollbar */
