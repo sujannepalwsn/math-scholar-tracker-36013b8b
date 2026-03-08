@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, Home, KeyRound, LogOut, MessageSquare, Paintbrush, Star, User, Video } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, Home, KeyRound, LogOut, MessageSquare, Paintbrush, Settings, Star, User, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -29,6 +29,7 @@ const navItems: Array<{
   { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communications' },
   { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communications' },
   { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-settings", label: "Settings", icon: Settings, role: 'parent' as const },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'parent' as const },
 ];
 
