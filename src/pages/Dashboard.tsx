@@ -379,8 +379,6 @@ export default function Dashboard() {
       .slice(0, 50);
   }, [recentTestResults]);
 
-  const absentTeachers = teachers.filter((t) => teacherAttendance.some((ta) => ta.teacher_id === t.id && ta.status === "absent"));
-
   // Connect instruction grid to period_schedules with current day
   const todayClasses = useMemo(() => {
     return periodSchedules.map((ps: any) => ({
@@ -580,24 +578,40 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y">
-                  {absentTeachers.length === 0 ? (
-                    <p className="p-8 text-center text-xs italic text-success font-bold">All teachers are present!</p>
+                <div className="divide-y max-h-[400px] overflow-y-auto custom-scrollbar">
+                  {teachers.length === 0 ? (
+                    <p className="p-8 text-center text-xs italic text-muted-foreground">No teachers found</p>
                   ) : (
-                    absentTeachers.map((t) => (
-                      <div key={t.id} className="p-4 flex justify-between items-center hover:bg-destructive/5 transition-colors cursor-pointer" onClick={() => navigate("/teachers")}>
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center">
-                            <Users className="h-4 w-4 text-destructive" />
+                    teachers.map((t) => {
+                      const attendance = teacherAttendance.find((ta) => ta.teacher_id === t.id);
+                      const status = attendance?.status || "pending";
+
+                      return (
+                        <div key={t.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate("/teachers")}>
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "h-8 w-8 rounded-full flex items-center justify-center",
+                              status === "present" ? "bg-success/10" : status === "absent" ? "bg-destructive/10" : "bg-warning/10"
+                            )}>
+                              <Users className={cn(
+                                "h-4 w-4",
+                                status === "present" ? "text-success" : status === "absent" ? "text-destructive" : "text-warning"
+                              )} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold">{t.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{t.subject}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold">{t.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{t.subject}</p>
-                          </div>
+                          <Badge
+                            variant={status === "present" ? "success" : status === "absent" ? "destructive" : "warning"}
+                            className="font-bold text-[9px] uppercase"
+                          >
+                            {status === "present" ? "Present" : status === "absent" ? "Absent" : "Not Marked"}
+                          </Badge>
                         </div>
-                        <Badge variant="destructive" className="font-bold text-[9px] uppercase">Absent</Badge>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </CardContent>
