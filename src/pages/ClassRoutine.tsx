@@ -69,10 +69,16 @@ export default function ClassRoutine() {
     enabled: !!user?.center_id });
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
-    queryKey: ["period-schedules", user?.center_id, selectedGrade],
+    queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name)`).eq("center_id", user.center_id).eq("grade", selectedGrade).order("day_of_week");
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name)`).eq("center_id", user.center_id).eq("grade", selectedGrade);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('teacher_id', user.teacher_id);
+      }
+
+      const { data, error } = await query.order("day_of_week");
       if (error) throw error;
       return data;
     },

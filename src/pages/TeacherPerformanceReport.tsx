@@ -31,10 +31,16 @@ export default function TeacherPerformanceReport() {
   const range = getDateRange();
 
   const { data: teachers = [] } = useQuery({
-    queryKey: ["teachers-for-report", user?.center_id],
+    queryKey: ["teachers-for-report", user?.center_id, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("teachers").select("id, name").eq("center_id", user.center_id).eq("is_active", true).order("name");
+      let query = supabase.from("teachers").select("id, name").eq("center_id", user.center_id).eq("is_active", true);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('id', user.teacher_id);
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },
@@ -42,11 +48,17 @@ export default function TeacherPerformanceReport() {
 
   // Teacher attendance
   const { data: teacherAttendance = [] } = useQuery({
-    queryKey: ["teacher-attendance-report", user?.center_id, range.start, range.end, selectedTeacher],
+    queryKey: ["teacher-attendance-report", user?.center_id, range.start, range.end, selectedTeacher, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("teacher_attendance").select("*").eq("center_id", user.center_id).gte("date", range.start).lte("date", range.end);
-      if (selectedTeacher !== "all") query = query.eq("teacher_id", selectedTeacher);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('teacher_id', user.teacher_id);
+      } else if (selectedTeacher !== "all") {
+        query = query.eq("teacher_id", selectedTeacher);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -55,11 +67,17 @@ export default function TeacherPerformanceReport() {
 
   // Lesson plans created
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-report", user?.center_id, range.start, range.end, selectedTeacher],
+    queryKey: ["lesson-plans-report", user?.center_id, range.start, range.end, selectedTeacher, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).gte("lesson_date", range.start).lte("lesson_date", range.end);
-      if (selectedTeacher !== "all") query = query.eq("teacher_id", selectedTeacher);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('teacher_id', user.teacher_id);
+      } else if (selectedTeacher !== "all") {
+        query = query.eq("teacher_id", selectedTeacher);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -68,11 +86,17 @@ export default function TeacherPerformanceReport() {
 
   // Homework assigned
   const { data: homework = [] } = useQuery({
-    queryKey: ["homework-report", user?.center_id, range.start, range.end, selectedTeacher],
+    queryKey: ["homework-report", user?.center_id, range.start, range.end, selectedTeacher, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("homework").select("*").eq("center_id", user.center_id).gte("due_date", range.start).lte("due_date", range.end);
-      if (selectedTeacher !== "all") query = query.eq("teacher_id", selectedTeacher);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('teacher_id', user.teacher_id);
+      } else if (selectedTeacher !== "all") {
+        query = query.eq("teacher_id", selectedTeacher);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -81,11 +105,17 @@ export default function TeacherPerformanceReport() {
 
   // Student chapters (evaluations)
   const { data: evaluations = [] } = useQuery({
-    queryKey: ["evaluations-report", user?.center_id, range.start, range.end, selectedTeacher],
+    queryKey: ["evaluations-report", user?.center_id, range.start, range.end, selectedTeacher, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("student_chapters").select("*").gte("completed_at", range.start).lte("completed_at", range.end);
-      if (selectedTeacher !== "all") query = query.eq("recorded_by_teacher_id", selectedTeacher);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('recorded_by_teacher_id', user.teacher_id);
+      } else if (selectedTeacher !== "all") {
+        query = query.eq("recorded_by_teacher_id", selectedTeacher);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -109,7 +139,7 @@ export default function TeacherPerformanceReport() {
       attendancePct: totalAttDays > 0 ? Math.round((presentDays / totalAttDays) * 100) : 0,
       lessonPlans: lps.length,
       homework: hws.length,
-      evaluations: evals.length };
+      evaluations: evals.filter(e => e.recorded_by_teacher_id === t.id).length };
   }).filter(t => selectedTeacher === "all" || t.id === selectedTeacher);
 
   return (

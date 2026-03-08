@@ -39,20 +39,25 @@ export default function AttendanceSummary() {
   const classes = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
   const { data: attendanceData = [] } = useQuery({
-    queryKey: ['attendance-summary', selectedMonth.toISOString().slice(0, 7), user?.center_id],
+    queryKey: ['attendance-summary', selectedMonth.toISOString().slice(0, 7), user?.center_id, user?.id],
     queryFn: async () => {
       const startDate = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(selectedMonth), 'yyyy-MM-dd');
       const studentIds = students.map(s => s.id);
       if (studentIds.length === 0) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('attendance')
         .select('*, students(name, grade)')
         .in('student_id', studentIds)
         .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date');
+        .lte('date', endDate);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('marked_by', user.id);
+      }
+
+      const { data, error } = await query.order('date');
 
       if (error) throw error;
       return data;

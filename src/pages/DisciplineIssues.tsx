@@ -85,7 +85,7 @@ export default function DisciplineIssues() {
 
   // Fetch discipline issues
   const { data: issues = [], isLoading: issuesLoading } = useQuery({ // Destructure isLoading here
-    queryKey: ["discipline-issues", user?.center_id, gradeFilter],
+    queryKey: ["discipline-issues", user?.center_id, gradeFilter, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
@@ -96,6 +96,10 @@ export default function DisciplineIssues() {
       
       if (gradeFilter !== "all") {
         query = query.eq("students.grade", gradeFilter);
+      }
+
+      if (user?.role === 'teacher') {
+        query = query.eq('reported_by', user.id);
       }
 
       const { data, error } = await query;

@@ -75,14 +75,16 @@ export default function Tests() {
 
   // Fetch tests
   const { data: tests = [] } = useQuery({
-    queryKey: ["tests", user?.center_id],
+    queryKey: ["tests", user?.center_id, user?.id],
     queryFn: async () => {
       let query = supabase
         .from("tests")
         .select("*, lesson_plans(id, subject, chapter, topic, grade)") // Fetch lesson_plans details
         .order("date", { ascending: false });
       
-      if (user?.role !== 'admin' && user?.center_id) {
+      if (user?.role === 'teacher') {
+        query = query.eq('created_by', user.id);
+      } else if (user?.role !== 'admin' && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }
       
@@ -192,6 +194,7 @@ export default function Tests() {
         center_id: user?.center_id!,
         questions: questions.length > 0 ? (questions as any) : null,
         lesson_plan_id: primaryLessonPlanId, // Save the primary lesson plan ID
+        created_by: user?.id,
       }).select().single();
 
       if (error) throw error;

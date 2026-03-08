@@ -84,7 +84,7 @@ export default function LessonTracking() {
 
   // Fetch lesson plans for dropdown and listing
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject],
+    queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject, user?.teacher_id],
     queryFn: async () => {
       let query = supabase
         .from("lesson_plans")
@@ -93,6 +93,10 @@ export default function LessonTracking() {
         .order("lesson_date", { ascending: false });
 
       if (filterSubject !== "all") query = query.eq("subject", filterSubject);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('teacher_id', user.teacher_id);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -103,7 +107,7 @@ export default function LessonTracking() {
 
   // Fetch student_chapters (now linked to lesson_plans)
   const { data: studentLessonRecordsRaw = [] } = useQuery({
-    queryKey: ["student-lesson-records", user?.center_id, filterSubject, filterStudent, filterGrade],
+    queryKey: ["student-lesson-records", user?.center_id, filterSubject, filterStudent, filterGrade, user?.teacher_id],
     queryFn: async () => {
       let query = supabase
         .from("student_chapters")
@@ -118,6 +122,10 @@ export default function LessonTracking() {
       if (filterStudent !== "all") query = query.eq("student_id", filterStudent);
       if (filterGrade !== "all") query = query.eq("students.grade", filterGrade);
       if (filterSubject !== "all") query = query.eq("lesson_plans.subject", filterSubject); // Filter by lesson plan subject
+
+      if (user?.role === 'teacher') {
+        query = query.eq('recorded_by_teacher_id', user.teacher_id);
+      }
 
       const { data, error } = await query.order("completed_at", { ascending: false });
       if (error) throw error;

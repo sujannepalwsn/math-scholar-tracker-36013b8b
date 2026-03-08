@@ -41,13 +41,19 @@ export default function Summary() {
   // Fetch attendance
   const studentIds = students?.map((s) => s.id) || [];
   const { data: allAttendance } = useQuery({
-    queryKey: ["all-attendance", user?.center_id, studentIds.length > 0 ? studentIds.join(",") : ""],
+    queryKey: ["all-attendance", user?.center_id, studentIds.length > 0 ? studentIds.join(",") : "", user?.role, user?.id],
     queryFn: async () => {
       if (!studentIds.length) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("attendance")
         .select("*")
         .in("student_id", studentIds);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('marked_by', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

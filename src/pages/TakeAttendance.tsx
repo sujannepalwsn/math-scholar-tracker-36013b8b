@@ -66,14 +66,20 @@ export default function TakeAttendance() {
     } });
 
   const { data: existingAttendance } = useQuery({
-    queryKey: ["attendance", dateStr, user?.center_id],
+    queryKey: ["attendance", dateStr, user?.center_id, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("attendance")
         .select("student_id, status, time_in, time_out, is_locked")
         .eq("date", dateStr)
         .eq("center_id", user.center_id);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('marked_by', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -161,6 +167,7 @@ export default function TakeAttendance() {
         status: attendance[student.id]?.present ? "present" : "absent",
         time_in: attendance[student.id]?.timeIn || null,
         time_out: attendance[student.id]?.timeOut || null,
+        marked_by: user.id,
         is_locked: true, // Lock after submission
       }));
       const { error } = await supabase.from("attendance").insert(records);
