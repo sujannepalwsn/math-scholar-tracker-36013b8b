@@ -238,7 +238,7 @@ export default function CenterSettings() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone" className="flex items-center gap-1">
-                  <PhoneIconIcon className="h-4 w-4" />
+                  <PhoneIcon className="h-4 w-4" />
                   Phone
                 </Label>
                 <Input
