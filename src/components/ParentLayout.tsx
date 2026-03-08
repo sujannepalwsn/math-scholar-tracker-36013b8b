@@ -1,13 +1,14 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, DollarSign, LogOut, User, Book, Paintbrush, AlertTriangle, KeyRound, Video, MessageSquare, Star, BookOpen, Calendar, Menu } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, Home, KeyRound, LogOut, MessageSquare, Paintbrush, Settings, Star, User, Video } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
 const navItems: Array<{
   to: string;
@@ -15,23 +16,20 @@ const navItems: Array<{
   icon: React.ElementType;
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
-
-  // Academics Group
   { to: "/parent-lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'parent' as const, category: 'Academics' },
+  { to: "/parent-student-report", label: "Academic Report", icon: BarChart3, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-homework", label: "Homework", icon: Book, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const, category: 'Academics' },
-
-  // Others
-  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const },
-  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const },
-  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const },
-  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const },
-  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'parent' as const },
+  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-settings", label: "Settings", icon: Settings, role: 'parent' as const, category: 'Administration' },
 ];
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
@@ -67,8 +65,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       return count || 0;
     },
     enabled: !!user?.id,
-    refetchInterval: 10000,
-  });
+    refetchInterval: 10000 });
 
   const updatedNavItems = navItems.map(item =>
     item.to === "/parent-messages" ? { ...item, unreadCount: unreadMessageCount } : item
@@ -82,7 +79,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 text-sm">
         <User className="h-4 w-4 text-muted-foreground" />
-        <span className="text-muted-foreground">{user?.username}</span>
+        <span className="text-muted-foreground truncate">{user?.username}</span>
       </div>
       <Button variant="ghost" size="sm" onClick={handleLogout}>
         <LogOut className="h-4 w-4" />
@@ -92,7 +89,6 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={updatedNavItems}
         headerContent={headerContent}
@@ -102,31 +98,26 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         onMobileOpenChange={setMobileMenuOpen}
       />
 
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
-        <div className="flex-1">
-          <CenterLogo size="sm" showName={true} />
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden hover:bg-muted"
-        >
-          <Menu className="h-5 w-5" />
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
+        <CenterLogo size="sm" showName={true} />
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
+          <LogOut className="h-4 w-4" />
         </Button>
       </header>
 
-      {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-y-auto bg-background transition-all duration-300",
+        "flex-1 overflow-y-auto bg-background transition-all duration-200",
         "md:h-screen",
-        "pt-20 md:pt-0",
-        "px-4 pb-8 md:p-8",
+        "pt-16 md:pt-0",
+        "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
-        {children}
+        <div className="page-enter max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
+
+      <BottomNav navItems={updatedNavItems} />
     </div>
   );
 }

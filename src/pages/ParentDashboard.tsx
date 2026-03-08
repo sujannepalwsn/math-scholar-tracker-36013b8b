@@ -1,37 +1,36 @@
-import { AlertTriangle, Book, BookOpen, Calendar as CalendarIcon, CheckCircle, ClipboardCheck, Clock, DollarSign, FileText, LogOut, MessageSquare, Paintbrush, Radio, Star, User, Video, XCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState, useMemo, useEffect } from 'react';
-import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isPast, isToday, isFuture } from 'date-fns';
-import { Tables } from '@/integrations/supabase/types';
-import { safeFormatDate, cn } from '@/lib/utils'; // Import safeFormatDate
-import ParentChapterPerformanceTable from '@/components/parent/ParentChapterPerformanceTable'; // NEW
-import ParentChapterDetailModal from '@/components/parent/ParentChapterDetailModal'; // NEW
+import React, { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
+import { QueryClient, QueryClientProvider, useMutation, useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
+import { eachDayOfInterval, endOfMonth, format, isFuture, isPast, isToday, startOfDay, subDays, subYears } from "date-fns"
+import { cn, formatCurrency, safeFormatDate } from "@/lib/utils"
+import { KPICard } from "@/components/dashboard/KPICard"
+import { AlertList } from "@/components/dashboard/AlertList"
+import CenterLogo from "@/components/CenterLogo";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
+import { Tables } from "@/integrations/supabase/types"
+import { Invoice, Payment } from "@/integrations/supabase/finance-types"
 
-// Initialize QueryClient (v4 syntax)
+// Initialize QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 min
-      retry: 1,
-    },
-  },
-});
+      staleTime: 1000 * 60,
+      retry: 1 } } });
 
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
-type DisciplineIssue = Tables<'discipline_issues'>;
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentChapter = Tables<'student_chapters'>;
-type Invoice = Tables<'invoices'>;
-type Payment = Tables<'payments'>;
 type Test = Tables<'tests'>;
 type Homework = Tables<'homework'>;
 type TestResult = Tables<'test_results'>;
@@ -43,124 +42,32 @@ interface ChapterPerformanceGroup {
   homeworkRecords: (StudentHomeworkRecord & { homework: Pick<Homework, 'id' | 'title' | 'subject' | 'due_date'> })[];
 }
 
-const MiniCalendar = ({ attendance, lessonRecords, tests, selectedMonth, setSelectedMonth }) => {
-  const daysInMonth = eachDayOfInterval({ start: startOfMonth(selectedMonth), end: endOfMonth(selectedMonth) });
-
-  const getAttendanceStatus = (date: string) => {
-    const record = attendance.find((a: any) => safeFormatDate(a.date, 'yyyy-MM-dd') === date);
-    if (!record) return 'none';
-    return record.status === 'present' ? 'present' : 'absent';
-  };
-
-  const getTooltipData = (date: string) => {
-    const dayLessons = lessonRecords.filter((lr: any) => safeFormatDate(lr.completed_at, 'yyyy-MM-dd') === date);
-    const dayTests = tests.filter(t => safeFormatDate(t.date_taken, 'yyyy-MM-dd') === date);
-    return { dayLessons, dayTests };
-  };
-
-  const colors = { present: '#16a34a', absent: '#dc2626', none: '#e5e7eb' };
-
-  return (
-    <div className="w-full max-w-md border rounded p-2 bg-white shadow">
-      {/* Month Navigation */}
-      <div className="flex justify-between items-center mb-2">
-        <button onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))} className="px-2">‹</button>
-        <span className="font-semibold">{format(selectedMonth, 'MMMM yyyy')}</span>
-        <button onClick={() => setSelectedMonth(addMonths(selectedMonth, 1))} className="px-2">›</button>
-      </div>
-
-      {/* Week Days */}
-      <div className="grid grid-cols-7 gap-1 mb-1 text-center font-semibold text-xs text-gray-500">
-        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
-      </div>
-
-      {/* Calendar Days */}
-      <div className="grid grid-cols-7 gap-1">
-        {daysInMonth.map(day => {
-          const dateStr = safeFormatDate(day, 'yyyy-MM-dd');
-          const status = getAttendanceStatus(dateStr);
-          const tooltipData = getTooltipData(dateStr);
-
-          return (
-            <div key={dateStr} className="relative group">
-              <div
-                className="aspect-square rounded flex items-center justify-center text-xs font-medium cursor-pointer"
-                style={{ backgroundColor: colors[status], color: status !== 'none' ? 'white' : 'inherit' }}
-              >
-                {day.getDate()}
-              </div>
-
-              {(tooltipData.dayLessons.length > 0 || tooltipData.dayTests.length > 0) && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-56 p-2 bg-white border rounded shadow-strong opacity-0 group-hover:opacity-100 transition-opacity z-10 text-xs">
-                  {tooltipData.dayLessons.length > 0 && (
-                    <div className="mb-1">
-                      <p className="font-semibold border-b mb-1">Lessons</p>
-                      {tooltipData.dayLessons.map((lr: any) => (
-                        <p key={lr.id}>
-                          <span className="font-semibold">{lr.lesson_plans?.chapter}</span> ({lr.lesson_plans?.subject}) - {lr.lesson_plans?.topic || 'No topic'}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                  {tooltipData.dayTests.length > 0 && (
-                    <div>
-                      <p className="font-semibold border-b mb-1">Tests</p>
-                      {tooltipData.dayTests.map(t => (
-                        <p key={t.id}>
-                          {t.tests?.name}: {t.marks_obtained}/{t.tests?.total_marks}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 const ParentDashboardContent = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [showMiniCalendar, setShowMiniCalendar] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [dateRange, setDateRange] = useState<{from: string, to: string}>({
-    from: format(subMonths(new Date(), 3), 'yyyy-MM-dd'), // Default to last 3 months
-    to: format(new Date(), 'yyyy-MM-dd')
-  });
+  const today = new Date().toISOString().split("T")[0];
   
-  // Multi-child support: track selected student
+  const [dateRange, setDateRange] = useState({
+    from: subDays(new Date(), 30).toISOString().split("T")[0],
+    to: today
+  });
+
   const linkedStudents = user?.linked_students || [];
-  const hasMultipleChildren = linkedStudents.length > 1;
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     user?.student_id || linkedStudents[0]?.id || null
   );
 
-  const [showChapterDetailModal, setShowChapterDetailModal] = useState(false); // NEW
-  const [selectedChapterGroup, setSelectedChapterGroup] = useState<ChapterPerformanceGroup | null>(null); // NEW
+  const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformanceGroup | null>(null);
+  const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
-  const today = new Date();
-  const todayStr = format(today, 'yyyy-MM-dd');
-
-  // Update selected student when linked_students changes
   useEffect(() => {
     if (!selectedStudentId && linkedStudents.length > 0) {
       setSelectedStudentId(linkedStudents[0].id);
     }
   }, [linkedStudents, selectedStudentId]);
 
-  if (!user || user.role !== 'parent' || (!user.student_id && linkedStudents.length === 0)) {
-    navigate('/login-parent');
-    return null;
-  }
+  const activeStudentId = selectedStudentId || user?.student_id;
 
-  // Use the selected student ID (or fallback to user.student_id for legacy support)
-  const activeStudentId = selectedStudentId || user.student_id;
-
-  // Fetch student details
   const { data: student } = useQuery({
     queryKey: ['student', activeStudentId],
     queryFn: async () => {
@@ -169,133 +76,136 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
-  // Fetch upcoming center events for this student's center
-  const { data: upcomingEvents = [] } = useQuery({
-    queryKey: ['parent-upcoming-events', student?.center_id],
-    queryFn: async () => {
-      if (!student?.center_id) return [];
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const { data, error } = await supabase
-        .from('center_events')
-        .select('*')
-        .eq('center_id', student.center_id)
-        .gte('event_date', today)
-        .order('event_date', { ascending: true })
-        .limit(5);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!student?.center_id,
-  });
-
-  // Fetch latest broadcast message for this parent's conversation
-  const { data: latestBroadcastMessage } = useQuery({
-    queryKey: ['latest-broadcast-message', user.id],
-    queryFn: async () => {
-      if (!user.id) return null;
-      const { data: conversation, error: convError } = await supabase
-        .from('chat_conversations')
-        .select('id')
-        .eq('parent_user_id', user.id)
-        .maybeSingle();
-
-      if (convError || !conversation) return null;
-
-      const { data: message, error: msgError } = await supabase
-        .from('chat_messages')
-        .select('message_text, sent_at')
-        .eq('conversation_id', conversation.id)
-        .order('sent_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      if (msgError) console.error("Error fetching latest broadcast message:", msgError);
-      return message;
-    },
-    enabled: !!user.id,
-  });
-
-  // Attendance
   const { data: attendance = [] } = useQuery({
-    queryKey: ['attendance', activeStudentId],
+    queryKey: ['attendance', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('attendance').select('*').eq('student_id', activeStudentId).order('date', { ascending: true });
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', activeStudentId)
+        .gte('date', dateRange.from)
+        .lte('date', dateRange.to)
+        .order('date', { ascending: true });
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
-  // Tests (for MiniCalendar tooltip and Test Report)
   const { data: testResults = [] } = useQuery({
-    queryKey: ['test-results-parent-dashboard', activeStudentId],
+    queryKey: ['test-results-parent-dashboard', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('test_results').select('*, tests(*)').eq('student_id', activeStudentId).order('date_taken', { ascending: false });
+      const { data, error } = await supabase
+        .from('test_results')
+        .select('*, tests!inner(id, name, subject, total_marks, lesson_plan_id, questions)')
+        .eq('student_id', activeStudentId)
+        .gte('date_taken', dateRange.from)
+        .lte('date_taken', dateRange.to)
+        .order('date_taken', { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
-  // Lesson Records (student_chapters now links to lesson_plans)
-  const { data: lessonRecords = [] } = useQuery({
-    queryKey: ['student-lesson-records-mini-calendar', activeStudentId],
-    queryFn: async () => {
-      if (!activeStudentId) return [];
-      let query = supabase.from('student_chapters').select(`
-        *,
-        lesson_plans(id, subject, chapter, topic, lesson_date)
-      `).eq('student_id', activeStudentId).order('completed_at', { ascending: false });
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!activeStudentId,
-  });
-
-  // Homework Records
   const { data: homeworkStatus = [] } = useQuery({
-    queryKey: ['student-homework-records', activeStudentId],
+    queryKey: ['student-homework-records', activeStudentId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('student_homework_records').select('*, homework(*)').eq('student_id', activeStudentId).order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('student_homework_records')
+        .select('*, homework(*)')
+        .eq('student_id', activeStudentId)
+        .gte('created_at', `${dateRange.from}T00:00:00`)
+        .lte('created_at', `${dateRange.to}T23:59:59`)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
-  // Discipline Issues
-  const { data: disciplineIssues = [] } = useQuery({
-    queryKey: ['student-discipline-issues', activeStudentId],
-    queryFn: async () => {
-      if (!activeStudentId) return [];
-      const { data, error } = await supabase.from('discipline_issues').select('*').eq('student_id', activeStudentId).order('issue_date', { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!activeStudentId,
-  });
-
-  // Fetch Invoices for Pending Fees
   const { data: invoices = [] } = useQuery({
     queryKey: ['student-invoices-dashboard', activeStudentId],
     queryFn: async () => {
       if (!activeStudentId) return [];
       const { data, error } = await supabase.from('invoices').select('*').eq('student_id', activeStudentId);
       if (error) throw error;
-      return data as Invoice[];
+      return data || [];
     },
-    enabled: !!activeStudentId,
-  });
+    enabled: !!activeStudentId });
 
-  // Fetch all lesson plans for the center
+  const { data: lessonRecords = [] } = useQuery({
+    queryKey: ['student-lesson-records', activeStudentId],
+    queryFn: async () => {
+      if (!activeStudentId) return [];
+      const { data, error } = await supabase.from('student_chapters').select(`
+        *,
+        lesson_plans!inner(id, subject, chapter, topic, lesson_date, lesson_file_url, grade, notes),
+        recorded_by_teacher:recorded_by_teacher_id(name)
+      `).eq('student_id', activeStudentId).order('completed_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!activeStudentId });
+
+  // Fetch activities (participations)
+  const { data: preschoolActivities = [] } = useQuery({
+    queryKey: ["student-preschool-activities-report", activeStudentId, dateRange],
+    queryFn: async () => {
+      if (!activeStudentId) return [];
+      let query = supabase.from("student_activities").select("*, activities(title, description, activity_date, photo_url, video_url, activity_type_id, activity_types(name))")
+        .eq("student_id", activeStudentId)
+        .gte("created_at", `${dateRange.from}T00:00:00`)
+        .lte("created_at", `${dateRange.to}T23:59:59`);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!activeStudentId });
+
+  // Fetch discipline issues
+  const { data: disciplineIssues = [] } = useQuery({
+    queryKey: ["student-discipline-issues-report", activeStudentId, dateRange],
+    queryFn: async () => {
+      if (!activeStudentId) return [];
+      let query = supabase.from("discipline_issues").select("*, discipline_categories(name)")
+        .eq("student_id", activeStudentId)
+        .gte("issue_date", dateRange.from)
+        .lte("issue_date", dateRange.to);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!activeStudentId });
+
+  // Fetch payments
+  const { data: payments = [] } = useQuery({
+    queryKey: ["student-payments-report", activeStudentId, dateRange],
+    queryFn: async () => {
+      if (!activeStudentId) return [];
+      const { data: invoices, error: invError } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('student_id', activeStudentId);
+
+      if (invError) throw invError;
+      if (!invoices || invoices.length === 0) return [];
+
+      const invoiceIds = invoices.map(inv => inv.id);
+      const { data, error } = await supabase.from("payments").select("*")
+        .in("invoice_id", invoiceIds)
+        .gte("payment_date", dateRange.from)
+        .lte("payment_date", dateRange.to);
+      if (error) throw error;
+      return data as Payment[];
+    },
+    enabled: !!activeStudentId });
+
+  // Fetch all lesson plans for context
   const { data: allLessonPlans = [] } = useQuery({
     queryKey: ["all-lesson-plans-for-report", user?.center_id],
     queryFn: async () => {
@@ -308,199 +218,124 @@ const ParentDashboardContent = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
-  // Fetch upcoming meetings for parent
-  const { data: upcomingMeetings = [] } = useQuery({
-    queryKey: ['parent-upcoming-meetings', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('meeting_attendees')
-        .select(`
-          *,
-          meetings(id, title, meeting_date, meeting_type, status, location, agenda)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data || []).filter((att: any) => {
-        if (!att.meetings?.meeting_date) return false;
-        const meetingDate = new Date(att.meetings.meeting_date);
-        return isFuture(meetingDate) || isToday(meetingDate);
-      }).slice(0, 5);
-    },
-    enabled: !!user?.id,
-  });
-
-  // Calculate summary - handle null paid_amount
-  const pendingFees = useMemo(() => {
-    return invoices.reduce((sum, inv) => sum + (inv.total_amount - (inv.paid_amount || 0)), 0);
-  }, [invoices]);
-
-  // Attendance summary
-  const totalDays = attendance.length;
-  const presentDays = attendance.filter(a => a.status === 'present').length;
-  const absentDays = totalDays - presentDays;
-  const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-
-  // Filtered attendance by date range
-  const filteredAttendance = attendance.filter(a => {
-    if (!dateRange.from || !dateRange.to) return true;
-    const date = new Date(a.date);
-    return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-  });
-
-  // Filtered test results by date range
-  const filteredTestResults = testResults.filter((tr: any) => {
-    if (!dateRange.from || !dateRange.to) return true;
-    if (!tr.date_taken) return false;
-    const date = new Date(tr.date_taken);
-    return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-  });
-
-  // Test statistics
-  const testStats = useMemo(() => {
-    const filtered = filteredTestResults.filter((tr: any) => tr.tests);
-    if (filtered.length === 0) {
-      return { total: 0, average: 0, highest: 0, lowest: 0 };
-    }
-    const percentages = filtered.map((tr: any) => {
-      const total = tr.tests?.total_marks || 1;
-      return (tr.marks_obtained / total) * 100;
+  const attendanceTrend = useMemo(() => {
+    const range = eachDayOfInterval({ start: new Date(dateRange.from), end: new Date(dateRange.to) });
+    return range.map(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const record = attendance.find(a => a.date === dayStr);
+      return { date: format(day, "MMM d"), value: record ? (record.status === "present" ? 100 : 0) : 0 };
     });
-    return {
-      total: filtered.length,
-      average: Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length),
-      highest: Math.round(Math.max(...percentages)),
-      lowest: Math.round(Math.min(...percentages)),
-    };
-  }, [filteredTestResults]);
+  }, [attendance, dateRange]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login-parent');
+  const performanceTrend = useMemo(() => {
+    return testResults.map(tr => ({
+      date: format(new Date(tr.date_taken), "MMM d"),
+      value: Math.round((tr.marks_obtained / (tr.tests?.total_marks || 100)) * 100)
+    })).reverse().slice(-7);
+  }, [testResults]);
+
+  const totalInvoiced = useMemo(() => invoices.reduce((acc, inv) => acc + inv.total_amount, 0), [invoices]);
+  const totalPaid = useMemo(() => invoices.reduce((acc, inv) => acc + (inv.paid_amount || 0), 0), [invoices]);
+  const outstandingDues = totalInvoiced - totalPaid;
+  const attendanceRate = attendance.length > 0 ? Math.round((attendance.filter(a => a.status === 'present').length / attendance.length) * 100) : 0;
+  const homeworkPendingCount = homeworkStatus.filter(hs => !['completed', 'checked'].includes(hs.status)).length;
+  const avgPerformance = performanceTrend.length > 0 ? Math.round(performanceTrend.reduce((a, b) => a + b.value, 0) / performanceTrend.length) : 0;
+
+  const subjectPerformance = useMemo(() => {
+    const subjectsMap = new Map<string, { total: number; count: number }>();
+    testResults.forEach((tr: any) => {
+      const subject = tr.tests?.subject;
+      if (subject) {
+        if (!subjectsMap.has(subject)) subjectsMap.set(subject, { total: 0, count: 0 });
+        const pct = (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100;
+        const entry = subjectsMap.get(subject)!;
+        entry.total += pct;
+        entry.count += 1;
+      }
+    });
+    return Array.from(subjectsMap.entries()).map(([name, { total, count }]) => ({
+      name,
+      percentage: Math.round(total / count)
+    })).sort((a, b) => b.percentage - a.percentage);
+  }, [testResults]);
+
+  const overdueHomeworks = useMemo(() => {
+    return homeworkStatus.filter((hs: any) => {
+      const dueDate = hs.homework?.due_date ? new Date(hs.homework.due_date) : null;
+      return dueDate && isPast(dueDate) && !['completed', 'checked'].includes(hs.status);
+    });
+  }, [homeworkStatus]);
+
+  const getRatingStars = (rating: number | null) => {
+    if (rating === null) return "N/A";
+    return Array(rating).fill("⭐").join("");
   };
 
-  // --------------------------
-  // Helper: robust time formatter
-  // --------------------------
-  const formatTimeValue = (timeVal: string | null, dateVal: string | null) => {
-    if (!timeVal) return '-';
-
-    // If timeVal is just "HH:mm" or "HH:mm:ss", combine with dateVal
-    if (typeof timeVal === 'string' && /^\d{1,2}:\d{2}(:\d{2})?$/.test(timeVal)) {
-      let datePart = null;
-
-      if (dateVal) {
-        const dtemp = new Date(dateVal);
-        if (!isNaN(dtemp.getTime())) {
-          datePart = dtemp.toISOString().split('T')[0];
-        } else if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateVal)) {
-          datePart = dateVal.split('T')[0];
-        }
-      }
-
-      // Fallback to today's date if datePart not available
-      if (!datePart) {
-        datePart = new Date().toISOString().split('T')[0];
-      }
-
-      // Try combining date and time
-      const d = new Date(`${datePart}T${timeVal}`);
-      if (!isNaN(d.getTime())) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const getHomeworkStatusIcon = (status: StudentHomeworkRecord['status']) => {
+    switch (status) {
+      case 'completed':
+      case 'checked':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'in_progress':
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'assigned':
+      default:
+        return <XCircle className="h-4 w-4 text-red-600" />;
     }
-    // If direct parsing or combining fails, return original value or placeholder
-    return timeVal;
   };
 
-  // --- New Dashboard Card Data Calculations ---
+  const getSeverityColor = (severity: Tables<'discipline_issues'>['severity']) => {
+    switch (severity) {
+      case "low": return "text-green-600";
+      case "medium": return "text-orange-600";
+      case "high": return "text-red-600";
+      default: return "text-gray-600";
+    }
+  };
 
-  // Today's Homework
-  const todaysHomework = homeworkStatus.filter((hs: any) => 
-    hs.homework?.due_date && isToday(new Date(hs.homework.due_date)) && 
-    !['completed', 'checked'].includes(hs.status)
-  );
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
-  // Missed or Due Homeworks (excluding today's)
-  const overdueHomeworksOnly = homeworkStatus.filter((hs: any) => {
-    if (!hs.homework?.due_date) return false;
-    const dueDate = new Date(hs.homework.due_date);
-    const isNotCompleted = !['completed', 'checked'].includes(hs.status);
-    const isOverdue = isPast(dueDate) && !isToday(dueDate);
-    return isNotCompleted && isOverdue;
-  });
+  const parentAlerts = [
+    ...homeworkStatus.filter(hs => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && !['completed', 'checked'].includes(hs.status)).map(hs => ({
+      id: `hw-${hs.id}`,
+      title: `Overdue Homework: ${hs.homework?.title}`,
+      type: "error" as const,
+      timestamp: hs.homework?.due_date
+    })),
+    ...attendance.filter(a => a.status === 'absent').slice(0, 2).map(a => ({
+      id: `att-${a.id}`,
+      title: `Absence recorded for ${format(new Date(a.date), "MMM d")}`,
+      type: "warning" as const,
+      timestamp: a.date
+    }))
+  ].slice(0, 5);
 
-  // Today's Attendance
-  const todaysAttendance = attendance.find(a => isToday(new Date(a.date)));
-
-  // Today's Lessons Studied
-  const todaysLessonsStudied = lessonRecords.filter((lr: any) => 
-    lr.completed_at && isToday(new Date(lr.completed_at))
-  );
-
-  // Today's Discipline Issues
-  const todaysDisciplineIssues = disciplineIssues.filter(di => 
-    di.issue_date && isToday(new Date(di.issue_date))
-  );
-
-  // NEW: Calculate Missed Chapters for Dashboard
-  const missedChaptersCount = useMemo(() => {
-    if (!student?.grade) return 0;
-    const studentGrade = student.grade;
-
-    const completedLessonPlanIds = new Set(lessonRecords.map(sc => sc.lesson_plan_id));
-
-    const missed = allLessonPlans.filter(lp => 
-      lp.grade === studentGrade && // Filter by student's grade
-      !completedLessonPlanIds.has(lp.id) &&
-      new Date(lp.lesson_date) <= today // Only count lessons that should have been taught by now
-    );
-    return missed.length;
-  }, [student, lessonRecords, allLessonPlans, today]);
-
-
-  // NEW: Chapter-wise Performance Data Grouping for Parent Dashboard
   const chapterPerformanceData: ChapterPerformanceGroup[] = useMemo(() => {
     const dataMap = new Map<string, ChapterPerformanceGroup>();
 
-    // Filter studentChapters, testResults, homeworkStatus by dateRange
-    const filteredStudentChapters = lessonRecords.filter((sc: any) => {
-      if (!sc.completed_at) return false;
-      const date = new Date(sc.completed_at);
-      return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-    });
-
-    const filteredTestResults = testResults.filter((tr: any) => {
-      if (!tr.date_taken) return false;
-      const date = new Date(tr.date_taken);
-      return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-    });
-
-    const filteredHomeworkRecords = homeworkStatus.filter((hs: any) => {
-      if (!hs.homework?.due_date) return false;
-      const date = new Date(hs.homework.due_date);
-      return date >= new Date(dateRange.from) && date <= new Date(dateRange.to);
-    });
-
     // Process student_chapters (lesson evaluations)
-    filteredStudentChapters.forEach((sc: any) => {
+    lessonRecords.forEach((sc: any) => {
       if (sc.lesson_plan_id && sc.lesson_plans) {
         if (!dataMap.has(sc.lesson_plan_id)) {
           dataMap.set(sc.lesson_plan_id, {
             lessonPlan: sc.lesson_plans,
             studentChapters: [],
             testResults: [],
-            homeworkRecords: [],
-          });
+            homeworkRecords: [] });
         }
         dataMap.get(sc.lesson_plan_id)?.studentChapters.push(sc);
       }
     });
 
     // Process test results
-    filteredTestResults.forEach((tr: any) => {
+    testResults.forEach((tr: any) => {
       if (tr.tests?.lesson_plan_id) {
         if (!dataMap.has(tr.tests.lesson_plan_id)) {
           const correspondingLessonPlan = allLessonPlans.find(lp => lp.id === tr.tests.lesson_plan_id);
@@ -509,18 +344,17 @@ const ParentDashboardContent = () => {
               lessonPlan: correspondingLessonPlan as any,
               studentChapters: [],
               testResults: [],
-              homeworkRecords: [],
-            });
+              homeworkRecords: [] });
           } else {
-            return; // Skip if no corresponding lesson plan found
+            return;
           }
         }
         dataMap.get(tr.tests.lesson_plan_id)?.testResults.push(tr);
       }
     });
 
-    // Process homework records - match by subject instead of lesson_plan_id
-    filteredHomeworkRecords.forEach((hs: any) => {
+    // Process homework records
+    homeworkStatus.forEach((hs: any) => {
       const hwSubject = hs.homework?.subject;
       if (hwSubject) {
         const matchingLessonPlan = allLessonPlans.find(lp => lp.subject === hwSubject);
@@ -531,593 +365,674 @@ const ParentDashboardContent = () => {
     });
 
     // Sort by lesson plan date
-    return Array.from(dataMap.values()).sort((a, b) => 
+    return Array.from(dataMap.values()).sort((a, b) =>
       new Date(b.lessonPlan.lesson_date).getTime() - new Date(a.lessonPlan.lesson_date).getTime()
     );
-  }, [lessonRecords, testResults, homeworkStatus, dateRange, allLessonPlans]); // Added allLessonPlans to dependencies
+  }, [lessonRecords, testResults, homeworkStatus, allLessonPlans]);
 
-  const handleViewChapterDetails = (chapterGroup: ChapterPerformanceGroup) => {
-    setSelectedChapterGroup(chapterGroup);
-    setShowChapterDetailModal(true);
-  };
+  if (!user || user.role !== 'parent') {
+    navigate('/login-parent');
+    return null;
+  }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-3 rounded-2xl shadow-soft">
-              <User className="h-8 w-8 text-primary" />
+    <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <CenterLogo size="lg" />
+        <div className="flex items-center gap-4">
+          {linkedStudents.length > 1 && (
+            <Select value={selectedStudentId || ''} onValueChange={setSelectedStudentId}>
+              <SelectTrigger className="w-48 bg-white border-none shadow-soft rounded-2xl font-bold h-11">
+                <SelectValue placeholder="Select Child" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-none shadow-strong">
+                {linkedStudents.map((child) => (
+                  <SelectItem key={child.id} value={child.id} className="font-bold py-3">{child.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button variant="ghost" size="icon" className="relative bg-white shadow-soft rounded-xl">
+            <Bell className="h-5 w-5 text-slate-600" />
+            <span className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-full border-2 border-white" />
+          </Button>
+          <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl shadow-soft">
+            <div className="h-9 w-9 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden">
+               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-extrabold tracking-tight">Parent Portal</h1>
-              <p className="text-muted-foreground text-lg">Welcome back! Monitoring your child's progress.</p>
+              <p className="text-xs font-black text-foreground/90 leading-none">{user?.username?.split('@')[0]}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parent</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-             <div className="hidden md:flex bg-secondary/50 px-4 py-2 rounded-2xl border border-primary/5 items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{format(new Date(), 'MMM d, yyyy')}</span>
-             </div>
-             <Button variant="outline" onClick={handleLogout} className="rounded-2xl border-2">
-                <LogOut className="h-4 w-4 mr-2" /> Logout
-             </Button>
-          </div>
         </div>
-
-        {/* STUDENT SELECTOR FOR MULTI-CHILD */}
-        {hasMultipleChildren && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Select Child</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedStudentId || ''} onValueChange={setSelectedStudentId}>
-                <SelectTrigger className="w-full md:w-[300px]">
-                  <SelectValue placeholder="Select a child" />
-                </SelectTrigger>
-                <SelectContent>
-                  {linkedStudents.map((child) => (
-                    <SelectItem key={child.id} value={child.id}>
-                      {child.name} {child.grade ? `(Grade ${child.grade})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* STUDENT INFO */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" /> Student Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {student ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-semibold">{student.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Grade</p>
-                  <p className="font-semibold">{student.grade}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">School</p>
-                  <p className="font-semibold">{student.school_name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Contact</p>
-                  <p className="font-semibold">{student.contact_number}</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No student data available</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* NEW SUMMARY CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[
-            {
-              title: "Latest Broadcast",
-              icon: Radio,
-              color: "text-blue-600",
-              bgColor: "bg-blue-100",
-              content: latestBroadcastMessage ? (
-                <>
-                  <p className="text-sm font-bold line-clamp-2">{latestBroadcastMessage.message_text}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(latestBroadcastMessage.sent_at), 'MMM d, h:mm a')}
-                  </p>
-                </>
-              ) : "No new messages"
-            },
-            {
-              title: "Today's Homework",
-              value: todaysHomework.length,
-              icon: Book,
-              color: "text-orange-600",
-              bgColor: "bg-orange-100",
-              label: "due today"
-            },
-            {
-              title: "Overdue Homework",
-              value: overdueHomeworksOnly.length,
-              icon: AlertTriangle,
-              color: "text-red-600",
-              bgColor: "bg-red-100",
-              label: "past due date"
-            },
-            {
-              title: "Pending Fees",
-              value: pendingFees > 0 ? `₹${pendingFees.toFixed(2)}` : '₹0.00',
-              icon: DollarSign,
-              color: "text-purple-600",
-              bgColor: "bg-purple-100",
-              label: "outstanding"
-            },
-            {
-              title: "Today's Attendance",
-              value: todaysAttendance ? todaysAttendance.status.toUpperCase() : 'N/A',
-              icon: CalendarIcon,
-              color: "text-green-600",
-              bgColor: "bg-green-100",
-              label: todaysAttendance?.time_in ? `In: ${formatTimeValue(todaysAttendance.time_in, todaysAttendance.date)}` : 'No record'
-            },
-            {
-              title: "Today's Lessons",
-              value: todaysLessonsStudied.length,
-              icon: BookOpen,
-              color: "text-blue-600",
-              bgColor: "bg-blue-100",
-              label: "chapters studied"
-            },
-            {
-              title: "Missed Chapters",
-              value: missedChaptersCount,
-              icon: XCircle,
-              color: "text-red-600",
-              bgColor: "bg-red-100",
-              label: "not yet covered"
-            },
-            {
-              title: "Test Results",
-              value: testStats.total,
-              icon: ClipboardCheck,
-              color: "text-indigo-600",
-              bgColor: "bg-indigo-100",
-              label: testStats.total > 0 ? `Avg: ${testStats.average}%` : 'no tests'
-            },
-          ].map((stat, idx) => (
-            <Card key={idx} className="border-none shadow-soft hover:shadow-medium transition-all duration-300 group">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{stat.title}</CardTitle>
-                <div className={cn("p-2 rounded-xl transition-transform group-hover:rotate-12", stat.bgColor)}>
-                  <stat.icon className={cn("h-4 w-4", stat.color)} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {stat.value !== undefined ? (
-                  <>
-                    <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
-                  </>
-                ) : (
-                  <div className="mt-1">{stat.content}</div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Upcoming Meetings Notification */}
-        {upcomingMeetings.length > 0 && (
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Video className="h-5 w-5 text-blue-600" /> Upcoming Meetings
-                <Badge variant="secondary">{upcomingMeetings.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upcomingMeetings.map((att: any) => (
-                  <div key={att.id} className={`p-3 rounded-lg border ${isToday(new Date(att.meetings?.meeting_date)) ? 'bg-blue-100 border-blue-300' : 'bg-background'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{att.meetings?.title}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {att.meetings?.meeting_type?.charAt(0).toUpperCase() + att.meetings?.meeting_type?.slice(1)} Meeting
-                          {att.meetings?.location && ` • ${att.meetings.location}`}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{format(new Date(att.meetings?.meeting_date), 'PPP')}</p>
-                        <p className="text-xs text-muted-foreground">{format(new Date(att.meetings?.meeting_date), 'p')}</p>
-                        {isToday(new Date(att.meetings?.meeting_date)) && <Badge className="mt-1">Today</Badge>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Upcoming Events */}
-        {upcomingEvents.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CalendarIcon className="h-5 w-5" /> Upcoming Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upcomingEvents.map((event: any) => (
-                  <div key={event.id} className={`p-3 rounded-lg border ${event.is_holiday ? 'bg-red-50 border-red-200' : 'bg-muted/50'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{event.title}</h4>
-                        <p className="text-sm text-muted-foreground">{event.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
-                        {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
-                        {isToday(new Date(event.event_date)) && <Badge className="ml-2">Today</Badge>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Attendance Toggle and Mini Calendar */}
-        <div className="flex justify-between items-center gap-2">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" /> Attendance Calendar
-          </h3>
-          <Button size="sm" onClick={() => setShowMiniCalendar(prev => !prev)}>
-            {showMiniCalendar ? 'Hide Calendar' : 'Show Calendar'}
-          </Button>
-        </div>
-        {showMiniCalendar && (
-          <MiniCalendar
-            attendance={attendance}
-            lessonRecords={lessonRecords}
-            tests={testResults}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-          />
-        )}
-
-        {/* Date Range Filter for Chapter Performance */}
-        {/* Date Range Filter - Global */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" /> Date Range Filter
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 flex-wrap">
-              <label className="text-sm font-medium">From:</label>
-              <Input
-                type="date"
-                value={dateRange.from}
-                onChange={e => setDateRange({...dateRange, from: e.target.value})}
-                className="w-[150px]"
-              />
-              <label className="text-sm font-medium">To:</label>
-              <Input
-                type="date"
-                value={dateRange.to}
-                onChange={e => setDateRange({...dateRange, to: e.target.value})}
-                className="w-[150px]"
-              />
-              <p className="text-xs text-muted-foreground ml-2">This filter applies to attendance, chapter performance, homework, and test reports below</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Chapter-wise Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" /> Chapter-wise Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activeStudentId ? (
-              <ParentChapterPerformanceTable
-                chapterPerformanceData={chapterPerformanceData}
-                onViewDetails={handleViewChapterDetails}
-              />
-            ) : (
-              <p className="text-muted-foreground text-center py-8">Please select a student to view chapter performance.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Test Report */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5" /> Test Report
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredTestResults.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No test results found for the selected date range.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Test Name</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Date Taken</TableHead>
-                      <TableHead>Marks Obtained</TableHead>
-                      <TableHead>Total Marks</TableHead>
-                      <TableHead>Percentage</TableHead>
-                      <TableHead>Grade</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTestResults.map((tr: any) => {
-                      const percentage = tr.tests?.total_marks 
-                        ? Math.round((tr.marks_obtained / tr.tests.total_marks) * 100)
-                        : 0;
-                      const getGradeColor = (pct: number) => {
-                        if (pct >= 90) return 'text-green-600 font-semibold';
-                        if (pct >= 75) return 'text-blue-600 font-semibold';
-                        if (pct >= 60) return 'text-yellow-600 font-semibold';
-                        if (pct >= 50) return 'text-orange-600 font-semibold';
-                        return 'text-red-600 font-semibold';
-                      };
-                      const getGrade = (pct: number) => {
-                        if (pct >= 90) return 'A+';
-                        if (pct >= 80) return 'A';
-                        if (pct >= 75) return 'B+';
-                        if (pct >= 70) return 'B';
-                        if (pct >= 60) return 'C+';
-                        if (pct >= 50) return 'C';
-                        return 'F';
-                      };
-                      return (
-                        <TableRow key={tr.id}>
-                          <TableCell className="font-medium">{tr.tests?.name || 'N/A'}</TableCell>
-                          <TableCell>{tr.tests?.subject || 'N/A'}</TableCell>
-                          <TableCell>{safeFormatDate(tr.date_taken, 'PPP')}</TableCell>
-                          <TableCell className="font-semibold">{tr.marks_obtained}</TableCell>
-                          <TableCell>{tr.tests?.total_marks || 'N/A'}</TableCell>
-                          <TableCell className={getGradeColor(percentage)}>{percentage}%</TableCell>
-                          <TableCell className={getGradeColor(percentage)}>{getGrade(percentage)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-            {filteredTestResults.length > 0 && (
-              <div className="mt-4 pt-4 border-t">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Total Tests</p>
-                    <p className="font-semibold">{testStats.total}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Average Score</p>
-                    <p className="font-semibold">{testStats.average}%</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Highest Score</p>
-                    <p className="font-semibold text-green-600">{testStats.highest}%</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Lowest Score</p>
-                    <p className="font-semibold text-red-600">{testStats.lowest}%</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Missed Chapters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-600" /> Missed Chapters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {missedChaptersCount === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No missed chapters. Great job!</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Chapter</TableHead>
-                      <TableHead>Topic</TableHead>
-                      <TableHead>Lesson Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allLessonPlans
-                      .filter(lp => {
-                        if (!student?.grade) return false;
-                        const studentGrade = student.grade;
-                        const completedLessonPlanIds = new Set(lessonRecords.map(sc => sc.lesson_plan_id));
-                        return (
-                          lp.grade === studentGrade &&
-                          !completedLessonPlanIds.has(lp.id) &&
-                          new Date(lp.lesson_date) <= today
-                        );
-                      })
-                      .map((lp) => (
-                        <TableRow key={lp.id}>
-                          <TableCell className="font-medium">{lp.subject || 'N/A'}</TableCell>
-                          <TableCell>{lp.chapter || 'N/A'}</TableCell>
-                          <TableCell>{lp.topic || 'N/A'}</TableCell>
-                          <TableCell>{safeFormatDate(lp.lesson_date, 'PPP')}</TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Overdue Homework */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" /> Overdue Homework
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {overdueHomeworksOnly.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No overdue homework. Keep up the good work!</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Due Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {overdueHomeworksOnly.map((hs: any) => (
-                      <TableRow key={hs.id}>
-                        <TableCell className="font-medium">{hs.homework?.title || 'N/A'}</TableCell>
-                        <TableCell>{hs.homework?.subject || 'N/A'}</TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center gap-1 ${
-                            hs.status === 'completed' || hs.status === 'checked' 
-                              ? 'text-green-600' 
-                              : hs.status === 'in_progress' 
-                              ? 'text-yellow-600' 
-                              : 'text-red-600'
-                          }`}>
-                            {hs.status === 'completed' || hs.status === 'checked' ? (
-                              <CheckCircle className="h-4 w-4" />
-                            ) : hs.status === 'in_progress' ? (
-                              <Clock className="h-4 w-4" />
-                            ) : (
-                              <XCircle className="h-4 w-4" />
-                            )}
-                            {hs.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-red-600 font-semibold">
-                          {hs.homework?.due_date ? safeFormatDate(hs.homework.due_date, 'PPP') : 'N/A'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Events */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" /> Upcoming Events
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {upcomingEvents.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No upcoming events.</p>
-            ) : (
-              <div className="space-y-3">
-                {upcomingEvents.map((event: any) => (
-                  <div key={event.id} className={`p-3 rounded-lg border ${event.is_holiday ? 'bg-red-50 border-red-200' : 'bg-muted/50'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{event.title}</h4>
-                        <p className="text-sm text-muted-foreground">{event.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{format(new Date(event.event_date), 'PPP')}</p>
-                        {event.is_holiday && <span className="text-xs text-red-600 font-medium">Holiday</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" /> Daily Attendance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto max-h-64">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Time In</TableHead>
-                    <TableHead>Time Out</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAttendance.map(a => (
-                    <TableRow key={a.id}>
-                      <TableCell>{safeFormatDate(a.date, "PPP")}</TableCell>
-                      <TableCell className={a.status === 'present' ? 'text-green-600' : 'text-red-600'}>
-                        {a.status}
-                      </TableCell>
-
-                      <TableCell>
-                        {formatTimeValue(a.time_in, a.date)}
-                      </TableCell>
-
-                      <TableCell>
-                        {formatTimeValue(a.time_out, a.date)}
-                      </TableCell>
-
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Chapter Detail Modal */}
-      <ParentChapterDetailModal
-        open={showChapterDetailModal}
-        onOpenChange={setShowChapterDetailModal}
-        chapterGroup={selectedChapterGroup}
-      />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-2 bg-card/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-border/40">
+          <div className="p-2 bg-primary text-white rounded-lg">
+            <GraduationCap className="h-4 w-4" />
+          </div>
+          <Badge variant="outline" className="text-xs font-black text-primary tracking-tight uppercase">{student?.name || "Learning Odyssey"}</Badge>
+          <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
+             <Calendar className="h-4 w-4 text-slate-400" />
+             <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-card/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-border/40">
+           <Input
+             type="date"
+             value={dateRange.to}
+             onChange={(e) => setDateRange({...dateRange, to: e.target.value, from: subDays(new Date(e.target.value), 30).toISOString().split('T')[0]})}
+             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700 focus-visible:ring-0"
+           />
+        </div>
+      </div>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <KPICard title="Attendance Rate" value={`${attendanceRate}%`} description="Presence Index" icon={Clock} color="green" trendData={attendanceTrend} onClick={() => scrollToSection("attendance-section")} />
+        <KPICard title="Avg Performance" value={`${avgPerformance}%`} description="Evaluation Synthesis" icon={TrendingUp} color="purple" trendData={performanceTrend} onClick={() => scrollToSection("tests-section")} />
+        <KPICard title="Homework Pending" value={homeworkPendingCount} description="Active Assignments" icon={Book} color="orange" onClick={() => scrollToSection("overdue-homework-section")} />
+        <KPICard title="Fees Payable" value={`₹${outstandingDues}`} description="Outstanding Liability" icon={Wallet} color="rose" onClick={() => scrollToSection("finance-section")} />
+      </div>
+
+      {/* Subject Wise Performance Cards */}
+      {subjectPerformance.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Subject Performance</h3>
+          </div>
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+            {subjectPerformance.map((sp) => (
+              <Card key={sp.name} className="border-none shadow-soft bg-card/60 backdrop-blur-sm overflow-hidden group hover:shadow-medium transition-all duration-300">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground truncate max-w-[80px] md:max-w-none">{sp.name}</p>
+                      <p className="text-xl font-black group-hover:text-primary transition-colors">{sp.percentage}%</p>
+                    </div>
+                    <div className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      sp.percentage >= 75 ? "bg-green-500" : sp.percentage >= 50 ? "bg-orange-500" : "bg-red-500"
+                    )} />
+                  </div>
+                  <div className="mt-2 w-full h-1 bg-muted/30 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full transition-all duration-1000",
+                        sp.percentage >= 75 ? "bg-green-500" : sp.percentage >= 50 ? "bg-orange-500" : "bg-red-500"
+                      )}
+                      style={{ width: `${sp.percentage}%` }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Middle Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2 border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20 overflow-hidden">
+            <CardHeader className="bg-primary/5 border-b border-slate-100 p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <CardTitle className="text-lg font-black flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10"><BookOpen className="h-6 w-6 text-primary" /></div>
+                  Academic Progress Matrix
+                </CardTitle>
+                <div className="flex items-center gap-2 bg-card/60 p-1 rounded-xl border border-border/40 shadow-soft">
+                   <Input type="date" value={dateRange.from} onChange={e => setDateRange({...dateRange, from: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
+                   <span className="text-[10px] font-black text-slate-300">TO</span>
+                   <Input type="date" value={dateRange.to} onChange={e => setDateRange({...dateRange, to: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-h-[400px] overflow-auto custom-scrollbar">
+                <table className="w-full text-sm text-left min-w-[700px]">
+                  <thead className="bg-muted/50 border-b sticky top-0 z-10 shadow-sm">
+                    <tr>
+                      <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Subject</th>
+                      <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Topic</th>
+                      <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Evaluation</th>
+                      <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Homework</th>
+                      <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Result</th>
+                      <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {chapterPerformanceData.map((chapterGroup) => {
+                      const evaluation = chapterGroup.studentChapters[0];
+                      const testResult = chapterGroup.testResults[0];
+                      const homework = chapterGroup.homeworkRecords[0];
+
+                      const avgPct = chapterGroup.testResults.length > 0
+                        ? Math.round(chapterGroup.testResults.reduce((acc, tr) => acc + (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100, 0) / chapterGroup.testResults.length)
+                        : null;
+
+                      return (
+                        <tr key={chapterGroup.lessonPlan.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4 font-semibold">{chapterGroup.lessonPlan.subject}</td>
+                          <td className="px-6 py-4">
+                            <p className="font-medium">{chapterGroup.lessonPlan.topic}</p>
+                            <p className="text-[10px] text-muted-foreground">Chapter: {chapterGroup.lessonPlan.chapter}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            {evaluation ? getRatingStars(evaluation.evaluation_rating) : <span className="text-muted-foreground italic text-xs">N/A</span>}
+                          </td>
+                          <td className="px-6 py-4">
+                            {homework ? (
+                              <Badge variant={homework.status === 'completed' || homework.status === 'checked' ? 'success' : homework.status === 'in_progress' ? 'warning' : 'destructive'} className="text-[9px] uppercase font-bold">
+                                {homework.status}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground italic text-xs">N/A</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 font-bold">
+                            {avgPct !== null ? (
+                              <span className={cn(avgPct >= 75 ? "text-green-600" : avgPct >= 50 ? "text-orange-600" : "text-red-600")}>
+                                {avgPct}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground italic text-xs">N/A</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
+                              onClick={() => setSelectedChapterDetail(chapterGroup)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        <AlertList alerts={parentAlerts} onViewAll={() => navigate("/parent-messages")} />
+      </div>
+
+      <div className="flex justify-center py-4">
+        <Button
+          variant="outline"
+          className="rounded-2xl border-2 font-black uppercase tracking-widest text-[10px] h-12 px-8 shadow-soft bg-white hover:bg-slate-50"
+          onClick={() => navigate("/parent-student-report")}
+        >
+          <BarChart3 className="mr-2 h-4 w-4 text-primary" />
+          View Comprehensive Academic Report
+        </Button>
+      </div>
+
+      <div id="printable-report" className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-muted" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-[hsl(var(--background))] px-4 text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground/60">
+                Detailed Academic Profile
+              </span>
+            </div>
+          </div>
+
+          {/* Finance Summary */}
+          <Card id="finance-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <DollarSign className="h-6 w-6 text-primary" />
+                </div>
+                Financial Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-sm font-semibold">Total Invoiced: {formatCurrency(totalInvoiced)}</div>
+                <div className="text-sm font-semibold">Total Paid: {formatCurrency(totalPaid)}</div>
+                <div className="text-sm font-bold text-rose-600">Outstanding Dues: {formatCurrency(outstandingDues)}</div>
+              </div>
+              <h3 className="font-semibold mb-2">Payment History</h3>
+              {payments.length === 0 ? (
+                <p className="text-muted-foreground text-sm italic">No payments recorded.</p>
+              ) : (
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[600px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        <th className="border-b px-4 py-2 text-left">Date</th>
+                        <th className="border-b px-4 py-2 text-left">Amount</th>
+                        <th className="border-b px-4 py-2 text-left">Method</th>
+                        <th className="border-b px-4 py-2 text-left">Reference</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payments.map((p) => (
+                        <tr key={p.id} className="hover:bg-slate-50/50">
+                          <td className="border-b px-4 py-2">{safeFormatDate(p.payment_date, "PPP")}</td>
+                          <td className="border-b px-4 py-2 font-bold">{formatCurrency(p.amount)}</td>
+                          <td className="border-b px-4 py-2">{p.payment_method}</td>
+                          <td className="border-b px-4 py-2">{p.reference_number || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Attendance Overview */}
+          <Card id="attendance-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-green-500/5 pb-4 border-b border-green-500/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Clock className="h-6 w-6 text-green-600" />
+                </div>
+                Attendance Analytics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-4 mb-4">
+                <div className="text-sm font-semibold">Total Days: {attendance.length}</div>
+                <div className="text-sm font-semibold text-green-600">Present: {attendance.filter(a => a.status === 'present').length}</div>
+                <div className="text-sm font-semibold text-rose-600">Absent: {attendance.filter(a => a.status === 'absent').length}</div>
+                <div className="text-sm font-bold">Attendance %: {attendanceRate}%</div>
+              </div>
+              <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                <table className="w-full border-collapse text-sm min-w-[600px]">
+                  <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                    <tr>
+                      <th className="border-b px-4 py-2 text-left">Date</th>
+                      <th className="border-b px-4 py-2 text-left">Status</th>
+                      <th className="border-b px-4 py-2 text-left">Time In</th>
+                      <th className="border-b px-4 py-2 text-left">Time Out</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendance.map((record) => (
+                      <tr key={record.id} className="hover:bg-slate-50/50">
+                        <td className="border-b px-4 py-2">{safeFormatDate(record.date, "PPP")}</td>
+                        <td className="border-b px-4 py-2">
+                          <Badge variant={record.status === 'present' ? 'success' : 'destructive'} className="uppercase text-[9px]">
+                            {record.status}
+                          </Badge>
+                        </td>
+                        <td className="border-b px-4 py-2">{record.time_in || "-"}</td>
+                        <td className="border-b px-4 py-2">{record.time_out || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Test Report */}
+          <Card id="tests-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-purple-500/5 pb-4 border-b border-purple-500/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <ClipboardCheck className="h-6 w-6 text-purple-600" />
+                </div>
+                Academic Test Records
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {testResults.length === 0 ? (
+                <p className="text-muted-foreground text-sm italic">No test results found.</p>
+              ) : (
+                <>
+                  <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar mb-4">
+                    <table className="w-full text-sm min-w-[700px]">
+                      <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                          <th className="border-b px-4 py-2 text-left">Test Name</th>
+                          <th className="border-b px-4 py-2 text-left">Subject</th>
+                          <th className="border-b px-4 py-2 text-left">Date Taken</th>
+                          <th className="border-b px-4 py-2 text-left">Marks</th>
+                          <th className="border-b px-4 py-2 text-left">Percentage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {testResults.map((tr: any) => {
+                          const percentage = tr.tests?.total_marks
+                            ? Math.round((tr.marks_obtained / tr.tests.total_marks) * 100)
+                            : 0;
+                          return (
+                            <tr key={tr.id} className="hover:bg-slate-50/50">
+                              <td className="border-b px-4 py-2 font-medium">{tr.tests?.name || 'N/A'}</td>
+                              <td className="border-b px-4 py-2">{tr.tests?.subject || 'N/A'}</td>
+                              <td className="border-b px-4 py-2">{safeFormatDate(tr.date_taken, "PPP")}</td>
+                              <td className="border-b px-4 py-2 font-bold">{tr.marks_obtained}/{tr.tests?.total_marks}</td>
+                              <td className={cn("border-b px-4 py-2 font-bold", percentage >= 75 ? "text-green-600" : percentage >= 50 ? "text-orange-600" : "text-red-600")}>
+                                {percentage}%
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Overdue Homework */}
+          <Card id="overdue-homework-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-orange-500/5 pb-4 border-b border-orange-500/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <AlertTriangle className="h-6 w-6 text-orange-600" />
+                </div>
+                Overdue Homework
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {overdueHomeworks.length === 0 ? (
+                <p className="text-muted-foreground text-sm italic">No overdue homework found.</p>
+              ) : (
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[600px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        <th className="border-b px-4 py-2 text-left">Title</th>
+                        <th className="border-b px-4 py-2 text-left">Subject</th>
+                        <th className="border-b px-4 py-2 text-left">Status</th>
+                        <th className="border-b px-4 py-2 text-left">Due Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {overdueHomeworks.map((hw: any) => (
+                        <tr key={hw.id} className="hover:bg-slate-50/50">
+                          <td className="border-b px-4 py-2 font-medium">{hw.homework?.title || '-'}</td>
+                          <td className="border-b px-4 py-2">{hw.homework?.subject || '-'}</td>
+                          <td className="border-b px-4 py-2">
+                            <Badge variant="destructive" className="uppercase text-[9px] font-bold">
+                              {hw.status}
+                            </Badge>
+                          </td>
+                          <td className="border-b px-4 py-2">{safeFormatDate(hw.homework?.due_date, "PPP")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Preschool Activities */}
+          <Card id="activities-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-pink-500/5 pb-4 border-b border-pink-500/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-pink-500/10">
+                  <Paintbrush className="h-6 w-6 text-pink-600" />
+                </div>
+                Preschool Activities
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {preschoolActivities.length === 0 ? (
+                <p className="text-muted-foreground text-sm italic">No activity records found.</p>
+              ) : (
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[700px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        <th className="border-b px-4 py-2 text-left">Type</th>
+                        <th className="border-b px-4 py-2 text-left">Title</th>
+                        <th className="border-b px-4 py-2 text-left">Date</th>
+                        <th className="border-b px-4 py-2 text-left">Involvement</th>
+                        <th className="border-b px-4 py-2 text-left">Media</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preschoolActivities.map((pa: any) => (
+                        <tr key={pa.id} className="hover:bg-slate-50/50">
+                          <td className="border-b px-4 py-2">{pa.activities?.activity_types?.name || 'N/A'}</td>
+                          <td className="border-b px-4 py-2 font-medium">{pa.activities?.title || 'N/A'}</td>
+                          <td className="border-b px-4 py-2">{pa.activities?.activity_date ? safeFormatDate(pa.activities.activity_date, "PPP") : 'N/A'}</td>
+                          <td className="border-b px-4 py-2 font-bold">{pa.involvement_score || "N/A"}</td>
+                          <td className="border-b px-4 py-2">
+                            <div className="flex gap-2">
+                              {pa.activities?.photo_url && (
+                                <a href={supabase.storage.from("activity-photos").getPublicUrl(pa.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs font-bold">Photo</a>
+                              )}
+                              {pa.activities?.video_url && (
+                                <a href={supabase.storage.from("activity-videos").getPublicUrl(pa.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs font-bold">Video</a>
+                              )}
+                              {!pa.activities?.photo_url && !pa.activities?.video_url && "-"}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Discipline Issues */}
+          <Card id="discipline-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-red-500/5 pb-4 border-b border-red-500/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-red-500/10">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                Behavioral Insight Log
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {disciplineIssues.length === 0 ? (
+                <p className="text-muted-foreground text-sm italic">No discipline records found.</p>
+              ) : (
+                <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
+                  <table className="w-full text-sm min-w-[700px]">
+                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        <th className="border-b px-4 py-2 text-left">Category</th>
+                        <th className="border-b px-4 py-2 text-left">Severity</th>
+                        <th className="border-b px-4 py-2 text-left">Date</th>
+                        <th className="border-b px-4 py-2 text-center">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {disciplineIssues.map((di: any) => (
+                        <tr key={di.id} className="hover:bg-slate-50/50">
+                          <td className="border-b px-4 py-2 font-medium">{di.discipline_categories?.name || 'N/A'}</td>
+                          <td className="border-b px-4 py-2">
+                            <Badge className={cn("text-[9px] font-black uppercase",
+                              di.severity === "high" ? "bg-red-500" :
+                              di.severity === "medium" ? "bg-orange-500" : "bg-green-500")}>
+                              {di.severity}
+                            </Badge>
+                          </td>
+                          <td className="border-b px-4 py-2">{safeFormatDate(di.issue_date, "PPP")}</td>
+                          <td className="border-b px-4 py-2 text-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-[10px] font-bold uppercase text-primary bg-primary/5 hover:bg-primary/10 rounded-lg"
+                              onClick={() => setSelectedDisciplineIssue(di)}
+                            >
+                              View
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+      </div>
+
+      {/* Chapter Detail Dialog */}
+      <Dialog open={!!selectedChapterDetail} onOpenChange={() => setSelectedChapterDetail(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-black">
+              <BookOpen className="h-6 w-6 text-primary" />
+              Intelligence Report: {selectedChapterDetail?.lessonPlan.chapter}
+            </DialogTitle>
+            <DialogDescription className="font-bold text-primary/80 uppercase text-[10px] tracking-widest">
+              Subject: {selectedChapterDetail?.lessonPlan.subject} • Taught on {selectedChapterDetail ? safeFormatDate(selectedChapterDetail.lessonPlan.lesson_date, "PPP") : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedChapterDetail && (
+            <div className="space-y-6 py-4">
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Instructional Objective</p>
+                <p className="font-bold text-slate-700">{selectedChapterDetail.lessonPlan.topic}</p>
+              </div>
+
+              {/* Lesson Evaluation */}
+              <div className="space-y-3">
+                <h4 className="font-black flex items-center gap-2 text-xs uppercase tracking-widest text-slate-400">
+                  <Star className="h-4 w-4 text-amber-500" /> Institutional Evaluation
+                </h4>
+                {selectedChapterDetail.studentChapters.length > 0 ? (
+                  selectedChapterDetail.studentChapters.map((sc) => (
+                    <div key={sc.id} className="bg-white p-4 rounded-2xl border shadow-sm space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-black uppercase text-slate-400">Proficiency Score</span>
+                        <div className="flex gap-1">{getRatingStars(sc.evaluation_rating)}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[9px] font-black uppercase text-slate-300">Instructor Remarks</span>
+                        <p className="text-xs italic text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl">"{sc.teacher_notes || "No qualitative remarks recorded."}"</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs italic text-slate-400">No evaluation recorded.</p>
+                )}
+              </div>
+
+              {/* Tests */}
+              <div className="space-y-3">
+                <h4 className="font-black flex items-center gap-2 text-xs uppercase tracking-widest text-slate-400">
+                  <ClipboardCheck className="h-4 w-4 text-rose-500" /> Academic Results
+                </h4>
+                {selectedChapterDetail.testResults.length > 0 ? (
+                  <div className="divide-y border rounded-2xl overflow-hidden">
+                    {selectedChapterDetail.testResults.map((tr) => {
+                      const pct = Math.round((tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100);
+                      return (
+                        <div key={tr.id} className="p-4 flex justify-between items-center bg-white">
+                          <div>
+                            <p className="text-sm font-bold text-slate-700">{tr.tests?.name}</p>
+                            <p className="text-[10px] font-bold text-slate-400">{safeFormatDate(tr.date_taken, "PPP")}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-rose-600">{tr.marks_obtained}/{tr.tests?.total_marks}</p>
+                            <p className={cn("text-[10px] font-black", pct >= 75 ? "text-green-600" : pct >= 50 ? "text-orange-600" : "text-red-600")}>{pct}%</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs italic text-slate-400">No tests associated.</p>
+                )}
+              </div>
+
+              {/* Homework */}
+              <div className="space-y-3">
+                <h4 className="font-black flex items-center gap-2 text-xs uppercase tracking-widest text-slate-400">
+                  <Book className="h-4 w-4 text-primary" /> Directives (Homework)
+                </h4>
+                {selectedChapterDetail.homeworkRecords.length > 0 ? (
+                  <div className="divide-y border rounded-2xl overflow-hidden">
+                    {selectedChapterDetail.homeworkRecords.map((hr) => (
+                      <div key={hr.id} className="p-4 flex justify-between items-center bg-white">
+                        <div>
+                          <p className="text-sm font-bold text-slate-700">{hr.homework?.title}</p>
+                          <p className="text-[10px] font-bold text-slate-400">Due: {safeFormatDate(hr.homework?.due_date, "PPP")}</p>
+                        </div>
+                        <Badge variant={hr.status === 'completed' || hr.status === 'checked' ? 'success' : hr.status === 'in_progress' ? 'warning' : 'destructive'} className="text-[9px] uppercase font-black">
+                          {hr.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs italic text-slate-400">No homework assigned.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Discipline Detail Dialog */}
+      <Dialog open={!!selectedDisciplineIssue} onOpenChange={() => setSelectedDisciplineIssue(null)}>
+        <DialogContent className="max-w-md rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-black">
+              <AlertTriangle className="h-5 w-5 text-rose-600" />
+              Incident Dossier
+            </DialogTitle>
+          </DialogHeader>
+          {selectedDisciplineIssue && (
+            <div className="space-y-4 py-2">
+              <div className="flex justify-between items-start border-b pb-4">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Category</p>
+                  <p className="text-lg font-black text-slate-700">{selectedDisciplineIssue.discipline_categories?.name}</p>
+                </div>
+                <Badge className={cn("text-[10px] font-black uppercase",
+                  selectedDisciplineIssue.severity === "high" ? "bg-red-500" :
+                  selectedDisciplineIssue.severity === "medium" ? "bg-orange-500" : "bg-green-500")}>
+                  {selectedDisciplineIssue.severity}
+                </Badge>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Narrative</p>
+                <p className="text-sm bg-slate-50 p-4 rounded-2xl italic text-slate-600 leading-relaxed border border-slate-100">
+                  "{selectedDisciplineIssue.description}"
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Timeline</p>
+                  <p className="text-xs font-bold text-slate-700">{safeFormatDate(selectedDisciplineIssue.issue_date, "PPP")}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Resolution Status</p>
+                  <Badge variant="outline" className="mt-1 font-black uppercase text-[9px] border-slate-200 text-slate-500">
+                    {selectedDisciplineIssue.status || "Logged"}
+                  </Badge>
+                </div>
+              </div>
+
+              {selectedDisciplineIssue.action_taken && (
+                <div className="space-y-1 pt-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Corrective Action</p>
+                  <p className="text-xs font-bold text-slate-600 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">{selectedDisciplineIssue.action_taken}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

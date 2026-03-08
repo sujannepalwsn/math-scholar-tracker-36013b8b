@@ -1,10 +1,10 @@
 import { Calendar } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
 
 const FEATURES = [
   { name: 'register_student', label: 'Register Student' },
@@ -40,8 +40,7 @@ export default function CenterFeaturePermissions() {
         .order('name');
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   const { data: permissions = [], isLoading: permissionsLoading } = useQuery({
     queryKey: ['center-feature-permissions'],
@@ -51,8 +50,7 @@ export default function CenterFeaturePermissions() {
         .select('*');
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   const permissionsByCenter = permissions.reduce((acc, perm) => {
     acc[perm.center_id] = perm;
@@ -82,8 +80,7 @@ export default function CenterFeaturePermissions() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update feature permission');
-    },
-  });
+    } });
 
   const handleToggle = (centerId: string, featureName: string, currentStatus: boolean) => {
     updatePermissionMutation.mutate({ centerId, featureName, isEnabled: !currentStatus });

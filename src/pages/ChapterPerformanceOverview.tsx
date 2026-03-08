@@ -1,16 +1,16 @@
 "use client";
+import React, { useMemo, useState } from "react";
+import { BookOpen } from "lucide-react";
 
-import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BookOpen, Check, FileText, Star, User } from "lucide-react"; // Added FileText for tests
-import { Tables } from "@/integrations/supabase/types";
-import { safeFormatDate } from '@/lib/utils';
-import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tables } from "@/integrations/supabase/types"
+import { safeFormatDate } from "@/lib/utils"
+import { Progress } from "@/components/ui/progress"
 
 
 // Re-using types from ParentChapterDetailModal for consistency
@@ -55,8 +55,7 @@ export default function ChapterPerformanceOverview() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
   const uniqueGrades = Array.from(new Set(allStudents.map(s => s.grade))).sort();
 
   // Fetch all lesson plans for subject filter and grouping
@@ -72,12 +71,11 @@ export default function ChapterPerformanceOverview() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch all student_chapters for the center, filtered by student/grade/subject
   const { data: studentChaptersRaw = [], isLoading: studentChaptersLoading } = useQuery({
-    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter],
+    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("student_chapters").select(`
@@ -86,6 +84,10 @@ export default function ChapterPerformanceOverview() {
         lesson_plans(id, chapter, subject, topic, grade, lesson_date, lesson_file_url),
         recorded_by_teacher:recorded_by_teacher_id(name)
       `).eq("students.center_id", user.center_id);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('recorded_by_teacher_id', user.teacher_id);
+      }
 
       if (subjectFilter !== "all") {
         query = query.eq("lesson_plans.subject", subjectFilter);
@@ -103,28 +105,32 @@ export default function ChapterPerformanceOverview() {
       // Filter out records where student or lesson_plan data might be missing
       return data?.filter((d: any) => d.students && d.lesson_plans) || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // NEW: Fetch all test results for the center, including test details and linked lesson_plan_id
   const { data: allTestResults = [], isLoading: testResultsLoading } = useQuery({
-    queryKey: ["all-test-results-for-chapter-overview", user?.center_id],
+    queryKey: ["all-test-results-for-chapter-overview", user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("test_results")
         .select(`
           id,
           student_id,
           marks_obtained,
-          tests(id, name, subject, total_marks, lesson_plan_id)
+          tests!inner(id, name, subject, total_marks, lesson_plan_id, created_by)
         `) // Removed lesson_plans(chapter) as it's not directly on tests
         .eq("tests.center_id", user.center_id); // Ensure tests belong to the same center
+
+      if (user?.role === 'teacher') {
+        query = query.eq('tests.created_by', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const allSubjects = useMemo(() => {
     return Array.from(new Set(allLessonPlans.map(lp => lp.subject).filter(Boolean))).sort();
@@ -163,8 +169,7 @@ export default function ChapterPerformanceOverview() {
         evaluationRating: sc.evaluation_rating,
         teacherNotes: sc.teacher_notes,
         recordedByTeacherName: sc.recorded_by_teacher?.name || null,
-        associatedTests: associatedTests,
-      });
+        associatedTests: associatedTests });
     });
 
     // Also add entries for tests that are linked to a lesson plan but have no student_chapter entry
@@ -200,8 +205,7 @@ export default function ChapterPerformanceOverview() {
               evaluationRating: null,
               teacherNotes: null,
               recordedByTeacherName: null,
-              associatedTests: [tr],
-            });
+              associatedTests: [tr] });
           }
         }
       }
@@ -227,57 +231,71 @@ export default function ChapterPerformanceOverview() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Academic Progress</h1>
-          <p className="text-muted-foreground text-lg">Detailed breakdown of student performance across all chapters.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Progress Matrix
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Multi-dimensional breakdown of student curricular performance.</p>
+          </div>
         </div>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4 border-b">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" /> Evaluation Archive
-            </CardTitle>
-            <div className="flex gap-2">
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="w-[160px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Subject</label>
               <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filter by Subject" />
+                <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Subject" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
                   <SelectItem value="all">All Subjects</SelectItem>
-                  {allSubjects.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
+                  {allSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="w-[140px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
               <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filter by Grade" />
+                <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Grade" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
                   <SelectItem value="all">All Grades</SelectItem>
-                  {uniqueGrades.map((g) => (
-                    <SelectItem key={g} value={g}>{g}</SelectItem>
-                  ))}
+                  {uniqueGrades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {/* NEW: Student Filter */}
+            </div>
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Student Focus</label>
               <Select value={studentFilter} onValueChange={setStudentFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by Student" />
+                <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Search Student" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Students</SelectItem>
-                  {allStudents.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name} ({s.grade})</SelectItem>
-                  ))}
+                <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
+                  <SelectItem value="all">All Registered Students</SelectItem>
+                  {allStudents.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} ({s.grade})</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
+        </Card>
+      </div>
+
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <BookOpen className="h-6 w-6 text-primary" />
+            </div>
+            Evaluation Archive
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {combinedChapterRecords.length === 0 ? (

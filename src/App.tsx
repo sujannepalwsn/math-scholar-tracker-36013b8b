@@ -6,12 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter as BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import CenterLayout from "./components/CenterLayout";
 import AdminLayout from "./components/AdminLayout";
 import ParentLayout from "./components/ParentLayout";
 import TeacherLayout from "./components/TeacherLayout";
 import BackButtonHandler from "./components/BackButtonHandler";
+
 import Dashboard from "./pages/Dashboard";
 import RegisterStudent from "./pages/RegisterStudent";
 import TakeAttendance from "./pages/TakeAttendance";
@@ -28,11 +30,14 @@ import StudentReport from "./pages/StudentReport";
 import AIInsights from "./pages/AIInsights";
 import ViewRecords from "./pages/ViewRecords";
 import Summary from "./pages/Summary";
+
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
 import ParentLogin from "./pages/ParentLogin";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminFinance from "./pages/AdminFinance";
+
 import ParentDashboard from "./pages/ParentDashboard";
 import ParentFinanceDashboard from "./pages/ParentFinanceDashboard";
 import ParentHomework from "./pages/ParentHomework";
@@ -41,20 +46,28 @@ import ParentDiscipline from "./pages/ParentDiscipline";
 import ParentMeetings from "./pages/ParentMeetings";
 import ParentChapterRating from "./pages/ParentChapterRating";
 import ParentLessonTracking from "./pages/ParentLessonTracking";
+import ParentStudentReport from "./pages/ParentStudentReport";
+import ParentMessaging from "./pages/ParentMessaging";
+
 import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherMeetings from "./pages/TeacherMeetings";
 import TeacherMessaging from "./pages/TeacherMessaging";
+
 import MeetingManagement from "./pages/MeetingManagement";
 import Messaging from "./pages/Messaging";
 import ClassRoutine from "./pages/ClassRoutine";
 import CalendarEvents from "./pages/CalendarEvents";
-import ParentMessaging from "./pages/ParentMessaging";
+
 import InitAdmin from "./pages/InitAdmin";
 import NotFound from "./pages/NotFound";
+
 import AdminSettings from "./pages/admin/Settings";
 import CenterSettings from "./pages/CenterSettings";
+import GeneralSettings from "./pages/GeneralSettings";
 import ChangePassword from "./pages/ChangePassword";
+
 import ChapterPerformanceOverview from "./pages/ChapterPerformanceOverview";
+import TeacherPerformanceReport from "./pages/TeacherPerformanceReport";
 
 const queryClient = new QueryClient();
 
@@ -65,86 +78,101 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-        <BrowserRouter>
-          <BackButtonHandler />
-          <Routes>
-            {/* Authentication Routes */}
-            <Route path="/init-admin" element={<InitAdmin />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/login-admin" element={<AdminLogin />} />
-            <Route path="/login-parent" element={<ParentLogin />} />
-            <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
-            {/* Parent Routes */}
-            <Route path="/parent-dashboard" element={<ProtectedRoute role="parent"><ParentLayout><ParentDashboard /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-finance" element={<ProtectedRoute role="parent"><ParentLayout><ParentFinanceDashboard /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-homework" element={<ProtectedRoute role="parent"><ParentLayout><ParentHomework /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-activities" element={<ProtectedRoute role="parent"><ParentLayout><ParentActivities /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-discipline" element={<ProtectedRoute role="parent"><ParentLayout><ParentDiscipline /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-meetings" element={<ProtectedRoute role="parent"><ParentLayout><ParentMeetings /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-messages" element={<ProtectedRoute role="parent"><ParentLayout><ParentMessaging /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-chapter-rating" element={<ProtectedRoute role="parent"><ParentLayout><ParentChapterRating /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-lesson-tracking" element={<ProtectedRoute role="parent"><ParentLayout><ParentLessonTracking /></ParentLayout></ProtectedRoute>} />
-            <Route path="/parent-calendar" element={<ProtectedRoute role="parent"><ParentLayout><CalendarEvents /></ParentLayout></ProtectedRoute>} />
+          <BrowserRouter>
+            <BackButtonHandler />
 
-            {/* Teacher Routes */}
-            <Route path="/teacher-dashboard" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherDashboard /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/take-attendance" element={<ProtectedRoute role="teacher"><TeacherLayout><TakeAttendance /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/attendance-summary" element={<ProtectedRoute role="teacher"><TeacherLayout><AttendanceSummary /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/lesson-plans" element={<ProtectedRoute role="teacher"><TeacherLayout><LessonPlans /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/lesson-tracking" element={<ProtectedRoute role="teacher"><TeacherLayout><LessonTracking /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/homework-management" element={<ProtectedRoute role="teacher"><TeacherLayout><HomeworkManagement /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/activities" element={<ProtectedRoute role="teacher"><TeacherLayout><PreschoolActivities /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/preschool-activities" element={<ProtectedRoute role="teacher"><TeacherLayout><PreschoolActivities /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/discipline-issues" element={<ProtectedRoute role="teacher"><TeacherLayout><DisciplineIssues /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/test-management" element={<ProtectedRoute role="teacher"><TeacherLayout><Tests /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/student-report" element={<ProtectedRoute role="teacher"><TeacherLayout><StudentReport /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/chapter-performance" element={<ProtectedRoute role="teacher"><TeacherLayout><ChapterPerformanceOverview /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/ai-insights" element={<ProtectedRoute role="teacher"><TeacherLayout><AIInsights /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/view-records" element={<ProtectedRoute role="teacher"><TeacherLayout><ViewRecords /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/summary" element={<ProtectedRoute role="teacher"><TeacherLayout><Summary /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/finance" element={<ProtectedRoute role="teacher"><TeacherLayout><AdminFinance /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher-meetings" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMeetings /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher-messages" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMessaging /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/class-routine" element={<ProtectedRoute role="teacher"><TeacherLayout><ClassRoutine /></TeacherLayout></ProtectedRoute>} />
-            <Route path="/teacher/calendar" element={<ProtectedRoute role="teacher"><TeacherLayout><CalendarEvents /></TeacherLayout></ProtectedRoute>} />
+            <Routes>
 
-            {/* Center Routes */}
-            <Route path="/" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
-            <Route path="/register" element={<ProtectedRoute role="center"><CenterLayout><RegisterStudent /></CenterLayout></ProtectedRoute>} />
-            <Route path="/attendance" element={<ProtectedRoute role="center"><CenterLayout><TakeAttendance /></CenterLayout></ProtectedRoute>} />
-            <Route path="/attendance-summary" element={<ProtectedRoute role="center"><CenterLayout><AttendanceSummary /></CenterLayout></ProtectedRoute>} />
-            <Route path="/lesson-plans" element={<ProtectedRoute role="center"><CenterLayout><LessonPlans /></CenterLayout></ProtectedRoute>} />
-            <Route path="/lesson-tracking" element={<ProtectedRoute role="center"><CenterLayout><LessonTracking /></CenterLayout></ProtectedRoute>} />
-            <Route path="/homework" element={<ProtectedRoute role="center"><CenterLayout><HomeworkManagement /></CenterLayout></ProtectedRoute>} />
-            <Route path="/activities" element={<ProtectedRoute role="center"><CenterLayout><PreschoolActivities /></CenterLayout></ProtectedRoute>} />
-            <Route path="/discipline" element={<ProtectedRoute role="center"><CenterLayout><DisciplineIssues /></CenterLayout></ProtectedRoute>} />
-            <Route path="/teachers" element={<ProtectedRoute role="center"><CenterLayout><TeacherManagement /></CenterLayout></ProtectedRoute>} />
-            <Route path="/teacher-attendance" element={<ProtectedRoute role="center"><CenterLayout><TeacherAttendancePage /></CenterLayout></ProtectedRoute>} />
-            <Route path="/tests" element={<ProtectedRoute role="center"><CenterLayout><Tests /></CenterLayout></ProtectedRoute>} />
-            <Route path="/student-report" element={<ProtectedRoute role="center"><CenterLayout><StudentReport /></CenterLayout></ProtectedRoute>} />
-            <Route path="/ai-insights" element={<ProtectedRoute role="center"><CenterLayout><AIInsights /></CenterLayout></ProtectedRoute>} />
-            <Route path="/records" element={<ProtectedRoute role="center"><CenterLayout><ViewRecords /></CenterLayout></ProtectedRoute>} />
-            <Route path="/summary" element={<ProtectedRoute role="center"><CenterLayout><Summary /></CenterLayout></ProtectedRoute>} />
-            <Route path="/finance" element={<ProtectedRoute role="center"><CenterLayout><AdminFinance /></CenterLayout></ProtectedRoute>} />
-            <Route path="/meetings" element={<ProtectedRoute role="center"><CenterLayout><MeetingManagement /></CenterLayout></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute role="center"><CenterLayout><Messaging /></CenterLayout></ProtectedRoute>} />
-            <Route path="/class-routine" element={<ProtectedRoute role="center"><CenterLayout><ClassRoutine /></CenterLayout></ProtectedRoute>} />
-            <Route path="/calendar" element={<ProtectedRoute role="center"><CenterLayout><CalendarEvents /></CenterLayout></ProtectedRoute>} />
-            <Route path="/chapter-performance-overview" element={<ProtectedRoute role="center"><CenterLayout><ChapterPerformanceOverview /></CenterLayout></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute role="center"><CenterLayout><CenterSettings /></CenterLayout></ProtectedRoute>} />
+              {/* Authentication */}
+              <Route path="/init-admin" element={<InitAdmin />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/login-admin" element={<AdminLogin />} />
+              <Route path="/login-parent" element={<ParentLogin />} />
+              <Route
+                path="/change-password"
+                element={
+                  <ProtectedRoute>
+                    <ChangePassword />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Admin Routes */}
-            <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
-            <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminLayout><AdminFinance /></AdminLayout></ProtectedRoute>} />
-            <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
+              {/* Parent */}
+              <Route path="/parent-dashboard" element={<ProtectedRoute role="parent"><ParentLayout><ParentDashboard /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-finance" element={<ProtectedRoute role="parent"><ParentLayout><ParentFinanceDashboard /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-homework" element={<ProtectedRoute role="parent"><ParentLayout><ParentHomework /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-activities" element={<ProtectedRoute role="parent"><ParentLayout><ParentActivities /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-discipline" element={<ProtectedRoute role="parent"><ParentLayout><ParentDiscipline /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-meetings" element={<ProtectedRoute role="parent"><ParentLayout><ParentMeetings /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-messages" element={<ProtectedRoute role="parent"><ParentLayout><ParentMessaging /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-chapter-rating" element={<ProtectedRoute role="parent"><ParentLayout><ParentChapterRating /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-lesson-tracking" element={<ProtectedRoute role="parent"><ParentLayout><ParentLessonTracking /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-student-report" element={<ProtectedRoute role="parent"><ParentLayout><ParentStudentReport /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-calendar" element={<ProtectedRoute role="parent"><ParentLayout><CalendarEvents /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-settings" element={<ProtectedRoute role="parent"><ParentLayout><GeneralSettings /></ParentLayout></ProtectedRoute>} />
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
+              {/* Teacher */}
+              <Route path="/teacher-dashboard" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherDashboard /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/take-attendance" element={<ProtectedRoute role="teacher"><TeacherLayout><TakeAttendance /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/attendance-summary" element={<ProtectedRoute role="teacher"><TeacherLayout><AttendanceSummary /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/lesson-plans" element={<ProtectedRoute role="teacher"><TeacherLayout><LessonPlans /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/lesson-tracking" element={<ProtectedRoute role="teacher"><TeacherLayout><LessonTracking /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/homework-management" element={<ProtectedRoute role="teacher"><TeacherLayout><HomeworkManagement /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/activities" element={<ProtectedRoute role="teacher"><TeacherLayout><PreschoolActivities /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/preschool-activities" element={<ProtectedRoute role="teacher"><TeacherLayout><PreschoolActivities /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/discipline-issues" element={<ProtectedRoute role="teacher"><TeacherLayout><DisciplineIssues /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/test-management" element={<ProtectedRoute role="teacher"><TeacherLayout><Tests /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/student-report" element={<ProtectedRoute role="teacher"><TeacherLayout><StudentReport /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/chapter-performance" element={<ProtectedRoute role="teacher"><TeacherLayout><ChapterPerformanceOverview /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/ai-insights" element={<ProtectedRoute role="teacher"><TeacherLayout><AIInsights /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/view-records" element={<ProtectedRoute role="teacher"><TeacherLayout><ViewRecords /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/summary" element={<ProtectedRoute role="teacher"><TeacherLayout><Summary /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/finance" element={<ProtectedRoute role="teacher"><TeacherLayout><AdminFinance /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher-meetings" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMeetings /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher-messages" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMessaging /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/class-routine" element={<ProtectedRoute role="teacher"><TeacherLayout><ClassRoutine /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/calendar" element={<ProtectedRoute role="teacher"><TeacherLayout><CalendarEvents /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/settings" element={<ProtectedRoute role="teacher"><TeacherLayout><GeneralSettings /></TeacherLayout></ProtectedRoute>} />
+
+              {/* Center */}
+              <Route path="/" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
+              <Route path="/register" element={<ProtectedRoute role="center"><CenterLayout><RegisterStudent /></CenterLayout></ProtectedRoute>} />
+              <Route path="/attendance" element={<ProtectedRoute role="center"><CenterLayout><TakeAttendance /></CenterLayout></ProtectedRoute>} />
+              <Route path="/attendance-summary" element={<ProtectedRoute role="center"><CenterLayout><AttendanceSummary /></CenterLayout></ProtectedRoute>} />
+              <Route path="/lesson-plans" element={<ProtectedRoute role="center"><CenterLayout><LessonPlans /></CenterLayout></ProtectedRoute>} />
+              <Route path="/lesson-tracking" element={<ProtectedRoute role="center"><CenterLayout><LessonTracking /></CenterLayout></ProtectedRoute>} />
+              <Route path="/homework" element={<ProtectedRoute role="center"><CenterLayout><HomeworkManagement /></CenterLayout></ProtectedRoute>} />
+              <Route path="/activities" element={<ProtectedRoute role="center"><CenterLayout><PreschoolActivities /></CenterLayout></ProtectedRoute>} />
+              <Route path="/discipline" element={<ProtectedRoute role="center"><CenterLayout><DisciplineIssues /></CenterLayout></ProtectedRoute>} />
+              <Route path="/teachers" element={<ProtectedRoute role="center"><CenterLayout><TeacherManagement /></CenterLayout></ProtectedRoute>} />
+              <Route path="/teacher-attendance" element={<ProtectedRoute role="center"><CenterLayout><TeacherAttendancePage /></CenterLayout></ProtectedRoute>} />
+              <Route path="/tests" element={<ProtectedRoute role="center"><CenterLayout><Tests /></CenterLayout></ProtectedRoute>} />
+              <Route path="/student-report" element={<ProtectedRoute role="center"><CenterLayout><StudentReport /></CenterLayout></ProtectedRoute>} />
+              <Route path="/ai-insights" element={<ProtectedRoute role="center"><CenterLayout><AIInsights /></CenterLayout></ProtectedRoute>} />
+              <Route path="/records" element={<ProtectedRoute role="center"><CenterLayout><ViewRecords /></CenterLayout></ProtectedRoute>} />
+              <Route path="/summary" element={<ProtectedRoute role="center"><CenterLayout><Summary /></CenterLayout></ProtectedRoute>} />
+              <Route path="/finance" element={<ProtectedRoute role="center"><CenterLayout><AdminFinance /></CenterLayout></ProtectedRoute>} />
+              <Route path="/meetings" element={<ProtectedRoute role="center"><CenterLayout><MeetingManagement /></CenterLayout></ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute role="center"><CenterLayout><Messaging /></CenterLayout></ProtectedRoute>} />
+              <Route path="/class-routine" element={<ProtectedRoute role="center"><CenterLayout><ClassRoutine /></CenterLayout></ProtectedRoute>} />
+              <Route path="/calendar" element={<ProtectedRoute role="center"><CenterLayout><CalendarEvents /></CenterLayout></ProtectedRoute>} />
+              <Route path="/chapter-performance-overview" element={<ProtectedRoute role="center"><CenterLayout><ChapterPerformanceOverview /></CenterLayout></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute role="center"><CenterLayout><CenterSettings /></CenterLayout></ProtectedRoute>} />
+              <Route path="/teacher-performance" element={<ProtectedRoute role="center"><CenterLayout><TeacherPerformanceReport /></CenterLayout></ProtectedRoute>} />
+
+              {/* Admin */}
+              <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminLayout><AdminFinance /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
+
+              <Route path="*" element={<NotFound />} />
+
+            </Routes>
+          </BrowserRouter>
+
+        </TooltipProvider>
+      </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

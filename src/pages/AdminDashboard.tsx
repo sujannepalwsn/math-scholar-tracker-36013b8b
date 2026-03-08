@@ -1,19 +1,20 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { Edit, Plus, Power, PowerOff, Shield, Users } from "lucide-react";
+import React, { useState } from "react";
+import { Edit, Plus, Power, PowerOff, Users } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useAuth } from "@/contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 import * as bcrypt from 'bcryptjs';
 import CenterFeaturePermissions from '@/components/admin/CenterFeaturePermissions';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 
 const AdminDashboard = () => {
@@ -74,8 +75,7 @@ const AdminDashboard = () => {
 
       // Create default permissions
       const { error: permError } = await supabase.from('center_feature_permissions').insert({
-        center_id: centerData.id,
-      });
+        center_id: centerData.id });
       if (permError) console.error('Error seeding permissions:', permError);
 
       return centerData;
@@ -130,16 +130,24 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="max-w-7xl mx-auto space-y-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-extrabold tracking-tight">System Administration</h1>
-            <p className="text-muted-foreground text-lg">Manage centers, user permissions and system status.</p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+              System Administration
+            </h1>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <p className="text-muted-foreground text-sm font-medium">Global management and institutional oversight.</p>
+            </div>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Create Center</Button>
+              <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+                <Plus className="h-5 w-5 mr-2" />
+                REGISTER NEW CENTER
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -197,59 +205,79 @@ const AdminDashboard = () => {
           </DialogContent>
         </Dialog>
 
-        <Card className="border-none shadow-medium overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
               Registered Tuition Centers
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? <p>Loading...</p> : centers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No centers registered yet</p>
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+              </div>
+            ) : centers.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground font-medium italic">No active center registrations discovered.</p>
+              </div>
             ) : (
-              <div className="overflow-auto max-h-[400px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Center Name</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {centers.map((center: any) => {
-                    const centerUser = center.users?.[0];
-                    return (
-                      <TableRow key={center.id}>
-                        <TableCell className="font-medium">{center.name}</TableCell>
-                        <TableCell>{center.address || '-'}</TableCell>
-                        <TableCell>{center.phone || '-'}</TableCell>
-                        <TableCell>{centerUser?.username || '-'}</TableCell>
-                        <TableCell>
-                          {centerUser?.is_active ?
-                            <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-none">Active</Badge> :
-                            <Badge variant="destructive" className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-none">Inactive</Badge>
-                          }
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenEditDialog(center)}><Edit className="h-4 w-4" /></Button>
-                            {centerUser && (
-                              <Button variant="ghost" size="sm" onClick={() => toggleStatusMutation.mutate({ userId: centerUser.id, isActive: centerUser.is_active })}>
-                                {centerUser.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/5">
+                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Center Entity</TableHead>
+                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Physical Location</TableHead>
+                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Telecom</TableHead>
+                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Identity</TableHead>
+                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Status</TableHead>
+                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4 text-right">Operations</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {centers.map((center: any) => {
+                      const centerUser = center.users?.[0];
+                      return (
+                        <TableRow key={center.id} className="group transition-all duration-300 hover:bg-card/60">
+                          <TableCell className="px-6 py-4 font-black text-slate-700 group-hover:text-primary transition-colors">{center.name}</TableCell>
+                          <TableCell className="px-6 py-4 font-medium text-slate-500 text-xs truncate max-w-[200px]">{center.address || '-'}</TableCell>
+                          <TableCell className="px-6 py-4 font-bold text-primary text-xs">{center.phone || '-'}</TableCell>
+                          <TableCell className="px-6 py-4">
+                            <code className="bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-700">{centerUser?.username || '-'}</code>
+                          </TableCell>
+                          <TableCell className="px-6 py-4">
+                            {centerUser?.is_active ?
+                              <Badge className="bg-green-500/10 text-green-600 border-none rounded-lg font-black uppercase text-[9px] tracking-tighter px-2 py-0.5">Operational</Badge> :
+                              <Badge variant="destructive" className="bg-red-500/10 text-red-600 border-none rounded-lg font-black uppercase text-[9px] tracking-tighter px-2 py-0.5">Suspended</Badge>
+                            }
+                          </TableCell>
+                          <TableCell className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleOpenEditDialog(center)}>
+                                <Edit className="h-3.5 w-3.5 text-primary" />
                               </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                              {centerUser && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn(
+                                    "h-8 w-8 rounded-full shadow-soft transition-all",
+                                    centerUser.is_active ? "bg-white hover:bg-red-50 text-red-600" : "bg-white hover:bg-green-50 text-green-600"
+                                  )}
+                                  onClick={() => toggleStatusMutation.mutate({ userId: centerUser.id, isActive: centerUser.is_active })}
+                                >
+                                  {centerUser.is_active ? <PowerOff className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5" />}
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>

@@ -1,20 +1,22 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { CalendarIcon, Camera, Edit, Plus, Settings, Star, Trash2, Video } from "lucide-react";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
+import React, { useState } from "react";
+import { CalendarIcon, Camera, CheckSquare, Edit, Plus, Settings, Star, Trash2, Users, Video } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Tables } from "@/integrations/supabase/types"
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge"
 
 
 type Activity = Tables<'activities'>;
@@ -30,7 +32,7 @@ export default function PreschoolActivities() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [showActivityTypeManagement, setShowActivityTypeManagement] = useState(false);
 
-  const [studentId, setStudentId] = useState("select-student"); // Changed initial state
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [activityTypeId, setActivityTypeId] = useState("select-activity-type"); // Changed initial state
   const [title, setTitle] = useState(""); // New state for activity title
   const [description, setDescription] = useState("");
@@ -53,8 +55,7 @@ export default function PreschoolActivities() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Filtered students for the modal's student select dropdown
   const filteredStudentsForModal = students.filter(s => modalGradeFilter === "all" || s.grade === modalGradeFilter);
@@ -72,12 +73,11 @@ export default function PreschoolActivities() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
-  // Fetch activities - now properly filtered by center
+  // Fetch activities - now properly filtered by center and teacher
   const { data: activities = [], isLoading } = useQuery({
-    queryKey: ["preschool-activities", user?.center_id, gradeFilter],
+    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       // First get student IDs for this center
@@ -90,20 +90,24 @@ export default function PreschoolActivities() {
       
       const studentIds = centerStudents.map(s => s.id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("student_activities")
-        .select("*, students(name, grade, center_id), activities(id, name, description, activity_date), activity_types(name)")
-        .in("student_id", studentIds)
-        .order("created_at", { ascending: false });
+        .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
+        .in("student_id", studentIds);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('activities.created_by', user.id);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const resetForm = () => {
-    setStudentId("select-student"); // Reset to default placeholder value
+    setSelectedStudentIds([]);
     setActivityTypeId("select-activity-type"); // Reset to default placeholder value
     setTitle("");
     setDescription("");
@@ -139,7 +143,7 @@ export default function PreschoolActivities() {
 
   const createActivityMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.center_id || studentId === "select-student" || activityTypeId === "select-activity-type" || !title) throw new Error("Please select a student, activity type, and provide a title."); // Validation
+      if (!user?.center_id || selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title) throw new Error("Please select at least one student, activity type, and provide a title."); // Validation
 
       let photoUrl: string | null = null;
       let videoUrl: string | null = null;
@@ -155,16 +159,19 @@ export default function PreschoolActivities() {
         description,
         activity_date: activityDate,
         activity_type_id: activityTypeId,
-      }).select().single();
+        photo_url: photoUrl,
+        video_url: videoUrl,
+        created_by: user.id }).select().single();
       if (activityError) throw activityError;
 
-      // Then create student_activity record
-      const { error: saError } = await supabase.from("student_activities").insert({
-        student_id: studentId,
+      // Then create student_activity records for all selected students
+      const studentActivityRecords = selectedStudentIds.map(sid => ({
+        student_id: sid,
         activity_id: activity.id,
         activity_type_id: activityTypeId,
-        rating: involvementRating,
-      });
+        involvement_score: involvementRating }));
+
+      const { error: saError } = await supabase.from("student_activities").insert(studentActivityRecords);
       if (saError) throw saError;
     },
     onSuccess: () => {
@@ -175,12 +182,11 @@ export default function PreschoolActivities() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to log activity");
-    },
-  });
+    } });
 
   const updateActivityMutation = useMutation({
     mutationFn: async () => {
-      if (!editingActivity || !user?.center_id || studentId === "select-student" || activityTypeId === "select-activity-type" || !title) throw new Error("Please select a student, activity type, and provide a title."); // Validation
+      if (!editingActivity || !user?.center_id || selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title) throw new Error("Please select a student, activity type, and provide a title."); // Validation
 
       let photoUrl: string | null = (editingActivity as any).activities?.photo_url;
       let videoUrl: string | null = (editingActivity as any).activities?.video_url;
@@ -195,15 +201,13 @@ export default function PreschoolActivities() {
         activity_date: activityDate,
         photo_url: photoUrl,
         video_url: videoUrl,
-        activity_type_id: activityTypeId,
-      }).eq("id", (editingActivity as any).activities?.id);
+        activity_type_id: activityTypeId }).eq("id", (editingActivity as any).activities?.id);
       if (activityUpdateError) throw activityUpdateError;
 
-      // Update the student_activity record
+      // Update the student_activity record (Updates only the current record being edited)
       const { error: saUpdateError } = await supabase.from("student_activities").update({
-        student_id: studentId,
-        involvement_score: involvementRating,
-      }).eq("id", editingActivity.id);
+        student_id: selectedStudentIds[0],
+        involvement_score: involvementRating }).eq("id", editingActivity.id);
       if (saUpdateError) throw saUpdateError;
     },
     onSuccess: () => {
@@ -214,8 +218,7 @@ export default function PreschoolActivities() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update activity");
-    },
-  });
+    } });
 
   const deleteActivityMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -235,12 +238,11 @@ export default function PreschoolActivities() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete activity");
-    },
-  });
+    } });
 
   const handleEditClick = (activity: any) => {
     setEditingActivity(activity);
-    setStudentId(activity.student_id);
+    setSelectedStudentIds([activity.student_id]);
     setActivityTypeId(activity.activities?.activity_type_id || "select-activity-type"); // Set to placeholder if null
     setTitle(activity.activities?.title || "");
     setDescription(activity.activities?.description || "");
@@ -273,26 +275,31 @@ export default function PreschoolActivities() {
   // Filtering is now handled by the useQuery hook
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Preschool Journal</h1>
-          <p className="text-muted-foreground text-lg">Document and share student engagement and creative milestones.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Creative Journal
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Document and share student creative milestones.</p>
+          </div>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-3">
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by Grade" />
+            <SelectTrigger className="w-[140px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+              <SelectValue placeholder="Grade" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
               <SelectItem value="all">All Grades</SelectItem>
               {uniqueGrades.map((g) => (
                 <SelectItem key={g} value={g}>{g}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => setShowActivityTypeManagement(true)}>
-            <Settings className="h-4 w-4 mr-2" /> Manage Types
+          <Button variant="outline" onClick={() => setShowActivityTypeManagement(true)} className="rounded-xl h-11">
+            <Settings className="h-4 w-4 mr-2" /> Categories
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
@@ -323,21 +330,34 @@ export default function PreschoolActivities() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="student">Student *</Label>
-                <Select value={studentId} onValueChange={setStudentId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="select-student" disabled>Select Student</SelectItem> {/* Added placeholder item */}
-                    {filteredStudentsForModal.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name} - {s.grade}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                   <Label className="flex items-center gap-2"><Users className="h-4 w-4" /> Selected Students ({selectedStudentIds.length})</Label>
+                   <div className="flex gap-2">
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest" onClick={() => setSelectedStudentIds(filteredStudentsForModal.map(s => s.id))}>Select All</Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest" onClick={() => setSelectedStudentIds([])}>Clear</Button>
+                   </div>
+                </div>
+                <div className="border border-muted/20 rounded-xl p-3 max-h-48 overflow-y-auto space-y-2 bg-muted/5">
+                   {filteredStudentsForModal.map((s) => (
+                     <div key={s.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white transition-colors border border-transparent hover:border-muted/10">
+                        <Checkbox
+                          id={`student-${s.id}`}
+                          checked={selectedStudentIds.includes(s.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedStudentIds(prev => [...prev, s.id]);
+                            else setSelectedStudentIds(prev => prev.filter(id => id !== s.id));
+                          }}
+                        />
+                        <label htmlFor={`student-${s.id}`} className="text-sm font-bold text-slate-700 cursor-pointer flex-1">
+                          {s.name} <span className="text-[10px] text-muted-foreground uppercase ml-2 tracking-tighter">{s.grade}</span>
+                        </label>
+                     </div>
+                   ))}
+                   {filteredStudentsForModal.length === 0 && (
+                     <p className="text-center py-4 text-xs italic text-muted-foreground">No students found for selected grade.</p>
+                   )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="activityTypeId">Activity Type *</Label>
@@ -369,14 +389,26 @@ export default function PreschoolActivities() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="photo">Upload Photo (Optional)</Label>
-                <Input id="photo" type="file" accept="image/*" onChange={handlePhotoChange} />
+                <Input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handlePhotoChange}
+                />
                 {editingActivity && (editingActivity as any).activities?.photo_url && !photo && (
                   <p className="text-sm text-muted-foreground">Current photo attached</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="video">Upload Video (Optional)</Label>
-                <Input id="video" type="file" accept="video/*" onChange={handleVideoChange} />
+                <Input
+                  id="video"
+                  type="file"
+                  accept="video/*"
+                  capture="environment"
+                  onChange={handleVideoChange}
+                />
                 {editingActivity && (editingActivity as any).activities?.video_url && !video && (
                   <p className="text-sm text-muted-foreground">Current video attached</p>
                 )}
@@ -395,10 +427,10 @@ export default function PreschoolActivities() {
               </div>
               <Button
                 onClick={handleSubmit}
-                disabled={studentId === "select-student" || activityTypeId === "select-activity-type" || !title || !description || !activityDate || createActivityMutation.isPending || updateActivityMutation.isPending}
+                disabled={selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title || !description || !activityDate || createActivityMutation.isPending || updateActivityMutation.isPending}
                 className="w-full"
               >
-                {editingActivity ? (updateActivityMutation.isPending ? "Updating..." : "Update Activity") : (createActivityMutation.isPending ? "Logging..." : "Log Activity")}
+                {editingActivity ? (updateActivityMutation.isPending ? "Updating..." : "Update Activity") : (createActivityMutation.isPending ? "Logging..." : `Log Activity for ${selectedStudentIds.length} Students`)}
               </Button>
             </div>
           </DialogContent>
@@ -406,80 +438,100 @@ export default function PreschoolActivities() {
         </div>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Activity Log</CardTitle>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Camera className="h-6 w-6 text-primary" />
+            </div>
+            Activity Stream
+          </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="p-6">
           {isLoading ? (
-            <div className="flex justify-center py-12"><Star className="h-8 w-8 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            </div>
           ) : activities.length === 0 ? (
-            <p className="text-muted-foreground text-center py-12 italic">No activities recorded for the current selection.</p>
+            <div className="text-center py-12 space-y-3">
+              <div className="mx-auto w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center">
+                <Camera className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+              <p className="text-muted-foreground font-medium">No activities recorded for selected filters.</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {activities.map((activity: any) => (
-                <div key={activity.id} className="rounded-2xl border-2 border-primary/5 bg-card p-6 shadow-soft hover:shadow-medium transition-all group relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft" onClick={() => handleEditClick(activity)}>
-                      <Edit className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl bg-background shadow-soft hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                       <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-                          <Camera className="h-6 w-6" />
-                       </div>
-                       <div>
-                          <h3 className="font-bold text-xl leading-tight">{activity.students?.name}</h3>
-                          <div className="flex gap-2 mt-1">
-                             <Badge variant="outline" className="text-[10px]">{activity.activity_types?.name || 'Activity'}</Badge>
-                             <Badge className="text-[10px] bg-primary/10 text-primary border-none">{activity.students?.grade}</Badge>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-bold text-sm text-foreground">{activity.activities?.title}</h4>
-                        <p className="text-sm text-muted-foreground line-clamp-3 mt-1">{activity.activities?.description || 'No description'}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-x-4 gap-y-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-tighter">
-                          <CalendarIcon className="h-3.5 w-3.5" />
-                          {format(new Date(activity.activities?.activity_date || activity.created_at), "PPP")}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-muted/10">
+                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Student & Title</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Type & Grade</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Activity Date</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Involvement</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Media & Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activities.map((activity: any) => (
+                    <TableRow key={activity.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                      <TableCell className="pl-6 py-4">
+                        <div className="space-y-1">
+                          <p className="font-bold text-foreground/90 leading-none">{activity.students?.name}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{activity.activities?.title}</p>
                         </div>
-                        {activity.involvement_score && (
-                          <div className="flex items-center gap-1 text-xs font-bold text-orange-500 uppercase tracking-tighter">
-                            <Star className="h-3.5 w-3.5 fill-current" />
-                            Engagement: {activity.involvement_score}/5
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                            {activity.activity_types?.name || 'Milestone'}
+                          </Badge>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                            {activity.students?.grade}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                          <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+                          {format(new Date(activity.activities?.activity_date || activity.created_at), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {activity.involvement_score ? (
+                          <div className="inline-flex items-center gap-1 bg-orange-500/10 text-orange-600 px-2 py-1 rounded-lg text-[10px] font-black">
+                            <Star className="h-3 w-3 fill-current" />
+                            {activity.involvement_score}
                           </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      {activity.activities?.photo_url && (
-                        <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2" asChild>
-                          <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Camera className="h-4 w-4 mr-2" /> Photo
-                          </a>
-                        </Button>
-                      )}
-                      {activity.activities?.video_url && (
-                        <Button variant="outline" size="sm" className="flex-1 rounded-xl border-2" asChild>
-                          <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                            <Video className="h-4 w-4 mr-2" /> Video
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                        ) : <span className="text-xs text-slate-400 font-bold">N/A</span>}
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <div className="flex justify-end gap-2">
+                          {activity.activities?.photo_url && (
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary" asChild>
+                               <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                                 <Camera className="h-4 w-4" />
+                               </a>
+                             </Button>
+                          )}
+                          {activity.activities?.video_url && (
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary" asChild>
+                               <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                                 <Video className="h-4 w-4" />
+                               </a>
+                             </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(activity)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

@@ -1,17 +1,13 @@
 "use client";
+import React, { useEffect, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  X,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
+import { Link, useLocation } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface NavItem {
   to: string;
@@ -20,7 +16,7 @@ interface NavItem {
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }
 
 interface SidebarProps {
@@ -42,10 +38,10 @@ export default function Sidebar({
 }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
 
-  // Prevent animation glitch on first render
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(timer);
@@ -59,241 +55,205 @@ export default function Sidebar({
 
   const handleMobileClose = () => {
     onMobileOpenChange?.(false);
+    if (window.history.state?.sidebarOpen) {
+      window.history.back();
+    }
   };
 
-  // Handle back button on mobile when sidebar is open
-  useEffect(() => {
-    if (!isMobileOpen) return;
-
-    // Push a new state when the sidebar opens
-    window.history.pushState({ sidebarOpen: true }, "");
-
-    const handlePopState = (event: PopStateEvent) => {
-      // If the user clicks back, close the sidebar
-      if (onMobileOpenChange) {
-        onMobileOpenChange(false);
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      // If the sidebar is still "open" in history, but being closed by React state change,
-      // we need to remove the extra state we pushed to keep history clean.
-      if (window.history.state?.sidebarOpen) {
-        window.history.back();
-      }
-    };
-  }, [isMobileOpen, onMobileOpenChange]);
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
 
   const filteredNavItems = navItems.filter(item => {
-    if (item.role && user?.role !== item.role) {
-      return false;
-    }
-
+    if (item.role && user?.role !== item.role) return false;
     if (item.featureName) {
-      if (user?.role === 'center' && user.centerPermissions) {
-        return user.centerPermissions[item.featureName];
-      }
-      if (user?.role === 'teacher' && user.teacherPermissions) {
-        return user.teacherPermissions[item.featureName];
-      }
+      if (user?.role === 'center' && user.centerPermissions) return user.centerPermissions[item.featureName];
+      if (user?.role === 'teacher' && user.teacherPermissions) return user.teacherPermissions[item.featureName];
     }
     return true;
   });
 
-  // Desktop sidebar
+  const renderNavLinks = (items: NavItem[], isMobile: boolean) => {
+    const renderedItems: React.ReactNode[] = [];
+    let currentCategory: string | undefined = undefined;
+    let currentCategoryItems: React.ReactNode[] = [];
+
+    const flushCategory = (category: string, children: React.ReactNode[]) => {
+      const isExpanded = expandedCategories.includes(category);
+      if (isMobile) {
+        return (
+          <div key={`mob-cat-group-${category}`} className="space-y-0.5">
+            <button
+              onClick={() => toggleCategory(category)}
+              className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mt-4 first:mt-0 hover:text-foreground transition-colors"
+            >
+              {category}
+              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+            {isExpanded && children}
+          </div>
+        );
+      } else {
+        return (
+          <div key={`cat-group-${category}`} className="space-y-0.5">
+            {!isCollapsed ? (
+              <button
+                onClick={() => toggleCategory(category)}
+                className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mt-5 first:mt-0 hover:text-foreground transition-colors"
+              >
+                {category}
+                {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </button>
+            ) : (
+              <div className="mx-3 border-t border-border my-3 first:hidden" />
+            )}
+            {(isExpanded || isCollapsed) && children}
+          </div>
+        );
+      }
+    };
+
+    items.forEach((item, index) => {
+      if (item.category !== currentCategory) {
+        if (currentCategory) {
+          renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
+          currentCategoryItems = [];
+        }
+        currentCategory = item.category;
+      }
+
+      const Icon = item.icon;
+      const isActive = location.pathname === item.to;
+
+      const link = isMobile ? (
+        <Link
+          key={item.to}
+          to={item.to}
+          onClick={handleMobileClose}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+            isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="flex items-center justify-between flex-1 truncate">
+            {item.label}
+            {item.unreadCount && item.unreadCount > 0 && (
+              <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
+                {item.unreadCount}
+              </Badge>
+            )}
+          </span>
+        </Link>
+      ) : (
+        <Tooltip key={item.to} delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Link
+              to={item.to}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                isCollapsed ? "justify-center px-0" : ""
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {!isCollapsed && (
+                <span className="flex items-center justify-between w-full truncate">
+                  {item.label}
+                  {item.unreadCount && item.unreadCount > 0 && (
+                    <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
+                      {item.unreadCount}
+                    </Badge>
+                  )}
+                </span>
+              )}
+            </Link>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent side="right">
+              <span className="flex items-center gap-2">
+                {item.label}
+                {item.unreadCount && item.unreadCount > 0 && (
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                    {item.unreadCount}
+                  </Badge>
+                )}
+              </span>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      );
+
+      if (currentCategory) {
+        currentCategoryItems.push(link);
+      } else {
+        renderedItems.push(link);
+      }
+
+      if (index === items.length - 1 && currentCategory) {
+        renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
+      }
+    });
+
+    return renderedItems;
+  };
+
   const desktopSidebar = (
     <TooltipProvider>
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen z-20 hidden md:flex flex-col border-r",
-          "bg-card text-card-foreground shadow-soft",
-          mounted ? "transition-all duration-300" : "",
+          "fixed top-0 left-0 h-screen z-20 hidden md:flex flex-col border-r print:hidden",
+          "bg-card text-card-foreground",
+          mounted ? "transition-all duration-200" : "",
           isCollapsed ? "w-20" : "w-64"
         )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between h-20 px-4">
-          {!isCollapsed && <div className="flex-1 animate-in fade-in slide-in-from-left-4">{headerContent}</div>}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleCollapseToggle}
-            className="h-8 w-8 hover:bg-muted"
-          >
+        <div className="flex items-center justify-between h-16 px-4 border-b">
+          {!isCollapsed && <div className="flex-1 min-w-0">{headerContent}</div>}
+          <Button variant="ghost" size="icon" onClick={handleCollapseToggle} className="h-8 w-8 shrink-0">
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
-
-        {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {(() => {
-            const items: React.ReactNode[] = [];
-            let lastCategory: string | undefined = undefined;
-
-            filteredNavItems.forEach((item) => {
-              if (item.category !== lastCategory) {
-                if (item.category && !isCollapsed) {
-                  items.push(
-                    <div key={`cat-${item.category}`} className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-4 first:mt-0">
-                      {item.category}
-                    </div>
-                  );
-                } else if (item.category && isCollapsed) {
-                  items.push(
-                    <div key={`cat-sep-${item.category}`} className="mx-4 border-t border-muted my-4 first:hidden" />
-                  );
-                }
-                lastCategory = item.category;
-              }
-
-              const Icon = item.icon;
-              const isActive = location.pathname === item.to;
-              items.push(
-                <Tooltip key={item.to} delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={item.to}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        isCollapsed ? "justify-center px-0" : ""
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {!isCollapsed && (
-                        <span className="flex items-center justify-between w-full truncate">
-                          {item.label}
-                          {item.unreadCount && item.unreadCount > 0 && (
-                            <Badge variant="destructive" className="ml-auto px-1.5 py-0 text-[10px] min-w-[18px] h-[18px] flex items-center justify-center">
-                              {item.unreadCount}
-                            </Badge>
-                          )}
-                        </span>
-                      )}
-                    </Link>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right">
-                      <span className="flex items-center gap-2">
-                        {item.label}
-                        {item.unreadCount && item.unreadCount > 0 && (
-                          <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
-                            {item.unreadCount}
-                          </Badge>
-                        )}
-                      </span>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              );
-            });
-            return items;
-          })()}
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+          {renderNavLinks(filteredNavItems, false)}
         </nav>
-
-        {/* Footer */}
         <div className="mt-auto p-4 border-t">
           {!isCollapsed && <div className="text-sm text-muted-foreground">{footerContent}</div>}
-          {isCollapsed && (
-            <div className="flex justify-center">
-              {footerContent}
-            </div>
-          )}
+          {isCollapsed && <div className="flex justify-center">{footerContent}</div>}
         </div>
       </div>
     </TooltipProvider>
   );
 
-  // Mobile drawer
   const mobileSidebar = (
     <div
       className={cn(
         "fixed inset-0 z-40 md:hidden transition-opacity duration-200",
-        isMobileOpen ? "bg-black/50 backdrop-blur-sm" : "pointer-events-none opacity-0"
+        isMobileOpen ? "bg-foreground/20 backdrop-blur-sm" : "pointer-events-none opacity-0"
       )}
       onClick={handleMobileClose}
     >
-      {isMobileOpen && (
-        <style>{`
-          body {
-            overflow: hidden;
-          }
-        `}</style>
-      )}
+      {isMobileOpen && <style>{`body { overflow: hidden; }`}</style>}
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-lg flex flex-col transition-transform duration-300 ease-out z-50",
+          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-elevated flex flex-col transition-transform duration-200 ease-out z-50",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <div className="flex-1">{headerContent}</div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleMobileClose}
-            className="h-9 w-9 rounded-lg hover:bg-muted"
-          >
+          <div className="flex-1 min-w-0">{headerContent}</div>
+          <Button variant="ghost" size="icon" onClick={handleMobileClose} className="h-9 w-9 shrink-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
-
-        {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
-          {(() => {
-            const items: React.ReactNode[] = [];
-            let lastCategory: string | undefined = undefined;
-
-            filteredNavItems.forEach((item) => {
-              if (item.category !== lastCategory) {
-                if (item.category) {
-                  items.push(
-                    <div key={`mob-cat-${item.category}`} className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-4 first:mt-0">
-                      {item.category}
-                    </div>
-                  );
-                }
-                lastCategory = item.category;
-              }
-
-              const Icon = item.icon;
-              const isActive = location.pathname === item.to;
-              items.push(
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={handleMobileClose}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="flex items-center justify-between flex-1 truncate">
-                    {item.label}
-                    {item.unreadCount && item.unreadCount > 0 && (
-                      <Badge variant="destructive" className="ml-auto px-1.5 py-0 text-[10px]">
-                        {item.unreadCount}
-                      </Badge>
-                    )}
-                  </span>
-                </Link>
-              );
-            });
-            return items;
-          })()}
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+          {renderNavLinks(filteredNavItems, true)}
         </nav>
-
-        {/* Footer */}
         <div className="border-t p-4">
           <div className="text-sm text-muted-foreground">{footerContent}</div>
         </div>

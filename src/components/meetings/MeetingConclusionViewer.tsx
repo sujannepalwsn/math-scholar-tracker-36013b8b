@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { format } from "date-fns";
-import { Label } from "@/components/ui/label";
+import { format } from "date-fns"
+import { Label } from "@/components/ui/label"
 
 interface MeetingConclusionViewerProps {
   conclusion: {

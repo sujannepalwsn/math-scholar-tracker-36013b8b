@@ -1,18 +1,18 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox"; // Added this import
-import { toast } from "sonner";
+import React, { useEffect, useState } from "react";
 import { Star, User } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
-import { format } from "date-fns";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox" // Added this import
+import { toast } from "sonner"
+import { Tables } from "@/integrations/supabase/types"
+import { format } from "date-fns"
 
 interface EditStudentLessonRecordProps {
   studentChapterId: string;
@@ -46,8 +46,7 @@ export default function EditStudentLessonRecord({ studentChapterId, onSave, onCa
       if (error) throw error;
       return data;
     },
-    enabled: !!studentChapterId,
-  });
+    enabled: !!studentChapterId });
 
   useEffect(() => {
     if (studentChapter) {
@@ -83,8 +82,7 @@ export default function EditStudentLessonRecord({ studentChapterId, onSave, onCa
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update lesson record");
-    },
-  });
+    } });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

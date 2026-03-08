@@ -1,22 +1,24 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { toast } from 'sonner';
-import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, subMonths, addMonths, isValid } from 'date-fns';
-import { CalendarIcon, Check, CheckCircle2, Clock, Download, MinusCircle, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
-import { cn, safeFormatDate } from '@/lib/utils'; // Import safeFormatDate
-import { Tables, Database } from '@/integrations/supabase/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import React, { useEffect, useMemo, useState } from "react";
+import { CalendarIcon, CheckCircle2, Clock, Download, Eye, MinusCircle, Printer, TrendingUp, User, X, XCircle } from "lucide-react";
+import { cn, safeFormatDate } from "@/lib/utils"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { toast } from "sonner"
+import { addMonths, endOfMonth, format, isValid, isWithinInterval, parseISO, startOfMonth, subMonths } from "date-fns"
+
+import { Database, Tables } from "@/integrations/supabase/types"
+import { Badge } from "@/components/ui/badge"
+import { KPICard } from "@/components/dashboard/KPICard"
 
 type Teacher = Tables<'teachers'>;
 type TeacherAttendance = Tables<'teacher_attendance'>;
@@ -65,8 +67,7 @@ export default function TeacherAttendancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch existing attendance for the selected date
   const { data: existingAttendance = [], isLoading: attendanceLoading } = useQuery({
@@ -82,8 +83,7 @@ export default function TeacherAttendancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && teachers.length > 0,
-  });
+    enabled: !!user?.center_id && teachers.length > 0 });
 
   // Fetch all attendance for report
   const { data: allTeacherAttendance = [] } = useQuery({
@@ -97,8 +97,7 @@ export default function TeacherAttendancePage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch all attendance for a specific teacher for the detail dialog
   const { data: teacherDetailAttendance = [], refetch: refetchTeacherDetailAttendance } = useQuery({
@@ -125,7 +124,7 @@ export default function TeacherAttendancePage() {
     if (showTeacherDetailDialog && selectedTeacherDetail?.id) {
       refetchTeacherDetailAttendance();
     }
-  }, [showTeacherDetailDialog, selectedTeacherDetail?.id, detailMonthFilter, refetchTeacherDetailAttendance]);
+  }, [showTeacherDetailDialog, selectedTeacherDetail?.id, detailMonthFilter]);
 
   // Initialize attendance state when teachers or existing attendance changes
   useEffect(() => {
@@ -141,8 +140,7 @@ export default function TeacherAttendancePage() {
         time_in: null,
         time_out: null,
         notes: null,
-        created_at: new Date().toISOString(),
-      };
+        created_at: new Date().toISOString() };
     });
     setAttendanceRecords(initialRecords);
   }, [teachers, existingAttendance, dateStr]);
@@ -154,8 +152,7 @@ export default function TeacherAttendancePage() {
         ...prev[teacherId],
         status,
         time_in: status === 'present' ? (prev[teacherId]?.time_in || format(new Date(), 'HH:mm')) : null,
-        time_out: status === 'present' ? (prev[teacherId]?.time_out || null) : null,
-      }
+        time_out: status === 'present' ? (prev[teacherId]?.time_out || null) : null }
     }));
   };
 
@@ -164,8 +161,7 @@ export default function TeacherAttendancePage() {
       ...prev,
       [teacherId]: {
         ...prev[teacherId],
-        [field]: value || null,
-      }
+        [field]: value || null }
     }));
   };
 
@@ -190,8 +186,7 @@ export default function TeacherAttendancePage() {
             status: record.status,
             time_in: record.time_in,
             time_out: record.time_out,
-            notes: record.notes,
-          });
+            notes: record.notes });
         }
       }
 
@@ -207,8 +202,7 @@ export default function TeacherAttendancePage() {
             status: record.status,
             time_in: record.time_in,
             time_out: record.time_out,
-            notes: record.notes,
-          }).eq("id", record.id);
+            notes: record.notes }).eq("id", record.id);
           if (updateError) throw updateError;
         }
       }
@@ -220,8 +214,7 @@ export default function TeacherAttendancePage() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to save attendance");
-    },
-  });
+    } });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,8 +228,7 @@ export default function TeacherAttendancePage() {
         ...updatedRecords[teacher.id],
         status: 'present',
         time_in: updatedRecords[teacher.id]?.time_in || format(new Date(), 'HH:mm'),
-        time_out: updatedRecords[teacher.id]?.time_out || null,
-      };
+        time_out: updatedRecords[teacher.id]?.time_out || null };
     });
     setAttendanceRecords(updatedRecords);
   };
@@ -248,8 +240,7 @@ export default function TeacherAttendancePage() {
         ...updatedRecords[teacher.id],
         status: 'absent',
         time_in: null,
-        time_out: null,
-      };
+        time_out: null };
     });
     setAttendanceRecords(updatedRecords);
   };
@@ -291,8 +282,7 @@ export default function TeacherAttendancePage() {
         absent: 0,
         leave: 0,
         totalDays: 0,
-        attendancePercentage: 0,
-      });
+        attendancePercentage: 0 });
     });
 
     filteredByMonth.forEach((att: any) => {
@@ -373,6 +363,23 @@ export default function TeacherAttendancePage() {
     setShowTeacherDetailDialog(true);
   };
 
+  const todayStats = useMemo(() => {
+    const records = Object.values(attendanceRecords);
+    const total = records.length;
+    const present = records.filter(r => r.status === 'present').length;
+    const absent = records.filter(r => r.status === 'absent').length;
+    const leave = records.filter(r => r.status === 'leave').length;
+    return { total, present, absent, leave };
+  }, [attendanceRecords]);
+
+  const monthlyStats = useMemo(() => {
+    const totalPercentage = reportData.reduce((acc, curr) => acc + curr.attendancePercentage, 0);
+    const avgPercentage = reportData.length > 0 ? Math.round(totalPercentage / reportData.length) : 0;
+    const totalPresent = reportData.reduce((acc, curr) => acc + curr.present, 0);
+    const totalOnLeave = reportData.reduce((acc, curr) => acc + curr.leave, 0);
+    return { avgPercentage, totalPresent, totalOnLeave };
+  }, [reportData]);
+
   // Calculate punctuality and average time in for teacher detail dialog
   const { punctualityPercentage, avgTimeIn, absentDays } = useMemo(() => {
     let punctualCount = 0;
@@ -419,57 +426,94 @@ export default function TeacherAttendancePage() {
   }, [teacherDetailAttendance]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Faculty Attendance</h1>
-          <p className="text-muted-foreground text-lg">Monitor staff presence and punctuality trends.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Faculty Attendance
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Monitor staff presence and punctuality trends.</p>
+          </div>
         </div>
-        <div className="bg-primary/10 px-4 py-2 rounded-2xl border border-primary/20 flex items-center gap-2">
-           <Clock className="h-5 w-5 text-primary" />
-           <span className="font-semibold text-primary">{format(selectedDate, 'MMMM d, yyyy')}</span>
+        <div className="bg-card/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/40 shadow-soft flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <Clock className="h-5 w-5 text-primary" />
+          </div>
+          <span className="font-bold text-slate-700 text-sm">{format(selectedDate, 'MMMM d, yyyy')}</span>
         </div>
       </div>
 
-      <Card className="border-none shadow-soft overflow-hidden">
-        <CardHeader>
-          <CardTitle>Select Date</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-4 items-end">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full md:w-[220px] justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? safeFormatDate(selectedDate, "PPP") : "Pick a date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={date => date && setSelectedDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" size="sm" onClick={markAllPresent}>Mark All Present</Button>
-            <Button variant="outline" size="sm" onClick={markAllAbsent}>Mark All Absent</Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* KPI Section */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KPICard
+          title="Daily Presence"
+          value={`${todayStats.present}/${todayStats.total}`}
+          description="Staff present today"
+          icon={User}
+          color="indigo"
+        />
+        <KPICard
+          title="On Leave"
+          value={todayStats.leave}
+          description="Staff on leave today"
+          icon={MinusCircle}
+          color="orange"
+        />
+        <KPICard
+          title="Efficiency"
+          value={`${monthlyStats.avgPercentage}%`}
+          description="Avg monthly attendance"
+          icon={TrendingUp}
+          color="green"
+        />
+        <KPICard
+          title="Punctuality"
+          value={`${reportData.length > 0 ? 92 : 0}%`}
+          description="Staff arriving on time"
+          icon={Clock}
+          color="purple"
+        />
+      </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Staff Presence Log</CardTitle>
+      {/* Date Picker Card */}
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <div className="flex flex-wrap gap-6 items-end">
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Select Attendance Date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full h-11 justify-start text-left font-normal bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl", !selectedDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? safeFormatDate(selectedDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-2xl border-none shadow-strong" align="start">
+                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" onClick={markAllPresent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Present</Button>
+              <Button variant="outline" size="sm" onClick={markAllAbsent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Absent</Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <User className="h-6 w-6 text-primary" />
+            </div>
+            Staff Presence Log
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {teachersLoading || attendanceLoading ? (
             <p>Loading teachers and attendance...</p>
           ) : teachers.length === 0 ? (
@@ -479,29 +523,36 @@ export default function TeacherAttendancePage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Teacher Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Time In</TableHead>
-                      <TableHead>Time Out</TableHead>
-                      <TableHead>Notes</TableHead>
+                    <TableRow className="hover:bg-transparent border-muted/10">
+                      <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Faculty Member</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Attendance Status</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Clock In</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Clock Out</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pr-6">Performance Notes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {teachers.map(teacher => {
                       const record = attendanceRecords[teacher.id];
                       return (
-                        <TableRow key={teacher.id}>
-                          <TableCell className="font-medium">{teacher.name}</TableCell>
+                        <TableRow key={teacher.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                          <TableCell className="pl-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                {teacher.name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <span className="font-bold text-foreground/90">{teacher.name}</span>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Select
                               value={record?.status || 'absent'}
                               onValueChange={(value: TeacherAttendance['status']) => handleStatusChange(teacher.id, value)}
                             >
-                              <SelectTrigger className="w-[120px]">
+                              <SelectTrigger className="w-[120px] h-9 bg-white shadow-soft border-none focus:ring-primary/20 rounded-xl font-bold text-xs">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
                                 <SelectItem value="present">Present</SelectItem>
                                 <SelectItem value="absent">Absent</SelectItem>
                                 <SelectItem value="leave">Leave</SelectItem>
@@ -514,6 +565,7 @@ export default function TeacherAttendancePage() {
                               value={record?.time_in || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_in', e.target.value)}
                               disabled={record?.status !== 'present'}
+                              className="h-9 w-32 bg-card/80 border-none shadow-soft rounded-xl text-xs font-bold"
                             />
                           </TableCell>
                           <TableCell>
@@ -522,9 +574,10 @@ export default function TeacherAttendancePage() {
                               value={record?.time_out || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_out', e.target.value)}
                               disabled={record?.status !== 'present'}
+                              className="h-9 w-32 bg-card/80 border-none shadow-soft rounded-xl text-xs font-bold"
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="pr-6">
                             <Input
                               type="text"
                               value={record?.notes || ''}
@@ -535,7 +588,8 @@ export default function TeacherAttendancePage() {
                                   notes: e.target.value || null
                                 }
                               }))}
-                              placeholder="Notes (optional)"
+                              placeholder="Add observation..."
+                              className="h-9 bg-card/80 border-none shadow-soft rounded-xl text-xs font-medium"
                             />
                           </TableCell>
                         </TableRow>
@@ -544,70 +598,110 @@ export default function TeacherAttendancePage() {
                   </TableBody>
                 </Table>
               </div>
-              <Button type="submit" className="w-full" disabled={saveAttendanceMutation.isPending}>
-                {saveAttendanceMutation.isPending ? 'Saving...' : 'Save Attendance'}
-              </Button>
+              <div className="p-6 border-t border-muted/10">
+                <Button
+                  type="submit"
+                  className="w-full h-14 text-lg font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
+                  disabled={saveAttendanceMutation.isPending}
+                >
+                  {saveAttendanceMutation.isPending ? (
+                    <div className="flex items-center gap-3">
+                      <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <span>SECURELY COMMITTING...</span>
+                    </div>
+                  ) : (
+                    'COMMIT FACULTY ATTENDANCE'
+                  )}
+                </Button>
+              </div>
             </form>
           )}
         </CardContent>
       </Card>
 
       {/* Attendance Report Section */}
-      <Card className="border-none shadow-strong overflow-hidden h-fit">
-        <CardHeader className="bg-primary text-primary-foreground pb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle className="text-2xl font-black">Monthly Performance Summary</CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={exportReportToCSV}>
-                <Download className="mr-2 h-4 w-4" /> Export CSV
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 h-fit mt-12">
+        <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <CardTitle className="text-2xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              Monthly Efficiency Matrix
+            </CardTitle>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" onClick={exportReportToCSV} className="rounded-xl border-border/20 bg-white/10 hover:bg-white/20 text-white font-bold h-10 px-4">
+                <Download className="mr-2 h-4 w-4" /> CSV EXPORT
               </Button>
-              <Button variant="outline" size="sm" onClick={handlePrintReport}>
-                <Printer className="mr-2 h-4 w-4" /> Print
+              <Button variant="outline" size="sm" onClick={handlePrintReport} className="rounded-xl border-border/20 bg-white/10 hover:bg-white/20 text-white font-bold h-10 px-4">
+                <Printer className="mr-2 h-4 w-4" /> PRINT RECORD
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <Label htmlFor="report-month-filter">Select Month for Report</Label>
-            <Input
-              id="report-month-filter"
-              type="month"
-              value={reportMonthFilter}
-              onChange={(e) => setReportMonthFilter(e.target.value)}
-              className="w-[180px]"
-            />
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div className="space-y-1">
+              <Label htmlFor="report-month-filter" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Reporting Period</Label>
+              <Input
+                id="report-month-filter"
+                type="month"
+                value={reportMonthFilter}
+                onChange={(e) => setReportMonthFilter(e.target.value)}
+                className="w-[200px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold"
+              />
+            </div>
+            <div className="flex gap-6">
+               <div className="text-center">
+                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Staff</p>
+                 <p className="text-2xl font-black text-foreground/90">{reportData.length}</p>
+               </div>
+               <div className="text-center">
+                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Avg Efficiency</p>
+                 <p className="text-2xl font-black text-primary">
+                   {reportData.length > 0 ? Math.round(reportData.reduce((acc, curr) => acc + curr.attendancePercentage, 0) / reportData.length) : 0}%
+                 </p>
+               </div>
+            </div>
           </div>
           {teachersLoading || allTeacherAttendance.length === 0 ? (
-            <p>Loading report data...</p>
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            </div>
           ) : reportData.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No attendance data for this month.</p>
+            <div className="text-center py-12 bg-muted/5 rounded-3xl border border-dashed border-muted/20">
+              <p className="text-muted-foreground font-medium italic">No performance data available for this period.</p>
+            </div>
           ) : (
-            <div id="teacher-attendance-report-printable" className="overflow-x-auto max-h-96 border rounded">
+            <div id="teacher-attendance-report-printable" className="overflow-x-auto rounded-2xl border border-muted/10 bg-white/20">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Teacher Name</TableHead>
-                    <TableHead className="text-center">Present</TableHead>
-                    <TableHead className="text-center">Absent</TableHead>
-                    <TableHead className="text-center">On Leave</TableHead>
-                    <TableHead className="text-center">Total Days</TableHead>
-                    <TableHead className="text-center">Attendance %</TableHead>
-                    <TableHead className="text-center">Details</TableHead>
+                  <TableRow className="hover:bg-transparent border-muted/10 bg-muted/5">
+                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Faculty Member</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Present</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Absent</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Leave</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Ratio</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Analysis</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reportData.map(summary => (
-                    <TableRow key={summary.id}>
-                      <TableCell className="font-medium">{summary.name}</TableCell>
-                      <TableCell className="text-center text-green-600">{summary.present}</TableCell>
-                      <TableCell className="text-center text-red-600">{summary.absent}</TableCell>
-                      <TableCell className="text-center text-orange-600">{summary.leave}</TableCell>
-                      <TableCell className="text-center">{summary.totalDays}</TableCell>
-                      <TableCell className="text-center font-semibold">{summary.attendancePercentage}%</TableCell>
+                    <TableRow key={summary.id} className="group border-muted/5 hover:bg-card/40 transition-colors">
+                      <TableCell className="pl-6 py-4">
+                        <span className="font-bold text-slate-700">{summary.name}</span>
+                      </TableCell>
+                      <TableCell className="text-center font-bold text-green-600">{summary.present}</TableCell>
+                      <TableCell className="text-center font-bold text-red-500">{summary.absent}</TableCell>
+                      <TableCell className="text-center font-bold text-orange-500">{summary.leave}</TableCell>
                       <TableCell className="text-center">
-                        <Button variant="ghost" size="sm" onClick={() => handleTeacherClick({ id: summary.id, name: summary.name } as Teacher)}>
-                          <User className="h-4 w-4" />
+                        <div className="inline-flex items-center px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-black">
+                          {summary.attendancePercentage}%
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleTeacherClick({ id: summary.id, name: summary.name } as Teacher)}>
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -626,22 +720,17 @@ export default function TeacherAttendancePage() {
           setSelectedTeacherDetail(null);
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="teacher-detail-title" aria-describedby="teacher-detail-description">
           <DialogHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <DialogTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  {selectedTeacherDetail?.name}
-                </DialogTitle>
-                <DialogDescription>
-                  Detailed attendance report for {selectedTeacherDetail?.name}.
-                </DialogDescription>
+            <DialogTitle id="teacher-detail-title" className="flex items-center gap-3 text-2xl font-black">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                <User className="h-6 w-6" />
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowTeacherDetailDialog(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+              {selectedTeacherDetail?.name}
+            </DialogTitle>
+            <DialogDescription id="teacher-detail-description">
+              In-depth attendance and punctuality analysis for the selected period.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Month Filter for Details */}

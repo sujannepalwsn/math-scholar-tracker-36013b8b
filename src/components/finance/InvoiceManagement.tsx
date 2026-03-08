@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Plus, Eye, DollarSign, FilePlus } from 'lucide-react';
-import { formatCurrency } from '@/integrations/supabase/finance-types';
-import { format } from 'date-fns';
+import React, { useState } from "react";
+import { DollarSign, Eye, FilePlus, Plus } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
+import { formatCurrency } from "@/integrations/supabase/finance-types"
+import { format } from "date-fns"
 
 const InvoiceManagement = () => {
   const { user } = useAuth();
@@ -26,8 +26,7 @@ const InvoiceManagement = () => {
     year: format(new Date(), 'yyyy'),
     academicYear: '2024-2025', // Default academic year, can be made dynamic
     dueInDays: '30',
-    gradeFilter: 'all',
-  });
+    gradeFilter: 'all' });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', user?.center_id],
@@ -99,9 +98,7 @@ const InvoiceManagement = () => {
           year: parseInt(bulkGenerateForm.year),
           academicYear: bulkGenerateForm.academicYear,
           dueInDays: parseInt(bulkGenerateForm.dueInDays),
-          gradeFilter: bulkGenerateForm.gradeFilter,
-        },
-      });
+          gradeFilter: bulkGenerateForm.gradeFilter } });
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Failed to generate invoices via Edge Function');
@@ -156,7 +153,7 @@ const InvoiceManagement = () => {
       partial: 'bg-orange-100 text-orange-800',
       paid: 'bg-green-100 text-green-800',
       overdue: 'bg-red-100 text-red-800',
-      cancelled: 'bg-slate-100 text-slate-800'
+      cancelled: 'bg-slate-100 text-foreground/90'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };

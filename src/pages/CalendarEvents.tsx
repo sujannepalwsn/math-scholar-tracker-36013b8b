@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { Plus, Trash2, Edit, CalendarDays, PartyPopper, GraduationCap, Users } from "lucide-react";
-import { format, isSameDay, parseISO } from "date-fns";
+import React, { useState } from "react";
+import { CalendarDays, Edit, GraduationCap, PartyPopper, Plus, Trash2, Users } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
+import { format, isSameDay, parseISO } from "date-fns"
 
 const EVENT_TYPES = [
   { value: "holiday", label: "Holiday", icon: PartyPopper, color: "bg-red-100 text-red-800" },
@@ -50,27 +50,30 @@ export default function CalendarEvents() {
       if (error) throw error;
       return data;
     },
-    enabled: isParent && !!(user?.student_id || user?.linked_students?.[0]?.id),
-  });
+    enabled: isParent && !!(user?.student_id || user?.linked_students?.[0]?.id) });
 
   // Determine center_id: use user's center_id for center/teacher/admin, or student's center_id for parents
   const centerId = isParent ? student?.center_id : user?.center_id;
 
   // Fetch events
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["center-events", centerId],
+    queryKey: ["center-events", centerId, user?.role, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("center_events")
         .select("*")
-        .eq("center_id", centerId)
-        .order("event_date");
+        .eq("center_id", centerId);
+
+      if (user?.role === 'teacher') {
+        query = query.eq('created_by', user.id);
+      }
+
+      const { data, error } = await query.order("event_date");
       if (error) throw error;
       return data;
     },
-    enabled: !!centerId,
-  });
+    enabled: !!centerId });
 
   const resetForm = () => {
     setTitle("");
@@ -91,8 +94,7 @@ export default function CalendarEvents() {
         event_date: eventDate,
         event_type: eventType,
         is_holiday: isHoliday,
-        created_by: user.id,
-      } as any);
+        created_by: user.id } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -103,8 +105,7 @@ export default function CalendarEvents() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create event");
-    },
-  });
+    } });
 
   const updateEventMutation = useMutation({
     mutationFn: async () => {
@@ -114,8 +115,7 @@ export default function CalendarEvents() {
         description: description || null,
         event_date: eventDate,
         event_type: eventType,
-        is_holiday: isHoliday,
-      } as any).eq("id", editingEvent.id);
+        is_holiday: isHoliday } as any).eq("id", editingEvent.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -126,8 +126,7 @@ export default function CalendarEvents() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update event");
-    },
-  });
+    } });
 
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -140,8 +139,7 @@ export default function CalendarEvents() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete event");
-    },
-  });
+    } });
 
   const handleEditEvent = (event: any) => {
     setEditingEvent(event);
@@ -175,13 +173,16 @@ export default function CalendarEvents() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Event Calendar</h1>
-          <p className="text-muted-foreground text-lg">
-            {isParent ? "Keep track of upcoming center holidays and special activities." : "Schedule and manage academic events, holidays, and center activities."}
-          </p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Institutional Calendar
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Manage academic events, holidays, and activities.</p>
+          </div>
         </div>
         {!isParent && (
           <Dialog open={showEventDialog} onOpenChange={(open) => {
@@ -189,7 +190,10 @@ export default function CalendarEvents() {
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" /> Add Event</Button>
+              <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+                <Plus className="h-5 w-5 mr-2" />
+                ADD NEW EVENT
+              </Button>
             </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -273,37 +277,39 @@ export default function CalendarEvents() {
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Calendar */}
-        <Card className="border-none shadow-medium overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle className="text-xl flex items-center gap-2 text-primary">
-              <CalendarDays className="h-5 w-5" />
+        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <CalendarDays className="h-6 w-6 text-primary" />
+              </div>
               Interactive Schedule
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-xl border"
+              onSelect={(date) => date && setSelectedDate(date)}
+              className="rounded-3xl border border-border/40 bg-white/30 backdrop-blur-sm p-4 shadow-soft mx-auto"
               modifiers={{
-                hasEvent: eventDates,
-              }}
+                hasEvent: eventDates }}
               modifiersStyles={{
                 hasEvent: {
                   backgroundColor: 'hsl(var(--primary) / 0.2)',
-                  fontWeight: 'bold',
-                },
-              }}
+                  fontWeight: 'bold' } }}
             />
           </CardContent>
         </Card>
 
         {/* Events for Selected Date */}
-        <Card className="border-none shadow-strong overflow-hidden h-fit">
-          <CardHeader className="bg-primary text-primary-foreground pb-6">
-            <CardTitle className="text-xl">
-              Agenda: {selectedDate ? format(selectedDate, "MMMM d") : "Select a date"}
+        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 h-fit">
+          <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
+                <PartyPopper className="h-6 w-6 text-white" />
+              </div>
+              Daily Agenda: {selectedDate ? format(selectedDate, "MMMM d") : "Protocol Check"}
             </CardTitle>
           </CardHeader>
           <CardContent>

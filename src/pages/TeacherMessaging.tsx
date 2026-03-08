@@ -1,16 +1,16 @@
 "use client";
+import React, { useEffect, useRef, useState } from "react";
+import { MessageSquare, Send } from "lucide-react";
 
-import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
-import { Send, MessageSquare } from "lucide-react";
-import { format } from "date-fns";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { toast } from "sonner"
+import { format } from "date-fns"
 
 export default function TeacherMessaging() {
   const { user } = useAuth();
@@ -40,8 +40,7 @@ export default function TeacherMessaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user.id && !!user.center_id,
-  });
+    enabled: !!user.id && !!user.center_id });
 
   // Fetch messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
@@ -60,8 +59,7 @@ export default function TeacherMessaging() {
       return data;
     },
     enabled: !!conversation?.id,
-    refetchInterval: 5000,
-  });
+    refetchInterval: 5000 });
 
   // Scroll to bottom
   useEffect(() => {
@@ -94,8 +92,7 @@ export default function TeacherMessaging() {
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: conversation.id,
         sender_user_id: user.id,
-        message_text: newMessage.trim(),
-      });
+        message_text: newMessage.trim() });
       if (error) throw error;
 
       await supabase
@@ -110,8 +107,7 @@ export default function TeacherMessaging() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to send message");
-    },
-  });
+    } });
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,23 +136,30 @@ export default function TeacherMessaging() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Staff Messenger</h1>
-          <p className="text-muted-foreground text-lg">Direct communication line with center administration.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Administrative Liaison
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Secure communication link with institutional leadership.</p>
+          </div>
         </div>
       </div>
 
-      <Card className="h-[700px] flex flex-col border-none shadow-strong overflow-hidden">
-        <CardHeader className="bg-primary text-primary-foreground pb-4 shadow-soft relative z-10">
-          <CardTitle className="flex items-center gap-3 text-xl">
-             <div className="bg-white/20 p-2 rounded-xl">
-                <MessageSquare className="h-5 w-5 text-white" />
+      <Card className="h-[700px] flex flex-col border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong relative z-10 border-b border-border/10">
+          <CardTitle className="flex items-center gap-3 text-xl font-black tracking-tight">
+             <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
+                <MessageSquare className="h-6 w-6 text-white" />
              </div>
-             Center Administration
+             <div className="space-y-0.5">
+               <span>Institution Command</span>
+               <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Official channel for {conversation.centers?.name || "Center"}</p>
+             </div>
           </CardTitle>
-          <p className="text-sm text-primary-foreground/80 font-medium">Official channel for {conversation.centers?.name || "Center"}</p>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col p-0">
           <ScrollArea className="flex-1 p-4">

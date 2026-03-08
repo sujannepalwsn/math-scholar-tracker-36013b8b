@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
-import { Tables } from '@/integrations/supabase/types';
+import React, { useState } from "react";
+import { Check, Edit, Plus, Trash2, X } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
+import { Tables } from "@/integrations/supabase/types"
 
 type DisciplineCategory = Tables<'discipline_categories'>;
 
@@ -44,8 +44,7 @@ export default function DisciplineCategoryManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const resetForm = () => {
     setName("");
@@ -62,8 +61,7 @@ export default function DisciplineCategoryManagement() {
         name,
         description: description || null,
         default_severity: defaultSeverity,
-        is_active: true,
-      });
+        is_active: true });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -74,8 +72,7 @@ export default function DisciplineCategoryManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create discipline category");
-    },
-  });
+    } });
 
   const updateCategoryMutation = useMutation({
     mutationFn: async () => {
@@ -83,8 +80,7 @@ export default function DisciplineCategoryManagement() {
       const { error } = await supabase.from("discipline_categories").update({
         name,
         description: description || null,
-        default_severity: defaultSeverity,
-      }).eq("id", editingCategory.id);
+        default_severity: defaultSeverity }).eq("id", editingCategory.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -95,14 +91,12 @@ export default function DisciplineCategoryManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update discipline category");
-    },
-  });
+    } });
 
   const toggleCategoryStatusMutation = useMutation({
     mutationFn: async (category: DisciplineCategory) => {
       const { error } = await supabase.from("discipline_categories").update({
-        is_active: !category.is_active,
-      }).eq("id", category.id);
+        is_active: !category.is_active }).eq("id", category.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -111,8 +105,7 @@ export default function DisciplineCategoryManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update category status");
-    },
-  });
+    } });
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -125,8 +118,7 @@ export default function DisciplineCategoryManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete discipline category");
-    },
-  });
+    } });
 
   const handleEditClick = (category: DisciplineCategory) => {
     setEditingCategory(category);

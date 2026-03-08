@@ -1,16 +1,18 @@
-import { CalendarDays, CheckCircle2, Edit, Eye, FileText, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { CalendarDays, CheckCircle2, Edit, Eye, FileText, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import { Tables, TablesInsert } from "@/integrations/supabase/types"
 import MeetingForm from "@/components/meetings/MeetingForm";
 import MeetingAttendanceRecorder from "@/components/meetings/MeetingAttendanceRecorder";
 import MeetingConclusionForm from "@/components/meetings/MeetingConclusionForm";
@@ -46,8 +48,7 @@ export default function MeetingManagement() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const deleteMeetingMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -75,8 +76,7 @@ export default function MeetingManagement() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete meeting");
-    },
-  });
+    } });
 
   const handleMeetingSave = async (meetingData: Tables<'meetings'>, selectedStudentIds: string[], selectedTeacherIds: string[]) => {
     // This function is called by MeetingForm after meeting is created/updated
@@ -108,8 +108,7 @@ export default function MeetingManagement() {
             meeting_id: meetingData.id,
             student_id: pu.student_id,
             user_id: pu.id, // Link parent user ID
-            attendance_status: 'pending',
-          });
+            attendance_status: 'pending' });
         }
       });
 
@@ -133,8 +132,7 @@ export default function MeetingManagement() {
             meeting_id: meetingData.id,
             teacher_id: tu.teacher_id,
             user_id: tu.id, // Link teacher user ID
-            attendance_status: 'pending',
-          });
+            attendance_status: 'pending' });
         }
       });
     }
@@ -178,38 +176,51 @@ export default function MeetingManagement() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Meeting Center</h1>
-          <p className="text-muted-foreground text-lg">Organize and track consultations with parents and staff.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Meeting Center
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Organize and track consultations with parents and staff.</p>
+          </div>
         </div>
         <Dialog open={showMeetingFormDialog} onOpenChange={(open) => {
           setShowMeetingFormDialog(open);
           if (!open) setEditingMeeting(null);
         }}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> Create Meeting</Button>
+            <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+              <Plus className="h-5 w-5 mr-2" />
+              CREATE SESSION
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="meeting-form-title" aria-describedby="meeting-form-description">
             <DialogHeader>
-              <DialogTitle id="meeting-form-title">{editingMeeting ? "Edit Meeting" : "Create New Meeting"}</DialogTitle>
-              <DialogDescription id="meeting-form-description">
-                {editingMeeting ? "Update the details of this meeting." : "Schedule a new meeting for parents, teachers, or both."}
+              <DialogTitle id="meeting-form-title" className="text-2xl font-black tracking-tight">{editingMeeting ? "Update Consultation" : "Schedule New Assembly"}</DialogTitle>
+              <DialogDescription id="meeting-form-description" className="font-medium">
+                {editingMeeting ? "Modify session parameters and attendees." : "Initialize a new communication protocol with stakeholders."}
               </DialogDescription>
             </DialogHeader>
             <MeetingForm
               meeting={editingMeeting}
-              onSave={handleMeetingSave} // Pass the simplified handler
+              onSave={handleMeetingSave}
               onCancel={() => setShowMeetingFormDialog(false)}
             />
           </DialogContent>
         </Dialog>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl">Scheduled Assemblies</CardTitle>
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <CalendarDays className="h-6 w-6 text-primary" />
+            </div>
+            Scheduled Assemblies
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -233,46 +244,56 @@ export default function MeetingManagement() {
                 </TableHeader>
                 <TableBody>
                   {meetings.map((meeting: any) => (
-                    <TableRow key={meeting.id}>
-                      <TableCell className="font-medium">{meeting.title}</TableCell>
-                      <TableCell>{format(new Date(meeting.meeting_date), "PPP")}</TableCell>
-                      <TableCell>{meeting.meeting_time || format(new Date(meeting.meeting_date), "p")}</TableCell>
-                      <TableCell>{meeting.meeting_type.charAt(0).toUpperCase() + meeting.meeting_type.slice(1)}</TableCell>
+                    <TableRow key={meeting.id} className="group transition-all duration-300">
+                      <TableCell className="font-black text-slate-700 group-hover:text-primary transition-colors">{meeting.title}</TableCell>
+                      <TableCell className="font-medium text-slate-600">{format(new Date(meeting.meeting_date), "MMM d, yyyy")}</TableCell>
+                      <TableCell className="font-bold text-primary">{meeting.meeting_time || format(new Date(meeting.meeting_date), "p")}</TableCell>
                       <TableCell>
-                        <span className={`font-semibold ${getStatusColor(meeting.status)}`}>
-                          {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-none font-bold uppercase text-[9px] tracking-widest px-2 py-0.5">
+                          {meeting.meeting_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn("inline-flex items-center gap-1.5 font-black uppercase text-[10px] tracking-tight", getStatusColor(meeting.status))}>
+                          <div className={cn("h-1.5 w-1.5 rounded-full", meeting.status === 'completed' ? 'bg-green-600 animate-pulse' : meeting.status === 'cancelled' ? 'bg-red-600' : 'bg-blue-600')} />
+                          {meeting.status}
                         </span>
                       </TableCell>
                       <TableCell>
                         {meeting.related_meeting ? (
-                          <span className="text-xs text-blue-600 font-medium">
+                          <Badge variant="outline" className="text-[10px] font-medium border-blue-100 text-blue-600 bg-blue-50/50">
                             ↩ {meeting.related_meeting.title}
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-muted-foreground opacity-30">—</span>
                         )}
                       </TableCell>
                       <TableCell>
                       {meeting.meeting_conclusions && meeting.meeting_conclusions.length > 0 ? (
-                          <Button variant="ghost" size="sm" onClick={() => handleConclusionClick(meeting)}>
-                            <Eye className="h-4 w-4 mr-1" /> View
+                          <Button variant="ghost" size="sm" onClick={() => handleConclusionClick(meeting)} className="rounded-xl text-primary font-bold hover:bg-primary/5">
+                            <Eye className="h-4 w-4 mr-1.5" /> SUMMARY
                           </Button>
                         ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
+                          <div className="flex items-center gap-1 text-red-400 opacity-50">
+                            <XCircle className="h-4 w-4" />
+                            <span className="text-[9px] font-black uppercase">PENDING</span>
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(meeting)}>
-                          <Edit className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white shadow-soft group-hover:scale-105 transition-all" onClick={() => handleEditClick(meeting)}>
+                          <Edit className="h-4 w-4 text-primary" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleAttendanceClick(meeting)}>
-                          <Users className="h-4 w-4 mr-1" /> Attendance
+                        <Button variant="outline" size="sm" className="h-9 rounded-xl border-2 font-bold px-3" onClick={() => handleAttendanceClick(meeting)}>
+                          <Users className="h-4 w-4 mr-1.5" />
+                          ROLL CALL
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleConclusionClick(meeting)}>
-                          <FileText className="h-4 w-4 mr-1" /> Conclusion
+                        <Button variant="outline" size="sm" className="h-9 rounded-xl border-2 font-bold px-3" onClick={() => handleConclusionClick(meeting)}>
+                          <FileText className="h-4 w-4 mr-1.5" />
+                          MINUTES
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => deleteMeetingMutation.mutate(meeting.id)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteMeetingMutation.mutate(meeting.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </TableCell>
                     </TableRow>

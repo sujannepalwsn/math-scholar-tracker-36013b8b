@@ -1,16 +1,16 @@
 "use client";
-
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { CalendarDays, Users, FileText, CheckCircle2, XCircle, Eye } from "lucide-react";
-import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
+import { CalendarDays, CheckCircle2, Eye, FileText, Users, XCircle } from "lucide-react";
+
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { format } from "date-fns"
+import { Tables } from "@/integrations/supabase/types"
+import { Button } from "@/components/ui/button"
 
 type Meeting = Tables<'meetings'>;
 type MeetingAttendee = Tables<'meeting_attendees'>;
@@ -64,8 +64,7 @@ export default function TeacherMeetings() {
       
       return data || [];
     },
-    enabled: !!user.teacher_id || !!user.id,
-  });
+    enabled: !!user.teacher_id || !!user.id });
 
   const getStatusColor = (status: Meeting['status']) => {
     switch (status) {
@@ -88,18 +87,26 @@ export default function TeacherMeetings() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Staff Consultations</h1>
-          <p className="text-muted-foreground text-lg">Keep track of faculty meetings and collaborative sessions.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Faculty assemblies
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Keep track of faculty meetings and collaborative sessions.</p>
+          </div>
         </div>
       </div>
 
-      <Card className="border-none shadow-medium overflow-hidden">
-        <CardHeader className="bg-muted/30 pb-4">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" /> Personalized Schedule
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+          <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <CalendarDays className="h-6 w-6 text-primary" />
+            </div>
+            Personalized Schedule
           </CardTitle>
         </CardHeader>
         <CardContent>

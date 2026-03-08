@@ -1,24 +1,24 @@
-import { BookOpen, Bot, CalendarIcon, Edit, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { format } from "date-fns";
+import React, { useEffect, useState } from "react";
+import { BookOpen, Bot, CalendarIcon, ClipboardCheck, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { format } from "date-fns"
 import OCRModal from "@/components/OCRModal";
 import BulkMarksEntry from "@/components/BulkMarksEntry";
 import QuestionPaperViewer from "@/components/QuestionPaperViewer";
-import { Tables } from "@/integrations/supabase/types";
-import { cn } from "@/lib/utils";
+import { Tables } from "@/integrations/supabase/types"
+import { cn } from "@/lib/utils"
 "use client";
 
 
@@ -52,6 +52,8 @@ export default function Tests() {
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [showBulkEntry, setShowBulkEntry] = useState(false);
   const [extractedTestContent, setExtractedTestContent] = useState("");
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+  const [viewingTestDetails, setViewingTestDetails] = useState<any>(null);
 
   // Form states for new test
   const [testName, setTestName] = useState("");
@@ -73,22 +75,23 @@ export default function Tests() {
 
   // Fetch tests
   const { data: tests = [] } = useQuery({
-    queryKey: ["tests", user?.center_id],
+    queryKey: ["tests", user?.center_id, user?.id],
     queryFn: async () => {
       let query = supabase
         .from("tests")
         .select("*, lesson_plans(id, subject, chapter, topic, grade)") // Fetch lesson_plans details
         .order("date", { ascending: false });
       
-      if (user?.role !== 'admin' && user?.center_id) {
+      if (user?.role === 'teacher') {
+        query = query.eq('created_by', user.id);
+      } else if (user?.role !== 'admin' && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }
       
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   // Fetch lesson plans for the dropdown
   const { data: lessonPlans = [] } = useQuery({
@@ -103,8 +106,7 @@ export default function Tests() {
       if (error) throw error;
       return data as LessonPlan[];
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -122,8 +124,7 @@ export default function Tests() {
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
-  });
+    } });
 
   // Fetch test results for selected test
   const { data: testResults = [], isLoading: testResultsLoading } = useQuery({
@@ -138,11 +139,16 @@ export default function Tests() {
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedTest,
-  });
+    enabled: !!selectedTest });
 
   // Effect to update questionMarks when selectedTest changes
   useEffect(() => {
+    if (!selectedTest) {
+      setQuestions([]);
+      setQuestionMarks([]);
+      return;
+    }
+
     const test = tests.find(t => t.id === selectedTest);
     if (test && test.questions) {
       const parsedQuestions = test.questions as unknown as Question[];
@@ -151,13 +157,12 @@ export default function Tests() {
         questionId: q.id,
         marksObtained: 0,
         studentAnswer: '',
-        feedback: '',
-      })));
+        feedback: '' })));
     } else {
       setQuestions([]);
       setQuestionMarks([]);
     }
-  }, [selectedTest, tests]);
+  }, [selectedTest]);
 
   // Create test mutation
   const createTestMutation = useMutation({
@@ -189,6 +194,7 @@ export default function Tests() {
         center_id: user?.center_id!,
         questions: questions.length > 0 ? (questions as any) : null,
         lesson_plan_id: primaryLessonPlanId, // Save the primary lesson plan ID
+        created_by: user?.id,
       }).select().single();
 
       if (error) throw error;
@@ -210,8 +216,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("Error creating test:", error);
       toast.error("Failed to create test");
-    },
-  });
+    } });
 
   // Add test result mutation
   const addResultMutation = useMutation({
@@ -253,8 +258,7 @@ export default function Tests() {
       } else {
         toast.error(error.message || "Failed to record marks");
       }
-    },
-  });
+    } });
 
   // Bulk marks entry mutation
   const bulkMarksMutation = useMutation({
@@ -298,8 +302,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("Error in bulkMarksMutation:", error);
       toast.error(error.message || "Failed to save bulk marks");
-    },
-  });
+    } });
 
   // Delete test result
   const deleteResultMutation = useMutation({
@@ -317,8 +320,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("Error deleting test result:", error);
       toast.error(error.message || "Failed to delete result");
-    },
-  });
+    } });
 
   // Delete test mutation
   const deleteTestMutation = useMutation({
@@ -351,8 +353,7 @@ export default function Tests() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete test");
-    },
-  });
+    } });
 
   // AI Grade Answer Mutation
   const aiGradeAnswerMutation = useMutation({
@@ -362,9 +363,7 @@ export default function Tests() {
           questionText,
           correctAnswer,
           studentAnswer,
-          totalMarks: maxMarks,
-        },
-      });
+          totalMarks: maxMarks } });
       if (error) throw error;
       return data;
     },
@@ -379,8 +378,7 @@ export default function Tests() {
     onError: (error: any) => {
       console.error("AI grading error:", error);
       toast.error(error.message || "Failed to get AI grade");
-    },
-  });
+    } });
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -410,13 +408,6 @@ export default function Tests() {
   };
 
   const selectedTestData = tests.find((t) => t.id === selectedTest);
-  
-  // New useEffect to log selectedTestData's lesson_plan_id
-  useEffect(() => {
-    if (selectedTestData) {
-      console.log("DEBUG: Selected test data. Lesson Plan ID from DB:", selectedTestData.lesson_plan_id);
-    }
-  }, [selectedTestData]);
 
   const testsWithFiles: typeof tests = []; // No uploaded_file_url in schema
 
@@ -425,52 +416,65 @@ export default function Tests() {
     : students;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-1000">
       {testsWithFiles.length > 0 && (
-        <Card className="border-none shadow-medium overflow-hidden">
+        <Card className="border-none shadow-medium overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
           <CardHeader className="bg-muted/30 pb-4">
             <CardTitle className="text-xl flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
               Available Question Papers
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {testsWithFiles.map((test) => (
-                <div
-                  key={test.id}
-                  className="rounded-2xl border-2 border-primary/5 p-5 hover:bg-primary/5 transition-all hover:shadow-soft"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
-                      <FileText className="h-6 w-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-base leading-tight">{test.name}</h3>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="outline" className="text-[10px]">{test.subject}</Badge>
-                        <Badge className="text-[10px] bg-primary/10 text-primary border-none">
-                          {test.date ? format(new Date(test.date), "MMM d") : 'No date'}
-                        </Badge>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/10">
+                  <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Test Name</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subject</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {testsWithFiles.map((test) => (
+                  <TableRow key={test.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <span className="font-bold text-foreground/90">{test.name}</span>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold">{test.subject}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="text-[10px] bg-primary/10 text-primary border-none font-bold">
+                        {test.date ? format(new Date(test.date), "MMM d, yyyy") : 'No date'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-           <h1 className="text-4xl font-extrabold tracking-tight">Assessment Center</h1>
-           <p className="text-muted-foreground text-lg">Create tests, manage question papers, and track student results.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Assessment Center
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Create tests, manage papers, and track results.</p>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setShowOCRModal(true)}>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" onClick={() => setShowOCRModal(true)} className="rounded-xl">
             <FileUp className="mr-2 h-4 w-4" />
-            Upload Test Paper (OCR)
+            OCR Upload
           </Button>
           <Dialog open={isAddingTest} onOpenChange={setIsAddingTest}>
             <DialogTrigger asChild>
@@ -586,11 +590,12 @@ export default function Tests() {
                   <p className="text-sm text-muted-foreground">{selectedLessonPlanIds.length} chapter(s) selected</p>
                 )}
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label>Upload Test File (Optional)</Label>
                 <Input
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf,image/*"
+                  capture="environment"
                   onChange={handleFileUpload}
                 />
                 {uploadedFile && (
@@ -657,74 +662,92 @@ export default function Tests() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <Card className="border-none shadow-medium overflow-hidden h-fit">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle className="text-xl">Evaluation Catalog</CardTitle>
+        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 h-fit">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <ClipboardCheck className="h-6 w-6 text-primary" />
+              </div>
+              Evaluation Catalog
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-3">
-              {tests.map((test) => (
-                <div
-                  key={test.id}
-                  className="group flex items-center gap-2"
-                >
-                  <button
-                    onClick={() => setSelectedTest(test.id)}
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-muted/10">
+                  <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Assessment Name</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Score</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tests.map((test) => (
+                  <TableRow
+                    key={test.id}
                     className={cn(
-                      "flex-1 text-left p-5 rounded-2xl border-2 transition-all duration-300",
-                      selectedTest === test.id
-                        ? "bg-primary text-primary-foreground border-primary shadow-medium scale-[1.02]"
-                        : "bg-card border-primary/5 hover:border-primary/20 hover:bg-primary/5"
+                      "group border-muted/5 transition-colors cursor-pointer",
+                      selectedTest === test.id ? "bg-primary/10" : "hover:bg-primary/5"
                     )}
+                    onClick={() => setSelectedTest(test.id)}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-bold text-lg leading-tight">{test.name}</div>
-                      <Badge className={cn("text-[10px] font-black border-none", selectedTest === test.id ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
-                         {test.total_marks} PTS
-                      </Badge>
-                    </div>
-                    <div className={cn("text-xs flex flex-wrap gap-x-3 gap-y-2 font-medium uppercase tracking-wider", selectedTest === test.id ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                      <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {test.subject}</span>
-                      <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> {format(new Date(test.date), "MMM d, yyyy")}</span>
-
-                      {test.questions && (test.questions as unknown as Question[]).length > 0 && (
-                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(test.questions as unknown as Question[]).length} Qs</span>
-                      )}
-                    </div>
-
-                    {(test as any).lesson_plans?.chapter && (
-                      <div className={cn("mt-3 p-2 rounded-xl text-[10px] font-bold inline-flex items-center gap-1.5", selectedTest === test.id ? "bg-white/10 text-white" : "bg-primary/5 text-primary")}>
-                         <FileText className="h-3 w-3" />
-                         Chapter: {(test as any).lesson_plans.chapter}
+                    <TableCell className="pl-6 py-4">
+                      <div className="space-y-1">
+                        <p className="font-bold text-foreground/90 leading-none">{test.name}</p>
+                        <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {test.subject}</span>
+                          <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> {format(new Date(test.date), "MMM d")}</span>
+                        </div>
                       </div>
-                    )}
-                  </button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
-                        deleteTestMutation.mutate(test.id);
-                      }
-                    }}
-                    title="Delete test"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              {tests.length === 0 && (
-                <p className="text-muted-foreground text-center py-8">
-                  No tests created yet
-                </p>
-              )}
-            </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge className="bg-primary/10 text-primary border-none font-black text-[10px]">
+                        {test.total_marks} PTS
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingTestDetails(test);
+                            setIsViewDetailsOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
+                              deleteTestMutation.mutate(test.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {tests.length === 0 && (
+              <p className="text-muted-foreground text-center py-12 font-medium">
+                No assessments in catalog
+              </p>
+            )}
           </CardContent>
         </Card>
 
         {selectedTest && selectedTestData && (
-          <Card className="border-none shadow-strong overflow-hidden animate-in slide-in-from-right-4 duration-500">
-            <CardHeader className="bg-primary text-primary-foreground pb-6">
+          <Card className="border-none shadow-strong overflow-hidden rounded-3xl animate-in slide-in-from-right-4 duration-500">
+            <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground pb-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-2xl font-black">Performance Entry</CardTitle>
@@ -810,8 +833,7 @@ export default function Tests() {
                                 questionText: q.questionText,
                                 correctAnswer: q.correctAnswer!,
                                 studentAnswer: currentQuestionMark?.studentAnswer || '',
-                                maxMarks: q.maxMarks,
-                              })}
+                                maxMarks: q.maxMarks })}
                               disabled={aiGradeAnswerMutation.isPending || !currentQuestionMark?.studentAnswer}
                             >
                               <Bot className="h-4 w-4 mr-1" /> AI Grade
@@ -851,7 +873,23 @@ export default function Tests() {
                 />
               </div>
               <Button
-                onClick={() => addResultMutation.mutate()}
+                onClick={() => {
+                  // Validate marks don't exceed total
+                  if (questions.length === 0) {
+                    const m = parseInt(marksObtained);
+                    if (m > selectedTestData.total_marks) {
+                      toast.error(`Marks (${m}) cannot exceed total marks (${selectedTestData.total_marks})`);
+                      return;
+                    }
+                  } else {
+                    const totalFromQ = questionMarks.reduce((sum, qm) => sum + qm.marksObtained, 0);
+                    if (totalFromQ > selectedTestData.total_marks) {
+                      toast.error(`Total marks (${totalFromQ}) exceed test total (${selectedTestData.total_marks})`);
+                      return;
+                    }
+                  }
+                  addResultMutation.mutate();
+                }}
                 disabled={!selectedStudentId || (!marksObtained && questions.length === 0) || addResultMutation.isPending}
                 className="w-full"
               >
@@ -921,6 +959,92 @@ export default function Tests() {
           toast.success("Test content extracted! You can now use this for reference.");
         }}
       />
+
+      <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Test Specifications & Results</DialogTitle>
+            <DialogDescription>Overview of test structure and student scores.</DialogDescription>
+          </DialogHeader>
+          {viewingTestDetails && (
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl">
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Test Name</Label>
+                  <p className="font-bold">{viewingTestDetails.name}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Total Marks</Label>
+                  <p className="font-bold">{viewingTestDetails.total_marks} PTS</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Subject</Label>
+                  <p className="font-medium">{viewingTestDetails.subject}</p>
+                </div>
+                <div>
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Date</Label>
+                  <p className="font-medium">{format(new Date(viewingTestDetails.date), "PPP")}</p>
+                </div>
+              </div>
+
+              {viewingTestDetails.lesson_plans && (
+                <div className="border-l-4 border-primary pl-4 py-1">
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Linked Lesson/Chapter</Label>
+                  <p className="text-sm font-semibold">
+                    {viewingTestDetails.lesson_plans.subject}: {viewingTestDetails.lesson_plans.chapter} - {viewingTestDetails.lesson_plans.topic}
+                  </p>
+                </div>
+              )}
+
+              {viewingTestDetails.questions && (viewingTestDetails.questions as any).length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-bold">Questions ({ (viewingTestDetails.questions as any).length })</Label>
+                  <div className="space-y-2">
+                    {(viewingTestDetails.questions as any).map((q: any, i: number) => (
+                      <div key={i} className="text-xs p-3 rounded-lg border bg-card">
+                        <div className="flex justify-between font-bold mb-1">
+                          <span>Q{i+1}. {q.maxMarks} Marks</span>
+                        </div>
+                        <p>{q.questionText}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <Label className="text-sm font-bold">Entered Results</Label>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead className="text-right">Score</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tests.find(t => t.id === viewingTestDetails.id) && testResults.length > 0 && selectedTest === viewingTestDetails.id ? (
+                      testResults.map((r: any) => (
+                        <TableRow key={r.id}>
+                          <TableCell className="text-sm font-medium">{r.students?.name}</TableCell>
+                          <TableCell className="text-right text-sm font-bold">
+                            {r.marks_obtained}/{viewingTestDetails.total_marks}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={2} className="text-center text-muted-foreground py-4 italic text-xs">
+                          {selectedTest === viewingTestDetails.id ? "No results entered yet." : "Select this test in the catalog to view its results here."}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {selectedTest && selectedTestData && (
         <BulkMarksEntry

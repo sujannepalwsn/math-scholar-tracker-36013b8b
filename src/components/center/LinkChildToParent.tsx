@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Check, UserPlus, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from "react";
+import { UserPlus, Users } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
 
 interface LinkChildToParentProps {
   open: boolean;
@@ -36,8 +36,7 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && open,
-  });
+    enabled: !!user?.center_id && open });
 
   // Fetch all students in this center
   const { data: students = [] } = useQuery({
@@ -53,8 +52,7 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && open,
-  });
+    enabled: !!user?.center_id && open });
 
   // Fetch existing parent-student links for the center
   const { data: existingLinks = [], refetch: refetchLinks } = useQuery({
@@ -85,8 +83,7 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id && open,
-  });
+    enabled: !!user?.center_id && open });
 
   // Get linked students for a parent
   const getLinkedStudentsForParent = (parentId: string) => {
@@ -95,8 +92,7 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
       .map((link: any) => ({
         id: link.student_id,
         name: link.students?.name,
-        grade: link.students?.grade,
-      }));
+        grade: link.students?.grade }));
   };
 
   // Check if link already exists
@@ -118,8 +114,7 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
 
       const { error } = await supabase.from("parent_students").insert({
         parent_user_id: selectedParentId,
-        student_id: selectedStudentId,
-      });
+        student_id: selectedStudentId });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -130,8 +125,7 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to link child");
-    },
-  });
+    } });
 
   const unlinkMutation = useMutation({
     mutationFn: async ({ parentId, studentId }: { parentId: string; studentId: string }) => {
@@ -148,8 +142,7 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to unlink child");
-    },
-  });
+    } });
 
   const selectedParentLinkedStudents = selectedParentId 
     ? getLinkedStudentsForParent(selectedParentId) 

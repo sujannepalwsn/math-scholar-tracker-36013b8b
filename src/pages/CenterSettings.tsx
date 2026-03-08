@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
+import { Building, ImageIcon, MapPin, Palette, Phone as PhoneIcon, Save, Settings, User } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Building, Image, MapPin, Palette, Phone, Save, Settings, User } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ThemeSelector from "@/components/ThemeSelector";
 
 interface CenterTheme {
   primary: string;
@@ -34,8 +36,7 @@ export default function CenterSettings() {
     sidebar: "#1e293b",
     foreground: "#1e293b",
     cardBackground: "#ffffff",
-    mutedForeground: "#64748b",
-  });
+    mutedForeground: "#64748b" });
 
   // Fetch center details
   const { data: center, isLoading } = useQuery({
@@ -50,8 +51,7 @@ export default function CenterSettings() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Populate form when center data loads
   useEffect(() => {
@@ -70,8 +70,7 @@ export default function CenterSettings() {
           sidebar: savedTheme.sidebar || "#1e293b",
           foreground: savedTheme.foreground || "#1e293b",
           cardBackground: savedTheme.cardBackground || "#ffffff",
-          mutedForeground: savedTheme.mutedForeground || "#64748b",
-        });
+          mutedForeground: savedTheme.mutedForeground || "#64748b" });
         // Do NOT apply theme here - it should only be applied on Save
       }
     }
@@ -146,8 +145,7 @@ export default function CenterSettings() {
           email: email || null,
           contact_person: contactPerson || null,
           logo_url: logoUrl || null,
-          theme,
-        } as any)
+          theme } as any)
         .eq("id", user.center_id);
       if (error) throw error;
       // Apply theme after saving
@@ -159,8 +157,7 @@ export default function CenterSettings() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update settings");
-    },
-  });
+    } });
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -179,23 +176,29 @@ export default function CenterSettings() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Center Configuration</h1>
-          <p className="text-muted-foreground text-lg">Personalize your center's identity and visual experience.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Center Control
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Configure institutional parameters and visual identity.</p>
+          </div>
         </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Basic Information */}
-        <Card className="border-none shadow-medium overflow-hidden h-fit">
-          <CardHeader className="bg-muted/30 pb-4 border-b">
-            <CardTitle className="text-xl flex items-center gap-2 text-primary">
-              <Building className="h-5 w-5" />
-              Organizational Identity
+        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Building className="h-6 w-6 text-primary" />
+              </div>
+              Identity Matrix
             </CardTitle>
-            <CardDescription>Core details about your educational center.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -237,7 +240,7 @@ export default function CenterSettings() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone" className="flex items-center gap-1">
-                  <Phone className="h-4 w-4" />
+                  <PhoneIcon className="h-4 w-4" />
                   Phone
                 </Label>
                 <Input
@@ -262,13 +265,14 @@ export default function CenterSettings() {
         </Card>
 
         {/* Logo & Branding */}
-        <Card className="border-none shadow-medium overflow-hidden h-fit">
-          <CardHeader className="bg-muted/30 pb-4 border-b">
-            <CardTitle className="text-xl flex items-center gap-2 text-primary">
-              <Image className="h-5 w-5" />
-              Visual Branding
+        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
+              <div className="p-2 rounded-xl bg-primary/10">
+              <ImageIcon className="h-6 w-6 text-primary" />
+              </div>
+              Visual Assets
             </CardTitle>
-            <CardDescription>Customize your center's digital presence.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -295,16 +299,34 @@ export default function CenterSettings() {
           </CardContent>
         </Card>
 
-        {/* Theme Customization */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Dashboard Theme
+        {/* Personal Appearance Settings */}
+        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Palette className="h-6 w-6 text-primary" />
+              </div>
+              Personal Appearance
             </CardTitle>
-            <CardDescription>Choose colors for your dashboard</CardDescription>
+            <CardDescription className="font-medium">Customize your own viewing experience</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
+            <ThemeSelector />
+          </CardContent>
+        </Card>
+
+        {/* Global Institution Theme (Admin Only) */}
+        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Settings className="h-6 w-6 text-primary" />
+              </div>
+              Institutional Branding Override
+            </CardTitle>
+            <CardDescription className="font-medium">Set the default color palette for all institutional users</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="primaryColor">Primary Color</Label>
@@ -365,91 +387,31 @@ export default function CenterSettings() {
                 </div>
                 <p className="text-xs text-muted-foreground">Sidebar background</p>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="foregroundColor">Text Color</Label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    id="foregroundColor"
-                    value={theme.foreground}
-                    onChange={(e) => setTheme({ ...theme, foreground: e.target.value })}
-                    className="w-12 h-10 rounded border cursor-pointer"
-                  />
-                  <Input
-                    value={theme.foreground}
-                    onChange={(e) => setTheme({ ...theme, foreground: e.target.value })}
-                    placeholder="#1e293b"
-                    className="flex-1"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Main text, headings</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cardBackground">Card Background</Label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    id="cardBackground"
-                    value={theme.cardBackground}
-                    onChange={(e) => setTheme({ ...theme, cardBackground: e.target.value })}
-                    className="w-12 h-10 rounded border cursor-pointer"
-                  />
-                  <Input
-                    value={theme.cardBackground}
-                    onChange={(e) => setTheme({ ...theme, cardBackground: e.target.value })}
-                    placeholder="#ffffff"
-                    className="flex-1"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Cards, panels background</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="mutedForeground">Secondary Text</Label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    id="mutedForeground"
-                    value={theme.mutedForeground}
-                    onChange={(e) => setTheme({ ...theme, mutedForeground: e.target.value })}
-                    className="w-12 h-10 rounded border cursor-pointer"
-                  />
-                  <Input
-                    value={theme.mutedForeground}
-                    onChange={(e) => setTheme({ ...theme, mutedForeground: e.target.value })}
-                    placeholder="#64748b"
-                    className="flex-1"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Muted text, descriptions</p>
-              </div>
             </div>
 
             {/* Theme Preview */}
-            <div className="mt-6 p-4 border rounded-lg">
-              <p className="text-sm font-medium mb-3">Preview:</p>
-              <div className="flex rounded-lg overflow-hidden h-32 border">
+            <div className="mt-8 p-6 border-2 border-dashed rounded-2xl bg-slate-50/50">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Preview Synthesis</p>
+              <div className="flex rounded-2xl overflow-hidden h-32 shadow-soft border border-white">
                 <div
-                  className="w-16 p-2"
+                  className="w-20 p-3"
                   style={{ backgroundColor: theme.sidebar }}
                 >
-                  <div className="w-full h-3 rounded mb-2" style={{ backgroundColor: theme.primary }} />
-                  <div className="w-full h-2 rounded mb-1 bg-white/20" />
-                  <div className="w-full h-2 rounded mb-1 bg-white/20" />
-                  <div className="w-full h-2 rounded bg-white/20" />
+                  <div className="w-full h-4 rounded-lg mb-3" style={{ backgroundColor: theme.primary }} />
+                  <div className="w-full h-2 rounded-full mb-2 bg-white/20" />
+                  <div className="w-full h-2 rounded-full mb-2 bg-white/20" />
+                  <div className="w-full h-2 rounded-full bg-white/20" />
                 </div>
                 <div
-                  className="flex-1 p-3"
+                  className="flex-1 p-4"
                   style={{ backgroundColor: theme.background }}
                 >
                   <div
-                    className="w-20 h-6 rounded mb-2"
+                    className="w-24 h-8 rounded-xl mb-3"
                     style={{ backgroundColor: theme.primary }}
                   />
-                  <div className="w-full h-2 rounded mb-1 bg-gray-200" />
-                  <div className="w-3/4 h-2 rounded bg-gray-200" />
+                  <div className="w-full h-3 rounded-full mb-2 bg-slate-200" />
+                  <div className="w-3/4 h-3 rounded-full bg-slate-200" />
                 </div>
               </div>
             </div>
@@ -458,10 +420,11 @@ export default function CenterSettings() {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-4">
         <Button
           variant="outline"
           size="lg"
+          className="rounded-2xl border-2 h-14 px-8 font-black uppercase text-xs tracking-widest"
           onClick={() => {
             const defaultTheme: CenterTheme = {
               primary: "#6366f1",
@@ -469,8 +432,7 @@ export default function CenterSettings() {
               sidebar: "#1e293b",
               foreground: "#1e293b",
               cardBackground: "#ffffff",
-              mutedForeground: "#64748b",
-            };
+              mutedForeground: "#64748b" };
             setTheme(defaultTheme);
             // Remove all inline CSS overrides to restore stylesheet defaults
             const root = document.documentElement;
@@ -490,9 +452,19 @@ export default function CenterSettings() {
           onClick={() => updateCenterMutation.mutate()}
           disabled={!name || updateCenterMutation.isPending}
           size="lg"
+          className="rounded-2xl shadow-strong h-14 px-10 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all"
         >
-          <Save className="h-4 w-4 mr-2" />
-          {updateCenterMutation.isPending ? "Saving..." : "Save Settings"}
+          {updateCenterMutation.isPending ? (
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              <span>COMMITTING...</span>
+            </div>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              SYNCHRONIZE SETTINGS
+            </>
+          )}
         </Button>
       </div>
     </div>

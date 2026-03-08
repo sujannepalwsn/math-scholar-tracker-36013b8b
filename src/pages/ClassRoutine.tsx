@@ -1,19 +1,19 @@
 "use client";
-
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { CalendarIcon, Clock, Edit, Plus, Trash2 } from "lucide-react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 
 // Sunday(0) to Friday(5) only
 const DAYS_OF_WEEK = [
@@ -66,19 +66,23 @@ export default function ClassRoutine() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
-    queryKey: ["period-schedules", user?.center_id, selectedGrade],
+    queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name)`).eq("center_id", user.center_id).eq("grade", selectedGrade).order("day_of_week");
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name)`).eq("center_id", user.center_id).eq("grade", selectedGrade);
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('teacher_id', user.teacher_id);
+      }
+
+      const { data, error } = await query.order("day_of_week");
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const { data: teachers = [] } = useQuery({
     queryKey: ["teachers-list", user?.center_id],
@@ -88,8 +92,7 @@ export default function ClassRoutine() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   const createPeriodMutation = useMutation({
     mutationFn: async () => {
@@ -98,8 +101,7 @@ export default function ClassRoutine() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["class-periods"] }); toast.success("Period created!"); resetPeriodForm(); setShowPeriodDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to create period"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to create period") });
 
   const updatePeriodMutation = useMutation({
     mutationFn: async () => {
@@ -108,14 +110,12 @@ export default function ClassRoutine() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["class-periods"] }); toast.success("Period updated!"); resetPeriodForm(); setShowPeriodDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to update period"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to update period") });
 
   const deletePeriodMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("class_periods").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["class-periods"] }); toast.success("Period deleted!"); },
-    onError: (error: any) => toast.error(error.message || "Failed to delete period"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to delete period") });
 
   const createScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -129,8 +129,7 @@ export default function ClassRoutine() {
           grade: scheduleGrade,
           day_of_week: dayNum,
           subject: scheduleSubject,
-          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null,
-        }));
+          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null }));
         const { error } = await supabase.from("period_schedules").insert(entries);
         if (error) throw error;
       } else {
@@ -142,14 +141,12 @@ export default function ClassRoutine() {
           grade: scheduleGrade,
           day_of_week: dayNum,
           subject: scheduleSubject,
-          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null,
-        });
+          teacher_id: scheduleTeacherId === "none" ? null : scheduleTeacherId || null });
         if (error) throw error;
       }
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["period-schedules"] }); toast.success("Schedule created!"); resetScheduleForm(); setShowScheduleDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to create schedule"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to create schedule") });
 
   const updateScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -160,14 +157,12 @@ export default function ClassRoutine() {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["period-schedules"] }); toast.success("Schedule updated!"); resetScheduleForm(); setShowScheduleDialog(false); },
-    onError: (error: any) => toast.error(error.message || "Failed to update schedule"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to update schedule") });
 
   const deleteScheduleMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("period_schedules").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["period-schedules"] }); toast.success("Schedule deleted!"); },
-    onError: (error: any) => toast.error(error.message || "Failed to delete schedule"),
-  });
+    onError: (error: any) => toast.error(error.message || "Failed to delete schedule") });
 
   const resetPeriodForm = () => { setPeriodNumber(""); setStartTime(""); setEndTime(""); setEditingPeriod(null); };
   const resetScheduleForm = () => { setScheduleGrade(""); setSchedulePeriodId(""); setScheduleDay(""); setScheduleSubject(""); setScheduleTeacherId("none"); setEditingSchedule(null); };
@@ -181,22 +176,30 @@ export default function ClassRoutine() {
   // Only show Sun-Fri
   const schedulesByDay = DAYS_OF_WEEK.map(day => ({
     ...day,
-    schedules: schedules.filter((s: any) => s.day_of_week === day.value).sort((a: any, b: any) => a.class_periods?.period_number - b.class_periods?.period_number),
-  }));
+    schedules: schedules.filter((s: any) => s.day_of_week === day.value).sort((a: any, b: any) => a.class_periods?.period_number - b.class_periods?.period_number) }));
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Academic Schedule</h1>
-          <p className="text-muted-foreground text-sm">Define periods and manage class routines.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Scheduling Matrix
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Define and manage institutional class routines.</p>
+          </div>
         </div>
       </div>
 
       <Tabs defaultValue="schedule" className="w-full">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="schedule" className="flex-1 sm:flex-none">Schedule</TabsTrigger>
-          <TabsTrigger value="periods" className="flex-1 sm:flex-none">Periods</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft">
+          <TabsTrigger value="schedule" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Institutional Schedule
+          </TabsTrigger>
+          <TabsTrigger value="periods" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Time Slots
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule" className="space-y-4">
@@ -289,31 +292,50 @@ export default function ClassRoutine() {
           </div>
 
           {schedulesLoading ? (
-            <div className="flex justify-center py-8"><Clock className="h-6 w-6 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {schedulesByDay.map(day => (
-                <Card key={day.value} className="overflow-hidden">
-                  <CardHeader className="bg-muted/30 py-3 border-b">
-                    <CardTitle className="text-base flex items-center gap-2 text-primary">
-                      <CalendarIcon className="h-4 w-4" /> {day.label}
+                <Card key={day.value} className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+                  <CardHeader className="border-b border-muted/20 bg-primary/5 py-4">
+                    <CardTitle className="text-base font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
+                      <div className="p-1.5 rounded-lg bg-primary/10">
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                      </div>
+                      {day.label}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     {day.schedules.length === 0 ? (
-                      <p className="text-muted-foreground text-sm p-4">No classes</p>
+                      <div className="p-8 text-center">
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest opacity-40 italic text-pretty">No Sessions Programmed</p>
+                      </div>
                     ) : (
-                      <div className="divide-y">
+                      <div className="divide-y divide-muted/10">
                         {day.schedules.map((schedule: any) => (
-                          <div key={schedule.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium truncate">{schedule.subject}</div>
-                              <div className="text-xs text-muted-foreground">P{schedule.class_periods?.period_number} · {schedule.class_periods?.start_time}-{schedule.class_periods?.end_time}</div>
-                              {schedule.teachers?.name && <div className="text-xs text-muted-foreground">{schedule.teachers.name}</div>}
+                          <div key={schedule.id} className="group flex items-center justify-between p-4 transition-all duration-300 hover:bg-card/60">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="font-black text-foreground/90 text-sm group-hover:text-primary transition-colors truncate">{schedule.subject}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-black uppercase">Slot {schedule.class_periods?.period_number}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{schedule.class_periods?.start_time} - {schedule.class_periods?.end_time}</span>
+                              </div>
+                              {schedule.teachers?.name && (
+                                <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
+                                  <div className="h-1 w-1 rounded-full bg-slate-300" />
+                                  {schedule.teachers.name}
+                                </div>
+                              )}
                             </div>
-                            <div className="flex gap-1 shrink-0">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditSchedule(schedule)}><Edit className="h-3 w-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteScheduleMutation.mutate(schedule.id)}><Trash2 className="h-3 w-3" /></Button>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleEditSchedule(schedule)}>
+                                <Edit className="h-3.5 w-3.5 text-primary" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteScheduleMutation.mutate(schedule.id)}>
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
                             </div>
                           </div>
                         ))}

@@ -1,15 +1,15 @@
 "use client";
+import React, { useEffect, useState } from "react";
+import { CheckCircle2, Filter, XCircle } from "lucide-react";
 
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
-import { CheckCircle2, XCircle, Filter } from "lucide-react";
-import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "sonner"
+import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types"
 
 interface MeetingAttendanceRecorderProps {
   meetingId: string;
@@ -42,8 +42,7 @@ export default function MeetingAttendanceRecorder({ meetingId, onClose }: Meetin
       if (error) throw error;
       return data;
     },
-    enabled: !!meetingId,
-  });
+    enabled: !!meetingId });
 
   // Fetch all students to get unique grades for the filter
   const { data: allStudents = [] } = useQuery({
@@ -57,8 +56,7 @@ export default function MeetingAttendanceRecorder({ meetingId, onClose }: Meetin
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
   const uniqueGrades = Array.from(new Set(allStudents.map(s => s.grade))).sort();
 
   // Fetch all active teachers for the current center (needed for teacherUser lookup in mutation)
@@ -75,8 +73,7 @@ export default function MeetingAttendanceRecorder({ meetingId, onClose }: Meetin
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id,
-  });
+    enabled: !!user?.center_id });
 
   // Fetch existing attendees for this meeting
   const { data: existingAttendees = [], isLoading: existingAttendeesLoading } = useQuery({
@@ -89,8 +86,7 @@ export default function MeetingAttendanceRecorder({ meetingId, onClose }: Meetin
       if (error) throw error;
       return data;
     },
-    enabled: !!meetingId,
-  });
+    enabled: !!meetingId });
 
   // Determine the list of participants to display
   const { data: participants = [], isLoading: participantsLoading } = useQuery({
@@ -121,8 +117,7 @@ export default function MeetingAttendanceRecorder({ meetingId, onClose }: Meetin
       }
       return fetchedParticipants;
     },
-    enabled: !!user?.center_id && !!meetingDetails,
-  });
+    enabled: !!user?.center_id && !!meetingDetails });
 
   useEffect(() => {
     const initialStatuses: Record<string, AttendanceStatus> = {};
@@ -190,8 +185,7 @@ export default function MeetingAttendanceRecorder({ meetingId, onClose }: Meetin
           meeting_id: meetingId,
           attended,
           attendance_status,
-          notes: null,
-        };
+          notes: null };
 
         if (meetingDetails?.meeting_type === 'parents' || meetingDetails?.meeting_type === 'general') {
           // Use the batched parent user map instead of individual queries
@@ -229,8 +223,7 @@ export default function MeetingAttendanceRecorder({ meetingId, onClose }: Meetin
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update attendance");
-    },
-  });
+    } });
 
   const handleStatusChange = (id: string, status: AttendanceStatus) => {
     setAttendeeStatuses(prev => ({ ...prev, [id]: status }));

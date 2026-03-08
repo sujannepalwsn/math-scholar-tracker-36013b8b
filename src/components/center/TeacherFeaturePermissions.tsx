@@ -1,11 +1,11 @@
 import { Calendar } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
-import { DialogDescription } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogDescription } from "@/components/ui/dialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
 
 const TEACHER_FEATURES = [
   { name: 'take_attendance', label: 'Take Attendance' },
@@ -43,8 +43,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
       if (error) throw error;
       return data;
     },
-    enabled: !!teacherId,
-  });
+    enabled: !!teacherId });
 
   const updatePermissionMutation = useMutation({
     mutationFn: async ({ featureName, isEnabled }: { featureName: string; isEnabled: boolean }) => {
@@ -69,8 +68,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update teacher feature permission');
-    },
-  });
+    } });
 
   const handleToggle = (featureName: string, currentStatus: boolean) => {
     updatePermissionMutation.mutate({ featureName, isEnabled: !currentStatus });

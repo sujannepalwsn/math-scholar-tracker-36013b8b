@@ -1,13 +1,14 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, CheckSquare, BookOpen, Book, Paintbrush, AlertTriangle, FileText, ClipboardCheck, User, LogOut, KeyRound, Video, MessageSquare, Calendar, Clock, TrendingUp, Brain, DollarSign, BarChart3, LayoutList, CalendarDays, Menu } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Brain, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, Home, KeyRound, LayoutList, LogOut, MessageSquare, Paintbrush, Settings, TrendingUp, User, Video } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
 const navItems: Array<{
   to: string;
@@ -16,11 +17,9 @@ const navItems: Array<{
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration';
+  category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const },
-
-  // Academics Group
   { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance', category: 'Academics' },
   { to: "/teacher/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'teacher' as const, featureName: 'lesson_plans', category: 'Academics' },
   { to: "/teacher/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'teacher' as const, featureName: 'lesson_tracking', category: 'Academics' },
@@ -28,23 +27,19 @@ const navItems: Array<{
   { to: "/teacher/test-management", label: "Tests", icon: ClipboardCheck, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
   { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'activities', category: 'Academics' },
   { to: "/teacher/discipline-issues", label: "Discipline", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues', category: 'Academics' },
-
-  // Administration Group
   { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance', category: 'Administration' },
+  { to: "/teacher/settings", label: "Settings", icon: Settings, role: 'teacher' as const, category: 'Administration' },
 
-  // Others
-  { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights' },
-  { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records' },
-  { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary' },
-  { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance' },
-  { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management' },
-  { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging' },
-  { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine' },
-  { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events' },
-  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary' },
-  { to: "/teacher/preschool-activities", label: "Preschool Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'preschool_activities' },
-  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access' },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'teacher' as const },
+  { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
+  { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communications' },
+  { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communications' },
+  { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance', category: 'Reports and Communications' },
+  { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management', category: 'Reports and Communications' },
+  { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging', category: 'Reports and Communications' },
+  { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine', category: 'Reports and Communications' },
+  { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events', category: 'Reports and Communications' },
+  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
+  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access', category: 'Reports and Communications' },
 ];
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
@@ -81,8 +76,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       return count || 0;
     },
     enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000,
-  });
+    refetchInterval: 10000 });
 
   const updatedNavItems = navItems.map(item =>
     item.to === "/teacher-messages" ? { ...item, unreadCount: unreadMessageCount } : item
@@ -96,7 +90,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 text-sm">
         <User className="h-4 w-4 text-muted-foreground" />
-        <span className="text-muted-foreground">{user?.username}</span>
+        <span className="text-muted-foreground truncate">{user?.username}</span>
       </div>
       <Button variant="ghost" size="sm" onClick={handleLogout}>
         <LogOut className="h-4 w-4" />
@@ -114,7 +108,6 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
-      {/* Consolidated Sidebar */}
       <Sidebar
         navItems={filteredTeacherNavItems}
         headerContent={headerContent}
@@ -124,31 +117,26 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         onMobileOpenChange={setMobileMenuOpen}
       />
 
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b z-20 flex items-center justify-between px-4">
-        <div className="flex-1">
-          <CenterLogo size="sm" showName={true} />
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden hover:bg-muted"
-        >
-          <Menu className="h-5 w-5" />
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
+        <CenterLogo size="sm" showName={true} />
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
+          <LogOut className="h-4 w-4" />
         </Button>
       </header>
 
-      {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-y-auto bg-background transition-all duration-300",
+        "flex-1 overflow-y-auto bg-background transition-all duration-200",
         "md:h-screen",
-        "pt-20 md:pt-0",
-        "px-4 pb-8 md:p-8",
+        "pt-16 md:pt-0",
+        "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
-        {children}
+        <div className="page-enter max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
+
+      <BottomNav navItems={filteredTeacherNavItems} />
     </div>
   );
 }

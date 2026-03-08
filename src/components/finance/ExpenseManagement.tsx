@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
-import { formatCurrency } from '@/integrations/supabase/finance-types';
+import React, { useState } from "react";
+import { Plus } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from "sonner"
+import { formatCurrency } from "@/integrations/supabase/finance-types"
 
 const EXPENSE_CATEGORIES = ['salaries', 'rent', 'utilities', 'materials', 'maintenance', 'transport', 'admin', 'other'];
 
@@ -78,7 +78,7 @@ const ExpenseManagement = () => {
       materials: 'bg-blue-100 text-blue-800',
       maintenance: 'bg-purple-100 text-purple-800',
       transport: 'bg-green-100 text-green-800',
-      admin: 'bg-slate-100 text-slate-800',
+      admin: 'bg-slate-100 text-foreground/90',
       other: 'bg-gray-100 text-gray-800'
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
