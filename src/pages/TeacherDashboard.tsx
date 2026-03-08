@@ -397,7 +397,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8faff] p-4 md:p-8 space-y-8 pb-24 md:pb-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <CenterLogo size="lg" />
@@ -407,11 +407,11 @@ export default function TeacherDashboard() {
             <span className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-full border-2 border-white" />
           </Button>
           <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl shadow-soft">
-            <div className="h-9 w-9 bg-indigo-100 rounded-xl flex items-center justify-center overflow-hidden">
-               <Users className="h-5 w-5 text-indigo-600" />
+            <div className="h-9 w-9 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden">
+               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-black text-slate-800 leading-none">{user?.username?.split('@')[0]}</p>
+              <p className="text-xs font-black text-foreground/90 leading-none">{user?.username?.split('@')[0]}</p>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Teacher</p>
             </div>
           </div>
@@ -419,8 +419,8 @@ export default function TeacherDashboard() {
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
-          <div className="p-2 bg-indigo-500 text-white rounded-lg">
+        <div className="flex items-center gap-2 bg-card/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-border/40">
+          <div className="p-2 bg-primary text-white rounded-lg">
             <Home className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
@@ -428,7 +428,7 @@ export default function TeacherDashboard() {
              <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-white/40">
+        <div className="flex items-center gap-3 bg-card/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-border/40">
            <Input
              type="date"
              value={dateRange.to}
@@ -455,7 +455,7 @@ export default function TeacherDashboard() {
           </div>
           <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
             {subjectPerformance.map((sp) => (
-              <Card key={sp.name} className="border-none shadow-soft bg-white/60 backdrop-blur-sm overflow-hidden group hover:shadow-medium transition-all duration-300">
+              <Card key={sp.name} className="border-none shadow-soft bg-card/60 backdrop-blur-sm overflow-hidden group hover:shadow-medium transition-all duration-300">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="space-y-1">
@@ -487,7 +487,7 @@ export default function TeacherDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
 
-           <Card className="border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+           <Card className="border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20 overflow-hidden">
               <CardHeader className="bg-primary/5 border-b border-primary/10">
                  <CardTitle className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" /> Academic Leaders
@@ -505,10 +505,10 @@ export default function TeacherDashboard() {
                             onClick={() => navigate(`/teacher/student-report?studentId=${r.student_id}`)}
                           >
                              <div>
-                                <p className="text-sm font-bold text-slate-800">{r.students?.name}</p>
+                                <p className="text-sm font-bold text-foreground/90">{r.students?.name}</p>
                                 <p className="text-[10px] text-slate-400 font-medium">Grade {r.students?.grade} • {r.tests?.name}</p>
                              </div>
-                             <Badge className="bg-indigo-500 text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                             <Badge className="bg-primary text-white font-black text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
                           </div>
                        ))
                     )}
@@ -525,7 +525,7 @@ export default function TeacherDashboard() {
           classes={todayClasses}
           onViewRoutine={() => navigate("/teacher/class-routine")}
         />
-        <Card className="lg:col-span-2 border-none shadow-soft bg-white/60 backdrop-blur-md rounded-2xl border border-white/20">
+        <Card className="lg:col-span-2 border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20">
            <CardHeader><CardTitle className="text-lg font-bold">Upcoming Professional Milestones</CardTitle></CardHeader>
            <CardContent>
               {upcomingMeetings.length === 0 ? (
@@ -539,8 +539,8 @@ export default function TeacherDashboard() {
                         onClick={() => navigate("/teacher/meetings")}
                      >
                         <div className="space-y-1">
-                           <p className="text-sm font-bold text-slate-800">{att.meetings?.title}</p>
-                           <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">{att.meetings?.meeting_type}</p>
+                           <p className="text-sm font-bold text-foreground/90">{att.meetings?.title}</p>
+                           <p className="text-[10px] font-black uppercase text-primary tracking-widest">{att.meetings?.meeting_type}</p>
                         </div>
                         <Badge variant="secondary" className="font-bold">{format(new Date(att.meetings?.meeting_date), "MMM d, p")}</Badge>
                      </div>
@@ -557,14 +557,14 @@ export default function TeacherDashboard() {
               <div className="w-full border-t border-muted" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-[#f8faff] px-4 text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground/60">
+              <span className="bg-[hsl(var(--background))] px-4 text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground/60">
                 Instructional Analytics & Insights
               </span>
             </div>
           </div>
 
           {/* Attendance Overview */}
-          <Card id="attendance-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/60 backdrop-blur-md">
+          <Card id="attendance-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
             <CardHeader className="bg-green-500/5 pb-4 border-b border-green-500/10">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <CardTitle className="text-2xl font-bold flex items-center gap-3">
@@ -573,7 +573,7 @@ export default function TeacherDashboard() {
                   </div>
                   Class Attendance Analytics
                 </CardTitle>
-                <div className="flex items-center gap-2 bg-white/60 p-1 rounded-xl border border-white/40 shadow-soft">
+                <div className="flex items-center gap-2 bg-card/60 p-1 rounded-xl border border-border/40 shadow-soft">
                    <Input type="date" value={attendanceDateRange.from} onChange={e => setAttendanceDateRange({...attendanceDateRange, from: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
                    <span className="text-[10px] font-black text-slate-300">TO</span>
                    <Input type="date" value={attendanceDateRange.to} onChange={e => setAttendanceDateRange({...attendanceDateRange, to: e.target.value})} className="h-8 w-32 border-none bg-transparent text-[10px] font-black uppercase" />
@@ -619,7 +619,7 @@ export default function TeacherDashboard() {
           </Card>
 
           {/* Curricular Milestones */}
-          <Card id="milestones-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/60 backdrop-blur-md">
+          <Card id="milestones-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
             <CardHeader className="bg-blue-500/5 pb-4 border-b border-blue-500/10">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-500/10">
@@ -699,7 +699,7 @@ export default function TeacherDashboard() {
           </Card>
 
           {/* Test Report */}
-          <Card id="tests-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/60 backdrop-blur-md">
+          <Card id="tests-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
             <CardHeader className="bg-purple-500/5 pb-4 border-b border-purple-500/10">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-purple-500/10">
@@ -750,7 +750,7 @@ export default function TeacherDashboard() {
           </Card>
 
           {/* Activities */}
-          <Card id="activities-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/60 backdrop-blur-md">
+          <Card id="activities-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
             <CardHeader className="bg-pink-500/5 pb-4 border-b border-pink-500/10">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-pink-500/10">
@@ -784,10 +784,10 @@ export default function TeacherDashboard() {
                           <td className="border-b px-4 py-2">
                             <div className="flex gap-2">
                               {pa.activities?.photo_url && (
-                                <a href={supabase.storage.from("activity-photos").getPublicUrl(pa.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-[9px] font-black uppercase">Photo</a>
+                                <a href={supabase.storage.from("activity-photos").getPublicUrl(pa.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-[9px] font-black uppercase">Photo</a>
                               )}
                               {pa.activities?.video_url && (
-                                <a href={supabase.storage.from("activity-videos").getPublicUrl(pa.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-[9px] font-black uppercase">Video</a>
+                                <a href={supabase.storage.from("activity-videos").getPublicUrl(pa.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-[9px] font-black uppercase">Video</a>
                               )}
                             </div>
                           </td>
@@ -801,7 +801,7 @@ export default function TeacherDashboard() {
           </Card>
 
           {/* Discipline Issues */}
-          <Card id="discipline-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-white/60 backdrop-blur-md">
+          <Card id="discipline-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
             <CardHeader className="bg-red-500/5 pb-4 border-b border-red-500/10">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-red-500/10">
@@ -863,10 +863,10 @@ export default function TeacherDashboard() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-black">
-              <BookOpen className="h-6 w-6 text-indigo-600" />
+              <BookOpen className="h-6 w-6 text-primary" />
               Chapter Intel: {selectedChapterDetail?.lessonPlan.chapter}
             </DialogTitle>
-            <DialogDescription className="font-bold text-indigo-400 uppercase text-[10px] tracking-widest">
+            <DialogDescription className="font-bold text-primary/80 uppercase text-[10px] tracking-widest">
               {selectedChapterDetail?.lessonPlan.subject} • Instruction Date: {selectedChapterDetail ? safeFormatDate(selectedChapterDetail.lessonPlan.lesson_date, "PPP") : ""}
             </DialogDescription>
           </DialogHeader>

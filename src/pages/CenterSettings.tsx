@@ -191,9 +191,9 @@ export default function CenterSettings() {
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Basic Information */}
-        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
               <div className="p-2 rounded-xl bg-primary/10">
                 <Building className="h-6 w-6 text-primary" />
               </div>
@@ -265,9 +265,9 @@ export default function CenterSettings() {
         </Card>
 
         {/* Logo & Branding */}
-        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <Card className="border-none shadow-strong overflow-hidden h-fit rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
               <div className="p-2 rounded-xl bg-primary/10">
               <ImageIcon className="h-6 w-6 text-primary" />
               </div>
@@ -300,9 +300,9 @@ export default function CenterSettings() {
         </Card>
 
         {/* Personal Appearance Settings */}
-        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
               <div className="p-2 rounded-xl bg-primary/10">
                 <Palette className="h-6 w-6 text-primary" />
               </div>
@@ -316,9 +316,9 @@ export default function CenterSettings() {
         </Card>
 
         {/* Global Institution Theme (Admin Only) */}
-        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-white/40 backdrop-blur-md border border-white/20">
+        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-widest">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
               <div className="p-2 rounded-xl bg-primary/10">
                 <Settings className="h-6 w-6 text-primary" />
               </div>

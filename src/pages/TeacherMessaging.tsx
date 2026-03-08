@@ -149,8 +149,8 @@ export default function TeacherMessaging() {
         </div>
       </div>
 
-      <Card className="h-[700px] flex flex-col border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-white/40 backdrop-blur-md border border-white/20">
-        <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong relative z-10 border-b border-white/10">
+      <Card className="h-[700px] flex flex-col border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong relative z-10 border-b border-border/10">
           <CardTitle className="flex items-center gap-3 text-xl font-black tracking-tight">
              <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
                 <MessageSquare className="h-6 w-6 text-white" />
