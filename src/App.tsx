@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter as BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -11,6 +11,7 @@ import CenterLayout from "./components/CenterLayout";
 import AdminLayout from "./components/AdminLayout";
 import ParentLayout from "./components/ParentLayout";
 import TeacherLayout from "./components/TeacherLayout";
+import BackButtonHandler from "./components/BackButtonHandler";
 import Dashboard from "./pages/Dashboard";
 import RegisterStudent from "./pages/RegisterStudent";
 import TakeAttendance from "./pages/TakeAttendance";
@@ -65,6 +66,7 @@ const App = () => (
           <Toaster />
           <Sonner />
         <BrowserRouter>
+          <BackButtonHandler />
           <Routes>
             {/* Authentication Routes */}
             <Route path="/init-admin" element={<InitAdmin />} />
