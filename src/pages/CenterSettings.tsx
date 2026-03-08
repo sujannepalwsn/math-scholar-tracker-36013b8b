@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Building, ImageIcon, MapPin, Palette, Phone as PhoneIcon, Save, Settings, User } from "lucide-react";
+import { Building, ImageIcon, KeyRound, Loader2, MapPin, Palette, Phone as PhoneIcon, Save, Settings, ShieldCheck, User } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ThemeSelector from "@/components/ThemeSelector";
+import * as bcrypt from 'bcryptjs';
 
 interface CenterTheme {
   primary: string;
@@ -21,7 +22,7 @@ interface CenterTheme {
 }
 
 export default function CenterSettings() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
@@ -30,6 +31,10 @@ export default function CenterSettings() {
   const [email, setEmail] = useState("");
   const [contactPerson, setContactPerson] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [theme, setTheme] = useState<CenterTheme>({
     primary: "#6366f1",
     background: "#ffffff",
@@ -169,6 +174,62 @@ export default function CenterSettings() {
     // Try to upload to a general bucket or use a public URL
     // For now, just accept a URL input
     toast.info("Please enter the logo URL directly. File upload coming soon.");
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+
+    if (!user) {
+      toast.error('User not logged in.');
+      setPasswordLoading(false);
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error('New passwords do not match.');
+      setPasswordLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long.');
+      setPasswordLoading(false);
+      return;
+    }
+
+    try {
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('password_hash')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError || !userData) throw new Error('Failed to fetch user data.');
+
+      const passwordMatch = await bcrypt.compare(oldPassword, userData.password_hash);
+      if (!passwordMatch) {
+        toast.error('Old password is incorrect.');
+        setPasswordLoading(false);
+        return;
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ password_hash: hashedPassword, updated_at: new Date().toISOString() } as any)
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Password changed successfully. Please log in again.');
+      setTimeout(() => logout(), 2000);
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      toast.error(error.message || 'Failed to change password.');
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -415,6 +476,65 @@ export default function CenterSettings() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <ShieldCheck className="h-6 w-6 text-primary" />
+              </div>
+              Security Protocols
+            </CardTitle>
+            <CardDescription className="font-medium text-slate-500">Update your access keys and authentication credentials</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 md:p-8">
+            <form onSubmit={handlePasswordChange} className="max-w-md space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="oldPassword">Current Access Key</Label>
+                <Input
+                  id="oldPassword"
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  required
+                  disabled={passwordLoading}
+                  className="h-12 rounded-xl bg-card/50"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Identity Token</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  disabled={passwordLoading}
+                  className="h-12 rounded-xl bg-card/50"
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmNewPassword">Verify New Token</Label>
+                <Input
+                  id="confirmNewPassword"
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  required
+                  disabled={passwordLoading}
+                  className="h-12 rounded-xl bg-card/50"
+                  placeholder="Re-enter new token"
+                />
+              </div>
+              <Button type="submit" className="h-12 px-8 rounded-xl font-black uppercase tracking-widest text-[10px]" disabled={passwordLoading}>
+                {passwordLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> SYNCHRONIZING...</> : <><Save className="h-4 w-4 mr-2" /> UPDATE CREDENTIALS</>}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
