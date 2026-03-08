@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Download, Users } from "lucide-react";
-import { cn } from "@/lib/utils"
+import { cn, safeFormatDate } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { endOfMonth, format, isWithinInterval, parseISO, startOfMonth } from "date-fns"
-import { cn, safeFormatDate } from "@/lib/utils" // Import safeFormatDate and cn
 
 interface StudentSummary {
   id: string;

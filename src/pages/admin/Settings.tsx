@@ -1,4 +1,4 @@
-import { Bell, Settings2 } from "lucide-react";
+import { Bell, Cpu, Database, Globe, Settings2, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 

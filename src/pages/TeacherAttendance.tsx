@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { toast } from "sonner"
 import { addMonths, endOfMonth, format, isValid, isWithinInterval, parseISO, startOfMonth, subMonths } from "date-fns"
-import { safeFormatDate } from "@/lib/utils" // Import safeFormatDate
+
 import { Database, Tables } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { KPICard } from "@/components/dashboard/KPICard"

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, Download, FileText, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, FileText, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"

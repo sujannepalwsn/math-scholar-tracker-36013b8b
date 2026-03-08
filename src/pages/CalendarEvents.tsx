@@ -285,7 +285,7 @@ export default function CalendarEvents() {
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={setSelectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
               className="rounded-3xl border border-white/40 bg-white/30 backdrop-blur-sm p-4 shadow-soft mx-auto"
               modifiers={{
                 hasEvent: eventDates }}
