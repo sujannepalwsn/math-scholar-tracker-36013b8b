@@ -37,7 +37,6 @@ import ResultsDashboard from "./pages/ResultsDashboard";
 import MarksheetView from "./pages/MarksheetView";
 import StudentIdCard from "./pages/StudentIdCard";
 import Notifications from "./pages/Notifications";
-import Summary from "./pages/Summary";
 
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
