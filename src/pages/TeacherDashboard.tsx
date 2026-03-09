@@ -62,10 +62,10 @@ export default function TeacherDashboard() {
       let query = supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
 
       if (user?.role === 'teacher') {
-        // Find teacher's grade and filter students
-        const { data: teacher } = await supabase.from('teachers').select('grade').eq('id', teacherId).single();
-        if (teacher?.grade) {
-          query = query.eq('grade', teacher.grade);
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', teacherId);
+        const grades = assignments?.map(a => a.grade) || [];
+        if (grades.length > 0) {
+          query = query.in('grade', grades);
         }
       }
 
