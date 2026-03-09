@@ -11,16 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
-
-function getGrade(percentage: number): string {
-  if (percentage >= 90) return "A+";
-  if (percentage >= 80) return "A";
-  if (percentage >= 70) return "B+";
-  if (percentage >= 60) return "B";
-  if (percentage >= 50) return "C";
-  if (percentage >= 40) return "D";
-  return "F";
-}
+import { getGrade } from "@/lib/utils";
 
 export default function MarksEntry() {
   const { user } = useAuth();
