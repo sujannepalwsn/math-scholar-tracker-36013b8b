@@ -2307,6 +2307,7 @@ export type Database = {
           is_active: boolean | null
           last_login: string | null
           password_hash: string
+          preferences: Json | null
           role: string
           student_id: string | null
           teacher_id: string | null
@@ -2320,6 +2321,7 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password_hash: string
+          preferences?: Json | null
           role: string
           student_id?: string | null
           teacher_id?: string | null
@@ -2333,6 +2335,7 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password_hash?: string
+          preferences?: Json | null
           role?: string
           student_id?: string | null
           teacher_id?: string | null
