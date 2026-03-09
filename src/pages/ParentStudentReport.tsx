@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -47,6 +47,7 @@ export default function ParentStudentReport() {
   const [aiSummary, setAiSummary] = useState<string>("");
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformance | null>(null);
+  const [selectedExamResult, setSelectedExamResult] = useState<any>(null);
 
   // Students for parent are already in user context, but let's fetch to be safe/consistent
   const { data: students = [] } = useQuery({
@@ -252,6 +253,77 @@ export default function ParentStudentReport() {
       return data;
     },
     enabled: !!user?.center_id });
+
+  // Fetch Published Exam Results
+  const { data: publishedExams = [] } = useQuery({
+    queryKey: ["published-exams-report", selectedStudentId, user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id || !selectedStudentId || selectedStudentId === "none") return [];
+
+      const student = students.find(s => s.id === selectedStudentId);
+      if (!student) return [];
+
+      const { data: exams, error: examsError } = await supabase
+        .from("exams")
+        .select("*")
+        .eq("center_id", user.center_id)
+        .eq("grade", student.grade)
+        .eq("status", "published");
+
+      if (examsError) throw examsError;
+      if (!exams || exams.length === 0) return [];
+
+      const examIds = exams.map(e => e.id);
+
+      const { data: subjects, error: subjError } = await supabase
+        .from("exam_subjects")
+        .select("*")
+        .in("exam_id", examIds);
+
+      if (subjError) throw subjError;
+
+      const { data: marks, error: marksError } = await supabase
+        .from("exam_marks")
+        .select("*")
+        .eq("student_id", selectedStudentId)
+        .in("exam_id", examIds);
+
+      if (marksError) throw marksError;
+
+      return exams.map(exam => {
+        const examSubjects = subjects.filter(s => s.exam_id === exam.id);
+        const examMarks = marks.filter(m => m.exam_id === exam.id);
+
+        let totalObtained = 0;
+        let totalFull = 0;
+        let allPassed = true;
+        const hasMarks = examMarks.length > 0;
+
+        const results = examSubjects.map(subj => {
+          const mark = examMarks.find(m => m.exam_subject_id === subj.id);
+          const obtained = mark?.marks_obtained || 0;
+          totalObtained += obtained;
+          totalFull += subj.full_marks;
+          if (obtained < subj.pass_marks) allPassed = false;
+          return { ...subj, obtained, passed: obtained >= subj.pass_marks };
+        });
+
+        const percentage = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
+
+        return {
+          ...exam,
+          totalObtained,
+          totalFull,
+          percentage,
+          allPassed,
+          hasMarks,
+          results,
+          student
+        };
+      }).filter(e => e.hasMarks);
+    },
+    enabled: !!user?.center_id && selectedStudentId !== "none"
+  });
 
   // Fetch finance data (keep student-specific for now, or generalize if needed)
   const { data: invoices = [] } = useQuery({
@@ -1388,6 +1460,67 @@ export default function ParentStudentReport() {
             </CardContent>
           </Card>
 
+          {/* Published Results Section */}
+          <Card id="published-results-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
+            <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                </div>
+                Published Exam Results
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {publishedExams.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground italic">No published exam results found for this student.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-muted/50 border-b">
+                      <tr>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Exam Name</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Date</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Total Marks</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Percentage</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Grade</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {publishedExams.map((result: any) => (
+                        <tr key={result.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4 font-semibold">{result.name}</td>
+                          <td className="px-6 py-4">{safeFormatDate(result.exam_date, "PPP")}</td>
+                          <td className="px-6 py-4 font-medium">{result.totalObtained}/{result.totalFull}</td>
+                          <td className="px-6 py-4 font-bold">
+                            <span className={cn(result.percentage >= 75 ? "text-green-600" : result.percentage >= 50 ? "text-orange-600" : "text-red-600")}>
+                              {result.percentage.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant="outline" className="font-bold">
+                              {getGradeFormal(result.percentage)}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
+                              onClick={() => setSelectedExamResult(result)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Test Report */}
           <Card id="tests-section">
             <CardHeader>
@@ -1667,6 +1800,141 @@ export default function ParentStudentReport() {
           )}
         </div>
       )}
+
+      {/* Published Result Marksheet Dialog */}
+      <Dialog open={!!selectedExamResult} onOpenChange={() => setSelectedExamResult(null)}>
+        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
+          <DialogHeader className="no-print">
+            <DialogTitle>Official Marksheet</DialogTitle>
+            <DialogDescription>Formal academic record for {selectedExamResult?.name}</DialogDescription>
+          </DialogHeader>
+
+          {selectedExamResult && (
+            <div id="marksheet-content-report" className="space-y-6">
+              <div className="text-center space-y-2 border-b pb-6">
+                <h1 className="text-2xl font-black text-primary tracking-tight">OFFICIAL MARKSHEET</h1>
+                <h2 className="text-lg font-bold text-foreground/80 uppercase">{selectedExamResult.name}</h2>
+                <p className="text-sm font-medium text-muted-foreground">Academic Year: {selectedExamResult.academic_year}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 bg-muted/30 p-6 rounded-2xl border">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Student Name</p>
+                  <p className="text-lg font-bold">{selectedExamResult.student.name}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Roll Number</p>
+                  <p className="text-lg font-bold">{selectedExamResult.student.roll_number || "-"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Grade / Class</p>
+                  <p className="text-lg font-bold">Grade {selectedExamResult.student.grade}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Exam Date</p>
+                  <p className="text-lg font-bold">{selectedExamResult.exam_date ? safeFormatDate(selectedExamResult.exam_date, "PPP") : "-"}</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead className="font-bold py-4">Subject Name</TableHead>
+                      <TableHead className="text-center font-bold">Full Marks</TableHead>
+                      <TableHead className="text-center font-bold">Pass Marks</TableHead>
+                      <TableHead className="text-center font-bold">Obtained</TableHead>
+                      <TableHead className="text-center font-bold">Result</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedExamResult.results.map((subj: any) => (
+                      <TableRow key={subj.id} className="h-12">
+                        <TableCell className="font-semibold">{subj.subject_name}</TableCell>
+                        <TableCell className="text-center font-medium">{subj.full_marks}</TableCell>
+                        <TableCell className="text-center font-medium">{subj.pass_marks}</TableCell>
+                        <TableCell className="text-center font-black text-primary">{subj.obtained}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={subj.passed ? "success" : "destructive"} className="font-black uppercase text-[9px]">
+                            {subj.passed ? "Pass" : "Fail"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                <div className="p-4 rounded-2xl bg-muted/20 border text-center space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Grand Total</p>
+                  <p className="text-xl font-black">{selectedExamResult.totalObtained}/{selectedExamResult.totalFull}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-muted/20 border text-center space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Percentage</p>
+                  <p className="text-xl font-black">{selectedExamResult.percentage.toFixed(1)}%</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-muted/20 border text-center space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Grade</p>
+                  <p className="text-xl font-black">{getGradeFormal(selectedExamResult.percentage)}</p>
+                </div>
+                <div className={cn(
+                  "p-4 rounded-2xl border text-center space-y-1",
+                  selectedExamResult.allPassed ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20"
+                )}>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Final Status</p>
+                  <p className={cn("text-xl font-black", selectedExamResult.allPassed ? "text-green-600" : "text-red-600")}>
+                    {selectedExamResult.allPassed ? "PASSED" : "FAILED"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-between mt-16 px-4 pb-8">
+                <div className="text-center space-y-1">
+                  <div className="w-32 border-t-2 border-foreground/30 pt-1" />
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Class Teacher</p>
+                </div>
+                <div className="text-center space-y-1">
+                  <div className="w-32 border-t-2 border-foreground/30 pt-1" />
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Principal</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-6 border-t no-print">
+            <Button variant="outline" size="sm" className="rounded-xl h-10 px-6" onClick={() => {
+               const content = document.getElementById('marksheet-content-report');
+               if (content) {
+                 const printWindow = window.open('', '_blank');
+                 printWindow?.document.write(`<html><head><title>Marksheet</title><style>
+                   body { font-family: sans-serif; padding: 40px; }
+                   table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                   th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                   th { background-color: #f5f5f5; }
+                   .text-center { text-align: center; }
+                   .font-bold { font-weight: bold; }
+                   .border-b { border-bottom: 1px solid #eee; }
+                   .pb-6 { padding-bottom: 24px; }
+                   .mb-6 { margin-bottom: 24px; }
+                   .p-6 { padding: 24px; }
+                   .rounded-2xl { border-radius: 1rem; }
+                   .border { border: 1px solid #eee; }
+                   .bg-muted\\/30 { background-color: #f9fafb; }
+                   .grid { display: grid; }
+                   .grid-cols-2 { grid-template-cols: 1fr 1fr; }
+                   .gap-6 { gap: 24px; }
+                 </style></head><body>${content.innerHTML}</body></html>`);
+                 printWindow?.document.close();
+                 printWindow?.focus();
+                 setTimeout(() => { printWindow?.print(); printWindow?.close(); }, 500);
+               }
+            }}>
+              <Printer className="h-4 w-4 mr-2" /> Print
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Chapter Detail Dialog */}
       <Dialog open={!!selectedChapterDetail} onOpenChange={() => setSelectedChapterDetail(null)}>
