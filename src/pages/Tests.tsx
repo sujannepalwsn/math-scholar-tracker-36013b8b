@@ -73,17 +73,35 @@ export default function Tests() {
   const [resultDate, setResultDate] = useState(format(new Date(), "yyyy-MM-dd"));
   // Removed resultNotes state
 
+  const { data: assignedGrades = [] } = useQuery({
+    queryKey: ["teacher-assigned-grades-tests", user?.teacher_id],
+    queryFn: async () => {
+      if (!user?.teacher_id) return [];
+      const { data, error } = await supabase
+        .from("class_teacher_assignments")
+        .select("grade")
+        .eq("teacher_id", user.teacher_id);
+      if (error) throw error;
+      return data.map(d => d.grade);
+    },
+    enabled: !!user?.teacher_id && user?.role === 'teacher'
+  });
+
   // Fetch tests
   const { data: tests = [] } = useQuery({
-    queryKey: ["tests", user?.center_id, user?.id],
+    queryKey: ["tests", user?.center_id, user?.id, assignedGrades],
     queryFn: async () => {
       let query = supabase
         .from("tests")
-        .select("*, lesson_plans(id, subject, chapter, topic, grade)") // Fetch lesson_plans details
+        .select("*, lesson_plans!inner(id, subject, chapter, topic, grade)") // Fetch lesson_plans details
         .order("date", { ascending: false });
       
       if (user?.role === 'teacher') {
-        query = query.eq('created_by', user.id);
+        if (assignedGrades.length > 0) {
+          query = query.in('lesson_plans.grade', assignedGrades);
+        } else {
+          query = query.eq('created_by', user.id);
+        }
       } else if (user?.role !== 'admin' && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }

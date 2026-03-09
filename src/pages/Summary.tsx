@@ -27,12 +27,33 @@ export default function Summary() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>(format(new Date(), "yyyy-MM"));
 
+  const { data: assignedGrades = [] } = useQuery({
+    queryKey: ["teacher-assigned-grades-summary", user?.teacher_id],
+    queryFn: async () => {
+      if (!user?.teacher_id) return [];
+      const { data, error } = await supabase
+        .from("class_teacher_assignments")
+        .select("grade")
+        .eq("teacher_id", user.teacher_id);
+      if (error) throw error;
+      return data.map(d => d.grade);
+    },
+    enabled: !!user?.teacher_id && user?.role === 'teacher'
+  });
+
   // Fetch students
   const { data: students } = useQuery({
-    queryKey: ["students", user?.center_id],
+    queryKey: ["students", user?.center_id, assignedGrades],
     queryFn: async () => {
       let query = supabase.from("students").select("*").order("name");
       if (user?.role !== "admin" && user?.center_id) query = query.eq("center_id", user.center_id);
+
+      if (user?.role === 'teacher' && assignedGrades.length > 0) {
+        query = query.in('grade', assignedGrades);
+      } else if (user?.role === 'teacher') {
+        return [];
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -48,10 +69,6 @@ export default function Summary() {
         .from("attendance")
         .select("*")
         .in("student_id", studentIds);
-
-      if (user?.role === 'teacher') {
-        query = query.eq('marked_by', user.id);
-      }
 
       const { data, error } = await query;
       if (error) throw error;
