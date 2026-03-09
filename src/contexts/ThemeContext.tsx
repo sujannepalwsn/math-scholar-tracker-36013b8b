@@ -158,21 +158,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updated = { ...userPreferences, ...newPrefs };
     setUserPreferences(updated);
 
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({ preferences: updated } as any)
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      // Also update local storage as a quick cache/backup
-      localStorage.setItem("app-theme-name", updated.theme);
-      localStorage.setItem("app-dark-mode", String(updated.darkMode));
-      localStorage.setItem("app-compact-mode", String(updated.compactMode));
-    } catch (error) {
-      console.error('Error updating user preferences:', error);
-    }
+    // Save to localStorage
+    localStorage.setItem("app-theme-name", updated.theme);
+    localStorage.setItem("app-dark-mode", String(updated.darkMode));
+    localStorage.setItem("app-compact-mode", String(updated.compactMode));
   };
 
   useEffect(() => {
