@@ -106,6 +106,9 @@ const App = () => (
                 }
               />
 
+              {/* Notifications (all roles) */}
+              <Route path="/notifications" element={<ProtectedRoute><CenterLayout><Notifications /></CenterLayout></ProtectedRoute>} />
+
               {/* Parent */}
               <Route path="/parent-dashboard" element={<ProtectedRoute role="parent"><ParentLayout><ParentDashboard /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-finance" element={<ProtectedRoute role="parent"><ParentLayout><ParentFinanceDashboard /></ParentLayout></ProtectedRoute>} />
