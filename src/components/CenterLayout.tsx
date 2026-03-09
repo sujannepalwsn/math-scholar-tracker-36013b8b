@@ -37,6 +37,7 @@ const navItems: Array<{
   { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
   { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'lesson_tracking', category: 'Administration' },
   { to: "/teacher-performance", label: "Teacher Reports", icon: BarChart3, role: 'center' as const, category: 'Administration' },
+  { to: "/student-id-cards", label: "Student ID Cards", icon: IdCard, role: 'center' as const, category: 'Administration' },
   { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const, category: 'Administration' },
 
   // Reports and Communications Group
