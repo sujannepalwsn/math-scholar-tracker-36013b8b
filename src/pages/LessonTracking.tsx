@@ -82,9 +82,23 @@ export default function LessonTracking() {
     enabled: !!user?.center_id, // Ensure this is enabled for center users
   });
 
+  const { data: assignedGrades = [] } = useQuery({
+    queryKey: ["teacher-assigned-grades-tracking", user?.teacher_id],
+    queryFn: async () => {
+      if (!user?.teacher_id) return [];
+      const { data, error } = await supabase
+        .from("class_teacher_assignments")
+        .select("grade")
+        .eq("teacher_id", user.teacher_id);
+      if (error) throw error;
+      return data.map(d => d.grade);
+    },
+    enabled: !!user?.teacher_id && user?.role === 'teacher'
+  });
+
   // Fetch lesson plans for dropdown and listing
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject, user?.teacher_id],
+    queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject, user?.teacher_id, assignedGrades],
     queryFn: async () => {
       let query = supabase
         .from("lesson_plans")
@@ -95,7 +109,11 @@ export default function LessonTracking() {
       if (filterSubject !== "all") query = query.eq("subject", filterSubject);
 
       if (user?.role === 'teacher') {
-        query = query.eq('teacher_id', user.teacher_id);
+        if (assignedGrades.length > 0) {
+          query = query.in('grade', assignedGrades);
+        } else {
+          query = query.eq('teacher_id', user.teacher_id);
+        }
       }
 
       const { data, error } = await query;
@@ -107,25 +125,29 @@ export default function LessonTracking() {
 
   // Fetch student_chapters (now linked to lesson_plans)
   const { data: studentLessonRecordsRaw = [] } = useQuery({
-    queryKey: ["student-lesson-records", user?.center_id, filterSubject, filterStudent, filterGrade, user?.teacher_id],
+    queryKey: ["student-lesson-records", user?.center_id, filterSubject, filterStudent, filterGrade, user?.teacher_id, assignedGrades],
     queryFn: async () => {
       let query = supabase
         .from("student_chapters")
         .select(`
           *,
-          students(id, name, grade, center_id),
+          students!inner(id, name, grade, center_id),
           lesson_plans(id, chapter, subject, topic, grade, lesson_date, lesson_file_url),
           recorded_by_teacher:recorded_by_teacher_id(name)
         `)
         .eq("students.center_id", user?.center_id!);
 
+      if (user?.role === 'teacher') {
+        if (assignedGrades.length > 0) {
+          query = query.in('students.grade', assignedGrades);
+        } else {
+          query = query.eq('recorded_by_teacher_id', user.teacher_id);
+        }
+      }
+
       if (filterStudent !== "all") query = query.eq("student_id", filterStudent);
       if (filterGrade !== "all") query = query.eq("students.grade", filterGrade);
       if (filterSubject !== "all") query = query.eq("lesson_plans.subject", filterSubject); // Filter by lesson plan subject
-
-      if (user?.role === 'teacher') {
-        query = query.eq('recorded_by_teacher_id', user.teacher_id);
-      }
 
       const { data, error } = await query.order("completed_at", { ascending: false });
       if (error) throw error;

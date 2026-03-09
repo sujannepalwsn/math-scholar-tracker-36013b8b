@@ -47,17 +47,36 @@ export default function HomeworkManagement() {
   const [bulkStatus, setBulkStatus] = useState<StudentHomeworkRecord['status']>("completed");
   const [bulkRemarks, setBulkRemarks] = useState("");
 
+  const { data: assignedGrades = [] } = useQuery({
+    queryKey: ["teacher-assigned-grades-homework", user?.teacher_id],
+    queryFn: async () => {
+      if (!user?.teacher_id) return [];
+      const { data, error } = await supabase
+        .from("class_teacher_assignments")
+        .select("grade")
+        .eq("teacher_id", user.teacher_id);
+      if (error) throw error;
+      return data.map(d => d.grade);
+    },
+    enabled: !!user?.teacher_id && user?.role === 'teacher'
+  });
+
   const { data: homeworkList = [], isLoading } = useQuery({
-    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id],
+    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id, assignedGrades],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("homework").select("*, lesson_plans(*)").eq("center_id", user.center_id).order("due_date", { ascending: false });
-      if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
-      if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
       if (user?.role === 'teacher') {
-        query = query.eq('teacher_id', user.teacher_id);
+        if (assignedGrades.length > 0) {
+          query = query.in('grade', assignedGrades);
+        } else {
+          query = query.eq('teacher_id', user.teacher_id);
+        }
       }
+
+      if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
+      if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
       const { data, error } = await query;
       if (error) throw error;

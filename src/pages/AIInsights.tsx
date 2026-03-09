@@ -14,7 +14,9 @@ export default function AIInsights() {
 
   const generateInsightsMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("ai-generate-insights");
+      const { data, error } = await supabase.functions.invoke("ai-generate-insights", {
+        body: { teacherId: user?.role === 'teacher' ? user?.teacher_id : null }
+      });
       if (error) throw error;
       return data;
     },
