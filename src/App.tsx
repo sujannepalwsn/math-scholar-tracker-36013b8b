@@ -31,6 +31,14 @@ import AIInsights from "./pages/AIInsights";
 import ViewRecords from "./pages/ViewRecords";
 import Summary from "./pages/Summary";
 
+import ExamManagement from "./pages/ExamManagement";
+import MarksEntry from "./pages/MarksEntry";
+import ResultsDashboard from "./pages/ResultsDashboard";
+import MarksheetView from "./pages/MarksheetView";
+import StudentIdCard from "./pages/StudentIdCard";
+import Notifications from "./pages/Notifications";
+import Summary from "./pages/Summary";
+
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
 import ParentLogin from "./pages/ParentLogin";
