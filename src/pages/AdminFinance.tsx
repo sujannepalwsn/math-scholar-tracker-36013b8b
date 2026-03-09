@@ -30,11 +30,12 @@ const AdminFinance = () => {
         .eq('center_id', user.center_id);
 
       if (user?.role === 'teacher' && user?.teacher_id) {
-        // Teachers only see invoices for their grade
-        const { data: teacher } = await supabase.from('teachers').select('grade').eq('id', user.teacher_id).single();
-        if (teacher?.grade) {
-          const { data: students } = await supabase.from('students').select('id').eq('grade', teacher.grade);
-          const studentIds = students?.map(s => s.id) || [];
+        // Teachers only see invoices for their assigned grades
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
+        const grades = assignments?.map(a => a.grade) || [];
+        if (grades.length > 0) {
+          const { data: gradeStudents } = await supabase.from('students').select('id').in('grade', grades);
+          const studentIds = gradeStudents?.map(s => s.id) || [];
           query = query.in('student_id', studentIds);
         }
       }
