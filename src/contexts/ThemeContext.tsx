@@ -110,33 +110,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     try {
       // Fetch user preferences and center details in parallel
-      const [userResult, centerResult] = await Promise.all([
-        supabase.from('users').select('preferences').eq('id', user.id).single(),
-        user.center_id
-          ? supabase.from('centers').select('theme, logo_url').eq('id', user.center_id).single()
-          : Promise.resolve({ data: null, error: null })
-      ]);
+      const centerResult = user.center_id
+        ? await supabase.from('centers').select('theme, logo_url').eq('id', user.center_id).single()
+        : { data: null, error: null };
 
-      if (userResult.data?.preferences) {
-        const prefs = userResult.data.preferences as any;
+      // Load preferences from localStorage only
+      const localTheme = localStorage.getItem("app-theme-name");
+      const localDark = localStorage.getItem("app-dark-mode") === "true";
+      const localCompact = localStorage.getItem("app-compact-mode") === "true";
+
+      if (localTheme) {
         setUserPreferences({
-          theme: prefs.theme || defaultPreferences.theme,
-          darkMode: prefs.darkMode ?? defaultPreferences.darkMode,
-          compactMode: prefs.compactMode ?? defaultPreferences.compactMode
+          theme: localTheme,
+          darkMode: localDark,
+          compactMode: localCompact
         });
-      } else {
-        // Fallback to local storage if DB doesn't have it yet
-        const localTheme = localStorage.getItem("app-theme-name");
-        const localDark = localStorage.getItem("app-dark-mode") === "true";
-        const localCompact = localStorage.getItem("app-compact-mode") === "true";
-
-        if (localTheme) {
-          setUserPreferences({
-            theme: localTheme,
-            darkMode: localDark,
-            compactMode: localCompact
-          });
-        }
       }
 
       if (centerResult.data) {
