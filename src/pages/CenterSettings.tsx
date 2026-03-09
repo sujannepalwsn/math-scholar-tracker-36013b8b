@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Building, FileText, ImageIcon, KeyRound, Loader2, MapPin, Palette, Phone as PhoneIcon, Save, Settings, ShieldCheck, User } from "lucide-react";
+import { Building, ImageIcon, KeyRound, Loader2, MapPin, Palette, Phone as PhoneIcon, Save, Settings, ShieldCheck, User } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,12 +19,6 @@ interface CenterTheme {
   foreground: string;
   cardBackground: string;
   mutedForeground: string;
-  marksheet?: {
-    header_text?: string;
-    footer_text?: string;
-    signature_left?: string;
-    signature_right?: string;
-  };
 }
 
 export default function CenterSettings() {
@@ -41,12 +35,6 @@ export default function CenterSettings() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [marksheetConfig, setMarksheetConfig] = useState({
-    header_text: "",
-    footer_text: "",
-    signature_left: "Class Teacher",
-    signature_right: "Principal"
-  });
   const [theme, setTheme] = useState<CenterTheme>({
     primary: "#6366f1",
     background: "#ffffff",
@@ -87,17 +75,7 @@ export default function CenterSettings() {
           sidebar: savedTheme.sidebar || "#1e293b",
           foreground: savedTheme.foreground || "#1e293b",
           cardBackground: savedTheme.cardBackground || "#ffffff",
-          mutedForeground: savedTheme.mutedForeground || "#64748b",
-          marksheet: savedTheme.marksheet });
-
-        if (savedTheme.marksheet) {
-          setMarksheetConfig({
-            header_text: savedTheme.marksheet.header_text || "",
-            footer_text: savedTheme.marksheet.footer_text || "",
-            signature_left: savedTheme.marksheet.signature_left || "Class Teacher",
-            signature_right: savedTheme.marksheet.signature_right || "Principal"
-          });
-        }
+          mutedForeground: savedTheme.mutedForeground || "#64748b" });
         // Do NOT apply theme here - it should only be applied on Save
       }
     }
@@ -163,10 +141,6 @@ export default function CenterSettings() {
   const updateCenterMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
-      const updatedTheme = {
-        ...theme,
-        marksheet: marksheetConfig
-      };
       const { error } = await supabase
         .from("centers")
         .update({
@@ -176,7 +150,7 @@ export default function CenterSettings() {
           email: email || null,
           contact_person: contactPerson || null,
           logo_url: logoUrl || null,
-          theme: updatedTheme } as any)
+          theme } as any)
         .eq("id", user.center_id);
       if (error) throw error;
       // Apply theme after saving
@@ -399,55 +373,6 @@ export default function CenterSettings() {
           </CardHeader>
           <CardContent className="pt-6">
             <ThemeSelector />
-          </CardContent>
-        </Card>
-
-        {/* Marksheet Configuration */}
-        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              Marksheet Designer
-            </CardTitle>
-            <CardDescription className="font-medium text-slate-500">Configure labels and text for institutional marksheets</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 md:p-8 space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Marksheet Header Text</Label>
-                <Input
-                  value={marksheetConfig.header_text}
-                  onChange={(e) => setMarksheetConfig({ ...marksheetConfig, header_text: e.target.value })}
-                  placeholder="e.g., ANNUAL EXAMINATION REPORT"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Marksheet Footer Text</Label>
-                <Input
-                  value={marksheetConfig.footer_text}
-                  onChange={(e) => setMarksheetConfig({ ...marksheetConfig, footer_text: e.target.value })}
-                  placeholder="e.g., Hard work is the key to success."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Left Signature Label</Label>
-                <Input
-                  value={marksheetConfig.signature_left}
-                  onChange={(e) => setMarksheetConfig({ ...marksheetConfig, signature_left: e.target.value })}
-                  placeholder="Class Teacher"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Right Signature Label</Label>
-                <Input
-                  value={marksheetConfig.signature_right}
-                  onChange={(e) => setMarksheetConfig({ ...marksheetConfig, signature_right: e.target.value })}
-                  placeholder="Principal"
-                />
-              </div>
-            </div>
           </CardContent>
         </Card>
 

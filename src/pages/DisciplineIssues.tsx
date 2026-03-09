@@ -83,28 +83,14 @@ export default function DisciplineIssues() {
     },
     enabled: !!user?.center_id });
 
-  const { data: assignedGrades = [] } = useQuery({
-    queryKey: ["teacher-assigned-grades-discipline", user?.teacher_id],
-    queryFn: async () => {
-      if (!user?.teacher_id) return [];
-      const { data, error } = await supabase
-        .from("class_teacher_assignments")
-        .select("grade")
-        .eq("teacher_id", user.teacher_id);
-      if (error) throw error;
-      return data.map(d => d.grade);
-    },
-    enabled: !!user?.teacher_id && user?.role === 'teacher'
-  });
-
   // Fetch discipline issues
   const { data: issues = [], isLoading: issuesLoading } = useQuery({ // Destructure isLoading here
-    queryKey: ["discipline-issues", user?.center_id, gradeFilter, user?.id, assignedGrades],
+    queryKey: ["discipline-issues", user?.center_id, gradeFilter, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
         .from("discipline_issues")
-        .select("*, students!inner(name, grade), discipline_categories(name)")
+        .select("*, students(name, grade), discipline_categories(name)")
         .eq("center_id", user.center_id)
         .order("issue_date", { ascending: false });
       
@@ -113,11 +99,7 @@ export default function DisciplineIssues() {
       }
 
       if (user?.role === 'teacher') {
-        if (assignedGrades.length > 0) {
-          query = query.in('students.grade', assignedGrades);
-        } else {
-          query = query.eq('reported_by', user.id);
-        }
+        query = query.eq('reported_by', user.id);
       }
 
       const { data, error } = await query;

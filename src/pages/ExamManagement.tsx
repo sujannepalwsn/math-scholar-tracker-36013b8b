@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BookOpen, Calendar, CheckCircle, Edit, GraduationCap, Plus, Save, Trash2, XCircle } from "lucide-react";
+import { BookOpen, Calendar, Edit, GraduationCap, Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,211 +12,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { cn, safeFormatDate, getGrade } from "@/lib/utils";
+import { cn, safeFormatDate } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 
 const grades = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
-
-// Component for Marks Entry Grid
-const MarksEntryGrid = ({ exam, centerId, user, queryClient }: { exam: any, centerId: string, user: any, queryClient: any }) => {
-  const [marksData, setMarksData] = useState<Record<string, Record<string, string>>>({});
-
-  const { data: entrySubjects = [] } = useQuery({
-    queryKey: ["exam-subjects-entry", exam?.id, user?.role, user?.teacher_id],
-    queryFn: async () => {
-      let query = supabase
-        .from("exam_subjects")
-        .select("*")
-        .eq("exam_id", exam.id);
-
-      // If user is a teacher, filter subjects they are assigned to
-      if (user?.role === 'teacher' && user?.teacher_id) {
-        // Get teacher's own subject from teachers table
-        const { data: teacherData } = await supabase
-          .from("teachers")
-          .select("subject")
-          .eq("id", user.teacher_id)
-          .single();
-
-        // Get subjects from class routine for this teacher
-        const { data: scheduleData } = await supabase
-          .from("period_schedules")
-          .select("subject")
-          .eq("teacher_id", user.teacher_id);
-
-        const teacherSubjects = new Set<string>();
-        if (teacherData?.subject) teacherSubjects.add(teacherData.subject);
-        scheduleData?.forEach(s => { if (s.subject) teacherSubjects.add(s.subject); });
-
-        if (teacherSubjects.size > 0) {
-          query = query.in("subject_name", Array.from(teacherSubjects));
-        } else {
-          // If no subjects assigned, they shouldn't see any subjects
-          return [];
-        }
-      }
-
-      const { data, error } = await query.order("subject_name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!exam?.id,
-  });
-
-  const { data: entryStudents = [] } = useQuery({
-    queryKey: ["students-for-exam", centerId, exam?.grade],
-    queryFn: async () => {
-      if (!centerId || !exam?.grade) return [];
-      const { data, error } = await supabase
-        .from("students")
-        .select("*")
-        .eq("center_id", centerId)
-        .eq("grade", exam.grade)
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!centerId && !!exam?.grade,
-  });
-
-  const { data: existingMarks = [] } = useQuery({
-    queryKey: ["existing-marks", exam?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exam_marks")
-        .select("*")
-        .eq("exam_id", exam.id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!exam?.id,
-  });
-
-  React.useEffect(() => {
-    if (existingMarks.length > 0) {
-      const data: Record<string, Record<string, string>> = {};
-      existingMarks.forEach((m: any) => {
-        if (!data[m.student_id]) data[m.student_id] = {};
-        data[m.student_id][m.exam_subject_id] = m.marks_obtained?.toString() || "";
-      });
-      setMarksData(data);
-    }
-  }, [existingMarks]);
-
-  const saveMarks = useMutation({
-    mutationFn: async () => {
-      if (!centerId) return;
-      const records: any[] = [];
-      Object.entries(marksData).forEach(([studentId, subjectMarks]) => {
-        Object.entries(subjectMarks).forEach(([subjectId, marks]) => {
-          if (marks !== "") {
-            records.push({
-              center_id: centerId,
-              exam_id: exam.id,
-              exam_subject_id: subjectId,
-              student_id: studentId,
-              marks_obtained: parseFloat(marks),
-              entered_by: user?.id,
-            });
-          }
-        });
-      });
-      if (records.length === 0) return;
-
-      const { error } = await supabase
-        .from("exam_marks")
-        .upsert(records, { onConflict: "exam_id,exam_subject_id,student_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["existing-marks"] });
-      queryClient.invalidateQueries({ queryKey: ["exams"] });
-      toast.success("Marks saved successfully");
-    },
-    onError: (err: any) => toast.error(err.message),
-  });
-
-  const handleMarkChange = (studentId: string, subjectId: string, value: string) => {
-    setMarksData((prev) => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], [subjectId]: value },
-    }));
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h4 className="font-medium">Marks Entry Grid - {exam?.name}</h4>
-        <Button size="sm" onClick={() => saveMarks.mutate()} disabled={saveMarks.isPending}>
-          <Save className="h-4 w-4 mr-2" /> Save Marks
-        </Button>
-      </div>
-      <div className="overflow-x-auto rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="min-w-[150px]">Student</TableHead>
-              {entrySubjects.map((s: any) => (
-                <TableHead key={s.id} className="text-center min-w-[80px]">
-                  {s.subject_name}
-                  <div className="text-[10px] text-muted-foreground">({s.full_marks})</div>
-                </TableHead>
-              ))}
-              <TableHead className="text-center">Total</TableHead>
-              <TableHead className="text-center">Grade</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entryStudents.map((student: any) => {
-              let totalObtained = 0;
-              let totalFull = 0;
-              let hasAnyMarks = false;
-
-              entrySubjects.forEach((subj: any) => {
-                const m = marksData[student.id]?.[subj.id];
-                if (m !== undefined && m !== "") {
-                  totalObtained += parseFloat(m);
-                  totalFull += subj.full_marks;
-                  hasAnyMarks = true;
-                }
-              });
-
-              const pct = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
-
-              return (
-                <TableRow key={student.id}>
-                  <TableCell className="font-medium">
-                    {student.name}
-                    <div className="text-[10px] text-muted-foreground">Roll: {student.roll_number || "-"}</div>
-                  </TableCell>
-                  {entrySubjects.map((subj: any) => (
-                    <TableCell key={subj.id} className="text-center">
-                      <Input
-                        type="number"
-                        className="w-16 mx-auto h-8 text-center"
-                        value={marksData[student.id]?.[subj.id] || ""}
-                        onChange={(e) => handleMarkChange(student.id, subj.id, e.target.value)}
-                      />
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-center font-bold">
-                    {hasAnyMarks ? `${totalObtained}/${totalFull}` : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {hasAnyMarks ? (
-                      <Badge variant={pct < 40 ? "destructive" : "default"}>{getGrade(pct)}</Badge>
-                    ) : "-"}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
-};
 
 export default function ExamManagement() {
   const { user } = useAuth();
@@ -244,34 +43,11 @@ export default function ExamManagement() {
       if (!centerId) return [];
       const { data, error } = await supabase
         .from("exams")
-        .select("*, exam_subjects(id), exam_marks(id)")
+        .select("*")
         .eq("center_id", centerId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-
-      // Fetch total students for each grade to calculate completion
-      const { data: studentCounts } = await supabase
-        .from("students")
-        .select("grade, id")
-        .eq("center_id", centerId)
-        .eq("is_active", true);
-
-      const countsByGrade: Record<string, number> = {};
-      studentCounts?.forEach(s => {
-        if (s.grade) countsByGrade[s.grade] = (countsByGrade[s.grade] || 0) + 1;
-      });
-
-      return data.map(exam => {
-        const totalSubjects = exam.exam_subjects?.length || 0;
-        const totalStudents = countsByGrade[exam.grade] || 0;
-        const expectedMarksCount = totalSubjects * totalStudents;
-        const actualMarksCount = exam.exam_marks?.length || 0;
-
-        return {
-          ...exam,
-          is_complete: expectedMarksCount > 0 && actualMarksCount >= expectedMarksCount
-        };
-      });
+      return data;
     },
     enabled: !!centerId,
   });
@@ -333,18 +109,7 @@ export default function ExamManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exams"] });
-      toast.success("Exam routine published!");
-    },
-  });
-
-  const publishResults = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("exams").update({ status: "results_published" }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["exams"] });
-      toast.success("Exam results published! Marksheets are now available.");
+      toast.success("Exam published! Results are now visible to parents.");
     },
   });
 
@@ -395,207 +160,6 @@ export default function ExamManagement() {
     });
     setEditingExam(exam);
     setShowForm(true);
-  };
-
-  const [marksExamId, setMarksExamId] = useState<string | null>(null);
-
-  // Component for Marks Entry Grid
-  const MarksEntryGrid = ({ examId }: { examId: string }) => {
-    const exam = exams.find((e: any) => e.id === examId);
-    const [marksData, setMarksData] = useState<Record<string, Record<string, string>>>({});
-
-    const { data: entrySubjects = [] } = useQuery({
-      queryKey: ["exam-subjects-entry", examId, user?.role, user?.teacher_id],
-      queryFn: async () => {
-        let query = supabase
-          .from("exam_subjects")
-          .select("*")
-          .eq("exam_id", examId);
-
-        // If user is a teacher, filter subjects they are assigned to
-        if (user?.role === 'teacher' && user?.teacher_id) {
-          // Get teacher's own subject from teachers table
-          const { data: teacherData } = await supabase
-            .from("teachers")
-            .select("subject")
-            .eq("id", user.teacher_id)
-            .single();
-
-          // Get subjects from class routine for this teacher
-          const { data: scheduleData } = await supabase
-            .from("period_schedules")
-            .select("subject")
-            .eq("teacher_id", user.teacher_id);
-
-          const teacherSubjects = new Set<string>();
-          if (teacherData?.subject) teacherSubjects.add(teacherData.subject);
-          scheduleData?.forEach(s => { if (s.subject) teacherSubjects.add(s.subject); });
-
-          if (teacherSubjects.size > 0) {
-            query = query.in("subject_name", Array.from(teacherSubjects));
-          } else {
-            // If no subjects assigned, they shouldn't see any subjects
-            return [];
-          }
-        }
-
-        const { data, error } = await query.order("subject_name");
-        if (error) throw error;
-        return data;
-      },
-    });
-
-    const { data: entryStudents = [] } = useQuery({
-      queryKey: ["students-for-exam", centerId, exam?.grade],
-      queryFn: async () => {
-        if (!centerId || !exam?.grade) return [];
-        const { data, error } = await supabase
-          .from("students")
-          .select("*")
-          .eq("center_id", centerId)
-          .eq("grade", exam.grade)
-          .eq("is_active", true)
-          .order("name");
-        if (error) throw error;
-        return data;
-      },
-      enabled: !!centerId && !!exam?.grade,
-    });
-
-    const { data: existingMarks = [] } = useQuery({
-      queryKey: ["existing-marks", examId],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from("exam_marks")
-          .select("*")
-          .eq("exam_id", examId);
-        if (error) throw error;
-        return data;
-      },
-    });
-
-    React.useEffect(() => {
-      if (existingMarks.length > 0) {
-        const data: Record<string, Record<string, string>> = {};
-        existingMarks.forEach((m: any) => {
-          if (!data[m.student_id]) data[m.student_id] = {};
-          data[m.student_id][m.exam_subject_id] = m.marks_obtained?.toString() || "";
-        });
-        setMarksData(data);
-      }
-    }, [existingMarks]);
-
-    const saveMarks = useMutation({
-      mutationFn: async () => {
-        if (!centerId) return;
-        const records: any[] = [];
-        Object.entries(marksData).forEach(([studentId, subjectMarks]) => {
-          Object.entries(subjectMarks).forEach(([subjectId, marks]) => {
-            if (marks !== "") {
-              records.push({
-                center_id: centerId,
-                exam_id: examId,
-                exam_subject_id: subjectId,
-                student_id: studentId,
-                marks_obtained: parseFloat(marks),
-                entered_by: user?.id,
-              });
-            }
-          });
-        });
-        if (records.length === 0) return;
-
-        const { error } = await supabase
-          .from("exam_marks")
-          .upsert(records, { onConflict: "exam_id,exam_subject_id,student_id" });
-        if (error) throw error;
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["existing-marks"] });
-        toast.success("Marks saved successfully");
-      },
-      onError: (err: any) => toast.error(err.message),
-    });
-
-    const handleMarkChange = (studentId: string, subjectId: string, value: string) => {
-      setMarksData((prev) => ({
-        ...prev,
-        [studentId]: { ...prev[studentId], [subjectId]: value },
-      }));
-    };
-
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h4 className="font-medium">Marks Entry Grid - {exam?.name}</h4>
-          <Button size="sm" onClick={() => saveMarks.mutate()} disabled={saveMarks.isPending}>
-            <Save className="h-4 w-4 mr-2" /> Save Marks
-          </Button>
-        </div>
-        <div className="overflow-x-auto rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[150px]">Student</TableHead>
-                {entrySubjects.map((s: any) => (
-                  <TableHead key={s.id} className="text-center min-w-[80px]">
-                    {s.subject_name}
-                    <div className="text-[10px] text-muted-foreground">({s.full_marks})</div>
-                  </TableHead>
-                ))}
-                <TableHead className="text-center">Total</TableHead>
-                <TableHead className="text-center">Grade</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entryStudents.map((student: any) => {
-                let totalObtained = 0;
-                let totalFull = 0;
-                let hasAnyMarks = false;
-
-                entrySubjects.forEach((subj: any) => {
-                  const m = marksData[student.id]?.[subj.id];
-                  if (m !== undefined && m !== "") {
-                    totalObtained += parseFloat(m);
-                    totalFull += subj.full_marks;
-                    hasAnyMarks = true;
-                  }
-                });
-
-                const pct = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
-
-                return (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">
-                      {student.name}
-                      <div className="text-[10px] text-muted-foreground">Roll: {student.roll_number || "-"}</div>
-                    </TableCell>
-                    {entrySubjects.map((subj: any) => (
-                      <TableCell key={subj.id} className="text-center">
-                        <Input
-                          type="number"
-                          className="w-16 mx-auto h-8 text-center"
-                          value={marksData[student.id]?.[subj.id] || ""}
-                          onChange={(e) => handleMarkChange(student.id, subj.id, e.target.value)}
-                        />
-                      </TableCell>
-                    ))}
-                    <TableCell className="text-center font-bold">
-                      {hasAnyMarks ? `${totalObtained}/${totalFull}` : "-"}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {hasAnyMarks ? (
-                        <Badge variant={pct < 40 ? "destructive" : "default"}>{getGrade(pct)}</Badge>
-                      ) : "-"}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -697,24 +261,6 @@ export default function ExamManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Marks Entry Dialog */}
-      <Dialog open={!!marksExamId} onOpenChange={(v) => { if (!v) setMarksExamId(null); }}>
-        <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Enter Marks</DialogTitle>
-            <DialogDescription>Input marks for each student and subject</DialogDescription>
-          </DialogHeader>
-          {marksExamId && (
-            <MarksEntryGrid
-              exam={exams.find((e: any) => e.id === marksExamId)}
-              centerId={centerId!}
-              user={user}
-              queryClient={queryClient}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
       {/* Exam List */}
       <div className="grid gap-4">
         {isLoading ? (
@@ -729,8 +275,8 @@ export default function ExamManagement() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-foreground">{exam.name}</h3>
-                      <Badge variant={exam.status === "results_published" ? "default" : exam.status === "published" ? "outline" : "secondary"}>
-                        {exam.status === "results_published" ? "Results Published" : exam.status === "published" ? "Routine Published" : "Draft"}
+                      <Badge variant={exam.status === "published" ? "default" : "secondary"}>
+                        {exam.status}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -742,34 +288,18 @@ export default function ExamManagement() {
                     <Button variant="outline" size="sm" onClick={() => { setSelectedExamId(exam.id); setShowSubjectDialog(true); }}>
                       <BookOpen className="h-3 w-3 mr-1" /> Subjects
                     </Button>
-                    {exam.status !== "results_published" && (
-                      <Button variant="outline" size="sm" onClick={() => setMarksExamId(exam.id)}>
-                        <Edit className="h-3 w-3 mr-1" /> Enter Marks
-                      </Button>
-                    )}
                     {exam.status === "draft" && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => handleEdit(exam)}>
                           <Edit className="h-3 w-3 mr-1" /> Edit
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => publishExam.mutate(exam.id)}>
-                          <GraduationCap className="h-3 w-3 mr-1" /> Publish Routine
+                          <GraduationCap className="h-3 w-3 mr-1" /> Publish
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => deleteExam.mutate(exam.id)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </>
-                    )}
-                    {exam.status === "published" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => publishResults.mutate(exam.id)}
-                        disabled={!exam.is_complete}
-                        title={!exam.is_complete ? "All marks must be entered before publishing results" : ""}
-                      >
-                        <GraduationCap className="h-3 w-3 mr-1" /> Publish Results
-                      </Button>
                     )}
                   </div>
                 </div>

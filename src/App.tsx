@@ -54,7 +54,6 @@ import ParentMeetings from "./pages/ParentMeetings";
 import ParentChapterRating from "./pages/ParentChapterRating";
 import ParentLessonTracking from "./pages/ParentLessonTracking";
 import ParentStudentReport from "./pages/ParentStudentReport";
-import ParentResults from "./pages/ParentResults";
 import ParentMessaging from "./pages/ParentMessaging";
 
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -120,7 +119,6 @@ const App = () => (
               <Route path="/parent-chapter-rating" element={<ProtectedRoute role="parent"><ParentLayout><ParentChapterRating /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-lesson-tracking" element={<ProtectedRoute role="parent"><ParentLayout><ParentLessonTracking /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-student-report" element={<ProtectedRoute role="parent"><ParentLayout><ParentStudentReport /></ParentLayout></ProtectedRoute>} />
-              <Route path="/parent-results" element={<ProtectedRoute role="parent"><ParentLayout><ParentResults /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-calendar" element={<ProtectedRoute role="parent"><ParentLayout><CalendarEvents /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-settings" element={<ProtectedRoute role="parent"><ParentLayout><GeneralSettings /></ParentLayout></ProtectedRoute>} />
 

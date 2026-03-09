@@ -1,345 +1,258 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, MessageSquare, Search, Send } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
-import { format, formatDistanceToNow } from "date-fns";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Check, Info, MessageSquare, Send, Shield } from "lucide-react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { toast } from "sonner"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 export default function ParentMessaging() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
-  const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch conversations for parent
-  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
-    queryKey: ["parent-chat-conversations", user?.id],
+  // Fetch conversation for parent
+  const { data: conversation, isLoading: conversationLoading } = useQuery({
+    queryKey: ["parent-conversation", user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) return null;
       const { data, error } = await supabase
         .from("chat_conversations")
-        .select(`*, students:student_id(id, name, grade), centers:center_id(id, name)`)
+        .select(`
+          *,
+          students:student_id(id, name, grade),
+          centers:center_id(id, name)
+        `)
         .eq("parent_user_id", user.id)
-        .order("updated_at", { ascending: false });
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
-  });
+    enabled: !!user?.id });
 
-  // Fetch unread counts per conversation
-  const { data: unreadCounts = {} } = useQuery({
-    queryKey: ["unread-counts", user?.id, conversations.map((c: any) => c.id).join(",")],
-    queryFn: async () => {
-      if (!user?.id || conversations.length === 0) return {};
-      const counts: Record<string, number> = {};
-      for (const conv of conversations) {
-        const { count, error } = await supabase
-          .from("chat_messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", conv.id)
-          .eq("is_read", false)
-          .neq("sender_user_id", user.id);
-        if (!error) counts[conv.id] = count || 0;
-      }
-      return counts;
-    },
-    enabled: !!user?.id && conversations.length > 0,
-    refetchInterval: 10000,
-  });
-
-  // Fetch messages for selected conversation
+  // Fetch messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
-    queryKey: ["chat-messages", selectedConversation?.id],
+    queryKey: ["parent-chat-messages", conversation?.id],
     queryFn: async () => {
-      if (!selectedConversation?.id) return [];
+      if (!conversation?.id) return [];
       const { data, error } = await supabase
         .from("chat_messages")
-        .select(`*, sender:sender_user_id(id, username, role)`)
-        .eq("conversation_id", selectedConversation.id)
+        .select(`
+          *,
+          sender:sender_user_id(id, username, role)
+        `)
+        .eq("conversation_id", conversation.id)
         .order("sent_at", { ascending: true });
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedConversation?.id,
-    refetchInterval: 3000,
-  });
+    enabled: !!conversation?.id,
+    refetchInterval: 5000 });
 
-  // Real-time subscription
-  useEffect(() => {
-    if (!selectedConversation?.id) return;
-    const channel = supabase
-      .channel(`chat-${selectedConversation.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `conversation_id=eq.${selectedConversation.id}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["chat-messages", selectedConversation.id] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedConversation?.id]);
-
+  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Mark as read
+  // Mark messages as read
   useEffect(() => {
     const markAsRead = async () => {
-      if (!selectedConversation?.id || !user?.id) return;
-      const unread = messages.filter((m: any) => !m.is_read && m.sender_user_id !== user.id);
-      if (unread.length > 0) {
+      if (!conversation?.id || !user?.id) return;
+      const unreadMessages = messages.filter(
+        (m: any) => !m.is_read && m.sender_user_id !== user.id
+      );
+      if (unreadMessages.length > 0) {
         await supabase
           .from("chat_messages")
           .update({ is_read: true, read_at: new Date().toISOString() })
-          .in("id", unread.map((m: any) => m.id));
-        queryClient.invalidateQueries({ queryKey: ["unread-counts"] });
+          .in("id", unreadMessages.map((m: any) => m.id));
       }
     };
     markAsRead();
-  }, [messages, selectedConversation?.id, user?.id]);
+  }, [messages, conversation?.id, user?.id]);
 
   // Send message
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedConversation?.id || !user?.id || !newMessage.trim()) throw new Error("Missing data");
+      if (!conversation?.id || !user?.id || !newMessage.trim()) {
+        throw new Error("Missing required data");
+      }
       const { error } = await supabase.from("chat_messages").insert({
-        conversation_id: selectedConversation.id,
+        conversation_id: conversation.id,
         sender_user_id: user.id,
-        message_text: newMessage.trim(),
-      });
+        message_text: newMessage.trim() });
       if (error) throw error;
-      await supabase.from("chat_conversations").update({ updated_at: new Date().toISOString() }).eq("id", selectedConversation.id);
+
+      await supabase
+        .from("chat_conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversation.id);
     },
     onSuccess: () => {
       setNewMessage("");
-      queryClient.invalidateQueries({ queryKey: ["chat-messages", selectedConversation?.id] });
-      queryClient.invalidateQueries({ queryKey: ["parent-chat-conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["parent-chat-messages", conversation?.id] });
     },
-    onError: (error: any) => toast.error(error.message || "Failed to send message"),
-  });
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to send message");
+    } });
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim()) sendMessageMutation.mutate();
+    if (newMessage.trim()) {
+      sendMessageMutation.mutate();
+    }
   };
 
-  const filteredConversations = conversations.filter((conv: any) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
+  if (conversationLoading) {
     return (
-      conv.students?.name?.toLowerCase().includes(q) ||
-      conv.centers?.name?.toLowerCase().includes(q)
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+      </div>
     );
-  });
+  }
 
-  const getConversationName = (conv: any) => conv.centers?.name || "Center";
-  const getConversationSub = (conv: any) => `Student: ${conv.students?.name}`;
-
-  // Mobile: show chat list or chat view
-  const showChatView = isMobile && selectedConversation;
-
-  const ConversationList = () => (
-    <div className="flex flex-col h-full bg-card">
-      <div className="p-3 border-b">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search conversations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 bg-muted/50 border-none focus-visible:ring-1"
-          />
+  if (!conversation) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <div className="p-4 rounded-full bg-slate-100/50 backdrop-blur-sm border border-slate-200">
+          <MessageSquare className="h-8 w-8 text-slate-400" />
         </div>
+        <p className="text-muted-foreground font-medium">No conversation sequence identified.</p>
+        <p className="text-xs text-slate-400">Institutional control will initiate contact soon.</p>
       </div>
-
-      <ScrollArea className="flex-1">
-        {conversationsLoading ? (
-          <div className="flex flex-col gap-2 p-3">
-             {[1,2,3].map(i => <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />)}
-          </div>
-        ) : filteredConversations.length === 0 ? (
-          <div className="text-center py-10 px-4">
-            <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-20" />
-            <p className="text-sm text-muted-foreground">No conversations found</p>
-          </div>
-        ) : (
-          filteredConversations.map((conv: any) => {
-            const unread = unreadCounts[conv.id] || 0;
-            const isActive = selectedConversation?.id === conv.id;
-            return (
-              <button
-                key={conv.id}
-                onClick={() => setSelectedConversation(conv)}
-                className={cn(
-                  "w-full text-left p-4 border-b hover:bg-muted/50 transition-all flex items-center gap-3 relative",
-                  isActive && "bg-primary/5 after:absolute after:left-0 after:top-0 after:bottom-0 after:w-1 after:bg-primary"
-                )}
-              >
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-primary">{getConversationName(conv)?.[0]?.toUpperCase()}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <p className={cn("text-sm font-semibold truncate", unread > 0 ? "text-foreground" : "text-foreground/80")}>
-                      {getConversationName(conv)}
-                    </p>
-                    {conv.updated_at && (
-                      <span className="text-[10px] text-muted-foreground shrink-0">
-                        {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: false })}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground truncate">{getConversationSub(conv)}</p>
-                    {unread > 0 && <Badge className="h-5 min-w-[20px] rounded-full p-0 flex items-center justify-center text-[10px] shrink-0 bg-primary">{unread}</Badge>}
-                  </div>
-                </div>
-              </button>
-            );
-          })
-        )}
-      </ScrollArea>
-    </div>
-  );
-
-  const ChatView = () => (
-    <div className="flex flex-col h-full bg-background">
-      {/* Chat header */}
-      <div className="p-4 border-b bg-card flex items-center gap-3 shrink-0 h-16">
-        {isMobile && (
-          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => setSelectedConversation(null)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        )}
-        {selectedConversation ? (
-          <>
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-primary">{getConversationName(selectedConversation)?.[0]?.toUpperCase()}</span>
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-sm truncate">{getConversationName(selectedConversation)}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold truncate">
-                {selectedConversation.students?.name} • Grade {selectedConversation.students?.grade}
-              </p>
-            </div>
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">Select a conversation</p>
-        )}
-      </div>
-
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
-        {!selectedConversation ? (
-          <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-3 py-20">
-            <div className="h-16 w-16 rounded-3xl bg-muted flex items-center justify-center mb-2">
-              <MessageSquare className="h-8 w-8 opacity-20" />
-            </div>
-            <p className="font-semibold text-sm">Select a conversation</p>
-            <p className="text-xs text-center max-w-[200px]">Communication with institutional leadership is initiated here.</p>
-          </div>
-        ) : messagesLoading ? (
-          <div className="space-y-4">
-             {[1,2,3,4].map(i => (
-               <div key={i} className={cn("flex", i % 2 === 0 ? "justify-end" : "justify-start")}>
-                 <div className="h-12 w-40 rounded-xl bg-muted animate-pulse" />
-               </div>
-             ))}
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-sm text-muted-foreground italic">No message history. Start the conversation!</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {messages.map((msg: any) => {
-              const isOwn = msg.sender_user_id === user?.id;
-              return (
-                <div key={msg.id} className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
-                  <div className={cn(
-                    "max-w-[85%] md:max-w-[70%] p-3 shadow-sm text-sm leading-relaxed",
-                    isOwn
-                      ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
-                      : "bg-card border border-border/50 rounded-2xl rounded-tl-none"
-                  )}>
-                    <p className="whitespace-pre-wrap">{msg.message_text}</p>
-                  </div>
-                  <div className={cn("flex items-center gap-1.5 mt-1 px-1")}>
-                    <p className="text-[10px] text-muted-foreground font-medium">
-                      {format(new Date(msg.sent_at), "h:mm a")}
-                    </p>
-                    {isOwn && (
-                      <span className={cn("text-[10px] font-bold", msg.is_read ? "text-primary" : "text-muted-foreground/40")}>
-                        {msg.is_read ? "✓✓" : "✓"}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </ScrollArea>
-
-      {/* Input */}
-      {selectedConversation && (
-        <div className="p-4 border-t bg-card">
-          <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
-            <Textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (newMessage.trim()) sendMessageMutation.mutate(); } }}
-              placeholder="Type a message..."
-              className="flex-1 min-h-[44px] max-h-[120px] resize-none rounded-xl border-muted-foreground/10 bg-muted/30 focus-visible:ring-primary/20"
-              rows={1}
-            />
-            <Button type="submit" size="icon" disabled={!newMessage.trim() || sendMessageMutation.isPending} className="h-11 w-11 rounded-xl shrink-0 shadow-soft">
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-          <p className="text-[9px] text-center text-muted-foreground mt-2 font-semibold uppercase tracking-widest">
-            Messages are securely logged for academic oversight
-          </p>
-        </div>
-      )}
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="space-y-6 h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)] flex flex-col">
-      <div className="shrink-0">
-        <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-          Communication Portal
-        </h1>
-        <p className="text-sm text-muted-foreground font-medium">Direct secure channel for academic synchronization.</p>
+    <div className="space-y-8 animate-in fade-in duration-1000 max-w-5xl mx-auto h-[calc(100vh-12rem)] flex flex-col">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Communication Portal
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Direct secure channel for academic and developmental synchronization.</p>
+          </div>
+        </div>
+        <div className="bg-card/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/40 shadow-soft flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <Shield className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground leading-none">Security</span>
+            <span className="font-black text-slate-700 text-sm">End-to-End Encrypted</span>
+          </div>
+        </div>
       </div>
 
-      <Card className="flex-1 border shadow-strong overflow-hidden rounded-2xl flex flex-col min-h-0 bg-card/60 backdrop-blur-sm">
-        {isMobile ? (
-          showChatView ? <ChatView /> : <ConversationList />
-        ) : (
-          <div className="flex h-full divide-x">
-            <div className="w-80 shrink-0 h-full overflow-hidden">
-              <ConversationList />
+      <Card className="flex-1 flex flex-col border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="bg-card/60 backdrop-blur-md py-6 px-8 border-b border-slate-100 flex-row items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-lg shadow-primary/20">
+               <MessageSquare className="h-6 w-6 text-white" />
             </div>
-            <div className="flex-1 h-full overflow-hidden">
-              <ChatView />
+            <div>
+              <CardTitle className="text-xl font-black text-foreground/90 tracking-tight">
+                {conversation.centers?.name || "Institution Control"}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Active Session • {conversation.students?.name}
+                 </p>
+              </div>
             </div>
           </div>
-        )}
+          <Badge className="bg-primary/5 text-primary/70 border-none font-black text-[10px] px-3 py-1 uppercase tracking-widest hidden sm:flex">Liaison Profile</Badge>
+        </CardHeader>
+
+        <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+          <ScrollArea className="flex-1 px-8">
+            <div className="py-8 space-y-6">
+              {messagesLoading ? (
+                <div className="flex justify-center py-12"><div className="h-6 w-6 border-2 border-primary border-t-transparent animate-spin rounded-full"/></div>
+              ) : messages.length === 0 ? (
+                <div className="text-center py-12 px-6">
+                   <Info className="h-8 w-8 text-slate-200 mx-auto mb-4" />
+                   <p className="text-muted-foreground text-sm font-medium italic">No message history identified. Secure channel established.</p>
+                </div>
+              ) : (
+                messages.map((msg: any) => {
+                  const isOwnMessage = msg.sender_user_id === user?.id;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={cn("flex w-full animate-in slide-in-from-bottom-2 duration-500", isOwnMessage ? "justify-end" : "justify-start")}
+                    >
+                      <div className={cn(
+                        "max-w-[80%] md:max-w-[70%] space-y-1.5",
+                        isOwnMessage ? "items-end" : "items-start"
+                      )}>
+                        <div
+                          className={cn(
+                            "rounded-[1.5rem] px-5 py-3 shadow-soft",
+                            isOwnMessage
+                              ? "bg-primary text-white rounded-tr-none"
+                              : "bg-white text-slate-700 rounded-tl-none border border-slate-100"
+                          )}
+                        >
+                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.message_text}</p>
+                        </div>
+                        <div className={cn("flex items-center gap-2 px-1", isOwnMessage ? "justify-end" : "justify-start")}>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                            {format(new Date(msg.sent_at), "h:mm a")}
+                          </p>
+                          {isOwnMessage && msg.is_read && (
+                            <Check className="h-2.5 w-2.5 text-emerald-500" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+
+          <div className="p-6 bg-card/60 backdrop-blur-md border-t border-slate-100 shrink-0">
+            <form onSubmit={handleSendMessage} className="relative">
+              <Textarea
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (newMessage.trim()) sendMessageMutation.mutate();
+                  }
+                }}
+                placeholder="Synchronize your thoughts..."
+                className="w-full min-h-[56px] max-h-[150px] resize-none py-4 px-6 pr-16 rounded-[1.5rem] border-none bg-white shadow-soft focus-visible:ring-primary/20 font-medium text-slate-700 placeholder:text-slate-300"
+                rows={1}
+              />
+              <Button
+                type="submit"
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                className="absolute right-2 top-2 h-10 w-10 rounded-2xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+            <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest text-center mt-3">
+               Press Shift + Enter for new line • Messages are securely logged
+            </p>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

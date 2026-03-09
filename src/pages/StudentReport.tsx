@@ -47,33 +47,12 @@ export default function StudentReport() {
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformance | null>(null);
 
-  const { data: assignedGrades = [] } = useQuery({
-    queryKey: ["teacher-assigned-grades-report", user?.teacher_id],
-    queryFn: async () => {
-      if (!user?.teacher_id) return [];
-      const { data, error } = await supabase
-        .from("class_teacher_assignments")
-        .select("grade")
-        .eq("teacher_id", user.teacher_id);
-      if (error) throw error;
-      return data.map(d => d.grade);
-    },
-    enabled: !!user?.teacher_id && user?.role === 'teacher'
-  });
-
   // Fetch students
   const { data: students = [] } = useQuery({
-    queryKey: ["students", user?.center_id, assignedGrades],
+    queryKey: ["students", user?.center_id],
     queryFn: async () => {
       let query = supabase.from("students").select("*").order("name");
       if (user?.role !== "admin" && user?.center_id) query = query.eq("center_id", user.center_id);
-
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
-      }
-
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -89,19 +68,23 @@ export default function StudentReport() {
 
   // Fetch attendance
   const { data: attendanceData = [], isLoading: isAttendanceLoading } = useQuery({
-    queryKey: ["student-attendance", selectedStudentId, gradeFilter, dateRange, user?.center_id, user?.role, user?.id, studentIds],
+    queryKey: ["student-attendance", selectedStudentId, gradeFilter, dateRange, user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
         .from("attendance")
-        .select("*, students!inner(grade)")
+        .select("*")
         .eq("center_id", user.center_id)
         .gte("date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
+      if (user?.role === 'teacher') {
+        query = query.eq('marked_by', user.id);
+      }
+
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
-      } else {
+      } else if (gradeFilter !== "all") {
         query = query.in("student_id", studentIds);
       }
 
@@ -109,7 +92,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && studentIds.length > 0 });
+    enabled: !!user?.center_id });
 
   // Fetch lesson plans (needed for grouping)
   const { data: allLessonPlans = [] } = useQuery({
@@ -138,9 +121,16 @@ export default function StudentReport() {
         .gte("completed_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("completed_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('recorded_by_teacher_id', user.teacher_id);
+      }
+
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
       } else {
+        // School level: still need to ensure students belong to the center
         query = query.in("student_id", studentIds);
       }
 
@@ -162,8 +152,14 @@ export default function StudentReport() {
         .gte("date_taken", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("date_taken", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
+      if (user?.role === 'teacher') {
+        query = query.eq('tests.created_by', user.id);
+      }
+
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
       } else {
         query = query.in("student_id", studentIds);
       }
@@ -186,8 +182,14 @@ export default function StudentReport() {
         .gte("homework.due_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("homework.due_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('homework.teacher_id', user.teacher_id);
+      }
+
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
       } else {
         query = query.in("student_id", studentIds);
       }
@@ -231,8 +233,14 @@ export default function StudentReport() {
         .gte("created_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("created_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
+      if (user?.role === 'teacher') {
+        query = query.eq('activities.created_by', user.id);
+      }
+
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
+      } else if (gradeFilter !== "all") {
+        query = query.in("student_id", studentIds);
       } else {
         query = query.in("student_id", studentIds);
       }
@@ -245,17 +253,21 @@ export default function StudentReport() {
 
   // Fetch discipline issues
   const { data: disciplineIssues = [], isLoading: isDisciplineLoading } = useQuery({
-    queryKey: ["student-discipline-issues-report", selectedStudentId, gradeFilter, dateRange, user?.center_id, user?.role, user?.id, studentIds],
+    queryKey: ["student-discipline-issues-report", selectedStudentId, gradeFilter, dateRange, user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("discipline_issues").select("*, discipline_categories(name), students!inner(grade)")
+      let query = supabase.from("discipline_issues").select("*, discipline_categories(name)")
         .eq("center_id", user.center_id)
         .gte("issue_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("issue_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
+      if (user?.role === 'teacher') {
+        query = query.eq('reported_by', user.id);
+      }
+
       if (selectedStudentId && selectedStudentId !== "none") {
         query = query.eq("student_id", selectedStudentId);
-      } else {
+      } else if (gradeFilter !== "all") {
         query = query.in("student_id", studentIds);
       }
 
@@ -263,7 +275,7 @@ export default function StudentReport() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && studentIds.length > 0 });
+    enabled: !!user?.center_id });
 
   // Fetch finance data (keep student-specific for now, or generalize if needed)
   const { data: invoices = [] } = useQuery({

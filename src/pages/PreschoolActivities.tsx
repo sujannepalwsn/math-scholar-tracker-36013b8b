@@ -75,37 +75,28 @@ export default function PreschoolActivities() {
     },
     enabled: !!user?.center_id });
 
-  const { data: assignedGrades = [] } = useQuery({
-    queryKey: ["teacher-assigned-grades-activities", user?.teacher_id],
-    queryFn: async () => {
-      if (!user?.teacher_id) return [];
-      const { data, error } = await supabase
-        .from("class_teacher_assignments")
-        .select("grade")
-        .eq("teacher_id", user.teacher_id);
-      if (error) throw error;
-      return data.map(d => d.grade);
-    },
-    enabled: !!user?.teacher_id && user?.role === 'teacher'
-  });
-
   // Fetch activities - now properly filtered by center and teacher
   const { data: activities = [], isLoading } = useQuery({
-    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id, assignedGrades],
+    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
+      // First get student IDs for this center
+      const { data: centerStudents } = await supabase
+        .from("students")
+        .select("id")
+        .eq("center_id", user.center_id);
+      
+      if (!centerStudents || centerStudents.length === 0) return [];
+      
+      const studentIds = centerStudents.map(s => s.id);
       
       let query = supabase
         .from("student_activities")
-        .select("*, students!inner(name, grade, center_id), activities!inner(*), activity_types(name)")
-        .eq("students.center_id", user.center_id);
+        .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
+        .in("student_id", studentIds);
 
       if (user?.role === 'teacher') {
-        if (assignedGrades.length > 0) {
-          query = query.in('students.grade', assignedGrades);
-        } else {
-          query = query.eq('activities.created_by', user.id);
-        }
+        query = query.eq('activities.created_by', user.id);
       }
 
       const { data, error } = await query.order("created_at", { ascending: false });

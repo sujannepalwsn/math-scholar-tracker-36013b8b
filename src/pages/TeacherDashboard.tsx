@@ -55,26 +55,18 @@ export default function TeacherDashboard() {
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
   // Data Fetching
-  const { data: assignedGrades = [] } = useQuery({
-    queryKey: ["teacher-assigned-grades", teacherId],
-    queryFn: async () => {
-      if (!teacherId) return [];
-      const { data, error } = await supabase
-        .from("class_teacher_assignments")
-        .select("grade")
-        .eq("teacher_id", teacherId);
-      if (error) throw error;
-      return data.map(d => d.grade);
-    },
-    enabled: !!teacherId
-  });
-
   const { data: teacherStudents = [], isLoading: isStudentsLoading } = useQuery({
-    queryKey: ["teacher-students", teacherId, user?.role, assignedGrades],
+    queryKey: ["teacher-students", teacherId, user?.role],
     queryFn: async () => {
       if (!teacherId) return [];
       let query = supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
 
+      if (user?.role === 'teacher') {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', teacherId);
+        const grades = assignments?.map(a => a.grade) || [];
+        if (grades.length > 0) {
+          query = query.in('grade', grades);
+        }
       }
 
       const { data, error } = await query;
@@ -84,23 +76,17 @@ export default function TeacherDashboard() {
     enabled: !!teacherId });
 
   const { data: classResults = [], isLoading: isClassResultsLoading } = useQuery({
-    queryKey: ["teacher-class-performance", teacherId, dateRange.from, dateRange.to, assignedGrades],
+    queryKey: ["teacher-class-performance", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
-      // Fetch all test results for students in assigned grades
-      let query = supabase
+      // Join with tests and filter by created_by (User ID).
+      // The tests table uses created_by instead of teacher_id in this schema.
+      const { data, error } = await supabase
         .from("test_results")
-        .select("*, students!inner(name, grade), tests!inner(*)")
+        .select("*, students(name, grade), tests!inner(*)")
+        .eq("tests.created_by", user?.id)
         .gte("date_taken", dateRange.from)
         .lte("date_taken", dateRange.to);
-
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         console.error("Error in classResults query:", error);
@@ -143,24 +129,17 @@ export default function TeacherDashboard() {
     enabled: !!user?.id });
 
   const { data: homeworkToGrade = [], isLoading: isHomeworkLoading } = useQuery({
-    queryKey: ["teacher-homework-to-grade", teacherId, dateRange.from, dateRange.to, assignedGrades],
+    queryKey: ["teacher-homework-to-grade", teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from("student_homework_records")
-        .select("*, students!inner(name, grade), homework!inner(*)")
+        .select("*, students(name, grade), homework!inner(*)")
+        .eq("homework.teacher_id", teacherId)
         .eq("status", "submitted")
         .gte("created_at", `${dateRange.from}T00:00:00`)
         .lte("created_at", `${dateRange.to}T23:59:59`)
         .limit(5);
-
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
-      }
-
-      const { data, error } = await query;
       if (error) {
         console.error("Error fetching homework to grade:", error);
         return [];
@@ -170,44 +149,35 @@ export default function TeacherDashboard() {
     enabled: !!teacherId });
 
   const { data: attendanceData = [], isLoading: isAttendanceLoading } = useQuery({
-    queryKey: ["teacher-student-attendance-range", teacherId, attendanceDateRange.from, attendanceDateRange.to, assignedGrades],
+    queryKey: ["teacher-student-attendance-range", teacherId, attendanceDateRange.from, attendanceDateRange.to],
     queryFn: async () => {
       if (!centerId || !user?.id) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from("attendance")
-        .select("*, students!inner(name, grade)")
+        .select("*")
         .eq("center_id", centerId)
+        .eq("marked_by", user.id)
         .gte("date", attendanceDateRange.from)
         .lte("date", attendanceDateRange.to)
         .order("date");
-
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
     enabled: !!centerId && !!user?.id });
 
   const { data: historicalAttendance = [] } = useQuery({
-    queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to, user?.role, assignedGrades],
+    queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to, user?.role, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
         .from("attendance")
-        .select("date, status, students!inner(grade)")
+        .select("date, status")
         .eq("center_id", centerId)
         .gte("date", dateRange.from)
         .lte("date", dateRange.to);
 
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
+      if (user?.role === 'teacher' && user?.id) {
+        query = query.eq('marked_by', user.id);
       }
 
       const { data, error } = await query.order("date");
@@ -217,26 +187,18 @@ export default function TeacherDashboard() {
     enabled: !!centerId });
 
   const { data: lessonRecords = [] } = useQuery({
-    queryKey: ['teacher-lesson-records', teacherId, dateRange.from, dateRange.to, assignedGrades],
+    queryKey: ['teacher-lesson-records', teacherId, dateRange.from, dateRange.to],
     queryFn: async () => {
       if (!teacherId) return [];
-      let query = supabase.from('student_chapters').select(`
+      const { data, error } = await supabase.from('student_chapters').select(`
         *,
         lesson_plans!inner(id, subject, chapter, topic, lesson_date, lesson_file_url, grade, notes),
-        recorded_by_teacher:recorded_by_teacher_id(name),
-        students!inner(grade)
+        recorded_by_teacher:recorded_by_teacher_id(name)
       `)
+        .eq('recorded_by_teacher_id', teacherId)
         .gte('completed_at', `${dateRange.from}T00:00:00`)
         .lte('completed_at', `${dateRange.to}T23:59:59`)
         .order('completed_at', { ascending: false });
-
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -258,19 +220,14 @@ export default function TeacherDashboard() {
     enabled: !!teacherId });
 
   const { data: disciplineIssues = [] } = useQuery({
-    queryKey: ["teacher-discipline-issues", user?.id, dateRange, assignedGrades],
+    queryKey: ["teacher-discipline-issues", user?.id, dateRange],
     queryFn: async () => {
       if (!centerId || !user?.id) return [];
-      let query = supabase.from("discipline_issues").select("*, discipline_categories(name), students!inner(name, grade)")
+      let query = supabase.from("discipline_issues").select("*, discipline_categories(name), students(name, grade)")
         .eq("center_id", centerId)
+        .eq("reported_by", user.id)
         .gte("issue_date", dateRange.from)
         .lte("issue_date", dateRange.to);
-
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
-      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -279,19 +236,14 @@ export default function TeacherDashboard() {
     enabled: !!centerId && !!user?.id });
 
   const { data: preschoolActivities = [] } = useQuery({
-    queryKey: ["teacher-activities", user?.id, dateRange, assignedGrades],
+    queryKey: ["teacher-activities", user?.id, dateRange],
     queryFn: async () => {
       if (!centerId || !user?.id) return [];
-      let query = supabase.from("student_activities").select("*, activities!inner(*, activity_types(name)), students!inner(name, grade)")
+      let query = supabase.from("student_activities").select("*, activities!inner(*, activity_types(name)), students(name, grade)")
         .eq("activities.center_id", centerId)
+        .eq("activities.created_by", user.id)
         .gte("created_at", `${dateRange.from}T00:00:00`)
         .lte("created_at", `${dateRange.to}T23:59:59`);
-
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
-      }
 
       const { data, error } = await query;
       if (error) throw error;

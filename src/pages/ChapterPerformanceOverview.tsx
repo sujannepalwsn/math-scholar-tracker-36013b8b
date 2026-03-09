@@ -73,36 +73,20 @@ export default function ChapterPerformanceOverview() {
     },
     enabled: !!user?.center_id });
 
-  const { data: assignedGrades = [] } = useQuery({
-    queryKey: ["teacher-assigned-grades-chapter", user?.teacher_id],
-    queryFn: async () => {
-      if (!user?.teacher_id) return [];
-      const { data, error } = await supabase
-        .from("class_teacher_assignments")
-        .select("grade")
-        .eq("teacher_id", user.teacher_id);
-      if (error) throw error;
-      return data.map(d => d.grade);
-    },
-    enabled: !!user?.teacher_id && user?.role === 'teacher'
-  });
-
   // Fetch all student_chapters for the center, filtered by student/grade/subject
   const { data: studentChaptersRaw = [], isLoading: studentChaptersLoading } = useQuery({
-    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter, user?.role, user?.teacher_id, assignedGrades],
+    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("student_chapters").select(`
         *,
-        students!inner(id, name, grade, center_id),
+        students(id, name, grade, center_id),
         lesson_plans(id, chapter, subject, topic, grade, lesson_date, lesson_file_url),
         recorded_by_teacher:recorded_by_teacher_id(name)
       `).eq("students.center_id", user.center_id);
 
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        query = query.eq('recorded_by_teacher_id', user.teacher_id);
       }
 
       if (subjectFilter !== "all") {
@@ -125,7 +109,7 @@ export default function ChapterPerformanceOverview() {
 
   // NEW: Fetch all test results for the center, including test details and linked lesson_plan_id
   const { data: allTestResults = [], isLoading: testResultsLoading } = useQuery({
-    queryKey: ["all-test-results-for-chapter-overview", user?.center_id, user?.role, user?.id, assignedGrades],
+    queryKey: ["all-test-results-for-chapter-overview", user?.center_id, user?.role, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
@@ -134,15 +118,12 @@ export default function ChapterPerformanceOverview() {
           id,
           student_id,
           marks_obtained,
-          students!inner(grade),
           tests!inner(id, name, subject, total_marks, lesson_plan_id, created_by)
         `) // Removed lesson_plans(chapter) as it's not directly on tests
         .eq("tests.center_id", user.center_id); // Ensure tests belong to the same center
 
-      if (user?.role === 'teacher' && assignedGrades.length > 0) {
-        query = query.in('students.grade', assignedGrades);
-      } else if (user?.role === 'teacher') {
-        return [];
+      if (user?.role === 'teacher') {
+        query = query.eq('tests.created_by', user.id);
       }
 
       const { data, error } = await query;

@@ -24,13 +24,3 @@ export const formatCurrency = (amount: number) => {
     currency: 'INR',
     maximumFractionDigits: 0 }).format(amount);
 };
-
-export function getGrade(pct: number) {
-  if (pct >= 90) return "A+";
-  if (pct >= 80) return "A";
-  if (pct >= 70) return "B+";
-  if (pct >= 60) return "B";
-  if (pct >= 50) return "C";
-  if (pct >= 40) return "D";
-  return "F";
-}

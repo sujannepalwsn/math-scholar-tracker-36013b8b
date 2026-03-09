@@ -8,7 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { PageHeader } from "@/components/ui/page-header";
-import { getGrade } from "@/lib/utils";
+
+function getGrade(pct: number) {
+  if (pct >= 90) return "A+";
+  if (pct >= 80) return "A";
+  if (pct >= 70) return "B+";
+  if (pct >= 60) return "B";
+  if (pct >= 50) return "C";
+  if (pct >= 40) return "D";
+  return "F";
+}
 
 export default function ResultsDashboard() {
   const { user } = useAuth();
@@ -23,7 +32,7 @@ export default function ResultsDashboard() {
         .from("exams")
         .select("*")
         .eq("center_id", centerId)
-        .eq("status", "results_published")
+        .eq("status", "published")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

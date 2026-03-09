@@ -11,7 +11,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/ui/page-header";
-import { cn, getGrade } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+
+function getGrade(pct: number) {
+  if (pct >= 90) return "A+";
+  if (pct >= 80) return "A";
+  if (pct >= 70) return "B+";
+  if (pct >= 60) return "B";
+  if (pct >= 50) return "C";
+  if (pct >= 40) return "D";
+  return "F";
+}
 
 export default function MarksheetView() {
   const { user } = useAuth();
@@ -36,7 +46,7 @@ export default function MarksheetView() {
     queryKey: ["exams-all", centerId],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("exams").select("*").eq("center_id", centerId).eq("status", "results_published").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("exams").select("*").eq("center_id", centerId).eq("status", "published").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -192,9 +202,6 @@ export default function MarksheetView() {
                 <h1 className="text-xl font-bold text-foreground">{center?.name || "School Name"}</h1>
                 <p className="text-sm text-muted-foreground">{center?.address || ""}</p>
                 <Separator className="my-3" />
-                {(center?.theme as any)?.marksheet?.header_text && (
-                  <h3 className="text-md font-bold text-foreground mb-2">{(center?.theme as any).marksheet.header_text}</h3>
-                )}
                 <h2 className="text-lg font-semibold text-foreground">MARKSHEET - {selectedExam?.name}</h2>
                 <p className="text-sm text-muted-foreground">Academic Year: {selectedExam?.academic_year}</p>
               </div>
@@ -257,22 +264,15 @@ export default function MarksheetView() {
                 </div>
               </div>
 
-              {/* Footer text */}
-              {(center?.theme as any)?.marksheet?.footer_text && (
-                <div className="mt-8 text-center text-sm italic text-muted-foreground">
-                  "{(center?.theme as any).marksheet.footer_text}"
-                </div>
-              )}
-
               {/* Signatures */}
               <div className="flex justify-between mt-16 text-sm">
                 <div className="text-center">
                   <div className="border-t border-foreground/30 w-32 mx-auto mb-1"></div>
-                  <p className="text-muted-foreground">{(center?.theme as any)?.marksheet?.signature_left || "Class Teacher"}</p>
+                  <p className="text-muted-foreground">Class Teacher</p>
                 </div>
                 <div className="text-center">
                   <div className="border-t border-foreground/30 w-32 mx-auto mb-1"></div>
-                  <p className="text-muted-foreground">{(center?.theme as any)?.marksheet?.signature_right || "Principal"}</p>
+                  <p className="text-muted-foreground">Principal</p>
                 </div>
               </div>
             </CardContent>
