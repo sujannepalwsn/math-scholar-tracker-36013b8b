@@ -140,6 +140,11 @@ export default function NotificationBell() {
                 ))
               )}
             </ScrollArea>
+            <div className="p-2 border-t">
+              <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => { navigate(getNotificationsRoute()); setOpen(false); }}>
+                View All Notifications
+              </Button>
+            </div>
           </div>
         </>
       )}
