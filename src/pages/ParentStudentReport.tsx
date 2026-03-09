@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -16,8 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
 import { Invoice, Payment } from "@/integrations/supabase/finance-types"
-import { formatCurrency, safeFormatDate, getGradeFormal } from "@/lib/utils" // Import safeFormatDate, formatCurrency
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatCurrency, safeFormatDate } from "@/lib/utils" // Import safeFormatDate, formatCurrency
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -39,8 +38,7 @@ export default function ParentStudentReport() {
   const { user } = useAuth();
   const linkedStudents = user?.linked_students || [];
 
-  const [selectedStudentId, setSelectedStudentId] = useState<string>(linkedStudents.length === 1 ? linkedStudents[0].id : "none");
-  const [selectedExamId, setSelectedExamId] = useState<string>("all");
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(linkedStudents[0]?.id || "none");
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: subYears(new Date(), 1), // Default to last year
     to: endOfMonth(new Date()) });
@@ -49,7 +47,6 @@ export default function ParentStudentReport() {
   const [aiSummary, setAiSummary] = useState<string>("");
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformance | null>(null);
-  const [selectedExamForDetail, setSelectedExamForDetail] = useState<any>(null);
 
   // Students for parent are already in user context, but let's fetch to be safe/consistent
   const { data: students = [] } = useQuery({
@@ -68,65 +65,6 @@ export default function ParentStudentReport() {
     if (selectedStudentId && selectedStudentId !== "none") return [selectedStudentId];
     return filteredStudents.map(s => s.id);
   }, [selectedStudentId, filteredStudents]);
-
-  // Fetch published exams for linked students
-  const { data: publishedExams = [] } = useQuery({
-    queryKey: ["published-exams-report-parent", user?.center_id, linkedStudents],
-    queryFn: async () => {
-      if (!user?.center_id || !linkedStudents.length) return [];
-      const grades = Array.from(new Set(linkedStudents.map(s => s.grade).filter(Boolean)));
-
-      const { data, error } = await supabase.from("exams")
-        .select("*")
-        .eq("center_id", user.center_id)
-        .eq("status", "published")
-        .in("grade", grades)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.center_id && linkedStudents.length > 0
-  });
-
-  // Fetch exam subjects for published exams
-  const { data: allExamSubjects = [] } = useQuery({
-    queryKey: ["all-exam-subjects-report-parent", user?.center_id],
-    queryFn: async () => {
-      if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("exam_subjects")
-        .select("*")
-        .eq("center_id", user.center_id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.center_id
-  });
-
-  // Fetch exam marks
-  const { data: examMarks = [], isLoading: isExamMarksLoading } = useQuery({
-    queryKey: ["student-exam-marks-report-parent", selectedStudentId, dateRange, studentIds],
-    queryFn: async () => {
-      let query = supabase.from("exam_marks").select("*, exams!inner(*)")
-        .gte("exams.created_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
-        .lte("exams.created_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
-
-      if (selectedStudentId && selectedStudentId !== "none") {
-        query = query.eq("student_id", selectedStudentId);
-      } else {
-        query = query.in("student_id", studentIds);
-      }
-
-      if (selectedExamId !== "all") {
-        query = query.eq("exam_id", selectedExamId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    enabled: studentIds.length > 0
-  });
 
   // Fetch attendance
   const { data: attendanceData = [], isLoading: isAttendanceLoading } = useQuery({
@@ -592,43 +530,6 @@ export default function ParentStudentReport() {
     csvRows.push(["Total Invoiced", totalInvoiced.toString()]);
     csvRows.push(["Total Paid", totalPaid.toString()]);
     csvRows.push(["Outstanding Dues", outstandingDues.toString()]);
-    csvRows.push([]);
-
-    csvRows.push(["Published Exam Results"]);
-    csvRows.push(["Exam Name", "Grade", "Academic Year", "Total Obtained", "Total Full", "Percentage", "Result"]);
-    publishedExams.forEach(exam => {
-      const marksForExam = examMarks.filter((m: any) => m.exam_id === exam.id && m.student_id === selectedStudentId);
-      const subjectsForExam = allExamSubjects.filter((s: any) => s.exam_id === exam.id);
-
-      let totalObtained = 0;
-      let totalFull = 0;
-      let allPassed = true;
-      let hasMarks = marksForExam.length > 0;
-
-      subjectsForExam.forEach((subj: any) => {
-        const mark = marksForExam.find((m: any) => m.exam_subject_id === subj.id);
-        if (mark) {
-          totalObtained += (mark.marks_obtained || 0);
-          totalFull += subj.full_marks;
-          if ((mark.marks_obtained || 0) < subj.pass_marks) allPassed = false;
-        } else {
-          allPassed = false;
-        }
-      });
-      const percentage = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
-
-      if (hasMarks) {
-        csvRows.push([
-          exam.name,
-          exam.grade,
-          exam.academic_year,
-          totalObtained.toString(),
-          totalFull.toString(),
-          percentage.toFixed(1) + "%",
-          allPassed ? "PASSED" : "FAILED"
-        ]);
-      }
-    });
     csvRows.push([]);
 
     csvRows.push(["Chapter-wise Performance"]);
@@ -1234,21 +1135,6 @@ export default function ParentStudentReport() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Exam</label>
-          <Select value={selectedExamId} onValueChange={setSelectedExamId}>
-            <SelectTrigger className="w-[180px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
-              <SelectValue placeholder="Select Exam" />
-            </SelectTrigger>
-            <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-              <SelectItem value="all">All Exams</SelectItem>
-              {publishedExams.map((exam: any) => (
-                <SelectItem key={exam.id} value={exam.id}>{exam.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Subject</label>
           <Select value={subjectFilter} onValueChange={setSubjectFilter}>
             <SelectTrigger className="w-[160px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
@@ -1415,110 +1301,6 @@ export default function ParentStudentReport() {
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Published Results Section */}
-          <Card id="published-results-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
-            <CardHeader className="bg-purple-500/5 pb-4 border-b border-purple-500/10">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <GraduationCap className="h-6 w-6 text-purple-600" />
-                </div>
-                Published Exam Results
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {publishedExams.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground italic">No published exams found for the selected filters.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-muted/50 border-b">
-                      <tr>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Exam Name</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Grade</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Academic Year</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Result</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {publishedExams.filter(exam => selectedExamId === "all" || exam.id === selectedExamId).map((exam) => {
-                        const marksForExam = examMarks.filter((m: any) => m.exam_id === exam.id);
-                        const subjectsForExam = allExamSubjects.filter((s: any) => s.exam_id === exam.id);
-
-                        const studentResultsMap: Record<string, {obtained: number, full: number, passed: boolean}> = {};
-                        marksForExam.forEach((m: any) => {
-                          if (!studentResultsMap[m.student_id]) {
-                            studentResultsMap[m.student_id] = { obtained: 0, full: 0, passed: true };
-                          }
-                          const subj = subjectsForExam.find((s: any) => s.id === m.exam_subject_id);
-                          if (subj) {
-                            studentResultsMap[m.student_id].obtained += (m.marks_obtained || 0);
-                            studentResultsMap[m.student_id].full += subj.full_marks;
-                            if ((m.marks_obtained || 0) < subj.pass_marks) studentResultsMap[m.student_id].passed = false;
-                          }
-                        });
-
-                        // Ensure all subjects have marks for pass status
-                        Object.keys(studentResultsMap).forEach(sid => {
-                          const studentMarksCount = marksForExam.filter((m: any) => m.student_id === sid).length;
-                          if (studentMarksCount < subjectsForExam.length) studentResultsMap[sid].passed = false;
-                        });
-
-                        const isSingleStudent = selectedStudentId && selectedStudentId !== "none";
-                        const studentData = isSingleStudent ? studentResultsMap[selectedStudentId] : null;
-                        const hasMarks = isSingleStudent ? !!studentData : Object.keys(studentResultsMap).length > 0;
-
-                        return (
-                          <tr key={exam.id} className="hover:bg-muted/30 transition-colors">
-                            <td className="px-6 py-4 font-semibold">{exam.name}</td>
-                            <td className="px-6 py-4">{exam.grade}</td>
-                            <td className="px-6 py-4">{exam.academic_year}</td>
-                            <td className="px-6 py-4 font-bold">
-                              {hasMarks ? (
-                                isSingleStudent && studentData ? (
-                                  <div className="flex flex-col">
-                                    <span className={cn(studentData.passed ? "text-green-600" : "text-red-600")}>
-                                      {studentData.passed ? "PASSED" : "FAILED"}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground font-medium">
-                                      {studentData.obtained}/{studentData.full} ({((studentData.obtained/studentData.full)*100).toFixed(1)}%)
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col">
-                                    <span className="text-primary">
-                                      {Object.values(studentResultsMap).filter(r => r.passed).length}/{Object.keys(studentResultsMap).length} Students Ranked
-                                    </span>
-                                  </div>
-                                )
-                              ) : (
-                                <span className="text-muted-foreground italic text-xs">No marks recorded</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              {isSingleStudent && studentData ? (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
-                                  onClick={() => setSelectedExamForDetail({ exam, marks: marksForExam.filter(m => m.student_id === selectedStudentId), subjects: subjectsForExam })}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              ) : (
-                                <span className="text-muted-foreground text-[10px]">Select a student to view details</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -1885,166 +1667,6 @@ export default function ParentStudentReport() {
           )}
         </div>
       )}
-
-      {/* Exam Result Detail Dialog */}
-      <Dialog open={!!selectedExamForDetail} onOpenChange={() => setSelectedExamForDetail(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <GraduationCap className="h-6 w-6 text-purple-600" />
-              Exam Marksheet: {selectedExamForDetail?.exam.name}
-            </DialogTitle>
-            <DialogDescription>
-              Detailed subject-wise breakdown and performance summary for this formal examination.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedExamForDetail && (
-            <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl border">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Student Name</p>
-                  <p className="font-bold">{selectedStudent?.name}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Grade</p>
-                  <p className="font-semibold">{selectedExamForDetail.exam.grade}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Academic Year</p>
-                  <p className="font-semibold">{selectedExamForDetail.exam.academic_year}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Exam Date</p>
-                  <p className="font-semibold">{selectedExamForDetail.exam.exam_date ? safeFormatDate(selectedExamForDetail.exam.exam_date, "PPP") : "N/A"}</p>
-                </div>
-              </div>
-
-              <div className="border rounded-xl overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      <TableHead className="font-bold">Subject</TableHead>
-                      <TableHead className="text-center font-bold">Full Marks</TableHead>
-                      <TableHead className="text-center font-bold">Pass Marks</TableHead>
-                      <TableHead className="text-center font-bold">Obtained</TableHead>
-                      <TableHead className="text-center font-bold">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedExamForDetail.subjects.map((subj: any) => {
-                      const mark = selectedExamForDetail.marks.find((m: any) => m.exam_subject_id === subj.id);
-                      const obtained = mark?.marks_obtained ?? "-";
-                      const passed = mark ? mark.marks_obtained >= subj.pass_marks : false;
-                      return (
-                        <TableRow key={subj.id}>
-                          <TableCell className="font-medium">{subj.subject_name}</TableCell>
-                          <TableCell className="text-center">{subj.full_marks}</TableCell>
-                          <TableCell className="text-center">{subj.pass_marks}</TableCell>
-                          <TableCell className="text-center font-bold">{obtained}</TableCell>
-                          <TableCell className="text-center">
-                            {mark ? (
-                              <Badge variant={passed ? "success" : "destructive"} className="text-[9px] uppercase font-bold">
-                                {passed ? "Pass" : "Fail"}
-                              </Badge>
-                            ) : "-"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {(() => {
-                  let totalObtained = 0;
-                  let totalFull = 0;
-                  let allPassed = true;
-                  selectedExamForDetail.subjects.forEach((subj: any) => {
-                    const mark = selectedExamForDetail.marks.find((m: any) => m.exam_subject_id === subj.id);
-                    if (mark) {
-                      totalObtained += (mark.marks_obtained || 0);
-                      totalFull += subj.full_marks;
-                      if ((mark.marks_obtained || 0) < subj.pass_marks) allPassed = false;
-                    } else {
-                      allPassed = false;
-                    }
-                  });
-                  const percentage = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
-                  return (
-                    <>
-                      <div className="bg-muted/20 p-3 rounded-lg border text-center">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Marks</p>
-                        <p className="text-xl font-black">{totalObtained}/{totalFull}</p>
-                      </div>
-                      <div className="bg-muted/20 p-3 rounded-lg border text-center">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Percentage</p>
-                        <p className="text-xl font-black">{percentage.toFixed(1)}%</p>
-                      </div>
-                      <div className="bg-muted/20 p-3 rounded-lg border text-center">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Grade</p>
-                        <p className="text-xl font-black">{getGradeFormal(percentage)}</p>
-                      </div>
-                      <div className={cn("p-3 rounded-lg border text-center", allPassed ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20")}>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Final Status</p>
-                        <p className={cn("text-xl font-black", allPassed ? "text-green-600" : "text-red-600")}>{allPassed ? "PASS" : "FAIL"}</p>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-
-              <div className="flex justify-end pt-4 gap-3 no-print">
-                <Button variant="outline" size="sm" onClick={() => {
-                  const printContent = document.querySelector('[role="dialog"]');
-                  if (printContent) {
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Marksheet - ${selectedStudent?.name}</title>
-                            <style>
-                              body { font-family: sans-serif; padding: 40px; }
-                              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                              th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                              th { background-color: #f5f5f5; }
-                              .font-bold { font-weight: bold; }
-                              .text-center { text-align: center; }
-                              .bg-muted { background-color: #f5f5f5; }
-                              .p-4 { padding: 1rem; }
-                              .rounded-xl { border-radius: 0.75rem; }
-                              .border { border: 1px solid #ddd; }
-                              .grid { display: grid; }
-                              .grid-cols-2 { grid-template-cols: repeat(2, minmax(0, 1fr)); }
-                              .gap-4 { gap: 1rem; }
-                              .text-xl { font-size: 1.25rem; }
-                              .font-black { font-weight: 900; }
-                              .no-print { display: none; }
-                            </style>
-                          </head>
-                          <body>
-                            ${printContent.innerHTML}
-                          </body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                      printWindow.focus();
-                      setTimeout(() => {
-                        printWindow.print();
-                        printWindow.close();
-                      }, 500);
-                    }
-                  }
-                }}>
-                  <Printer className="h-4 w-4 mr-2" /> Print Marksheet
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Chapter Detail Dialog */}
       <Dialog open={!!selectedChapterDetail} onOpenChange={() => setSelectedChapterDetail(null)}>

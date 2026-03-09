@@ -28,6 +28,7 @@ const navItems: Array<{
   { to: "/homework", label: "Homework", icon: Book, role: 'center' as const, featureName: 'homework_management', category: 'Academics' },
   { to: "/tests", label: "Tests", icon: ClipboardCheck, role: 'center' as const, featureName: 'test_management', category: 'Academics' },
   { to: "/exams", label: "Exams & Results", icon: GraduationCap, role: 'center' as const, featureName: 'test_management', category: 'Academics' },
+  { to: "/published-results", label: "Published Results", icon: Award, role: 'center' as const, category: 'Academics' },
   { to: "/activities", label: "Activities", icon: Paintbrush, role: 'center' as const, featureName: 'preschool_activities', category: 'Academics' },
   { to: "/discipline", label: "Discipline", icon: AlertTriangle, role: 'center' as const, featureName: 'discipline_issues', category: 'Academics' },
 

@@ -36,6 +36,7 @@ import MarksEntry from "./pages/MarksEntry";
 import ResultsDashboard from "./pages/ResultsDashboard";
 import MarksheetView from "./pages/MarksheetView";
 import StudentIdCard from "./pages/StudentIdCard";
+import PublishedResults from "./pages/PublishedResults";
 import Notifications from "./pages/Notifications";
 
 import Login from "./pages/Login";
@@ -119,6 +120,7 @@ const App = () => (
               <Route path="/parent-chapter-rating" element={<ProtectedRoute role="parent"><ParentLayout><ParentChapterRating /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-lesson-tracking" element={<ProtectedRoute role="parent"><ParentLayout><ParentLessonTracking /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-student-report" element={<ProtectedRoute role="parent"><ParentLayout><ParentStudentReport /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-results" element={<ProtectedRoute role="parent"><ParentLayout><PublishedResults /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-calendar" element={<ProtectedRoute role="parent"><ParentLayout><CalendarEvents /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-settings" element={<ProtectedRoute role="parent"><ParentLayout><GeneralSettings /></ParentLayout></ProtectedRoute>} />
 
@@ -171,6 +173,7 @@ const App = () => (
               <Route path="/settings" element={<ProtectedRoute role="center"><CenterLayout><CenterSettings /></CenterLayout></ProtectedRoute>} />
               <Route path="/teacher-performance" element={<ProtectedRoute role="center"><CenterLayout><TeacherPerformanceReport /></CenterLayout></ProtectedRoute>} />
               <Route path="/exams" element={<ProtectedRoute role="center"><CenterLayout><ExamManagement /></CenterLayout></ProtectedRoute>} />
+              <Route path="/published-results" element={<ProtectedRoute role="center"><CenterLayout><PublishedResults /></CenterLayout></ProtectedRoute>} />
               <Route path="/marks-entry" element={<ProtectedRoute role="center"><CenterLayout><MarksEntry /></CenterLayout></ProtectedRoute>} />
               <Route path="/results-dashboard" element={<ProtectedRoute role="center"><CenterLayout><ResultsDashboard /></CenterLayout></ProtectedRoute>} />
               <Route path="/marksheet" element={<ProtectedRoute role="center"><CenterLayout><MarksheetView /></CenterLayout></ProtectedRoute>} />
@@ -180,6 +183,7 @@ const App = () => (
               <Route path="/teacher/exams" element={<ProtectedRoute role="teacher"><TeacherLayout><ExamManagement /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/marks-entry" element={<ProtectedRoute role="teacher"><TeacherLayout><MarksEntry /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/results-dashboard" element={<ProtectedRoute role="teacher"><TeacherLayout><ResultsDashboard /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/published-results" element={<ProtectedRoute role="teacher"><TeacherLayout><PublishedResults /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/marksheet" element={<ProtectedRoute role="teacher"><TeacherLayout><MarksheetView /></TeacherLayout></ProtectedRoute>} />
 
               {/* Notifications for all roles */}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Brain, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, KeyRound, LayoutList, LogOut, MessageSquare, Paintbrush, PenTool, Settings, TrendingUp, User, Video } from "lucide-react";
+import { AlertTriangle, Award, BarChart3, Book, BookOpen, Brain, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, KeyRound, LayoutList, LogOut, MessageSquare, Paintbrush, PenTool, Settings, TrendingUp, User, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -26,6 +26,7 @@ const navItems: Array<{
   { to: "/teacher/homework-management", label: "Homework", icon: Book, role: 'teacher' as const, featureName: 'homework_management', category: 'Academics' },
   { to: "/teacher/test-management", label: "Tests", icon: ClipboardCheck, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
   { to: "/teacher/exams", label: "Exams & Results", icon: GraduationCap, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
+  { to: "/teacher/published-results", label: "Published Results", icon: Award, role: 'teacher' as const, category: 'Academics' },
   { to: "/teacher/marks-entry", label: "Marks Entry", icon: PenTool, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
   { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'activities', category: 'Academics' },
   { to: "/teacher/discipline-issues", label: "Discipline", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues', category: 'Academics' },
