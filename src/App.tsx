@@ -170,6 +170,21 @@ const App = () => (
               <Route path="/chapter-performance-overview" element={<ProtectedRoute role="center"><CenterLayout><ChapterPerformanceOverview /></CenterLayout></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute role="center"><CenterLayout><CenterSettings /></CenterLayout></ProtectedRoute>} />
               <Route path="/teacher-performance" element={<ProtectedRoute role="center"><CenterLayout><TeacherPerformanceReport /></CenterLayout></ProtectedRoute>} />
+              <Route path="/exams" element={<ProtectedRoute role="center"><CenterLayout><ExamManagement /></CenterLayout></ProtectedRoute>} />
+              <Route path="/marks-entry" element={<ProtectedRoute role="center"><CenterLayout><MarksEntry /></CenterLayout></ProtectedRoute>} />
+              <Route path="/results-dashboard" element={<ProtectedRoute role="center"><CenterLayout><ResultsDashboard /></CenterLayout></ProtectedRoute>} />
+              <Route path="/marksheet" element={<ProtectedRoute role="center"><CenterLayout><MarksheetView /></CenterLayout></ProtectedRoute>} />
+              <Route path="/student-id-cards" element={<ProtectedRoute role="center"><CenterLayout><StudentIdCard /></CenterLayout></ProtectedRoute>} />
+
+              {/* Teacher Result Routes */}
+              <Route path="/teacher/exams" element={<ProtectedRoute role="teacher"><TeacherLayout><ExamManagement /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/marks-entry" element={<ProtectedRoute role="teacher"><TeacherLayout><MarksEntry /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/results-dashboard" element={<ProtectedRoute role="teacher"><TeacherLayout><ResultsDashboard /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/marksheet" element={<ProtectedRoute role="teacher"><TeacherLayout><MarksheetView /></TeacherLayout></ProtectedRoute>} />
+
+              {/* Notifications for all roles */}
+              <Route path="/parent-notifications" element={<ProtectedRoute role="parent"><ParentLayout><Notifications /></ParentLayout></ProtectedRoute>} />
+              <Route path="/teacher/notifications" element={<ProtectedRoute role="teacher"><TeacherLayout><Notifications /></TeacherLayout></ProtectedRoute>} />
 
               {/* Admin */}
               <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
