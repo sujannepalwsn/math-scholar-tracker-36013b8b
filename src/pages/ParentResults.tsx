@@ -1,68 +1,56 @@
-import React, { useMemo, useRef, useState } from "react";
-import { Download, Printer, Search } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Award, BookOpen, Download, FileText, Printer, Search, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/ui/page-header";
-import { cn, getGrade } from "@/lib/utils";
+import { cn, formatCurrency, safeFormatDate, getGrade } from "@/lib/utils";
 
-export default function MarksheetView() {
+export default function ParentResults() {
   const { user } = useAuth();
-  const centerId = user?.center_id;
-  const printRef = useRef<HTMLDivElement>(null);
-
+  const linkedStudents = user?.linked_students || [];
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(linkedStudents[0]?.id || "");
   const [selectedExamId, setSelectedExamId] = useState<string>("");
-  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const activeStudent = linkedStudents.find(s => s.id === selectedStudentId);
 
   const { data: center } = useQuery({
-    queryKey: ["center-info", centerId],
+    queryKey: ["center-info", user?.center_id],
     queryFn: async () => {
-      if (!centerId) return null;
-      const { data } = await supabase.from("centers").select("*").eq("id", centerId).single();
+      if (!user?.center_id) return null;
+      const { data } = await supabase.from("centers").select("*").eq("id", user.center_id).single();
       return data;
     },
-    enabled: !!centerId,
+    enabled: !!user?.center_id,
   });
 
   const { data: exams = [] } = useQuery({
-    queryKey: ["exams-all", centerId],
+    queryKey: ["parent-exams", selectedStudentId],
     queryFn: async () => {
-      if (!centerId) return [];
-      const { data, error } = await supabase.from("exams").select("*").eq("center_id", centerId).eq("status", "results_published").order("created_at", { ascending: false });
+      if (!activeStudent?.grade || !user?.center_id) return [];
+      const { data, error } = await supabase
+        .from("exams")
+        .select("*")
+        .eq("center_id", user.center_id)
+        .eq("grade", activeStudent.grade)
+        .eq("status", "results_published")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!centerId,
+    enabled: !!activeStudent?.grade && !!user?.center_id,
   });
 
   const selectedExam = exams.find((e: any) => e.id === selectedExamId);
 
-  const { data: students = [] } = useQuery({
-    queryKey: ["students-marksheet", centerId, selectedExam?.grade],
-    queryFn: async () => {
-      if (!centerId || !selectedExam?.grade) return [];
-      const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("grade", selectedExam.grade).eq("is_active", true).order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!centerId && !!selectedExam?.grade,
-  });
-
-  const filteredStudents = students.filter((s: any) =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (s.roll_number || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const { data: subjects = [] } = useQuery({
-    queryKey: ["marksheet-subjects", selectedExamId],
+    queryKey: ["parent-marksheet-subjects", selectedExamId],
     queryFn: async () => {
       if (!selectedExamId) return [];
       const { data, error } = await supabase.from("exam_subjects").select("*").eq("exam_id", selectedExamId).order("subject_name");
@@ -73,7 +61,7 @@ export default function MarksheetView() {
   });
 
   const { data: marks = [] } = useQuery({
-    queryKey: ["marksheet-marks", selectedExamId, selectedStudentId],
+    queryKey: ["parent-marksheet-marks", selectedExamId, selectedStudentId],
     queryFn: async () => {
       if (!selectedExamId || !selectedStudentId) return [];
       const { data, error } = await supabase.from("exam_marks").select("*").eq("exam_id", selectedExamId).eq("student_id", selectedStudentId);
@@ -84,9 +72,7 @@ export default function MarksheetView() {
   });
 
   const marksheetData = useMemo(() => {
-    if (!marks.length || !subjects.length) return null;
-    const student = students.find((s: any) => s.id === selectedStudentId);
-    if (!student) return null;
+    if (!marks.length || !subjects.length || !activeStudent) return null;
 
     let totalObtained = 0;
     let totalFull = 0;
@@ -105,7 +91,7 @@ export default function MarksheetView() {
     const percentage = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
 
     return {
-      student,
+      student: activeStudent,
       subjectResults,
       totalObtained,
       totalFull,
@@ -113,80 +99,50 @@ export default function MarksheetView() {
       grade: getGrade(percentage),
       passed: allPassed,
     };
-  }, [marks, subjects, students, selectedStudentId]);
+  }, [marks, subjects, activeStudent]);
 
   const handlePrint = () => {
-    const content = printRef.current;
-    if (!content) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>Marksheet</title><style>
-      body { font-family: sans-serif; padding: 20px; }
-      table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-      th { background: #f5f5f5; }
-      .text-center { text-align: center; }
-      .text-right { text-align: right; }
-      .font-bold { font-weight: bold; }
-      .text-sm { font-size: 14px; }
-      .mt-8 { margin-top: 32px; }
-      .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
-      .sig-line { border-top: 1px solid #333; padding-top: 4px; width: 150px; text-align: center; }
-    </style></head><body>${content.innerHTML}</body></html>`);
-    printWindow.document.close();
-    printWindow.print();
+    window.print();
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Marksheet" description="View and print student marksheets" />
+      <PageHeader title="Exam Results" description="View child's academic performance in terminal exams" />
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Select value={selectedExamId} onValueChange={(v) => { setSelectedExamId(v); setSelectedStudentId(""); }}>
-          <SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger>
+      <div className="grid sm:grid-cols-2 gap-4 no-print">
+        {linkedStudents.length > 1 && (
+          <Select value={selectedStudentId} onValueChange={(v) => { setSelectedStudentId(v); setSelectedExamId(""); }}>
+            <SelectTrigger><SelectValue placeholder="Select child" /></SelectTrigger>
+            <SelectContent>
+              {linkedStudents.map((s: any) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        <Select value={selectedExamId} onValueChange={setSelectedExamId}>
+          <SelectTrigger><SelectValue placeholder="Select published exam" /></SelectTrigger>
           <SelectContent>
-            {exams.map((e: any) => (
-              <SelectItem key={e.id} value={e.id}>{e.name} - Grade {e.grade}</SelectItem>
-            ))}
+            {exams.length === 0 ? (
+              <SelectItem value="none" disabled>No exams published yet</SelectItem>
+            ) : (
+              exams.map((e: any) => (
+                <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
-
-        {selectedExamId && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or roll number..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        )}
       </div>
 
-      {selectedExamId && !selectedStudentId && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredStudents.map((s: any) => (
-            <Card key={s.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setSelectedStudentId(s.id)}>
-              <CardContent className="p-4">
-                <p className="font-medium text-foreground">{s.name}</p>
-                <p className="text-sm text-muted-foreground">Roll: {s.roll_number || "-"} • Grade {s.grade}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {marksheetData && (
-        <>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Print</Button>
-            <Button variant="outline" onClick={handlePrint}><Download className="h-4 w-4 mr-2" /> Download</Button>
-            <Button variant="outline" onClick={() => setSelectedStudentId("")}>Back to List</Button>
+      {marksheetData ? (
+        <div className="space-y-6">
+          <div className="flex gap-2 justify-end no-print">
+            <Button variant="outline" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Print Marksheet</Button>
           </div>
 
-          <Card>
-            <CardContent className="p-6" ref={printRef}>
+          <Card className="print:shadow-none print:border-none">
+            <CardContent className="p-6">
               {/* Header */}
               <div className="text-center mb-6">
                 <h1 className="text-xl font-bold text-foreground">{center?.name || "School Name"}</h1>
@@ -202,9 +158,7 @@ export default function MarksheetView() {
               {/* Student Info */}
               <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                 <div><span className="text-muted-foreground">Student Name:</span> <strong className="text-foreground">{marksheetData.student.name}</strong></div>
-                <div><span className="text-muted-foreground">Roll Number:</span> <strong className="text-foreground">{marksheetData.student.roll_number || "-"}</strong></div>
                 <div><span className="text-muted-foreground">Grade:</span> <strong className="text-foreground">{marksheetData.student.grade}</strong></div>
-                <div><span className="text-muted-foreground">Section:</span> <strong className="text-foreground">{marksheetData.student.section || "-"}</strong></div>
               </div>
 
               {/* Marks Table */}
@@ -277,7 +231,11 @@ export default function MarksheetView() {
               </div>
             </CardContent>
           </Card>
-        </>
+        </div>
+      ) : selectedExamId ? (
+        <Card><CardContent className="p-8 text-center text-muted-foreground">No marks recorded for this child in the selected exam.</CardContent></Card>
+      ) : (
+        <Card><CardContent className="p-8 text-center text-muted-foreground">Select an exam to view results.</CardContent></Card>
       )}
     </div>
   );
