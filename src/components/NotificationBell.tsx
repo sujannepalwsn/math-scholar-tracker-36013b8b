@@ -60,6 +60,12 @@ export default function NotificationBell() {
     setOpen(false);
   };
 
+  const getNotificationsRoute = () => {
+    if (user?.role === 'parent') return '/parent-notifications';
+    if (user?.role === 'teacher') return '/teacher/notifications';
+    return '/notifications';
+  };
+
   const getTypeIcon = (type: string) => {
     const colors: Record<string, string> = {
       student: "bg-blue-100 text-blue-600",
@@ -134,6 +140,11 @@ export default function NotificationBell() {
                 ))
               )}
             </ScrollArea>
+            <div className="p-2 border-t">
+              <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => { navigate(getNotificationsRoute()); setOpen(false); }}>
+                View All Notifications
+              </Button>
+            </div>
           </div>
         </>
       )}
