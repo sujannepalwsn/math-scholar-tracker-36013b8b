@@ -102,9 +102,25 @@ export default function TeacherDashboard() {
     queryFn: async () => {
       if (!teacherId) return [];
       const dayOfWeek = new Date(dateRange.to).getDay();
-      const { data, error } = await supabase.from("period_schedules").select("*, class_periods(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek);
+
+      // Get regular schedules
+      const { data: regular, error } = await supabase.from("period_schedules").select("*, class_periods(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek);
       if (error) throw error;
-      return data || [];
+
+      // Get substitutions for today
+      const { data: subs, error: subError } = await supabase
+        .from("class_substitutions")
+        .select("*, period_schedules(*, class_periods(*))")
+        .eq("substitute_teacher_id", teacherId)
+        .eq("date", dateRange.to);
+      if (subError) throw subError;
+
+      const mappedSubs = (subs || []).map(s => ({
+        ...s.period_schedules,
+        isSubstitution: true
+      }));
+
+      return [...(regular || []), ...mappedSubs];
     },
     enabled: !!teacherId });
 
@@ -367,10 +383,11 @@ export default function TeacherDashboard() {
         id: ps.id,
         time: ps.class_periods ? `${ps.class_periods.start_time.slice(0, 5)} - ${ps.class_periods.end_time.slice(0, 5)}` : "N/A",
         grade: ps.grade,
-        teacher: user?.username?.split('@')[0] || "Me",
+        teacher: ps.isSubstitution ? "Substitution Coverage" : (user?.username?.split('@')[0] || "Me"),
         subject: ps.subject,
         status: "upcoming" as const,
-        lesson_plan_id: matchingPlan?.id
+        lesson_plan_id: matchingPlan?.id,
+        isSubstitution: ps.isSubstitution
       };
     });
   }, [teacherSchedule, allLessonPlans, dateRange.to, user]);
@@ -400,6 +417,13 @@ export default function TeacherDashboard() {
       title: `Meeting today: ${att.meetings?.title}`,
       type: "warning" as const,
       timestamp: att.meetings?.meeting_date
+    })),
+    ...todayClasses.filter(c => c.isSubstitution).map(c => ({
+      id: `sub-${c.id}`,
+      title: `Substitution Coverage`,
+      description: `Grade ${c.grade} ${c.subject} at ${c.time}`,
+      type: "info" as const,
+      timestamp: today
     }))
   ];
 
