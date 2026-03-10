@@ -1,4 +1,4 @@
--- Consolidate Leave Management schema to ensure robustness
+-- Consolidate and Refine Leave Management schema
 -- This migration handles both fresh installs and updates from partially applied states
 
 -- 1. Ensure leave_categories table exists
@@ -13,11 +13,14 @@ CREATE TABLE IF NOT EXISTS public.leave_categories (
   CONSTRAINT fk_center FOREIGN KEY (center_id) REFERENCES public.centers(id) ON DELETE CASCADE
 );
 
--- Robustly ensure column constraints and missing columns
-ALTER TABLE public.leave_categories ALTER COLUMN center_id DROP NOT NULL;
-
+-- Force add columns and adjust constraints if they were created differently before
 DO $$
 BEGIN
+    -- Ensure center_id allows NULL for global categories
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='leave_categories' AND column_name='center_id' AND is_nullable='NO') THEN
+        ALTER TABLE public.leave_categories ALTER COLUMN center_id DROP NOT NULL;
+    END IF;
+
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='leave_categories' AND column_name='applicable_to') THEN
         ALTER TABLE public.leave_categories ADD COLUMN applicable_to TEXT NOT NULL DEFAULT 'both' CHECK (applicable_to IN ('student', 'teacher', 'both'));
     END IF;
@@ -141,3 +144,8 @@ WHERE NOT EXISTS (
   SELECT 1 FROM public.leave_categories lc
   WHERE lc.name = d.name AND lc.center_id IS NULL
 );
+
+-- 10. Policy for inserting notifications (needed for frontend alerts)
+DROP POLICY IF EXISTS "Center users can insert notifications" ON public.notifications;
+CREATE POLICY "Center users can insert notifications" ON public.notifications
+  FOR INSERT WITH CHECK (is_same_center(center_id));

@@ -117,13 +117,19 @@ export default function LeaveManagement() {
 
   const createNotificationMutation = useMutation({
     mutationFn: async ({ userId, status }: { userId: string; status: string }) => {
-      await supabase.from("notifications").insert({
-        center_id: user?.center_id!,
+      if (!user?.center_id) return;
+
+      const { error } = await supabase.from("notifications").insert({
+        center_id: user.center_id,
         user_id: userId,
         title: `Leave Application ${status.toUpperCase()}`,
         message: `Your leave application has been ${status}.`,
         type: "leave_status",
       });
+
+      if (error) {
+        console.error("Failed to send notification:", error);
+      }
     }
   });
 
