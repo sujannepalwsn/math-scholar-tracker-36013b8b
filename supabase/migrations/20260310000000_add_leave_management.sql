@@ -1,23 +1,27 @@
 -- Consolidate Leave Management schema to ensure robustness
 -- This migration handles both fresh installs and updates from partially applied states
 
--- 1. Ensure leave_categories table exists with all required columns
+-- 1. Ensure leave_categories table exists
 CREATE TABLE IF NOT EXISTS public.leave_categories (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  center_id UUID REFERENCES public.centers(id) ON DELETE CASCADE,
+  center_id UUID, -- Deliberately nullable for global categories
   name TEXT NOT NULL,
   applicable_to TEXT NOT NULL DEFAULT 'both' CHECK (applicable_to IN ('student', 'teacher', 'both')),
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  CONSTRAINT fk_center FOREIGN KEY (center_id) REFERENCES public.centers(id) ON DELETE CASCADE
 );
 
--- Force add columns if they are missing (handles cases where table existed without them)
+-- Robustly ensure column constraints and missing columns
+ALTER TABLE public.leave_categories ALTER COLUMN center_id DROP NOT NULL;
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='leave_categories' AND column_name='applicable_to') THEN
         ALTER TABLE public.leave_categories ADD COLUMN applicable_to TEXT NOT NULL DEFAULT 'both' CHECK (applicable_to IN ('student', 'teacher', 'both'));
     END IF;
+
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='leave_categories' AND column_name='is_active') THEN
         ALTER TABLE public.leave_categories ADD COLUMN is_active BOOLEAN DEFAULT true;
     END IF;
@@ -128,10 +132,10 @@ INSERT INTO public.leave_categories (name, center_id, applicable_to)
 SELECT d.name, d.center_id, d.applicable_to
 FROM (
   VALUES
-    ('Sick Leave', NULL, 'both'),
-    ('Casual Leave', NULL, 'both'),
-    ('Vacation', NULL, 'both'),
-    ('Emergency Leave', NULL, 'both')
+    ('Sick Leave', NULL::UUID, 'both'),
+    ('Casual Leave', NULL::UUID, 'both'),
+    ('Vacation', NULL::UUID, 'both'),
+    ('Emergency Leave', NULL::UUID, 'both')
 ) AS d(name, center_id, applicable_to)
 WHERE NOT EXISTS (
   SELECT 1 FROM public.leave_categories lc
