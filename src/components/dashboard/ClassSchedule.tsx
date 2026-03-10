@@ -1,4 +1,4 @@
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, Clock, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -12,6 +12,7 @@ interface ClassItem {
   teacher: string;
   subject: string;
   status: "completed" | "running" | "upcoming";
+  lesson_plan_id?: string;
 }
 
 interface ClassScheduleProps {
@@ -19,6 +20,7 @@ interface ClassScheduleProps {
   title?: string;
   className?: string;
   onItemClick?: (item: ClassItem) => void;
+  onViewPlan?: (item: ClassItem) => void;
   onViewRoutine?: () => void;
 }
 
@@ -27,6 +29,7 @@ export const ClassSchedule = ({
   title = "Today's Classes",
   className,
   onItemClick,
+  onViewPlan,
   onViewRoutine
 }: ClassScheduleProps) => {
   const statusStyles: Record<string, string> = {
@@ -80,15 +83,30 @@ export const ClassSchedule = ({
                   </div>
                   <p className="text-xs text-muted-foreground font-medium">{item.teacher} · {item.subject}</p>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px] font-black uppercase tracking-widest",
-                    statusStyles[item.status]
+                <div className="flex flex-col items-end gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[10px] font-black uppercase tracking-widest",
+                      statusStyles[item.status]
+                    )}
+                  >
+                    {item.status}
+                  </Badge>
+                  {item.lesson_plan_id && onViewPlan && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-[9px] font-black uppercase tracking-tighter text-primary bg-primary/5 hover:bg-primary/10 rounded-lg flex items-center gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewPlan(item);
+                      }}
+                    >
+                      <FileText className="h-3 w-3" /> Plan
+                    </Button>
                   )}
-                >
-                  {item.status}
-                </Badge>
+                </div>
               </div>
             ))}
           </div>
