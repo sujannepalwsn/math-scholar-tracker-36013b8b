@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { BookOpen, Calendar, Edit, GraduationCap, Plus, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { BookOpen, Calendar, Edit, GraduationCap, Plus, Trash2, ListChecks, CheckCircle2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +20,7 @@ const grades = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
 export default function ExamManagement() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
 
@@ -109,8 +111,54 @@ export default function ExamManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exams"] });
-      toast.success("Exam published! Results are now visible to parents.");
+      toast.success("Exam routine published!");
     },
+  });
+
+  const publishResults = useMutation({
+    mutationFn: async (exam: any) => {
+      // 1. Get subjects for this exam
+      const { data: subjects, error: subjError } = await supabase
+        .from("exam_subjects")
+        .select("id")
+        .eq("exam_id", exam.id);
+
+      if (subjError) throw subjError;
+      if (!subjects || subjects.length === 0) throw new Error("No subjects defined for this exam. Please add subjects first.");
+
+      // 2. Get active students for this grade
+      const { count: studentCount, error: studError } = await supabase
+        .from("students")
+        .select("*", { count: 'exact', head: true })
+        .eq("center_id", centerId!)
+        .eq("grade", exam.grade)
+        .eq("is_active", true);
+
+      if (studError) throw studError;
+      if (!studentCount || studentCount === 0) throw new Error("No active students found for this grade.");
+
+      const expectedMarksCount = studentCount * subjects.length;
+
+      // 3. Get entered marks count
+      const { count: marksCount, error: marksError } = await supabase
+        .from("exam_marks")
+        .select("*", { count: 'exact', head: true })
+        .eq("exam_id", exam.id);
+
+      if (marksError) throw marksError;
+
+      if ((marksCount || 0) < expectedMarksCount) {
+        throw new Error(`Incomplete marks. Expected ${expectedMarksCount} marks (${studentCount} students × ${subjects.length} subjects), but only ${marksCount} entered.`);
+      }
+
+      const { error } = await supabase.from("exams").update({ status: "results_published" }).eq("id", exam.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["exams"] });
+      toast.success("Results published! Marksheets are now available in reports.");
+    },
+    onError: (err: any) => toast.error(err.message),
   });
 
   const addSubject = useMutation({
@@ -275,8 +323,14 @@ export default function ExamManagement() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-foreground">{exam.name}</h3>
-                      <Badge variant={exam.status === "published" ? "default" : "secondary"}>
-                        {exam.status}
+                      <Badge
+                        variant={exam.status === "results_published" ? "default" : exam.status === "published" ? "secondary" : "outline"}
+                        className={cn(
+                          exam.status === "results_published" && "bg-blue-600 hover:bg-blue-700",
+                          exam.status === "published" && "bg-background border-muted-foreground/30 text-foreground"
+                        )}
+                      >
+                        {exam.status === "results_published" ? "Results Published" : exam.status === "published" ? "Routine Published" : "Draft"}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -288,16 +342,33 @@ export default function ExamManagement() {
                     <Button variant="outline" size="sm" onClick={() => { setSelectedExamId(exam.id); setShowSubjectDialog(true); }}>
                       <BookOpen className="h-3 w-3 mr-1" /> Subjects
                     </Button>
+
                     {exam.status === "draft" && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => handleEdit(exam)}>
                           <Edit className="h-3 w-3 mr-1" /> Edit
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => publishExam.mutate(exam.id)}>
-                          <GraduationCap className="h-3 w-3 mr-1" /> Publish
+                          <ListChecks className="h-3 w-3 mr-1" /> Publish Routine
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => deleteExam.mutate(exam.id)}>
                           <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+
+                    {exam.status === "published" && (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/marks-entry?examId=${exam.id}`)}>
+                          <Edit className="h-3 w-3 mr-1" /> Enter Marks
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => publishResults.mutate(exam)}
+                          disabled={publishResults.isPending}
+                        >
+                          <GraduationCap className="h-3 w-3 mr-1" /> Publish Results
                         </Button>
                       </>
                     )}

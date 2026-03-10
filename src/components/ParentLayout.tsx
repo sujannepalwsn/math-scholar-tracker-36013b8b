@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, Home, KeyRound, LogOut, MessageSquare, Paintbrush, Settings, Star, User, Video } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, GraduationCap, Home, KeyRound, LogOut, MessageSquare, Paintbrush, Settings, Star, User, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -21,6 +21,7 @@ const navItems: Array<{
   { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
   { to: "/parent-lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-student-report", label: "Academic Report", icon: BarChart3, role: 'parent' as const, category: 'Academics' },
+  { to: "/parent-results", label: "Exam Results", icon: GraduationCap, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-homework", label: "Homework", icon: Book, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const, category: 'Academics' },

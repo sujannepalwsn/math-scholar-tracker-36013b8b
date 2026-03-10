@@ -11,17 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/ui/page-header";
-import { cn } from "@/lib/utils";
-
-function getGrade(pct: number) {
-  if (pct >= 90) return "A+";
-  if (pct >= 80) return "A";
-  if (pct >= 70) return "B+";
-  if (pct >= 60) return "B";
-  if (pct >= 50) return "C";
-  if (pct >= 40) return "D";
-  return "F";
-}
+import { cn, getGradeFormal } from "@/lib/utils";
 
 export default function MarksheetView() {
   const { user } = useAuth();
@@ -43,10 +33,33 @@ export default function MarksheetView() {
   });
 
   const { data: exams = [] } = useQuery({
-    queryKey: ["exams-all", centerId],
+    queryKey: ["exams-all-marksheet", centerId, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("exams").select("*").eq("center_id", centerId).eq("status", "published").order("created_at", { ascending: false });
+      let query = supabase.from("exams")
+        .select("*")
+        .eq("center_id", centerId)
+        .order("created_at", { ascending: false });
+
+      if (user?.role === 'parent') {
+        query = query.eq("status", "published");
+      }
+
+      if (user?.role === 'teacher' && user?.teacher_id) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
+        const assignedGrades = assignments?.map(a => a.grade) || [];
+        const { data: subjectAssignments } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
+        const subjectGrades = subjectAssignments?.map(a => a.grade) || [];
+        const allTeacherGrades = Array.from(new Set([...assignedGrades, ...subjectGrades]));
+
+        if (allTeacherGrades.length > 0) {
+          query = query.in('grade', allTeacherGrades);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -120,7 +133,7 @@ export default function MarksheetView() {
       totalObtained,
       totalFull,
       percentage,
-      grade: getGrade(percentage),
+      grade: getGradeFormal(percentage),
       passed: allPassed,
     };
   }, [marks, subjects, students, selectedStudentId]);
@@ -156,7 +169,10 @@ export default function MarksheetView() {
           <SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger>
           <SelectContent>
             {exams.map((e: any) => (
-              <SelectItem key={e.id} value={e.id}>{e.name} - Grade {e.grade}</SelectItem>
+              <SelectItem key={e.id} value={e.id}>
+                {e.name} - Grade {e.grade}
+                {e.status === 'draft' && " (Draft)"}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
