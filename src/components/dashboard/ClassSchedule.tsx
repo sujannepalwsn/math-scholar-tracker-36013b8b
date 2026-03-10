@@ -13,6 +13,8 @@ interface ClassItem {
   subject: string;
   status: "completed" | "running" | "upcoming";
   lesson_plan_id?: string;
+  isVacant?: boolean;
+  isSubstitution?: boolean;
 }
 
 interface ClassScheduleProps {
@@ -80,6 +82,12 @@ export const ClassSchedule = ({
                     <span className="text-sm font-black text-foreground/90 tracking-tight">{item.time}</span>
                     <span className="text-slate-400">•</span>
                     <span className="text-sm font-bold text-slate-700">Grade {item.grade}</span>
+                    {item.isVacant && (
+                      <Badge variant="destructive" className="h-4 px-1.5 text-[8px] font-black uppercase">Vacant</Badge>
+                    )}
+                    {item.isSubstitution && (
+                      <Badge variant="outline" className="h-4 px-1.5 text-[8px] font-black uppercase bg-indigo-50 text-indigo-600 border-indigo-200">Covered</Badge>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground font-medium">{item.teacher} · {item.subject}</p>
                 </div>
