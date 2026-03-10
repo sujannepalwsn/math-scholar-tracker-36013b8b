@@ -58,13 +58,26 @@ export default function LeaveApplications() {
 
   // Fetch leave categories
   const { data: categories = [] } = useQuery({
-    queryKey: ["leave-categories", user?.center_id],
+    queryKey: ["leave-categories", user?.center_id, user?.role],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("leave_categories")
         .select("*")
-        .eq("center_id", user?.center_id!)
         .eq("is_active", true);
+
+      if (user?.center_id) {
+        query = query.or(`center_id.is.null,center_id.eq.${user.center_id}`);
+      } else {
+        query = query.is("center_id", null);
+      }
+
+      if (isParent) {
+        query = query.in("applicable_to", ["student", "both"]);
+      } else if (isTeacher) {
+        query = query.in("applicable_to", ["teacher", "both"]);
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },

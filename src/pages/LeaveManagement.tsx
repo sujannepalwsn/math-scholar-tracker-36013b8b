@@ -19,7 +19,10 @@ import {
   Eye,
   Check,
   X,
-  FileText
+  FileText,
+  Settings,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -51,6 +54,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import LeaveCategoryManager from "@/components/LeaveCategoryManager";
 
 export default function LeaveManagement() {
   const { user } = useAuth();
@@ -60,6 +64,7 @@ export default function LeaveManagement() {
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   // Fetch all leave applications for the center
   const { data: applications = [], isLoading } = useQuery({
@@ -168,6 +173,14 @@ export default function LeaveManagement() {
             <p className="text-muted-foreground text-sm font-medium">Review and process staff and student leave requests.</p>
           </div>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => setIsCategoryOpen(true)}
+          className="rounded-2xl h-12 px-6 font-bold shadow-soft gap-2 border-2"
+        >
+          <Settings className="h-5 w-5" />
+          LEAVE CATEGORIES
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-4 items-center">
@@ -301,6 +314,26 @@ export default function LeaveManagement() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Category Management Dialog */}
+      <Dialog open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
+        <DialogContent className="sm:max-w-[600px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Manage Leave Categories</DialogTitle>
+            <DialogDescription className="font-medium">
+              Add or remove leave types that appear in the application forms.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <LeaveCategoryManager />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCategoryOpen(false)} className="rounded-xl font-bold">
+              DONE
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

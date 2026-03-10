@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ThemeSelector from "@/components/ThemeSelector";
 import * as bcrypt from 'bcryptjs';
-import { Plus, Trash2 } from "lucide-react";
 
 interface CenterTheme {
   primary: string;
@@ -22,115 +21,6 @@ interface CenterTheme {
   mutedForeground: string;
 }
 
-function LeaveCategoryManager() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [newName, setNewName] = useState("");
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["leave-categories", user?.center_id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leave_categories")
-        .select("*")
-        .eq("center_id", user?.center_id!)
-        .order("created_at");
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const addMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("leave_categories")
-        .insert({ name: newName, center_id: user?.center_id! });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leave-categories"] });
-      setNewName("");
-      toast.success("Category added");
-    }
-  });
-
-  const toggleMutation = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from("leave_categories")
-        .update({ is_active })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leave-categories"] });
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("leave_categories").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leave-categories"] });
-      toast.success("Category deleted");
-    }
-  });
-
-  return (
-    <div className="space-y-6">
-      <div className="flex gap-4">
-        <Input
-          placeholder="New category name (e.g. Medical, Casual)"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          className="max-w-xs h-11 rounded-xl"
-        />
-        <Button
-          onClick={() => addMutation.mutate()}
-          disabled={!newName || addMutation.isPending}
-          className="rounded-xl h-11 px-6 font-bold"
-        >
-          <Plus className="w-4 h-4 mr-2" /> ADD CATEGORY
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {categories.map((cat) => (
-          <div key={cat.id} className="flex items-center justify-between p-4 rounded-2xl bg-card border border-muted-foreground/10">
-            <div className="space-y-1">
-              <p className={cn("font-bold text-sm", !cat.is_active && "text-muted-foreground line-through")}>{cat.name}</p>
-              <Badge variant={cat.is_active ? "secondary" : "outline"} className="text-[9px] uppercase">
-                {cat.is_active ? "Active" : "Inactive"}
-              </Badge>
-            </div>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-lg"
-                onClick={() => toggleMutation.mutate({ id: cat.id, is_active: !cat.is_active })}
-              >
-                <Settings className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50"
-                onClick={() => {
-                  if (confirm("Delete this category?")) deleteMutation.mutate(cat.id);
-                }}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function CenterSettings() {
   const { user, logout } = useAuth();
@@ -484,22 +374,6 @@ export default function CenterSettings() {
           </CardHeader>
           <CardContent className="pt-6">
             <ThemeSelector />
-          </CardContent>
-        </Card>
-
-        {/* Leave Categories */}
-        <Card className="lg:col-span-2 border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <Settings className="h-6 w-6 text-primary" />
-              </div>
-              Leave Configuration
-            </CardTitle>
-            <CardDescription className="font-medium">Manage custom leave types for your center</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <LeaveCategoryManager />
           </CardContent>
         </Card>
 
