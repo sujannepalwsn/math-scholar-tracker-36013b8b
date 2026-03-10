@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Calendar, TrendingUp, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"

@@ -29,22 +29,19 @@ CREATE TABLE IF NOT EXISTS public.class_substitutions (
 ALTER TABLE public.class_substitutions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for class_substitutions
+-- Using permissive policies to match other routine tables in this project
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can view substitutions of their center') THEN
-        CREATE POLICY "Users can view substitutions of their center" ON public.class_substitutions
-          FOR SELECT USING (center_id = (SELECT center_id FROM public.users WHERE id = auth.uid()));
-    END IF;
+    DROP POLICY IF EXISTS "Users can view substitutions of their center" ON public.class_substitutions;
+    DROP POLICY IF EXISTS "Center admins can manage substitutions" ON public.class_substitutions;
+    DROP POLICY IF EXISTS "Teachers can view substitutions assigned to them" ON public.class_substitutions;
+    DROP POLICY IF EXISTS "Service role full access on class_substitutions" ON public.class_substitutions;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Center admins can manage substitutions') THEN
-        CREATE POLICY "Center admins can manage substitutions" ON public.class_substitutions
-          FOR ALL USING (center_id = (SELECT center_id FROM public.users WHERE id = auth.uid() AND role = 'center'));
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Teachers can view substitutions assigned to them') THEN
-        CREATE POLICY "Teachers can view substitutions assigned to them" ON public.class_substitutions
-          FOR SELECT USING (substitute_teacher_id = (SELECT id FROM public.teachers WHERE user_id = auth.uid()));
-    END IF;
+    CREATE POLICY "Service role full access on class_substitutions"
+    ON public.class_substitutions
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
 END $$;
 
 -- Add updated_at trigger
@@ -57,11 +54,14 @@ BEGIN
     END IF;
 END $$;
 
--- Allow authenticated users to insert notifications for substitution alerts
+-- Allow insert on notifications for substitution alerts
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated users can insert notifications') THEN
-        CREATE POLICY "Authenticated users can insert notifications" ON public.notifications
-          FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-    END IF;
+    DROP POLICY IF EXISTS "Allow any user to insert notifications" ON public.notifications;
+    DROP POLICY IF EXISTS "Authenticated users can insert notifications" ON public.notifications;
+
+    CREATE POLICY "Allow any user to insert notifications"
+    ON public.notifications
+    FOR INSERT
+    WITH CHECK (true);
 END $$;

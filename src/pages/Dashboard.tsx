@@ -553,12 +553,14 @@ export default function Dashboard() {
 
   const assignSubstitutionMutation = useMutation({
     mutationFn: async (teacherId: string) => {
+      if (!centerId || !selectedVacantClass) throw new Error("Missing center ID or class selection");
+
       const { error } = await supabase.from('class_substitutions').insert({
         center_id: centerId,
         period_schedule_id: selectedVacantClass.id,
         date: today,
         substitute_teacher_id: teacherId,
-        original_teacher_id: selectedVacantClass.teacher_id,
+        original_teacher_id: selectedVacantClass.teacher_id || null,
         status: 'assigned'
       });
       if (error) throw error;
