@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Award, BarChart3, Book, BookOpen, Brain, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, KeyRound, LayoutList, LogOut, MessageSquare, Paintbrush, PenTool, Settings, TrendingUp, User, Video } from "lucide-react";
+import { AlertTriangle, Award, BarChart3, Book, BookOpen, Brain, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, KeyRound, LayoutList, LogOut, MessageSquare, Paintbrush, PenTool, Plane, Settings, TrendingUp, User, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -41,6 +41,7 @@ const navItems: Array<{
   { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging', category: 'Reports and Communications' },
   { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine', category: 'Reports and Communications' },
   { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events', category: 'Reports and Communications' },
+  { to: "/teacher/leave", label: "Leave Applications", icon: Plane, role: 'teacher' as const, category: 'Reports and Communications' },
   { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
   { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access', category: 'Reports and Communications' },
 ];

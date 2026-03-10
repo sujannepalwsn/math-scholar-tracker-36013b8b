@@ -45,11 +45,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       const storedUser = localStorage.getItem('auth_user');
       if (storedUser) {
-        const parsedUser: User = JSON.parse(storedUser);
-        setUser(parsedUser);
-        // Permissions are now fetched by the Edge Function during login,
-        // but we can keep this for initial load if needed, or remove for simplicity.
-        // For now, let's assume the stored user has the latest permissions.
+        try {
+          const parsedUser: User = JSON.parse(storedUser);
+          setUser(parsedUser);
+          // Permissions are now fetched by the Edge Function during login,
+          // but we can keep this for initial load if needed, or remove for simplicity.
+          // For now, let's assume the stored user has the latest permissions.
+        } catch (e) {
+          console.error("Failed to parse auth_user from localStorage", e);
+          localStorage.removeItem('auth_user');
+        }
       }
       setLoading(false);
     };

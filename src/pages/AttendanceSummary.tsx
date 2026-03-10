@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, TrendingUp } from "lucide-react";
+import { Calendar, TrendingUp, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -7,6 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
 
 interface AttendanceStats {
@@ -116,11 +125,13 @@ export default function AttendanceSummary() {
 
   const getAttendanceStatus = (date: string, studentId: string) => {
     const record = attendanceData.find((a: any) => format(new Date(a.date), 'yyyy-MM-dd') === date && a.student_id === studentId);
-    if (!record) return 'none';
-    return record.status === 'present' ? 'present' : 'absent';
+    if (!record) return { status: 'none', remarks: null };
+    return { status: record.status, remarks: record.remarks };
   };
 
   const colors = { present: '#22c55e', absent: '#ef4444', none: '#e5e7eb' };
+
+  const [selectedDayDetail, setSelectedDayDetail] = useState<{date: string, remarks: string | null} | null>(null);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
@@ -205,23 +216,67 @@ export default function AttendanceSummary() {
               ))}
               {daysInMonth.map((date) => {
                 const dateStr = format(date, 'yyyy-MM-dd');
-                const status = getAttendanceStatus(dateStr, selectedStudent);
+                const { status, remarks } = getAttendanceStatus(dateStr, selectedStudent);
+                const isAbsentWithLeave = status === 'absent' && remarks?.includes('Approved Leave');
+
                 return (
-                  <div
-                    key={dateStr}
-                    className="aspect-square rounded-lg flex items-center justify-center text-sm font-medium"
-                    style={{
-                      backgroundColor: status === 'present' ? colors.present : status === 'absent' ? colors.absent : colors.none,
-                      color: status !== 'none' ? 'white' : 'inherit' }}
-                  >
-                    {format(date, 'd')}
-                  </div>
+                  <TooltipProvider key={dateStr}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={cn(
+                            "aspect-square rounded-lg flex items-center justify-center text-sm font-medium cursor-pointer transition-transform hover:scale-110",
+                            isAbsentWithLeave && "ring-2 ring-orange-400 ring-offset-2"
+                          )}
+                          style={{
+                            backgroundColor: status === 'present' ? colors.present : status === 'absent' ? colors.absent : colors.none,
+                            color: status !== 'none' ? 'white' : 'inherit' }}
+                          onClick={() => remarks && setSelectedDayDetail({ date: dateStr, remarks })}
+                        >
+                          {format(date, 'd')}
+                        </div>
+                      </TooltipTrigger>
+                      {remarks && (
+                        <TooltipContent className="bg-card/90 backdrop-blur-md border-muted-foreground/10 rounded-xl p-3 shadow-strong max-w-xs">
+                          <p className="text-xs font-bold leading-relaxed">{remarks}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 );
               })}
             </div>
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!selectedDayDetail} onOpenChange={(open) => !open && setSelectedDayDetail(null)}>
+        <DialogContent className="sm:max-w-[425px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Attendance Detail</DialogTitle>
+            <DialogDescription className="font-medium">
+              Information for {selectedDayDetail ? format(new Date(selectedDayDetail.date), 'MMMM d, yyyy') : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 space-y-2">
+              <div className="flex items-center gap-2 text-orange-600">
+                <Info className="h-4 w-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Recorded Remarks</span>
+              </div>
+              <p className="text-sm font-bold text-orange-900 leading-relaxed italic">
+                "{selectedDayDetail?.remarks}"
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setSelectedDayDetail(null)}
+            className="w-full h-12 rounded-xl font-black uppercase tracking-widest text-[10px]"
+          >
+            Acknowledge
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {stats.length > 0 && (
         <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">

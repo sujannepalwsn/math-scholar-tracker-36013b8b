@@ -68,6 +68,21 @@ export default function Dashboard() {
     enabled: !!centerId,
   });
 
+  const { data: pendingLeavesCount = 0 } = useQuery({
+    queryKey: ["pending-leaves-count", centerId],
+    queryFn: async () => {
+      if (!centerId) return 0;
+      const { count, error } = await supabase
+        .from("leave_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("center_id", centerId)
+        .eq("status", "pending");
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!centerId,
+  });
+
   const { data: allAttendance = [] } = useQuery({
     queryKey: ["attendance-dashboard", centerId, today],
     queryFn: async () => {
@@ -419,7 +434,15 @@ export default function Dashboard() {
       type: "info" as const,
       timestamp: h.created_at,
     })),
-  ].slice(0, 5);
+    ...(pendingLeavesCount > 0 ? [{
+      id: "pending-leaves",
+      title: `${pendingLeavesCount} Pending Leave Applications`,
+      description: "Needs center admin review",
+      type: "warning" as const,
+      timestamp: new Date().toISOString(),
+      onClick: () => navigate("/leave-management")
+    }] : []),
+  ].slice(0, 6);
 
   const isLoading = isStudentsLoading || isTeachersLoading;
 

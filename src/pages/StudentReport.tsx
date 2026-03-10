@@ -49,6 +49,7 @@ export default function StudentReport() {
   const [selectedExamResult, setSelectedExamResult] = useState<any>(null);
   const [selectedExamSchedule, setSelectedExamSchedule] = useState<any>(null);
   const [selectedPublishedExamId, setSelectedPublishedExamId] = useState<string>("none");
+  const [selectedAttendanceDetail, setSelectedAttendanceDetail] = useState<any>(null);
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -1563,9 +1564,18 @@ export default function StudentReport() {
                   </thead>
                   <tbody>
                     {attendanceData.map((record) => (
-                      <tr key={record.id}>
-                        <td className="border px-2 py-1">{safeFormatDate(record.date, "PPP")}</td>
-                        <td className="border px-2 py-1">{record.status}</td>
+                      <tr
+                        key={record.id}
+                        className={cn(record.remarks?.includes('Approved Leave') && "bg-orange-50 cursor-pointer hover:bg-orange-100")}
+                        onClick={() => record.remarks && setSelectedAttendanceDetail(record)}
+                      >
+                        <td className="border px-2 py-1">
+                          <div className="flex items-center justify-between">
+                            {safeFormatDate(record.date, "PPP")}
+                            {record.remarks?.includes('Approved Leave') && <Badge variant="outline" className="text-[8px] h-4 bg-white text-orange-600 border-orange-200">LEAVE</Badge>}
+                          </div>
+                        </td>
+                        <td className="border px-2 py-1 capitalize">{record.status}</td>
                         <td className="border px-2 py-1">{record.time_in || "-"}</td>
                         <td className="border px-2 py-1">{record.time_out || "-"}</td>
                       </tr>
@@ -2335,6 +2345,35 @@ export default function StudentReport() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Attendance Remark Dialog */}
+      <Dialog open={!!selectedAttendanceDetail} onOpenChange={(open) => !open && setSelectedAttendanceDetail(null)}>
+        <DialogContent className="sm:max-w-[425px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Attendance Detail</DialogTitle>
+            <DialogDescription className="font-medium">
+              Information for {selectedAttendanceDetail ? safeFormatDate(selectedAttendanceDetail.date, 'MMMM d, yyyy') : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 space-y-2">
+              <div className="flex items-center gap-2 text-orange-600">
+                <FileText className="h-4 w-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Recorded Remarks</span>
+              </div>
+              <p className="text-sm font-bold text-orange-900 leading-relaxed italic">
+                "{selectedAttendanceDetail?.remarks}"
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setSelectedAttendanceDetail(null)}
+            className="w-full h-12 rounded-xl font-black uppercase tracking-widest text-[10px]"
+          >
+            Close
+          </Button>
         </DialogContent>
       </Dialog>
 

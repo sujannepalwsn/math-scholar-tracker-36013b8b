@@ -65,6 +65,22 @@ export default function TakeAttendance() {
       return data as Student[];
     } });
 
+  const { data: approvedLeaves = [] } = useQuery({
+    queryKey: ["approved-leaves", dateStr, user?.center_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leave_applications")
+        .select("student_id, category_id, leave_categories(name)")
+        .eq("center_id", user?.center_id!)
+        .eq("status", "approved")
+        .lte("start_date", dateStr)
+        .gte("end_date", dateStr);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!dateStr && !!user?.center_id
+  });
+
   const { data: existingAttendance } = useQuery({
     queryKey: ["attendance", dateStr, user?.center_id, user?.id],
     queryFn: async () => {
@@ -318,6 +334,11 @@ export default function TakeAttendance() {
                           <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold">
                             Grade {student.grade}
                           </Badge>
+                          {approvedLeaves.find(l => l.student_id === student.id) && (
+                            <Badge variant="outline" className="ml-2 bg-orange-50 text-orange-600 border-orange-200 rounded-lg px-2 py-0.5 text-[10px] font-bold animate-pulse">
+                              ON APPROVED LEAVE
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <Checkbox
