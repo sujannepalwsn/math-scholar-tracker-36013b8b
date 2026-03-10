@@ -85,6 +85,22 @@ export default function TeacherAttendancePage() {
     },
     enabled: !!user?.center_id && teachers.length > 0 });
 
+  const { data: approvedLeaves = [] } = useQuery({
+    queryKey: ["teacher-approved-leaves", dateStr, user?.center_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leave_applications")
+        .select("teacher_id, leave_categories(name)")
+        .eq("center_id", user?.center_id!)
+        .eq("status", "approved")
+        .lte("start_date", dateStr)
+        .gte("end_date", dateStr);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!dateStr && !!user?.center_id
+  });
+
   // Fetch all attendance for report
   const { data: allTeacherAttendance = [] } = useQuery({
     queryKey: ["all-teacher-attendance", user?.center_id],
@@ -541,7 +557,12 @@ export default function TeacherAttendancePage() {
                               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                                 {teacher.name.substring(0, 2).toUpperCase()}
                               </div>
-                              <span className="font-bold text-foreground/90">{teacher.name}</span>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-foreground/90">{teacher.name}</span>
+                                {approvedLeaves.find(l => l.teacher_id === teacher.id) && (
+                                  <span className="text-[9px] font-black text-orange-600 uppercase tracking-tighter animate-pulse">On Approved Leave</span>
+                                )}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>

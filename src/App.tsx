@@ -76,6 +76,8 @@ import ChangePassword from "./pages/ChangePassword";
 
 import ChapterPerformanceOverview from "./pages/ChapterPerformanceOverview";
 import TeacherPerformanceReport from "./pages/TeacherPerformanceReport";
+import LeaveApplications from "./pages/LeaveApplications";
+import LeaveManagement from "./pages/LeaveManagement";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +124,7 @@ const App = () => (
               <Route path="/parent-student-report" element={<ProtectedRoute role="parent"><ParentLayout><ParentStudentReport /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-results" element={<ProtectedRoute role="parent"><ParentLayout><PublishedResults /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-calendar" element={<ProtectedRoute role="parent"><ParentLayout><CalendarEvents /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-leave" element={<ProtectedRoute role="parent"><ParentLayout><LeaveApplications /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-settings" element={<ProtectedRoute role="parent"><ParentLayout><GeneralSettings /></ParentLayout></ProtectedRoute>} />
 
               {/* Teacher */}
@@ -145,6 +148,7 @@ const App = () => (
               <Route path="/teacher-messages" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMessaging /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/class-routine" element={<ProtectedRoute role="teacher"><TeacherLayout><ClassRoutine /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/calendar" element={<ProtectedRoute role="teacher"><TeacherLayout><CalendarEvents /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/leave" element={<ProtectedRoute role="teacher"><TeacherLayout><LeaveApplications /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/settings" element={<ProtectedRoute role="teacher"><TeacherLayout><GeneralSettings /></TeacherLayout></ProtectedRoute>} />
 
               {/* Center */}
@@ -172,6 +176,7 @@ const App = () => (
               <Route path="/chapter-performance-overview" element={<ProtectedRoute role="center"><CenterLayout><ChapterPerformanceOverview /></CenterLayout></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute role="center"><CenterLayout><CenterSettings /></CenterLayout></ProtectedRoute>} />
               <Route path="/teacher-performance" element={<ProtectedRoute role="center"><CenterLayout><TeacherPerformanceReport /></CenterLayout></ProtectedRoute>} />
+              <Route path="/leave-management" element={<ProtectedRoute role="center"><CenterLayout><LeaveManagement /></CenterLayout></ProtectedRoute>} />
               <Route path="/exams" element={<ProtectedRoute role="center"><CenterLayout><ExamManagement /></CenterLayout></ProtectedRoute>} />
               <Route path="/published-results" element={<ProtectedRoute role="center"><CenterLayout><PublishedResults /></CenterLayout></ProtectedRoute>} />
               <Route path="/marks-entry" element={<ProtectedRoute role="center"><CenterLayout><MarksEntry /></CenterLayout></ProtectedRoute>} />
