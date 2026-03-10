@@ -56,3 +56,12 @@ BEGIN
         FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
     END IF;
 END $$;
+
+-- Allow authenticated users to insert notifications for substitution alerts
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated users can insert notifications') THEN
+        CREATE POLICY "Authenticated users can insert notifications" ON public.notifications
+          FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+    END IF;
+END $$;
