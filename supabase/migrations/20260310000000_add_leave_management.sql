@@ -1,6 +1,37 @@
 -- Consolidate and Refine Leave Management schema
 -- This migration handles both fresh installs and updates from partially applied states
 
+-- 0. Ensure unique constraints exist for attendance tables (needed for ON CONFLICT)
+-- First, clean up any existing duplicates to prevent migration failure
+DO $$
+BEGIN
+    -- Clean student attendance duplicates
+    DELETE FROM public.attendance a
+    WHERE a.id NOT IN (
+        SELECT id FROM (
+            SELECT id, ROW_NUMBER() OVER (PARTITION BY student_id, date ORDER BY created_at DESC) as row_num
+            FROM public.attendance
+        ) t WHERE row_num = 1
+    );
+
+    -- Clean teacher attendance duplicates
+    DELETE FROM public.teacher_attendance a
+    WHERE a.id NOT IN (
+        SELECT id FROM (
+            SELECT id, ROW_NUMBER() OVER (PARTITION BY teacher_id, date ORDER BY created_at DESC) as row_num
+            FROM public.teacher_attendance
+        ) t WHERE row_num = 1
+    );
+
+    -- Apply unique constraints if they don't exist
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_student_date') THEN
+        ALTER TABLE public.attendance ADD CONSTRAINT unique_student_date UNIQUE (student_id, date);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_teacher_date') THEN
+        ALTER TABLE public.teacher_attendance ADD CONSTRAINT unique_teacher_date UNIQUE (teacher_id, date);
+    END IF;
+END $$;
+
 -- 1. Ensure leave_categories table exists
 CREATE TABLE IF NOT EXISTS public.leave_categories (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -13,7 +44,9 @@ CREATE TABLE IF NOT EXISTS public.leave_categories (
   CONSTRAINT fk_center FOREIGN KEY (center_id) REFERENCES public.centers(id) ON DELETE CASCADE
 );
 
--- Force add columns and adjust constraints if they were created differently before
+-- Robustly ensure column constraints and missing columns
+ALTER TABLE public.leave_categories ALTER COLUMN center_id DROP NOT NULL;
+
 DO $$
 BEGIN
     -- Ensure center_id allows NULL for global categories

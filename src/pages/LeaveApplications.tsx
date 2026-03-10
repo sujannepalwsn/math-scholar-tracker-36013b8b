@@ -12,7 +12,8 @@ import {
   XCircle,
   Paperclip,
   Loader2,
-  Trash2
+  Trash2,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
