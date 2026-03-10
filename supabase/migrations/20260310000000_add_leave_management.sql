@@ -1,21 +1,76 @@
--- Create leave_categories table
-CREATE TABLE public.leave_categories (
+-- Consolidate and Refine Leave Management schema
+-- This migration handles both fresh installs and updates from partially applied states
+
+-- 0. Ensure unique constraints exist for attendance tables (needed for ON CONFLICT)
+-- First, clean up any existing duplicates to prevent migration failure
+DO $$
+BEGIN
+    -- Clean student attendance duplicates
+    DELETE FROM public.attendance a
+    WHERE a.id NOT IN (
+        SELECT id FROM (
+            SELECT id, ROW_NUMBER() OVER (PARTITION BY student_id, date ORDER BY created_at DESC) as row_num
+            FROM public.attendance
+        ) t WHERE row_num = 1
+    );
+
+    -- Clean teacher attendance duplicates
+    DELETE FROM public.teacher_attendance a
+    WHERE a.id NOT IN (
+        SELECT id FROM (
+            SELECT id, ROW_NUMBER() OVER (PARTITION BY teacher_id, date ORDER BY created_at DESC) as row_num
+            FROM public.teacher_attendance
+        ) t WHERE row_num = 1
+    );
+
+    -- Apply unique constraints if they don't exist
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_student_date') THEN
+        ALTER TABLE public.attendance ADD CONSTRAINT unique_student_date UNIQUE (student_id, date);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_teacher_date') THEN
+        ALTER TABLE public.teacher_attendance ADD CONSTRAINT unique_teacher_date UNIQUE (teacher_id, date);
+    END IF;
+END $$;
+
+-- 1. Ensure leave_categories table exists
+CREATE TABLE IF NOT EXISTS public.leave_categories (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  center_id UUID NOT NULL REFERENCES public.centers(id),
+  center_id UUID, -- Deliberately nullable for global categories
   name TEXT NOT NULL,
+  applicable_to TEXT NOT NULL DEFAULT 'both' CHECK (applicable_to IN ('student', 'teacher', 'both')),
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  CONSTRAINT fk_center FOREIGN KEY (center_id) REFERENCES public.centers(id) ON DELETE CASCADE
 );
 
--- Create leave_applications table
-CREATE TABLE public.leave_applications (
+-- Robustly ensure column constraints and missing columns
+ALTER TABLE public.leave_categories ALTER COLUMN center_id DROP NOT NULL;
+
+DO $$
+BEGIN
+    -- Ensure center_id allows NULL for global categories
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='leave_categories' AND column_name='center_id' AND is_nullable='NO') THEN
+        ALTER TABLE public.leave_categories ALTER COLUMN center_id DROP NOT NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='leave_categories' AND column_name='applicable_to') THEN
+        ALTER TABLE public.leave_categories ADD COLUMN applicable_to TEXT NOT NULL DEFAULT 'both' CHECK (applicable_to IN ('student', 'teacher', 'both'));
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='leave_categories' AND column_name='is_active') THEN
+        ALTER TABLE public.leave_categories ADD COLUMN is_active BOOLEAN DEFAULT true;
+    END IF;
+END $$;
+
+-- 2. Ensure leave_applications table exists
+CREATE TABLE IF NOT EXISTS public.leave_applications (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  center_id UUID NOT NULL REFERENCES public.centers(id),
-  user_id UUID NOT NULL REFERENCES public.users(id),
-  student_id UUID REFERENCES public.students(id),
-  teacher_id UUID REFERENCES public.teachers(id),
-  category_id UUID REFERENCES public.leave_categories(id),
+  center_id UUID NOT NULL REFERENCES public.centers(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  student_id UUID REFERENCES public.students(id) ON DELETE CASCADE,
+  teacher_id UUID REFERENCES public.teachers(id) ON DELETE CASCADE,
+  category_id UUID REFERENCES public.leave_categories(id) ON DELETE SET NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   reason TEXT,
@@ -27,32 +82,39 @@ CREATE TABLE public.leave_applications (
   CONSTRAINT date_range_check CHECK (end_date >= start_date)
 );
 
--- Enable RLS
+-- 3. Enable RLS
 ALTER TABLE public.leave_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leave_applications ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for leave_categories
-CREATE POLICY "Users can view leave categories of their center" ON public.leave_categories
-  FOR SELECT USING (center_id = (SELECT center_id FROM public.users WHERE id = auth.uid()));
+-- 4. RLS Policies for leave_categories
+DROP POLICY IF EXISTS "Users can view leave categories" ON public.leave_categories;
+CREATE POLICY "Users can view leave categories" ON public.leave_categories
+  FOR SELECT USING (center_id IS NULL OR is_same_center(center_id));
 
+DROP POLICY IF EXISTS "Center admins can manage leave categories" ON public.leave_categories;
 CREATE POLICY "Center admins can manage leave categories" ON public.leave_categories
-  FOR ALL USING (center_id = (SELECT center_id FROM public.users WHERE id = auth.uid() AND role = 'center'));
+  FOR ALL USING (is_same_center(center_id));
 
--- RLS Policies for leave_applications
+-- 5. RLS Policies for leave_applications
+DROP POLICY IF EXISTS "Users can view their own leave applications" ON public.leave_applications;
 CREATE POLICY "Users can view their own leave applications" ON public.leave_applications
-  FOR SELECT USING (user_id = auth.uid() OR center_id = (SELECT center_id FROM public.users WHERE id = auth.uid() AND role = 'center'));
+  FOR SELECT USING (user_id = auth.uid() OR is_same_center(center_id));
 
+DROP POLICY IF EXISTS "Users can submit leave applications" ON public.leave_applications;
 CREATE POLICY "Users can submit leave applications" ON public.leave_applications
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Center admins can update leave applications" ON public.leave_applications;
 CREATE POLICY "Center admins can update leave applications" ON public.leave_applications
-  FOR UPDATE USING (center_id = (SELECT center_id FROM public.users WHERE id = auth.uid() AND role = 'center'));
+  FOR UPDATE USING (is_same_center(center_id));
 
--- Add updated_at triggers
+-- 6. Add updated_at triggers
+DROP TRIGGER IF EXISTS update_leave_categories_updated_at ON public.leave_categories;
 CREATE TRIGGER update_leave_categories_updated_at BEFORE UPDATE ON public.leave_categories FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+DROP TRIGGER IF EXISTS update_leave_applications_updated_at ON public.leave_applications;
 CREATE TRIGGER update_leave_applications_updated_at BEFORE UPDATE ON public.leave_applications FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
--- Function to handle auto-attendance on leave approval
+-- 7. Function to handle auto-attendance on leave approval
 CREATE OR REPLACE FUNCTION public.handle_leave_approval()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -84,16 +146,39 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS on_leave_approval ON public.leave_applications;
 CREATE TRIGGER on_leave_approval
   AFTER UPDATE ON public.leave_applications
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_leave_approval();
 
--- Create storage bucket for leave documents
+-- 8. Create storage bucket for leave documents
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('leave-documents', 'leave-documents', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies for leave documents
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'leave-documents');
+DROP POLICY IF EXISTS "Authenticated users can upload leave documents" ON storage.objects;
 CREATE POLICY "Authenticated users can upload leave documents" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'leave-documents' AND auth.role() = 'authenticated');
+
+-- 9. Insert default global categories
+INSERT INTO public.leave_categories (name, center_id, applicable_to)
+SELECT d.name, d.center_id, d.applicable_to
+FROM (
+  VALUES
+    ('Sick Leave', NULL::UUID, 'both'),
+    ('Casual Leave', NULL::UUID, 'both'),
+    ('Vacation', NULL::UUID, 'both'),
+    ('Emergency Leave', NULL::UUID, 'both')
+) AS d(name, center_id, applicable_to)
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.leave_categories lc
+  WHERE lc.name = d.name AND lc.center_id IS NULL
+);
+
+-- 10. Policy for inserting notifications (needed for frontend alerts)
+DROP POLICY IF EXISTS "Center users can insert notifications" ON public.notifications;
+CREATE POLICY "Center users can insert notifications" ON public.notifications
+  FOR INSERT WITH CHECK (is_same_center(center_id));

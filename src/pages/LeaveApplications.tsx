@@ -12,7 +12,8 @@ import {
   XCircle,
   Paperclip,
   Loader2,
-  Trash2
+  Trash2,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -58,13 +59,26 @@ export default function LeaveApplications() {
 
   // Fetch leave categories
   const { data: categories = [] } = useQuery({
-    queryKey: ["leave-categories", user?.center_id],
+    queryKey: ["leave-categories", user?.center_id, user?.role],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("leave_categories")
         .select("*")
-        .eq("center_id", user?.center_id!)
         .eq("is_active", true);
+
+      if (user?.center_id) {
+        query = query.or(`center_id.is.null,center_id.eq.${user.center_id}`);
+      } else {
+        query = query.is("center_id", null);
+      }
+
+      if (isParent) {
+        query = query.in("applicable_to", ["student", "both"]);
+      } else if (isTeacher) {
+        query = query.in("applicable_to", ["teacher", "both"]);
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },
@@ -167,13 +181,19 @@ export default function LeaveApplications() {
 
   const createNotificationMutation = useMutation({
     mutationFn: async () => {
-      await supabase.from("notifications").insert({
-        center_id: user?.center_id!,
+      if (!user?.center_id) return;
+
+      const { error } = await supabase.from("notifications").insert({
+        center_id: user.center_id,
         title: "New Leave Application",
-        message: `${user?.username} has submitted a new leave application.`,
+        message: `${user?.username || 'A user'} has submitted a new leave application.`,
         type: "leave_request",
-        user_id: null, // Broadcast to center admins if handled by backend, or target specific admin
+        user_id: null, // Broadcast to center admins
       });
+
+      if (error) {
+        console.error("Failed to send notification:", error);
+      }
     }
   });
 
