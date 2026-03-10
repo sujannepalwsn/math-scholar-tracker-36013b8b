@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle, Save, XCircle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,27 +25,35 @@ function getGrade(percentage: number): string {
 
 export default function MarksEntry() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
 
-  const [selectedExamId, setSelectedExamId] = useState<string>("");
+  const [selectedExamId, setSelectedExamId] = useState<string>(searchParams.get("examId") || "");
   const [marksData, setMarksData] = useState<Record<string, Record<string, string>>>({});
 
   const { data: exams = [] } = useQuery({
-    queryKey: ["exams-draft", centerId],
+    queryKey: ["exams-entry-list", centerId],
     queryFn: async () => {
       if (!centerId) return [];
       const { data, error } = await supabase
         .from("exams")
         .select("*")
         .eq("center_id", centerId)
-        .eq("status", "draft")
+        .in("status", ["draft", "published"])
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
     enabled: !!centerId,
   });
+
+  useEffect(() => {
+    const examId = searchParams.get("examId");
+    if (examId) {
+      setSelectedExamId(examId);
+    }
+  }, [searchParams]);
 
   const selectedExam = exams.find((e: any) => e.id === selectedExamId);
 
@@ -186,12 +195,15 @@ export default function MarksEntry() {
         <CardContent className="p-4">
           <Select value={selectedExamId} onValueChange={setSelectedExamId}>
             <SelectTrigger>
-              <SelectValue placeholder="Select an exam (draft only)" />
+              <SelectValue placeholder="Select an exam" />
             </SelectTrigger>
             <SelectContent>
               {exams.map((exam: any) => (
                 <SelectItem key={exam.id} value={exam.id}>
                   {exam.name} - Grade {exam.grade} ({exam.academic_year})
+                  <span className="ml-2 text-[10px] uppercase text-muted-foreground">
+                    ({exam.status === 'published' ? 'Routine Published' : 'Draft'})
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>

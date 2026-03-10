@@ -48,6 +48,7 @@ export default function StudentReport() {
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformance | null>(null);
   const [selectedExamResult, setSelectedExamResult] = useState<any>(null);
   const [selectedExamSchedule, setSelectedExamSchedule] = useState<any>(null);
+  const [selectedPublishedExamId, setSelectedPublishedExamId] = useState<string>("none");
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -296,9 +297,9 @@ export default function StudentReport() {
         .gte("exam_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("exam_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
-      // Parents only see published exams
+      // Parents only see published routines or results
       if (user?.role === 'parent') {
-        query = query.eq("status", "published");
+        query = query.in("status", ["published", "results_published"]);
       }
 
       const { data: exams, error: examsError } = await query;
@@ -1299,7 +1300,7 @@ export default function StudentReport() {
 
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Student</label>
-          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+          <Select value={selectedStudentId} onValueChange={(val) => { setSelectedStudentId(val); setSelectedPublishedExamId("none"); }}>
             <SelectTrigger className="w-[220px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
               <SelectValue placeholder="Select Student" />
             </SelectTrigger>
@@ -1313,6 +1314,26 @@ export default function StudentReport() {
             </SelectContent>
           </Select>
         </div>
+
+        {selectedStudentId !== "none" && (
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Published Result</label>
+            <Select value={selectedPublishedExamId} onValueChange={setSelectedPublishedExamId}>
+              <SelectTrigger className="w-[200px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                <SelectValue placeholder="Pick a Result" />
+              </SelectTrigger>
+              <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
+                <SelectItem value="none">No Result Selected</SelectItem>
+                {studentExams
+                  .filter(e => e.status === 'results_published')
+                  .map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  ))
+                }
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       </Card>
       </div>
@@ -1367,6 +1388,92 @@ export default function StudentReport() {
       ) : (
         <div className="space-y-8">
           <SummaryDashboard />
+
+          {selectedPublishedExamId !== "none" && studentExams.find(e => e.id === selectedPublishedExamId) && (
+            <Card className="border-none shadow-strong overflow-hidden rounded-3xl animate-in fade-in slide-in-from-top-4 duration-500">
+              <CardHeader className="bg-primary/5 border-b flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <GraduationCap className="h-6 w-6 text-primary" />
+                    Published Result: {studentExams.find(e => e.id === selectedPublishedExamId)?.name}
+                  </CardTitle>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedPublishedExamId("none")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <XCircle className="h-4 w-4 mr-1" /> Clear Filter
+                </Button>
+              </CardHeader>
+              <CardContent className="p-8">
+                {(() => {
+                  const exam = studentExams.find(e => e.id === selectedPublishedExamId);
+                  return (
+                    <div className="space-y-8">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-muted/30 p-6 rounded-2xl border">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Marks</p>
+                          <p className="text-xl font-black">{exam.totalObtained}/{exam.totalFull}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Percentage</p>
+                          <p className="text-xl font-black text-primary">{exam.percentage.toFixed(1)}%</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Grade</p>
+                          <p className="text-xl font-black">{getGradeFormal(exam.percentage)}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Status</p>
+                          <Badge variant={exam.allPassed ? "success" : "destructive"} className="font-black uppercase">
+                            {exam.allPassed ? "PASSED" : "FAILED"}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-muted/50 border-b">
+                            <tr>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Subject</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Full Marks</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Obtained</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Result</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {exam.results.map((res: any) => (
+                              <tr key={res.id}>
+                                <td className="px-6 py-4 font-semibold">{res.subject_name}</td>
+                                <td className="px-6 py-4 text-center">{res.full_marks}</td>
+                                <td className="px-6 py-4 text-center font-black text-primary">{res.obtained}</td>
+                                <td className="px-6 py-4 text-center">
+                                  <Badge variant={res.passed ? "success" : "destructive"} className="text-[9px] uppercase font-bold">
+                                    {res.passed ? "Pass" : "Fail"}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={() => setSelectedExamResult(exam)}
+                          className="rounded-xl shadow-soft"
+                        >
+                          <Printer className="h-4 w-4 mr-2" /> View & Print Full Marksheet
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
 
           {reportLevel === "student" && selectedStudent && (
             <div id="printable-report" className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">

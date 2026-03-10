@@ -42,7 +42,7 @@ export default function PublishedResults() {
         .order("created_at", { ascending: false });
 
       if (user?.role === 'parent') {
-        query = query.eq("status", "published");
+        query = query.in("status", ["published", "results_published"]);
       }
 
       if (user?.role === 'teacher' && user?.teacher_id) {
@@ -65,8 +65,10 @@ export default function PublishedResults() {
       }
 
       if (user?.role === 'parent' && user?.linked_students) {
-        const parentGrades = Array.from(new Set(user.linked_students.map((s: any) => s.grade).filter(Boolean)));
-        query = query.in('grade', parentGrades);
+        const parentGrades = Array.from(new Set(user.linked_students.map((s: any) => typeof s === 'string' ? null : s.grade).filter(Boolean)));
+        if (parentGrades.length > 0) {
+          query = query.in('grade', parentGrades);
+        }
       }
 
       const { data, error } = await query;
@@ -114,7 +116,8 @@ export default function PublishedResults() {
       }
 
       if (user?.role === 'parent' && user?.linked_students) {
-        query = query.in('id', user.linked_students.map((s: any) => s.id));
+        const studentIds = user.linked_students.map((s: any) => typeof s === 'string' ? s : s.id);
+        query = query.in('id', studentIds);
       }
 
       const { data, error } = await query.order("name");
@@ -262,6 +265,7 @@ export default function PublishedResults() {
                     <SelectItem key={e.id} value={e.id}>
                       {e.name} - Grade {e.grade}
                       {e.status === 'draft' && " (Draft)"}
+                      {e.status === 'results_published' && " (Results)"}
                     </SelectItem>
                   ))}
                 </SelectContent>
