@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
 import { Invoice, Payment } from "@/integrations/supabase/finance-types"
-import { formatCurrency, safeFormatDate } from "@/lib/utils" // Import safeFormatDate, formatCurrency
+import { formatCurrency, safeFormatDate, getGradeFormal } from "@/lib/utils" // Import safeFormatDate, formatCurrency, getGradeFormal
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -48,6 +48,7 @@ export default function ParentStudentReport() {
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformance | null>(null);
   const [selectedExamResult, setSelectedExamResult] = useState<any>(null);
+  const [selectedExamSchedule, setSelectedExamSchedule] = useState<any>(null);
 
   // Students for parent are already in user context, but let's fetch to be safe/consistent
   const { data: students = [] } = useQuery({
@@ -254,9 +255,9 @@ export default function ParentStudentReport() {
     },
     enabled: !!user?.center_id });
 
-  // Fetch Published Exam Results
-  const { data: publishedExams = [] } = useQuery({
-    queryKey: ["published-exams-report", selectedStudentId, user?.center_id],
+  // Fetch Exam Schedules & Results
+  const { data: studentExams = [] } = useQuery({
+    queryKey: ["student-exams-report", selectedStudentId, user?.center_id, students, dateRange],
     queryFn: async () => {
       if (!user?.center_id || !selectedStudentId || selectedStudentId === "none") return [];
 
@@ -268,7 +269,9 @@ export default function ParentStudentReport() {
         .select("*")
         .eq("center_id", user.center_id)
         .eq("grade", student.grade)
-        .eq("status", "published");
+        .eq("status", "published") // Parents only see published exams
+        .gte("exam_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
+        .lte("exam_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
       if (examsError) throw examsError;
       if (!exams || exams.length === 0) return [];
@@ -301,13 +304,27 @@ export default function ParentStudentReport() {
 
         const results = examSubjects.map(subj => {
           const mark = examMarks.find(m => m.exam_subject_id === subj.id);
-          const obtained = mark?.marks_obtained || 0;
-          totalObtained += obtained;
-          totalFull += subj.full_marks;
-          if (obtained < subj.pass_marks) allPassed = false;
-          return { ...subj, obtained, passed: obtained >= subj.pass_marks };
+          const hasMark = mark !== undefined && mark !== null && mark.marks_obtained !== null;
+          const obtained = hasMark ? mark!.marks_obtained : null;
+
+          if (hasMark) {
+            totalObtained += (obtained || 0);
+            totalFull += subj.full_marks;
+            if ((obtained || 0) < subj.pass_marks) allPassed = false;
+          } else {
+            allPassed = false;
+          }
+
+          return {
+            ...subj,
+            obtained,
+            passed: hasMark ? (obtained || 0) >= subj.pass_marks : false,
+            hasMark
+          };
         });
 
+        const marksCount = results.filter(r => r.hasMark).length;
+        const isPartial = marksCount > 0 && marksCount < examSubjects.length;
         const percentage = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
 
         return {
@@ -317,10 +334,11 @@ export default function ParentStudentReport() {
           percentage,
           allPassed,
           hasMarks,
+          isPartial,
           results,
           student
         };
-      }).filter(e => e.hasMarks);
+      });
     },
     enabled: !!user?.center_id && selectedStudentId !== "none"
   });
@@ -410,12 +428,26 @@ export default function ParentStudentReport() {
       ? Math.round((ratedEvaluations / totalEvaluations) * 100)
       : 0;
 
-    // 5. Average Test Performance
+    // 5. Average Test & Exam Performance
     const totalTestResults = testResults.length;
     const totalMarksObtained = testResults.reduce((sum, r) => sum + (r.marks_obtained || 0), 0);
     const totalMaxMarks = testResults.reduce((sum, r) => sum + (r.tests?.total_marks || 0), 0);
-    const testPerformance = totalMaxMarks > 0
-      ? Math.round((totalMarksObtained / totalMaxMarks) * 100)
+
+    // Add Exam Marks
+    let examObtained = 0;
+    let examFull = 0;
+    studentExams.forEach(e => {
+      if (e.hasMarks) {
+        examObtained += e.totalObtained;
+        examFull += e.totalFull;
+      }
+    });
+
+    const combinedObtained = totalMarksObtained + examObtained;
+    const combinedFull = totalMaxMarks + examFull;
+
+    const testPerformance = combinedFull > 0
+      ? Math.round((combinedObtained / combinedFull) * 100)
       : 0;
 
     // 6. Total Discipline Records
@@ -450,6 +482,8 @@ export default function ParentStudentReport() {
 
   const subjectPerformance = useMemo(() => {
     const subjectsMap = new Map<string, { total: number; count: number }>();
+
+    // Process Tests
     testResults.forEach((tr: any) => {
       const subject = tr.tests?.subject;
       if (subject) {
@@ -460,11 +494,26 @@ export default function ParentStudentReport() {
         entry.count += 1;
       }
     });
+
+    // Process Exams
+    studentExams.forEach((exam: any) => {
+      if (exam.hasMarks) {
+        exam.results.forEach((res: any) => {
+          const subject = res.subject_name;
+          if (!subjectsMap.has(subject)) subjectsMap.set(subject, { total: 0, count: 0 });
+          const pct = (res.obtained / (res.full_marks || 1)) * 100;
+          const entry = subjectsMap.get(subject)!;
+          entry.total += pct;
+          entry.count += 1;
+        });
+      }
+    });
+
     return Array.from(subjectsMap.entries()).map(([name, { total, count }]) => ({
       name,
       percentage: Math.round(total / count)
     })).sort((a, b) => b.percentage - a.percentage);
-  }, [testResults]);
+  }, [testResults, studentExams]);
 
   const subjects = Array.from(new Set([
     ...allLessonPlans.map(lp => lp.subject).filter(Boolean),
@@ -1460,19 +1509,19 @@ export default function ParentStudentReport() {
             </CardContent>
           </Card>
 
-          {/* Published Results Section */}
+          {/* Exam Schedules & Results Section */}
           <Card id="published-results-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
             <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <GraduationCap className="h-6 w-6 text-primary" />
                 </div>
-                Published Exam Results
+                Exam Schedules & Results
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {publishedExams.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground italic">No published exam results found for this student.</div>
+              {studentExams.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground italic">No exam records found for this student.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -1480,6 +1529,7 @@ export default function ParentStudentReport() {
                       <tr>
                         <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Exam Name</th>
                         <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Date</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Status</th>
                         <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Total Marks</th>
                         <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Percentage</th>
                         <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Grade</th>
@@ -1487,30 +1537,59 @@ export default function ParentStudentReport() {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {publishedExams.map((result: any) => (
-                        <tr key={result.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-6 py-4 font-semibold">{result.name}</td>
-                          <td className="px-6 py-4">{safeFormatDate(result.exam_date, "PPP")}</td>
-                          <td className="px-6 py-4 font-medium">{result.totalObtained}/{result.totalFull}</td>
+                      {studentExams.map((exam: any) => (
+                        <tr key={exam.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4 font-semibold">{exam.name}</td>
+                          <td className="px-6 py-4">{safeFormatDate(exam.exam_date, "PPP")}</td>
+                          <td className="px-6 py-4">
+                            {exam.hasMarks ? (
+                              exam.isPartial ? (
+                                <Badge variant="warning" className="text-[10px] uppercase font-black">Partial Result</Badge>
+                              ) : (
+                                <Badge variant="success" className="text-[10px] uppercase font-black">Result Ready</Badge>
+                              )
+                            ) : (
+                              <Badge variant="secondary" className="text-[10px] uppercase font-bold">Scheduled</Badge>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 font-medium">
+                            {exam.hasMarks ? `${exam.totalObtained}/${exam.totalFull}` : "-"}
+                          </td>
                           <td className="px-6 py-4 font-bold">
-                            <span className={cn(result.percentage >= 75 ? "text-green-600" : result.percentage >= 50 ? "text-orange-600" : "text-red-600")}>
-                              {result.percentage.toFixed(1)}%
-                            </span>
+                            {exam.hasMarks ? (
+                              <span className={cn(exam.percentage >= 75 ? "text-green-600" : exam.percentage >= 50 ? "text-orange-600" : "text-red-600")}>
+                                {exam.percentage.toFixed(1)}%
+                              </span>
+                            ) : "-"}
                           </td>
                           <td className="px-6 py-4">
-                            <Badge variant="outline" className="font-bold">
-                              {getGradeFormal(result.percentage)}
-                            </Badge>
+                            {exam.hasMarks ? (
+                              <Badge variant="outline" className="font-bold">
+                                {getGradeFormal(exam.percentage)}
+                              </Badge>
+                            ) : "-"}
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
-                              onClick={() => setSelectedExamResult(result)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            {exam.hasMarks && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
+                                onClick={() => setSelectedExamResult(exam)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {!exam.hasMarks && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                onClick={() => setSelectedExamSchedule(exam)}
+                              >
+                                <Calendar className="h-4 w-4" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1801,6 +1880,59 @@ export default function ParentStudentReport() {
         </div>
       )}
 
+      {/* Exam Schedule Dialog */}
+      <Dialog open={!!selectedExamSchedule} onOpenChange={() => setSelectedExamSchedule(null)}>
+        <DialogContent className="max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Exam Schedule
+            </DialogTitle>
+            <DialogDescription>Examination details and subject-wise schedule.</DialogDescription>
+          </DialogHeader>
+
+          {selectedExamSchedule && (
+            <div className="space-y-6 py-4">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Examination</p>
+                <p className="text-lg font-bold text-primary">{selectedExamSchedule.name}</p>
+                <p className="text-sm font-medium text-muted-foreground">Grade {selectedExamSchedule.grade} • {selectedExamSchedule.academic_year}</p>
+              </div>
+
+              <div className="bg-muted/30 p-4 rounded-2xl border space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold">Base Exam Date</span>
+                  <span className="text-sm font-semibold">{safeFormatDate(selectedExamSchedule.exam_date, "PPP")}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold">Total Subjects</span>
+                  <span className="text-sm font-semibold">{selectedExamSchedule.results.length}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Included Subjects</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {selectedExamSchedule.results.map((subj: any) => (
+                    <div key={subj.id} className="flex justify-between items-center p-3 bg-white border rounded-xl shadow-sm">
+                      <span className="font-bold text-sm text-foreground/80">{subj.subject_name}</span>
+                      <div className="flex gap-4 text-[10px] font-bold uppercase tracking-tighter">
+                        <span className="text-muted-foreground">Full: {subj.full_marks}</span>
+                        <span className="text-muted-foreground">Pass: {subj.pass_marks}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button variant="outline" className="rounded-xl" onClick={() => setSelectedExamSchedule(null)}>Close Schedule</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Published Result Marksheet Dialog */}
       <Dialog open={!!selectedExamResult} onOpenChange={() => setSelectedExamResult(null)}>
         <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
@@ -1853,11 +1985,17 @@ export default function ParentStudentReport() {
                         <TableCell className="font-semibold">{subj.subject_name}</TableCell>
                         <TableCell className="text-center font-medium">{subj.full_marks}</TableCell>
                         <TableCell className="text-center font-medium">{subj.pass_marks}</TableCell>
-                        <TableCell className="text-center font-black text-primary">{subj.obtained}</TableCell>
+                        <TableCell className="text-center font-black text-primary">
+                          {subj.obtained !== undefined && subj.obtained !== null ? subj.obtained : "-"}
+                        </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={subj.passed ? "success" : "destructive"} className="font-black uppercase text-[9px]">
-                            {subj.passed ? "Pass" : "Fail"}
-                          </Badge>
+                          {subj.obtained !== undefined && subj.obtained !== null ? (
+                            <Badge variant={subj.passed ? "success" : "destructive"} className="font-black uppercase text-[9px]">
+                              {subj.passed ? "Pass" : "Fail"}
+                            </Badge>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground italic">Pending</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

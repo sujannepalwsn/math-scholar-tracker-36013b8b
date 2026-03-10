@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Download, Eye, GraduationCap, Printer, Search, BarChart3 } from "lucide-react";
+import { Download, Eye, GraduationCap, Printer, Search, BarChart3, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,26 +13,37 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { PageHeader } from "@/components/ui/page-header";
 import { cn, safeFormatDate, getGradeFormal } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { subYears, endOfMonth } from "date-fns";
 
 export default function PublishedResults() {
   const { user } = useAuth();
   const centerId = user?.center_id;
 
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+    from: subYears(new Date(), 1),
+    to: endOfMonth(new Date())
+  });
   const [selectedExamId, setSelectedExamId] = useState<string>("");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudentResult, setSelectedStudentResult] = useState<any>(null);
+  const [selectedExamSchedule, setSelectedExamSchedule] = useState<any>(null);
 
-  // Fetch Published Exams
+  // Fetch Exams (Published for parents, All for staff)
   const { data: exams = [] } = useQuery({
-    queryKey: ["published-exams", centerId, user?.role, user?.teacher_id],
+    queryKey: ["exams-list-results", centerId, user?.role, user?.teacher_id, dateRange],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase.from("exams")
         .select("*")
         .eq("center_id", centerId)
-        .eq("status", "published")
+        .gte("exam_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
+        .lte("exam_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"))
         .order("created_at", { ascending: false });
+
+      if (user?.role === 'parent') {
+        query = query.eq("status", "published");
+      }
 
       if (user?.role === 'teacher' && user?.teacher_id) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
@@ -125,11 +136,14 @@ export default function PublishedResults() {
     enabled: !!selectedExamId
   });
 
+  const filteredExams = useMemo(() => {
+    return exams.filter(e => gradeFilter === "all" || e.grade === gradeFilter);
+  }, [exams, gradeFilter]);
+
   const studentResults = useMemo(() => {
     if (!selectedExamId || subjects.length === 0) return [];
 
     return students
-      .filter(s => gradeFilter === "all" || s.grade === gradeFilter)
       .filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.roll_number || "").toLowerCase().includes(searchQuery.toLowerCase())
@@ -210,22 +224,45 @@ export default function PublishedResults() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Published Results"
-        description="View and manage formal examination outcomes"
+        title={user?.role === 'parent' ? "Exam Results" : "Exam Schedules & Results"}
+        description={user?.role === 'parent' ? "View your child's formal examination outcomes" : "View and manage formal examination schedules and outcomes"}
       />
 
       <Card className="border-none shadow-soft bg-card/60 backdrop-blur-md">
         <CardContent className="p-6">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">From</label>
+              <Input
+                type="date"
+                className="w-[150px] bg-white/50"
+                value={safeFormatDate(dateRange.from, "yyyy-MM-dd")}
+                onChange={(e) => setDateRange(prev => ({ ...prev, from: new Date(e.target.value) }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">To</label>
+              <Input
+                type="date"
+                className="w-[150px] bg-white/50"
+                value={safeFormatDate(dateRange.to, "yyyy-MM-dd")}
+                onChange={(e) => setDateRange(prev => ({ ...prev, to: new Date(e.target.value) }))}
+              />
+            </div>
+
+            <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Exam</label>
               <Select value={selectedExamId} onValueChange={setSelectedExamId}>
                 <SelectTrigger className="w-[250px] bg-white/50">
-                  <SelectValue placeholder="Select a published exam" />
+                  <SelectValue placeholder="Select an exam" />
                 </SelectTrigger>
                 <SelectContent>
-                  {exams.map((e: any) => (
-                    <SelectItem key={e.id} value={e.id}>{e.name} - Grade {e.grade}</SelectItem>
+                  {filteredExams.map((e: any) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name} - Grade {e.grade}
+                      {e.status === 'draft' && " (Draft)"}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -260,6 +297,19 @@ export default function PublishedResults() {
                 />
               </div>
             </div>
+
+            {selectedExamId && (
+              <Button
+                variant="outline"
+                className="h-11 rounded-xl bg-primary/5 border-primary/20 text-primary font-bold"
+                onClick={() => setSelectedExamSchedule({
+                  ...selectedExam,
+                  results: subjects // Mocking result structure for schedule modal
+                })}
+              >
+                <Calendar className="mr-2 h-4 w-4" /> View Schedule
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -310,7 +360,7 @@ export default function PublishedResults() {
                             {result.allPassed ? "Pass" : "Fail"}
                           </Badge>
                         ) : (
-                          <span className="text-[10px] text-muted-foreground italic">Pending</span>
+                          <Badge variant="secondary" className="text-[10px] uppercase font-bold">Scheduled</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right px-6">
@@ -337,6 +387,59 @@ export default function PublishedResults() {
           <p className="text-muted-foreground font-medium">Please select an exam to view published results.</p>
         </div>
       )}
+
+      {/* Exam Schedule Dialog */}
+      <Dialog open={!!selectedExamSchedule} onOpenChange={() => setSelectedExamSchedule(null)}>
+        <DialogContent className="max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Exam Schedule
+            </DialogTitle>
+            <DialogDescription>Examination details and subject-wise schedule.</DialogDescription>
+          </DialogHeader>
+
+          {selectedExamSchedule && (
+            <div className="space-y-6 py-4">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Examination</p>
+                <p className="text-lg font-bold text-primary">{selectedExamSchedule.name}</p>
+                <p className="text-sm font-medium text-muted-foreground">Grade {selectedExamSchedule.grade} • {selectedExamSchedule.academic_year}</p>
+              </div>
+
+              <div className="bg-muted/30 p-4 rounded-2xl border space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold">Base Exam Date</span>
+                  <span className="text-sm font-semibold">{safeFormatDate(selectedExamSchedule.exam_date, "PPP")}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold">Total Subjects</span>
+                  <span className="text-sm font-semibold">{selectedExamSchedule.results.length}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Included Subjects</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {selectedExamSchedule.results.map((subj: any) => (
+                    <div key={subj.id} className="flex justify-between items-center p-3 bg-white border rounded-xl shadow-sm">
+                      <span className="font-bold text-sm text-foreground/80">{subj.subject_name}</span>
+                      <div className="flex gap-4 text-[10px] font-bold uppercase tracking-tighter">
+                        <span className="text-muted-foreground">Full: {subj.full_marks}</span>
+                        <span className="text-muted-foreground">Pass: {subj.pass_marks}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button variant="outline" className="rounded-xl" onClick={() => setSelectedExamSchedule(null)}>Close Schedule</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Marksheet Modal */}
       <Dialog open={!!selectedStudentResult} onOpenChange={() => setSelectedStudentResult(null)}>
