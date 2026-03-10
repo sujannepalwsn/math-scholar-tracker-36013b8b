@@ -30,7 +30,10 @@ export default function LeaveCategoryManager() {
         .from("leave_categories")
         .select("*");
 
-      if (user?.center_id) {
+      if (user?.role === 'admin') {
+        // Superadmin sees only global ones (or all if we want)
+        query = query.is("center_id", null);
+      } else if (user?.center_id) {
         query = query.or(`center_id.is.null,center_id.eq.${user.center_id}`);
       } else {
         query = query.is("center_id", null);
