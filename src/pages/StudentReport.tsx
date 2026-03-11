@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -435,13 +436,37 @@ export default function StudentReport() {
     return "school";
   }, [selectedStudentId, gradeFilter, subjectFilter]);
 
+  const { data: schoolDaysInRange = [] } = useQuery({
+    queryKey: ["school-days-in-range", user?.center_id, dateRange],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase
+        .from("school_days")
+        .select("date")
+        .eq("center_id", user.center_id)
+        .eq("is_school_day", true)
+        .gte("date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
+        .lte("date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id
+  });
+
   const dashboardStats = useMemo(() => {
     // 1. Total Students
     const totalStudents = reportLevel === "student" ? 1 : filteredStudents.length;
 
     // 2. Average Attendance %
-    const totalAttendanceDays = attendanceData.length;
-    const presentAttendanceDays = attendanceData.filter(a => a.status === "present").length;
+    // Calculate based on school days in range
+    const schoolDayDates = new Set(schoolDaysInRange.map(sd => sd.date));
+    const totalAttendanceDays = reportLevel === "student"
+      ? schoolDayDates.size
+      : schoolDayDates.size * filteredStudents.length;
+
+    const relevantAttendance = attendanceData.filter(a => schoolDayDates.has(a.date));
+    const presentAttendanceDays = relevantAttendance.filter(a => a.status === "present").length;
+
     const attendancePercentage = totalAttendanceDays > 0
       ? Math.round((presentAttendanceDays / totalAttendanceDays) * 100)
       : 0;
@@ -632,6 +657,20 @@ export default function StudentReport() {
     );
   }, [studentChapters, testResults, homeworkStatus, allLessonPlans]);
 
+  const { data: periodSchedules = [] } = useQuery({
+    queryKey: ["period-schedules-report", user?.center_id, selectedStudent?.grade],
+    queryFn: async () => {
+      if (!user?.center_id || !selectedStudent?.grade) return [];
+      const { data, error } = await supabase
+        .from("period_schedules")
+        .select("*, class_periods(start_time, end_time)")
+        .eq("center_id", user.center_id)
+        .eq("grade", selectedStudent.grade);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id && !!selectedStudent?.grade });
+
   // NEW: Calculate Missed Chapters
   const missedChapters = useMemo(() => {
     if (!selectedStudent || !selectedStudent.grade) return [];
@@ -639,13 +678,44 @@ export default function StudentReport() {
 
     const completedLessonPlanIds = new Set(studentChapters.map(sc => sc.lesson_plan_id));
 
-    return allLessonPlans.filter(lp => 
-      lp.grade === studentGrade && // Filter by student's grade
-      !completedLessonPlanIds.has(lp.id) &&
-      new Date(lp.lesson_date) >= dateRange.from &&
-      new Date(lp.lesson_date) <= dateRange.to
-    ).sort((a, b) => new Date(b.lesson_date).getTime() - new Date(a.lesson_date).getTime());
-  }, [selectedStudent, studentChapters, allLessonPlans, dateRange]);
+    return allLessonPlans.filter(lp => {
+      const isGradeMatch = lp.grade === studentGrade;
+      const isNotCompleted = !completedLessonPlanIds.has(lp.id);
+      const isWithinRange = new Date(lp.lesson_date) >= dateRange.from && new Date(lp.lesson_date) <= dateRange.to;
+
+      if (!isGradeMatch || !isNotCompleted || !isWithinRange) return false;
+
+      // Logic for "Missed due to Absence or Lateness"
+      const dateStr = lp.lesson_date;
+      const attendance = attendanceData.find(a => a.date === dateStr);
+
+      // 1. Completely absent
+      if (!attendance || attendance.status === 'absent') return true;
+
+      // 2. Late arrival (missed the period)
+      if (attendance.status === 'present' && attendance.time_in) {
+        // Find which periods match this lesson plan's subject and grade on this day
+        const dayOfWeek = new Date(dateStr).getDay();
+        const relevantSchedules = periodSchedules.filter(ps =>
+          ps.day_of_week === dayOfWeek &&
+          ps.subject === lp.subject
+        );
+
+        if (relevantSchedules.length > 0) {
+          // If student arrived AFTER the period ended, they missed it.
+          // Using the latest period for that subject on that day as criteria.
+          const latestPeriodEnd = relevantSchedules.reduce((latest, current) => {
+            const currentEnd = current.class_periods?.end_time || "00:00";
+            return currentEnd > latest ? currentEnd : latest;
+          }, "00:00");
+
+          if (attendance.time_in > latestPeriodEnd) return true;
+        }
+      }
+
+      return false;
+    }).sort((a, b) => new Date(b.lesson_date).getTime() - new Date(a.lesson_date).getTime());
+  }, [selectedStudent, studentChapters, allLessonPlans, dateRange, attendanceData, periodSchedules]);
 
   // Overdue Homework - based on student_homework_records
   const overdueHomeworks = useMemo(() => {
@@ -1316,6 +1386,25 @@ export default function StudentReport() {
           </Select>
         </div>
 
+        {selectedStudentId !== "none" && (
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Published Result</label>
+            <Select value={selectedPublishedExamId} onValueChange={setSelectedPublishedExamId}>
+              <SelectTrigger className="w-[200px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                <SelectValue placeholder="Pick a Result" />
+              </SelectTrigger>
+              <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
+                <SelectItem value="none">No Result Selected</SelectItem>
+                {studentExams
+                  .filter(e => e.status === 'results_published')
+                  .map((e) => (
+                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  ))
+                }
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       </Card>
       </div>
@@ -1370,6 +1459,92 @@ export default function StudentReport() {
       ) : (
         <div className="space-y-8">
           <SummaryDashboard />
+
+          {selectedPublishedExamId !== "none" && studentExams.find(e => e.id === selectedPublishedExamId) && (
+            <Card className="border-none shadow-strong overflow-hidden rounded-3xl animate-in fade-in slide-in-from-top-4 duration-500">
+              <CardHeader className="bg-primary/5 border-b flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <GraduationCap className="h-6 w-6 text-primary" />
+                    Published Result: {studentExams.find(e => e.id === selectedPublishedExamId)?.name}
+                  </CardTitle>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedPublishedExamId("none")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <XCircle className="h-4 w-4 mr-1" /> Clear Filter
+                </Button>
+              </CardHeader>
+              <CardContent className="p-8">
+                {(() => {
+                  const exam = studentExams.find(e => e.id === selectedPublishedExamId);
+                  return (
+                    <div className="space-y-8">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-muted/30 p-6 rounded-2xl border">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Marks</p>
+                          <p className="text-xl font-black">{exam.totalObtained}/{exam.totalFull}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Percentage</p>
+                          <p className="text-xl font-black text-primary">{exam.percentage.toFixed(1)}%</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Grade</p>
+                          <p className="text-xl font-black">{getGradeFormal(exam.percentage)}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Status</p>
+                          <Badge variant={exam.allPassed ? "success" : "destructive"} className="font-black uppercase">
+                            {exam.allPassed ? "PASSED" : "FAILED"}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-muted/50 border-b">
+                            <tr>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Subject</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Full Marks</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Obtained</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Result</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {exam.results.map((res: any) => (
+                              <tr key={res.id}>
+                                <td className="px-6 py-4 font-semibold">{res.subject_name}</td>
+                                <td className="px-6 py-4 text-center">{res.full_marks}</td>
+                                <td className="px-6 py-4 text-center font-black text-primary">{res.obtained}</td>
+                                <td className="px-6 py-4 text-center">
+                                  <Badge variant={res.passed ? "success" : "destructive"} className="text-[9px] uppercase font-bold">
+                                    {res.passed ? "Pass" : "Fail"}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={() => setSelectedExamResult(exam)}
+                          className="rounded-xl shadow-soft"
+                        >
+                          <Printer className="h-4 w-4 mr-2" /> View & Print Full Marksheet
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
 
           {reportLevel === "student" && selectedStudent && (
             <div id="printable-report" className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">
@@ -1566,180 +1741,92 @@ export default function StudentReport() {
           </Card>
 
           {/* Exam Schedules & Results Section */}
-          <Card id="published-results-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
+          <Card id="published-results-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
             <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <GraduationCap className="h-6 w-6 text-primary" />
-                  </div>
-                  Formal Assessment Records
-                </CardTitle>
-                <div className="flex items-center gap-3 bg-card/60 p-1.5 rounded-xl border border-border/40 shadow-soft">
-                  <span className="text-[10px] font-black text-muted-foreground uppercase ml-2">Filter Result:</span>
-                  <Select value={selectedPublishedExamId} onValueChange={setSelectedPublishedExamId}>
-                    <SelectTrigger className="w-[180px] h-8 bg-transparent border-none focus:ring-0 text-[11px] font-bold">
-                      <SelectValue placeholder="All Published Exams" />
-                    </SelectTrigger>
-                    <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-                      <SelectItem value="none">Show All History</SelectItem>
-                      {studentExams
-                        .filter(e => e.status === 'results_published')
-                        .map((e) => (
-                          <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                        ))
-                      }
-                    </SelectContent>
-                  </Select>
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <GraduationCap className="h-6 w-6 text-primary" />
                 </div>
-              </div>
+                Exam Schedules & Results
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {selectedPublishedExamId !== "none" ? (
-                <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                  {(() => {
-                    const exam = studentExams.find(e => e.id === selectedPublishedExamId);
-                    if (!exam) return <div className="p-8 text-center text-muted-foreground">Result not found.</div>;
-                    return (
-                      <>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-primary/5 p-6 rounded-3xl border border-primary/10">
-                          <div className="space-y-1 text-center border-r border-primary/10">
-                            <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">Synthesis Score</p>
-                            <p className="text-2xl font-black">{exam.totalObtained}/{exam.totalFull}</p>
-                          </div>
-                          <div className="space-y-1 text-center border-r border-primary/10">
-                            <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">Proficiency %</p>
-                            <p className="text-2xl font-black text-primary">{exam.percentage.toFixed(1)}%</p>
-                          </div>
-                          <div className="space-y-1 text-center border-r border-primary/10">
-                            <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">Grade Rank</p>
-                            <p className="text-2xl font-black">{getGradeFormal(exam.percentage)}</p>
-                          </div>
-                          <div className="space-y-1 text-center">
-                            <p className="text-[9px] font-black text-primary/60 uppercase tracking-widest">Outcome</p>
-                            <div className="flex justify-center mt-1">
-                              <Badge variant={exam.allPassed ? "success" : "destructive"} className="font-black uppercase text-[10px] rounded-lg">
-                                {exam.allPassed ? "PASSED" : "FAILED"}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="rounded-3xl border border-border/40 overflow-hidden bg-white/20 backdrop-blur-sm">
-                          <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50/50 border-b">
-                              <tr>
-                                <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Subject Domain</th>
-                                <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Full Scale</th>
-                                <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Obtained</th>
-                                <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border/20">
-                              {exam.results.map((res: any) => (
-                                <tr key={res.id} className="hover:bg-primary/5 transition-colors">
-                                  <td className="px-6 py-4 font-bold text-slate-700">{res.subject_name}</td>
-                                  <td className="px-6 py-4 text-center font-medium text-slate-400">{res.full_marks}</td>
-                                  <td className="px-6 py-4 text-center font-black text-primary">{res.obtained}</td>
-                                  <td className="px-6 py-4 text-center">
-                                    <Badge variant={res.passed ? "success" : "destructive"} className="text-[9px] uppercase font-bold rounded-md">
-                                      {res.passed ? "Pass" : "Fail"}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic">
-                              * Official academic record for {exam.name}
-                           </p>
-                           <Button
-                             onClick={() => setSelectedExamResult(exam)}
-                             className="rounded-2xl shadow-strong bg-slate-900 hover:bg-slate-800 text-white font-black uppercase text-[10px] tracking-widest px-6"
-                           >
-                             <Printer className="h-4 w-4 mr-2" /> View Full Marksheet
-                           </Button>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
+              {studentExams.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground italic">No exam records found for this student.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-muted/50 border-b">
                       <tr>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Assessment Name</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Exam Name</th>
                         <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Date</th>
                         <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Status</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Total Scale</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Proficiency</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Rank</th>
-                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Management</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Total Marks</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Percentage</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Grade</th>
+                        <th className="px-6 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {studentExams.length === 0 ? (
-                        <tr><td colSpan={7} className="p-8 text-center text-muted-foreground italic">No assessment history found.</td></tr>
-                      ) : (
-                        studentExams.map((exam: any) => (
-                          <tr key={exam.id} className="hover:bg-muted/30 transition-colors group">
-                            <td className="px-6 py-4">
-                              <p className="font-bold text-slate-700">{exam.name}</p>
-                              <p className="text-[9px] font-black uppercase text-primary/60 tracking-widest">Academic Year {exam.academic_year}</p>
-                            </td>
-                            <td className="px-6 py-4 text-[11px] font-medium text-slate-500">{safeFormatDate(exam.exam_date, "PPP")}</td>
-                            <td className="px-6 py-4">
-                              {exam.hasMarks ? (
-                                <Badge variant={exam.isPartial ? "warning" : "success"} className="text-[9px] uppercase font-black rounded-md">
-                                  {exam.isPartial ? "Partial Result" : "Result Ready"}
-                                </Badge>
+                      {studentExams.map((exam: any) => (
+                        <tr key={exam.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4 font-semibold">
+                            {exam.name}
+                            {exam.status === 'draft' && <Badge variant="outline" className="ml-2 text-[8px] h-4 uppercase">Draft</Badge>}
+                          </td>
+                          <td className="px-6 py-4">{safeFormatDate(exam.exam_date, "PPP")}</td>
+                          <td className="px-6 py-4">
+                            {exam.hasMarks ? (
+                              exam.isPartial ? (
+                                <Badge variant="warning" className="text-[10px] uppercase font-black">Partial Result</Badge>
                               ) : (
-                                <Badge variant="secondary" className="text-[9px] uppercase font-bold rounded-md">Scheduled</Badge>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 font-bold text-slate-700">
-                              {exam.hasMarks ? `${exam.totalObtained}/${exam.totalFull}` : "-"}
-                            </td>
-                            <td className="px-6 py-4">
-                              {exam.hasMarks ? (
-                                <span className={cn("font-black", exam.percentage >= 75 ? "text-green-600" : exam.percentage >= 50 ? "text-orange-600" : "text-red-600")}>
-                                  {exam.percentage.toFixed(1)}%
-                                </span>
-                              ) : "-"}
-                            </td>
-                            <td className="px-6 py-4 font-black text-slate-700">
-                              {exam.hasMarks ? getGradeFormal(exam.percentage) : "-"}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                               <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {exam.hasMarks ? (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-primary bg-white shadow-soft hover:bg-primary/10 rounded-xl"
-                                      onClick={() => setSelectedExamResult(exam)}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-slate-400 bg-white shadow-soft hover:bg-slate-50 rounded-xl"
-                                      onClick={() => setSelectedExamSchedule(exam)}
-                                    >
-                                      <Calendar className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                               </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
+                                <Badge variant="success" className="text-[10px] uppercase font-black">Result Ready</Badge>
+                              )
+                            ) : (
+                              <Badge variant="secondary" className="text-[10px] uppercase font-bold">Scheduled</Badge>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 font-medium">
+                            {exam.hasMarks ? `${exam.totalObtained}/${exam.totalFull}` : "-"}
+                          </td>
+                          <td className="px-6 py-4 font-bold">
+                            {exam.hasMarks ? (
+                              <span className={cn(exam.percentage >= 75 ? "text-green-600" : exam.percentage >= 50 ? "text-orange-600" : "text-red-600")}>
+                                {exam.percentage.toFixed(1)}%
+                              </span>
+                            ) : "-"}
+                          </td>
+                          <td className="px-6 py-4">
+                            {exam.hasMarks ? (
+                              <Badge variant="outline" className="font-bold">
+                                {getGradeFormal(exam.percentage)}
+                              </Badge>
+                            ) : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            {exam.hasMarks && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
+                                onClick={() => setSelectedExamResult(exam)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {!exam.hasMarks && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                onClick={() => setSelectedExamSchedule(exam)}
+                              >
+                                <Calendar className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

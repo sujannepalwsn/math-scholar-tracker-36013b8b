@@ -95,18 +95,41 @@ export default function Tests() {
 
   // Fetch lesson plans for the dropdown
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-for-tests", user?.center_id],
+    queryKey: ["lesson-plans-for-tests", user?.center_id, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("lesson_plans")
         .select("id, subject, chapter, topic, grade")
         .eq("center_id", user.center_id)
         .order("lesson_date", { ascending: false });
+
+      if (user?.role === 'teacher') {
+        query = query.eq('teacher_id', user.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as LessonPlan[];
     },
     enabled: !!user?.center_id });
+
+  const { data: teacherAssignments = [] } = useQuery({
+    queryKey: ["teacher-assignments", user?.teacher_id],
+    queryFn: async () => {
+      if (!user?.teacher_id) return [];
+      const { data, error } = await supabase
+        .from("period_schedules")
+        .select("subject, grade")
+        .eq("teacher_id", user.teacher_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: user?.role === 'teacher' && !!user?.teacher_id
+  });
+
+  const assignedSubjects = Array.from(new Set(teacherAssignments.map(a => a.subject))).sort();
+  const assignedGrades = Array.from(new Set(teacherAssignments.map(a => a.grade))).sort();
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -501,11 +524,20 @@ export default function Tests() {
               </div>
               <div>
                 <Label>Subject</Label>
-                <Input
-                  value={testSubject}
-                  onChange={(e) => setTestSubject(e.target.value)}
-                  placeholder="e.g., Mathematics"
-                />
+                {user?.role === 'teacher' ? (
+                  <Select value={testSubject} onValueChange={setTestSubject}>
+                    <SelectTrigger><SelectValue placeholder="Select Subject" /></SelectTrigger>
+                    <SelectContent>
+                      {assignedSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    value={testSubject}
+                    onChange={(e) => setTestSubject(e.target.value)}
+                    placeholder="e.g., Mathematics"
+                  />
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -528,11 +560,20 @@ export default function Tests() {
               </div>
               <div>
                 <Label>Grade (Optional)</Label>
-                <Input
-                  value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
-                  placeholder="e.g., 10th"
-                />
+                {user?.role === 'teacher' ? (
+                  <Select value={grade} onValueChange={setGrade}>
+                    <SelectTrigger><SelectValue placeholder="Select Grade" /></SelectTrigger>
+                    <SelectContent>
+                      {assignedGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value)}
+                    placeholder="e.g., 10th"
+                  />
+                )}
               </div>
               {/* Multi-select Lesson Plans/Chapters */}
               <div className="space-y-3 border p-4 rounded-lg">
