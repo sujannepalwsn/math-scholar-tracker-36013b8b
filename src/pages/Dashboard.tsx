@@ -497,7 +497,7 @@ export default function Dashboard() {
       timestamp: new Date().toISOString(),
       onClick: () => navigate("/leave-management")
     }] : []),
-    ...todayClasses.filter(c => c.isVacant && c.status !== 'completed').map(c => ({
+    ...todayClasses.filter(c => c.isVacant && !c.isSubstitution && c.status !== 'completed').map(c => ({
       id: `vacant-${c.id}`,
       title: `Vacant Class: Grade ${c.grade} ${c.subject}`,
       description: `Period ${c.time} is currently unassigned or teacher is absent.`,
@@ -539,16 +539,22 @@ export default function Dashboard() {
     // 3. Filter out those who have a substitution in THIS period today
     const busyBySub = substitutions
       .filter(s => {
+        // If the substitution itself has the class_period_id (might not, depends on JOIN)
+        // or if we find it via period_schedules
         const ps = periodSchedules.find(p => p.id === s.period_schedule_id);
-        return ps?.class_period_id === selectedVacantClass.class_period_id;
+        // Important: check both if substitution has direct period_id OR linked period_schedule has it
+        const periodId = s.class_period_id || ps?.class_period_id || s.period_schedules?.class_period_id;
+        return periodId === selectedVacantClass.class_period_id;
       })
       .map(s => s.substitute_teacher_id);
 
-    return teachers.filter(t =>
-      presentTeachers.includes(t.id) &&
-      !busyTeachers.includes(t.id) &&
-      !busyBySub.includes(t.id)
-    );
+    return teachers.filter(t => {
+      const isPresent = presentTeachers.includes(t.id);
+      const isBusyRegular = busyTeachers.includes(t.id);
+      const isBusySub = busyBySub.includes(t.id);
+
+      return isPresent && !isBusyRegular && !isBusySub;
+    });
   }, [selectedVacantClass, teacherAttendance, periodSchedules, substitutions, teachers]);
 
   const assignSubstitutionMutation = useMutation({
@@ -582,7 +588,10 @@ export default function Dashboard() {
       toast.success("Substitution assigned successfully!");
       setSelectedVacantClass(null);
     },
-    onError: (err: any) => toast.error(err.message)
+    onError: (err: any) => {
+      console.error("Substitution assignment error:", err);
+      toast.error(err.message || "Failed to assign substitution");
+    }
   });
 
   const isLoading = isStudentsLoading || isTeachersLoading;
