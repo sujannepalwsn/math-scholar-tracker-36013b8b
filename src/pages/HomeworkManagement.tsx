@@ -91,6 +91,23 @@ export default function HomeworkManagement() {
     },
     enabled: !!user?.center_id });
 
+  const { data: teacherAssignments = [] } = useQuery({
+    queryKey: ["teacher-assignments", user?.teacher_id],
+    queryFn: async () => {
+      if (!user?.teacher_id) return [];
+      const { data, error } = await supabase
+        .from("period_schedules")
+        .select("subject, grade")
+        .eq("teacher_id", user.teacher_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: user?.role === 'teacher' && !!user?.teacher_id
+  });
+
+  const assignedSubjects = Array.from(new Set(teacherAssignments.map(a => a.subject))).sort();
+  const assignedGrades = Array.from(new Set(teacherAssignments.map(a => a.grade))).sort();
+
   const { data: studentStatuses = [], refetch: refetchStudentStatuses } = useQuery({
     queryKey: ["student-homework-records", selectedHomeworkForStatus?.id],
     queryFn: async () => {
@@ -128,6 +145,14 @@ export default function HomeworkManagement() {
       if (grade === "select-grade") throw new Error("Please select a valid grade.");
       let fileUrl: string | null = null;
       let imageUrl: string | null = null;
+      // Prevent future dates for assigning homework
+      const selectedDueDate = new Date(dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDueDate > today) {
+        throw new Error("You cannot assign homework for future dates. Assignments must be for today or past dates.");
+      }
+
       if (file) fileUrl = await uploadFile(file, "homework-files");
       if (image) imageUrl = await uploadFile(image, "homework-images");
       const { data: newHomework, error } = await supabase.from("homework").insert({
@@ -197,7 +222,8 @@ export default function HomeworkManagement() {
 
   const handleManageStatusClick = (hw: Homework) => { setSelectedHomeworkForStatus(hw); setShowStatusDialog(true); };
 
-  const uniqueGrades = Array.from(new Set(students.map(s => s.grade))).sort();
+  const allUniqueGrades = Array.from(new Set(students.map(s => s.grade))).sort();
+  const uniqueGrades = user?.role === 'teacher' ? assignedGrades : allUniqueGrades;
   const uniqueSubjects = Array.from(new Set(homeworkList.map(hw => hw.subject))).sort();
 
   return (
@@ -245,7 +271,19 @@ export default function HomeworkManagement() {
             <div className="space-y-4 py-4">
               <Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} />
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Subject *</Label><Input value={subject} onChange={e => setSubject(e.target.value)} /></div>
+                <div>
+                  <Label>Subject *</Label>
+                  {user?.role === 'teacher' ? (
+                    <Select value={subject} onValueChange={setSubject}>
+                      <SelectTrigger><SelectValue placeholder="Select Subject" /></SelectTrigger>
+                      <SelectContent>
+                        {assignedSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={subject} onChange={e => setSubject(e.target.value)} />
+                  )}
+                </div>
                 <div><Label>Grade *</Label><Select value={grade} onValueChange={setGrade}><SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger><SelectContent><SelectItem value="select-grade" disabled>Select Grade</SelectItem>{uniqueGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select></div>
               </div>
               <Label>Link Lesson Plan</Label><Select value={lessonPlanId || "none"} onValueChange={v => setLessonPlanId(v === "none" ? null : v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No Lesson Plan</SelectItem>{lessonPlans.map(lp => <SelectItem key={lp.id} value={lp.id}>{lp.subject}: {lp.chapter}</SelectItem>)}</SelectContent></Select>
