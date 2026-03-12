@@ -65,23 +65,6 @@ export default function TakeAttendance() {
       return data as Student[];
     } });
 
-  const { data: schoolDayConfig } = useQuery({
-    queryKey: ["school-day-config", dateStr, user?.center_id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("school_days")
-        .select("is_school_day")
-        .eq("center_id", user?.center_id!)
-        .eq("date", dateStr)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!dateStr && !!user?.center_id
-  });
-
-  const isSchoolDay = schoolDayConfig ? schoolDayConfig.is_school_day : false;
-
   const { data: approvedLeaves = [] } = useQuery({
     queryKey: ["approved-leaves", dateStr, user?.center_id],
     queryFn: async () => {
@@ -253,15 +236,6 @@ export default function TakeAttendance() {
         </div>
       )}
 
-      {!isSchoolDay && (
-        <div className="flex items-center gap-3 p-4 bg-red-50/50 backdrop-blur-sm border border-red-200 rounded-2xl text-red-700 shadow-soft animate-in slide-in-from-top-2">
-          <div className="p-2 rounded-xl bg-red-100">
-            <XCircle className="h-4 w-4" />
-          </div>
-          <span className="text-sm font-bold uppercase tracking-tight">Non-School Day — Attendance recording is disabled.</span>
-        </div>
-      )}
-
       {/* Filters/Settings */}
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
@@ -404,7 +378,7 @@ export default function TakeAttendance() {
               <Button
                 type="submit"
                 className="w-full h-16 text-xl font-black shadow-strong rounded-[2rem] bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
-                disabled={saveMutation.isPending || (isLocked && !canEdit) || !isSchoolDay}
+                disabled={saveMutation.isPending || (isLocked && !canEdit)}
               >
                 {saveMutation.isPending ? (
                   <div className="flex items-center gap-3">

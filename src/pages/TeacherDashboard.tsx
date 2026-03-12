@@ -52,6 +52,7 @@ export default function TeacherDashboard() {
   });
 
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformanceGroup | null>(null);
+  const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan | null>(null);
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
   // Data Fetching
@@ -101,9 +102,25 @@ export default function TeacherDashboard() {
     queryFn: async () => {
       if (!teacherId) return [];
       const dayOfWeek = new Date(dateRange.to).getDay();
-      const { data, error } = await supabase.from("period_schedules").select("*, class_periods(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek);
+
+      // Get regular schedules
+      const { data: regular, error } = await supabase.from("period_schedules").select("*, class_periods(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek);
       if (error) throw error;
-      return data || [];
+
+      // Get substitutions for today
+      const { data: subs, error: subError } = await supabase
+        .from("class_substitutions")
+        .select("*, period_schedules(*, class_periods(*))")
+        .eq("substitute_teacher_id", teacherId)
+        .eq("date", dateRange.to);
+      if (subError) throw subError;
+
+      const mappedSubs = (subs || []).map(s => ({
+        ...s.period_schedules,
+        isSubstitution: true
+      }));
+
+      return [...(regular || []), ...mappedSubs];
     },
     enabled: !!teacherId });
 
@@ -210,12 +227,12 @@ export default function TeacherDashboard() {
       if (!teacherId) return [];
       const { data, error } = await supabase
         .from("lesson_plans")
-        .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url")
+        .select("*")
         .eq("center_id", centerId)
         .eq("teacher_id", teacherId)
         .order("lesson_date", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as LessonPlan[];
     },
     enabled: !!teacherId });
 
@@ -353,14 +370,27 @@ export default function TeacherDashboard() {
       .slice(0, 50);
   }, [classResults]);
 
-  const todayClasses = teacherSchedule.map((ps: any) => ({
-    id: ps.id,
-    time: ps.class_periods ? `${ps.class_periods.start_time.slice(0, 5)} - ${ps.class_periods.end_time.slice(0, 5)}` : "N/A",
-    grade: ps.grade,
-    teacher: user?.username?.split('@')[0] || "Me",
-    subject: ps.subject,
-    status: "upcoming" as const
-  }));
+  const todayClasses = useMemo(() => {
+    return teacherSchedule.map((ps: any) => {
+      // Look for a lesson plan for this subject, grade and date
+      const matchingPlan = allLessonPlans.find(lp =>
+        lp.subject === ps.subject &&
+        lp.grade === ps.grade &&
+        lp.lesson_date === dateRange.to
+      );
+
+      return {
+        id: ps.id,
+        time: ps.class_periods ? `${ps.class_periods.start_time.slice(0, 5)} - ${ps.class_periods.end_time.slice(0, 5)}` : "N/A",
+        grade: ps.grade,
+        teacher: ps.isSubstitution ? "Substitution Coverage" : (user?.username?.split('@')[0] || "Me"),
+        subject: ps.subject,
+        status: "upcoming" as const,
+        lesson_plan_id: matchingPlan?.id,
+        isSubstitution: ps.isSubstitution
+      };
+    });
+  }, [teacherSchedule, allLessonPlans, dateRange.to, user]);
 
   const getRatingStars = (rating: number | null) => {
     if (rating === null) return "N/A";
@@ -387,6 +417,13 @@ export default function TeacherDashboard() {
       title: `Meeting today: ${att.meetings?.title}`,
       type: "warning" as const,
       timestamp: att.meetings?.meeting_date
+    })),
+    ...todayClasses.filter(c => c.isSubstitution).map(c => ({
+      id: `sub-${c.id}`,
+      title: `Substitution Coverage`,
+      description: `Grade ${c.grade} ${c.subject} at ${c.time}`,
+      type: "info" as const,
+      timestamp: today
     }))
   ];
 
@@ -523,6 +560,10 @@ export default function TeacherDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <ClassSchedule
           classes={todayClasses}
+          onViewPlan={(item) => {
+            const plan = allLessonPlans.find(lp => lp.id === item.lesson_plan_id);
+            if (plan) setViewingLessonPlan(plan);
+          }}
           onViewRoutine={() => navigate("/teacher/class-routine")}
         />
         <Card className="lg:col-span-2 border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20">
@@ -927,6 +968,267 @@ export default function TeacherDashboard() {
                 ) : (
                   <p className="text-xs italic text-slate-400">No tests associated.</p>
                 )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Lesson Plan View Dialog */}
+      <Dialog open={!!viewingLessonPlan} onOpenChange={(open) => !open && setViewingLessonPlan(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle>Daily Lesson Plan Details</DialogTitle>
+            <DialogDescription>Full pedagogical breakdown and roadmap.</DialogDescription>
+          </DialogHeader>
+          {viewingLessonPlan && (
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border p-6 rounded-3xl bg-primary/5 border-primary/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                   <FileText className="h-24 w-24 text-primary" />
+                </div>
+                <div className="space-y-4 relative z-10">
+                  <div>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Subject & Unit</Label>
+                    <p className="text-xl font-black text-primary leading-tight">{viewingLessonPlan.subject}</p>
+                    <p className="text-sm font-bold text-muted-foreground">{viewingLessonPlan.chapter || "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Topic</Label>
+                    <p className="text-md font-bold text-foreground">{viewingLessonPlan.topic}</p>
+                  </div>
+                </div>
+                <div className="space-y-4 relative z-10">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Grade</Label>
+                      <p className="text-sm font-bold">{viewingLessonPlan.grade || "All Grades"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Period</Label>
+                      <p className="text-sm font-bold">{viewingLessonPlan.period || "N/A"}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Date</Label>
+                    <div className="flex items-center gap-2 text-sm font-bold">
+                       <CalendarIcon className="h-4 w-4 text-primary" />
+                       {format(new Date(viewingLessonPlan.lesson_date), "EEEE, MMM do yyyy")}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black flex items-center gap-2 text-primary">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    1. Learning Outcomes
+                  </h3>
+                  <p className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10 min-h-[60px]">
+                    {viewingLessonPlan.objectives || "No specific outcomes defined."}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black flex items-center gap-2 text-primary">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    2. Warm up & Review
+                  </h3>
+                  <p className="text-sm text-muted-foreground bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10 min-h-[60px]">
+                    {viewingLessonPlan.warm_up_review || "No review notes."}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black flex items-center gap-2 text-primary">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    3. Teaching Learning Activities
+                  </h3>
+                  <div className="space-y-2 bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10 min-h-[60px]">
+                    {Array.isArray(viewingLessonPlan.learning_activities) && (viewingLessonPlan.learning_activities as string[]).length > 0 ? (
+                      (viewingLessonPlan.learning_activities as string[]).map((activity, idx) => (
+                        <div key={idx} className="flex gap-3 text-sm">
+                          <span className="font-black text-primary/40">{String.fromCharCode(97 + idx)}.</span>
+                          <span className="text-muted-foreground">{activity}</span>
+                        </div>
+                      ))
+                    ) : <p className="text-sm text-muted-foreground italic">None listed.</p>}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black flex items-center gap-2 text-primary">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    4. Class Review / Evaluation
+                  </h3>
+                  <div className="space-y-2 bg-muted/30 p-4 rounded-2xl border border-muted-foreground/10 min-h-[60px]">
+                    {Array.isArray(viewingLessonPlan.evaluation_activities) && (viewingLessonPlan.evaluation_activities as string[]).length > 0 ? (
+                      (viewingLessonPlan.evaluation_activities as string[]).map((activity, idx) => (
+                        <div key={idx} className="flex gap-3 text-sm">
+                          <span className="font-black text-primary/40">{String.fromCharCode(97 + idx)}.</span>
+                          <span className="text-muted-foreground">{activity}</span>
+                        </div>
+                      ))
+                    ) : <p className="text-sm text-muted-foreground italic">None listed.</p>}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black flex items-center gap-2 text-primary">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    5. Assignments
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                       <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">Class Work</Label>
+                       <p className="text-sm text-muted-foreground">{viewingLessonPlan.class_work || "N/A"}</p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-violet-500/5 border border-violet-500/10">
+                       <Label className="text-[10px] font-black uppercase tracking-widest text-violet-600 mb-2 block">Home Assignment</Label>
+                       <p className="text-sm text-muted-foreground">{viewingLessonPlan.home_assignment || "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {viewingLessonPlan.notes && (
+                  <div className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">General Notes</h3>
+                    <p className="text-sm text-muted-foreground p-4 bg-muted/20 rounded-2xl border border-muted/20 italic">
+                      "{viewingLessonPlan.notes}"
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                  {viewingLessonPlan.lesson_file_url && (
+                    <Button variant="outline" size="sm" className="w-full rounded-xl" asChild>
+                      <a href={supabase.storage.from("lesson-files").getPublicUrl(viewingLessonPlan.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="h-4 w-4 mr-2" /> Download Attached Resource
+                      </a>
+                    </Button>
+                  )}
+                  {viewingLessonPlan.status === 'approved' && (
+                     <div className="flex items-center justify-end gap-2 text-xs font-black text-emerald-600">
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-600 hover:bg-emerald-100 border-none">APPROVED BY PRINCIPAL</Badge>
+                     </div>
+                  )}
+                </div>
+
+                <div className="pt-6 no-print">
+                   <Button
+                     onClick={() => {
+                       const printWindow = window.open("", "_blank");
+                       printWindow?.document.write(`
+                         <html>
+                           <head>
+                             <title>Lesson Plan - ${viewingLessonPlan.subject}</title>
+                             <style>
+                               @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+                               body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+                               .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+                               .header h1 { margin: 0; font-size: 24px; font-weight: 800; color: #4f46e5; text-transform: uppercase; }
+                               .grid { display: grid; grid-template-cols: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+                               .field { margin-bottom: 15px; }
+                               .label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+                               .value { font-size: 14px; font-weight: 700; color: #1e293b; }
+                               .section { margin-bottom: 25px; }
+                               .section-title { font-size: 12px; font-weight: 800; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+                               .section-content { font-size: 13px; color: #334155; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; min-height: 50px; white-space: pre-wrap; }
+                               .activity-item { display: flex; gap: 10px; margin-bottom: 8px; }
+                               .activity-num { font-weight: 800; color: #4f46e5; min-width: 20px; }
+                               .footer { margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 30px; display: grid; grid-template-cols: 1fr 1fr; gap: 40px; }
+                               .signature-line { border-top: 1px solid #94a3b8; margin-top: 40px; padding-top: 8px; font-size: 10px; font-weight: 700; color: #64748b; text-align: center; text-transform: uppercase; }
+                               @media print { body { padding: 0; } .no-print { display: none; } }
+                             </style>
+                           </head>
+                           <body>
+                             <div class="header">
+                               <h1>Daily Lesson Plan</h1>
+                               <div style="text-align: right">
+                                 <div class="label">Institution</div>
+                                 <div class="value">${user?.center_name || 'Academic Institution'}</div>
+                               </div>
+                             </div>
+
+                             <div class="grid">
+                               <div>
+                                 <div class="field"><div class="label">Subject</div><div class="value">${viewingLessonPlan.subject}</div></div>
+                                 <div class="field"><div class="label">Unit / Chapter</div><div class="value">${viewingLessonPlan.chapter || 'N/A'}</div></div>
+                                 <div class="field"><div class="label">Topic</div><div class="value">${viewingLessonPlan.topic}</div></div>
+                               </div>
+                               <div>
+                                 <div class="field"><div class="label">Grade</div><div class="value">${viewingLessonPlan.grade || 'All Grades'}</div></div>
+                                 <div class="field"><div class="label">Period</div><div class="value">${viewingLessonPlan.period || 'N/A'}</div></div>
+                                 <div class="field"><div class="label">Date</div><div class="value">${format(new Date(viewingLessonPlan.lesson_date), "EEEE, MMM do yyyy")}</div></div>
+                               </div>
+                             </div>
+
+                             <div class="section">
+                               <div class="section-title">1. Learning Outcomes</div>
+                               <div class="section-content">${viewingLessonPlan.objectives || 'None defined.'}</div>
+                             </div>
+
+                             <div class="section">
+                               <div class="section-title">2. Warm up & Review</div>
+                               <div class="section-content">${viewingLessonPlan.warm_up_review || 'N/A'}</div>
+                             </div>
+
+                             <div class="section">
+                               <div class="section-title">3. Teaching Learning Activities</div>
+                               <div class="section-content">
+                                 ${Array.isArray(viewingLessonPlan.learning_activities) && (viewingLessonPlan.learning_activities as string[]).length > 0
+                                   ? (viewingLessonPlan.learning_activities as string[]).map((a, i) => `<div class="activity-item"><span class="activity-num">${String.fromCharCode(97 + i)}.</span><span>${a}</span></div>`).join('')
+                                   : 'None listed.'}
+                               </div>
+                             </div>
+
+                             <div class="section">
+                               <div class="section-title">4. Class Review / Evaluation</div>
+                               <div class="section-content">
+                                 ${Array.isArray(viewingLessonPlan.evaluation_activities) && (viewingLessonPlan.evaluation_activities as string[]).length > 0
+                                   ? (viewingLessonPlan.evaluation_activities as string[]).map((a, i) => `<div class="activity-item"><span class="activity-num">${String.fromCharCode(97 + i)}.</span><span>${a}</span></div>`).join('')
+                                   : 'None listed.'}
+                               </div>
+                             </div>
+
+                             <div class="grid">
+                               <div class="section">
+                                 <div class="section-title">5a. Class Work</div>
+                                 <div class="section-content">${viewingLessonPlan.class_work || 'N/A'}</div>
+                               </div>
+                               <div class="section">
+                                 <div class="section-title">5b. Home Assignment</div>
+                                 <div class="section-content">${viewingLessonPlan.home_assignment || 'N/A'}</div>
+                               </div>
+                             </div>
+
+                             ${viewingLessonPlan.principal_remarks ? `
+                             <div class="section">
+                               <div class="section-title" style="color: #ea580c">Principal Remarks</div>
+                               <div class="section-content" style="background: #fff7ed; border-color: #ffedd5">"${viewingLessonPlan.principal_remarks}"</div>
+                             </div>
+                             ` : ''}
+
+                             <div class="footer">
+                               <div class="signature-line">Teacher's Signature</div>
+                               <div class="signature-line">Principal / Coordinator's Signature</div>
+                             </div>
+                           </body>
+                         </html>
+                       `);
+                       printWindow?.document.close();
+                       printWindow?.focus();
+                       setTimeout(() => {
+                         printWindow?.print();
+                         printWindow?.close();
+                       }, 500);
+                     }}
+                     className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-12 font-bold shadow-strong"
+                   >
+                     <Printer className="h-4 w-4 mr-2" /> Print Lesson Plan
+                   </Button>
+                </div>
               </div>
             </div>
           )}

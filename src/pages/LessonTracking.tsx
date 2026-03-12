@@ -263,14 +263,6 @@ export default function LessonTracking() {
         recorded_by_teacher_id: user.teacher_id || null, // Set to null if not a teacher
       }));
 
-      // Prevent future dates
-      const selectedDate = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (selectedDate > today) {
-        throw new Error("You cannot track lesson completion for future dates.");
-      }
-
       const { error: linkError } = await supabase.from("student_chapters").insert(studentLessonRecordsToInsert);
       if (linkError) throw linkError;
 

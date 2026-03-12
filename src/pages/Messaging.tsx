@@ -237,6 +237,156 @@ export default function Messaging() {
   // Mobile: show chat list or chat view
   const showChatView = isMobile && selectedConversation;
 
+  const ConversationList = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-3 border-b space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search conversations..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9" />
+        </div>
+        {user?.role === "center" && (
+          <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setShowNewConversation(!showNewConversation)}>
+            + New Conversation
+          </Button>
+        )}
+      </div>
+
+      {showNewConversation && user?.role === "center" && (
+        <div className="p-3 border-b bg-muted/30 space-y-2">
+          <Select value={newConversationGradeFilter} onValueChange={setNewConversationGradeFilter}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Grade" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Grades</SelectItem>
+              {uniqueGrades.map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
+            </SelectContent>
+          </Select>
+          <Input placeholder="Search student..." value={newConversationStudentSearch} onChange={(e) => setNewConversationStudentSearch(e.target.value)} className="h-8 text-xs" />
+          {filteredStudentsForNew.filter((s) => !activeConversations.some((c: any) => c.student_id === s.id)).slice(0, 5).map((student: any) => (
+            <Button key={student.id} variant="ghost" size="sm" className="w-full justify-start text-xs h-8" onClick={() => createConversationMutation.mutate(student)}>
+              + {student.name} ({student.grade})
+            </Button>
+          ))}
+        </div>
+      )}
+
+      <ScrollArea className="flex-1">
+        {conversationsLoading ? (
+          <p className="text-center text-muted-foreground p-4 text-sm">Loading...</p>
+        ) : filteredConversations.length === 0 ? (
+          <p className="text-center text-muted-foreground p-8 text-sm">No conversations yet</p>
+        ) : (
+          filteredConversations.map((conv: any) => {
+            const unread = unreadCounts[conv.id] || 0;
+            return (
+              <button
+                key={conv.id}
+                onClick={() => setSelectedConversation(conv)}
+                className={cn(
+                  "w-full text-left p-3 border-b hover:bg-muted/50 transition-colors flex items-center gap-3",
+                  selectedConversation?.id === conv.id && "bg-primary/5 border-l-2 border-l-primary"
+                )}
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">{getConversationName(conv)?.[0]?.toUpperCase()}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className={cn("text-sm font-medium truncate", unread > 0 && "font-bold")}>{getConversationName(conv)}</p>
+                    {conv.updated_at && <span className="text-[10px] text-muted-foreground shrink-0">{formatDistanceToNow(new Date(conv.updated_at), { addSuffix: false })}</span>}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground truncate">{getConversationSub(conv)}</p>
+                    {unread > 0 && <Badge className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] shrink-0">{unread}</Badge>}
+                  </div>
+                </div>
+              </button>
+            );
+          })
+        )}
+      </ScrollArea>
+    </div>
+  );
+
+  const ChatView = () => (
+    <div className="flex flex-col h-full">
+      {/* Chat header */}
+      <div className="p-4 border-b bg-card flex items-center gap-3">
+        {isMobile && (
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => setSelectedConversation(null)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
+        {selectedConversation ? (
+          <>
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-primary">{getConversationName(selectedConversation)?.[0]?.toUpperCase()}</span>
+            </div>
+            <div>
+              <p className="font-semibold text-sm">{getConversationName(selectedConversation)}</p>
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-success" />
+                <p className="text-xs text-muted-foreground">Grade {selectedConversation.students?.grade}</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">Select a conversation</p>
+        )}
+      </div>
+
+      {/* Messages */}
+      <ScrollArea className="flex-1 p-4">
+        {!selectedConversation ? (
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-3 py-20">
+            <MessageSquare className="h-12 w-12 opacity-30" />
+            <p className="text-sm">Select a conversation to start messaging</p>
+          </div>
+        ) : messagesLoading ? (
+          <p className="text-center text-muted-foreground text-sm">Loading messages...</p>
+        ) : messages.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8 text-sm">No messages yet. Start the conversation!</p>
+        ) : (
+          <div className="space-y-3">
+            {messages.map((msg: any) => {
+              const isOwn = msg.sender_user_id === user?.id;
+              return (
+                <div key={msg.id} className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
+                  <div className={cn("max-w-[75%] rounded-2xl p-3 shadow-soft", isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md")}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.message_text}</p>
+                    <div className={cn("flex items-center gap-1 mt-1", isOwn ? "justify-end" : "")}>
+                      <p className={cn("text-[10px]", isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
+                        {format(new Date(msg.sent_at), "h:mm a")}
+                      </p>
+                      {isOwn && msg.is_read && <span className="text-[10px] text-primary-foreground/60">✓✓</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </ScrollArea>
+
+      {/* Input */}
+      {selectedConversation && (
+        <form onSubmit={handleSendMessage} className="p-3 border-t flex gap-2 items-end bg-card">
+          <Textarea
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (newMessage.trim()) sendMessageMutation.mutate(); } }}
+            placeholder="Type a message... (Shift+Enter for new line)"
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+            rows={1}
+          />
+          <Button type="submit" size="icon" disabled={!newMessage.trim() || sendMessageMutation.isPending} className="shrink-0">
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
@@ -259,86 +409,14 @@ export default function Messaging() {
         <TabsContent value="direct">
           <Card className="border shadow-soft overflow-hidden rounded-xl h-[calc(100vh-280px)] min-h-[500px]">
             {isMobile ? (
-              showChatView ? (
-                <ChatView
-                  selectedConversation={selectedConversation}
-                  isMobile={isMobile}
-                  setSelectedConversation={setSelectedConversation}
-                  getConversationName={getConversationName}
-                  messagesLoading={messagesLoading}
-                  messages={messages}
-                  user={user}
-                  messagesEndRef={messagesEndRef}
-                  newMessage={newMessage}
-                  setNewMessage={setNewMessage}
-                  handleSendMessage={handleSendMessage}
-                  sendMessageMutation={sendMessageMutation}
-                />
-              ) : (
-                <ConversationList
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  user={user}
-                  setShowNewConversation={setShowNewConversation}
-                  showNewConversation={showNewConversation}
-                  newConversationGradeFilter={newConversationGradeFilter}
-                  setNewConversationGradeFilter={setNewConversationGradeFilter}
-                  uniqueGrades={uniqueGrades}
-                  newConversationStudentSearch={newConversationStudentSearch}
-                  setNewConversationStudentSearch={setNewConversationStudentSearch}
-                  filteredStudentsForNew={filteredStudentsForNew}
-                  activeConversations={activeConversations}
-                  createConversationMutation={createConversationMutation}
-                  conversationsLoading={conversationsLoading}
-                  filteredConversations={filteredConversations}
-                  unreadCounts={unreadCounts}
-                  setSelectedConversation={setSelectedConversation}
-                  selectedConversation={selectedConversation}
-                  getConversationName={getConversationName}
-                  getConversationSub={getConversationSub}
-                />
-              )
+              showChatView ? <ChatView /> : <ConversationList />
             ) : (
               <div className="grid grid-cols-3 h-full">
                 <div className="col-span-1 border-r h-full overflow-hidden">
-                  <ConversationList
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    user={user}
-                    setShowNewConversation={setShowNewConversation}
-                    showNewConversation={showNewConversation}
-                    newConversationGradeFilter={newConversationGradeFilter}
-                    setNewConversationGradeFilter={setNewConversationGradeFilter}
-                    uniqueGrades={uniqueGrades}
-                    newConversationStudentSearch={newConversationStudentSearch}
-                    setNewConversationStudentSearch={setNewConversationStudentSearch}
-                    filteredStudentsForNew={filteredStudentsForNew}
-                    activeConversations={activeConversations}
-                    createConversationMutation={createConversationMutation}
-                    conversationsLoading={conversationsLoading}
-                    filteredConversations={filteredConversations}
-                    unreadCounts={unreadCounts}
-                    setSelectedConversation={setSelectedConversation}
-                    selectedConversation={selectedConversation}
-                    getConversationName={getConversationName}
-                    getConversationSub={getConversationSub}
-                  />
+                  <ConversationList />
                 </div>
                 <div className="col-span-2 h-full overflow-hidden">
-                  <ChatView
-                    selectedConversation={selectedConversation}
-                    isMobile={isMobile}
-                    setSelectedConversation={setSelectedConversation}
-                    getConversationName={getConversationName}
-                    messagesLoading={messagesLoading}
-                    messages={messages}
-                    user={user}
-                    messagesEndRef={messagesEndRef}
-                    newMessage={newMessage}
-                    setNewMessage={setNewMessage}
-                    handleSendMessage={handleSendMessage}
-                    sendMessageMutation={sendMessageMutation}
-                  />
+                  <ChatView />
                 </div>
               </div>
             )}
@@ -383,187 +461,3 @@ export default function Messaging() {
     </div>
   );
 }
-
-const ConversationList = ({
-  searchQuery,
-  setSearchQuery,
-  user,
-  setShowNewConversation,
-  showNewConversation,
-  newConversationGradeFilter,
-  setNewConversationGradeFilter,
-  uniqueGrades,
-  newConversationStudentSearch,
-  setNewConversationStudentSearch,
-  filteredStudentsForNew,
-  activeConversations,
-  createConversationMutation,
-  conversationsLoading,
-  filteredConversations,
-  unreadCounts,
-  setSelectedConversation,
-  selectedConversation,
-  getConversationName,
-  getConversationSub
-}: any) => (
-  <div className="flex flex-col h-full">
-    <div className="p-3 border-b space-y-2">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search conversations..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9" />
-      </div>
-      {user?.role === "center" && (
-        <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setShowNewConversation(!showNewConversation)}>
-          + New Conversation
-        </Button>
-      )}
-    </div>
-
-    {showNewConversation && user?.role === "center" && (
-      <div className="p-3 border-b bg-muted/30 space-y-2">
-        <Select value={newConversationGradeFilter} onValueChange={setNewConversationGradeFilter}>
-          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Grade" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
-            {uniqueGrades.map((g: any) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
-          </SelectContent>
-        </Select>
-        <Input placeholder="Search student..." value={newConversationStudentSearch} onChange={(e) => setNewConversationStudentSearch(e.target.value)} className="h-8 text-xs" />
-        {filteredStudentsForNew.filter((s: any) => !activeConversations.some((c: any) => c.student_id === s.id)).slice(0, 5).map((student: any) => (
-          <Button key={student.id} variant="ghost" size="sm" className="w-full justify-start text-xs h-8" onClick={() => createConversationMutation.mutate(student)}>
-            + {student.name} ({student.grade})
-          </Button>
-        ))}
-      </div>
-    )}
-
-    <ScrollArea className="flex-1">
-      {conversationsLoading ? (
-        <p className="text-center text-muted-foreground p-4 text-sm">Loading...</p>
-      ) : filteredConversations.length === 0 ? (
-        <p className="text-center text-muted-foreground p-8 text-sm">No conversations yet</p>
-      ) : (
-        filteredConversations.map((conv: any) => {
-          const unread = unreadCounts[conv.id] || 0;
-          return (
-            <button
-              key={conv.id}
-              onClick={() => setSelectedConversation(conv)}
-              className={cn(
-                "w-full text-left p-3 border-b hover:bg-muted/50 transition-colors flex items-center gap-3",
-                selectedConversation?.id === conv.id && "bg-primary/5 border-l-2 border-l-primary"
-              )}
-            >
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-primary">{getConversationName(conv)?.[0]?.toUpperCase()}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className={cn("text-sm font-medium truncate", unread > 0 && "font-bold")}>{getConversationName(conv)}</p>
-                  {conv.updated_at && <span className="text-[10px] text-muted-foreground shrink-0">{formatDistanceToNow(new Date(conv.updated_at), { addSuffix: false })}</span>}
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground truncate">{getConversationSub(conv)}</p>
-                  {unread > 0 && <Badge className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] shrink-0">{unread}</Badge>}
-                </div>
-              </div>
-            </button>
-          );
-        })
-      )}
-    </ScrollArea>
-  </div>
-);
-
-const ChatView = ({
-  selectedConversation,
-  isMobile,
-  setSelectedConversation,
-  getConversationName,
-  messagesLoading,
-  messages,
-  user,
-  messagesEndRef,
-  newMessage,
-  setNewMessage,
-  handleSendMessage,
-  sendMessageMutation
-}: any) => (
-  <div className="flex flex-col h-full">
-    {/* Chat header */}
-    <div className="p-4 border-b bg-card flex items-center gap-3">
-      {isMobile && (
-        <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => setSelectedConversation(null)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-      )}
-      {selectedConversation ? (
-        <>
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="text-sm font-bold text-primary">{getConversationName(selectedConversation)?.[0]?.toUpperCase()}</span>
-          </div>
-          <div>
-            <p className="font-semibold text-sm">{getConversationName(selectedConversation)}</p>
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-success" />
-              <p className="text-xs text-muted-foreground">Grade {selectedConversation.students?.grade}</p>
-            </div>
-          </div>
-        </>
-      ) : (
-        <p className="text-sm text-muted-foreground">Select a conversation</p>
-      )}
-    </div>
-
-    {/* Messages */}
-    <ScrollArea className="flex-1 p-4">
-      {!selectedConversation ? (
-        <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-3 py-20">
-          <MessageSquare className="h-12 w-12 opacity-30" />
-          <p className="text-sm">Select a conversation to start messaging</p>
-        </div>
-      ) : messagesLoading ? (
-        <p className="text-center text-muted-foreground text-sm">Loading messages...</p>
-      ) : messages.length === 0 ? (
-        <p className="text-center text-muted-foreground py-8 text-sm">No messages yet. Start the conversation!</p>
-      ) : (
-        <div className="space-y-3">
-          {messages.map((msg: any) => {
-            const isOwn = msg.sender_user_id === user?.id;
-            return (
-              <div key={msg.id} className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[75%] rounded-2xl p-3 shadow-soft", isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md")}>
-                  <p className="text-sm whitespace-pre-wrap">{msg.message_text}</p>
-                  <div className={cn("flex items-center gap-1 mt-1", isOwn ? "justify-end" : "")}>
-                    <p className={cn("text-[10px]", isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
-                      {format(new Date(msg.sent_at), "h:mm a")}
-                    </p>
-                    {isOwn && msg.is_read && <span className="text-[10px] text-primary-foreground/60">✓✓</span>}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={messagesEndRef} />
-        </div>
-      )}
-    </ScrollArea>
-
-    {/* Input */}
-    {selectedConversation && (
-      <form onSubmit={handleSendMessage} className="p-3 border-t flex gap-2 items-end bg-card">
-        <Textarea
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (newMessage.trim()) sendMessageMutation.mutate(); } }}
-          placeholder="Type a message... (Shift+Enter for new line)"
-          className="flex-1 min-h-[40px] max-h-[120px] resize-none"
-          rows={1}
-        />
-        <Button type="submit" size="icon" disabled={!newMessage.trim() || sendMessageMutation.isPending} className="shrink-0">
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
-    )}
-  </div>
-);

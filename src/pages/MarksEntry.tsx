@@ -57,39 +57,16 @@ export default function MarksEntry() {
 
   const selectedExam = exams.find((e: any) => e.id === selectedExamId);
 
-  const { data: teacherAssignments = [] } = useQuery({
-    queryKey: ["teacher-assignments", user?.teacher_id],
-    queryFn: async () => {
-      if (!user?.teacher_id) return [];
-      const { data, error } = await supabase
-        .from("period_schedules")
-        .select("subject, grade")
-        .eq("teacher_id", user.teacher_id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: user?.role === 'teacher' && !!user?.teacher_id
-  });
-
-  const assignedSubjects = Array.from(new Set(teacherAssignments.map(a => a.subject)));
-
   const { data: subjects = [] } = useQuery({
-    queryKey: ["exam-subjects-entry", selectedExamId, user?.role, user?.teacher_id],
+    queryKey: ["exam-subjects-entry", selectedExamId],
     queryFn: async () => {
       if (!selectedExamId) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from("exam_subjects")
         .select("*")
         .eq("exam_id", selectedExamId)
         .order("subject_name");
-
-      const { data, error } = await query;
       if (error) throw error;
-
-      if (user?.role === 'teacher') {
-        return data.filter(s => assignedSubjects.includes(s.subject_name));
-      }
-
       return data;
     },
     enabled: !!selectedExamId,
