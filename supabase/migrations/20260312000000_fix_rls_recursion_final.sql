@@ -1,14 +1,30 @@
 -- Fix RLS recursion and ensure consistent helper functions across the database
+-- Migration: 20260312000000_fix_rls_recursion_final.sql
 
--- 1. Ensure all helper functions are defined correctly as SECURITY DEFINER
--- This prevents RLS recursion when these functions query the users table
+-- 1. UTILITY: Helper to drop all policies on a table (Idempotency)
+CREATE OR REPLACE FUNCTION public.drop_all_policies(table_schema text, table_name text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    pol record;
+BEGIN
+    FOR pol IN (SELECT policyname FROM pg_policies WHERE schemaname = table_schema AND tablename = table_name) LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', pol.policyname, table_schema, table_name);
+    END LOOP;
+END;
+$$;
+
+-- 2. CORE: Security Definer Helper Functions (The Fix for Recursion)
+-- These bypass RLS on the users table by being SECURITY DEFINER and setting search_path
 
 CREATE OR REPLACE FUNCTION public.get_user_role()
 RETURNS text
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth
 AS $$
   SELECT role FROM public.users WHERE id = auth.uid();
 $$;
@@ -18,7 +34,7 @@ RETURNS uuid
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth
 AS $$
   SELECT center_id FROM public.users WHERE id = auth.uid();
 $$;
@@ -28,274 +44,141 @@ RETURNS uuid
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth
 AS $$
   SELECT student_id FROM public.users WHERE id = auth.uid();
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_user_teacher_id()
-RETURNS uuid
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT teacher_id FROM public.users WHERE id = auth.uid();
-$$;
-
--- Versions with argument for specific user lookups
-CREATE OR REPLACE FUNCTION public.get_user_role(user_id uuid)
-RETURNS text
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT role FROM public.users WHERE id = user_id;
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_user_center_id(user_id uuid)
-RETURNS uuid
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT center_id FROM public.users WHERE id = user_id;
-$$;
-
--- Robust is_same_center check that also handles admins
 CREATE OR REPLACE FUNCTION public.is_same_center(target_center_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth
 AS $$
   SELECT
     COALESCE(target_center_id = public.get_user_center_id(), false)
     OR public.get_user_role() = 'admin';
 $$;
 
--- 2. Clean up and recreate users table policies to be non-recursive
-DO $$
-BEGIN
-    -- Drop all potentially recursive policies on users table
-    DROP POLICY IF EXISTS "Admins can view all users" ON public.users;
-    DROP POLICY IF EXISTS "Admins can modify all users" ON public.users;
-    DROP POLICY IF EXISTS "Users can view and modify their own record" ON public.users;
-    DROP POLICY IF EXISTS "Center users can view associated users" ON public.users;
-    DROP POLICY IF EXISTS "Center users can view other users in their center" ON public.users;
-    DROP POLICY IF EXISTS "Teacher users can view associated users" ON public.users;
-    DROP POLICY IF EXISTS "Parent users can view associated users" ON public.users;
-    DROP POLICY IF EXISTS "Users can view users in their center" ON public.users;
+-- 3. APPLY: Standardized Non-Recursive Policies
+
+-- USERS Table
+DO $$ BEGIN
+    PERFORM public.drop_all_policies('public', 'users');
+    ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY "Allow users to view their own record" ON public.users FOR SELECT USING (id = auth.uid());
+    CREATE POLICY "Allow users to update their own record" ON public.users FOR UPDATE USING (id = auth.uid());
+    CREATE POLICY "Allow admins to manage all users" ON public.users FOR ALL USING (public.get_user_role() = 'admin');
+    CREATE POLICY "Allow center users to view their center's users" ON public.users FOR SELECT USING (public.get_user_role() = 'center' AND center_id = public.get_user_center_id());
+    CREATE POLICY "Allow teachers to view their center's users" ON public.users FOR SELECT USING (public.get_user_role() = 'teacher' AND center_id = public.get_user_center_id());
 END $$;
 
--- New non-recursive policies for users table
-CREATE POLICY "Allow users to view their own record"
-ON public.users FOR SELECT USING (id = auth.uid());
-
-CREATE POLICY "Allow users to update their own record"
-ON public.users FOR UPDATE USING (id = auth.uid());
-
-CREATE POLICY "Allow admins to manage all users"
-ON public.users FOR ALL USING (public.get_user_role() = 'admin');
-
-CREATE POLICY "Allow center users to view their center's users"
-ON public.users FOR SELECT USING (
-  public.get_user_role() = 'center' AND center_id = public.get_user_center_id()
-);
-
-CREATE POLICY "Allow teachers to view their center's users"
-ON public.users FOR SELECT USING (
-  public.get_user_role() = 'teacher' AND center_id = public.get_user_center_id()
-);
-
--- 3. Fix centers table policies (essential for frontend to fetch name/logo)
-DO $$
-BEGIN
-    DROP POLICY IF EXISTS "Service role full access" ON public.centers;
-    DROP POLICY IF EXISTS "Service role full access on centers" ON public.centers;
-    DROP POLICY IF EXISTS "Users can view their own center" ON public.centers;
-    DROP POLICY IF EXISTS "Allow authenticated users to view their center" ON public.centers;
-    DROP POLICY IF EXISTS "Authenticated users can view centers" ON public.centers;
+-- CENTERS Table
+DO $$ BEGIN
+    PERFORM public.drop_all_policies('public', 'centers');
+    ALTER TABLE public.centers ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY "Allow authenticated users to view centers" ON public.centers FOR SELECT USING (auth.role() = 'authenticated');
+    CREATE POLICY "Service role full access on centers" ON public.centers FOR ALL USING (true) WITH CHECK (true);
 END $$;
 
-CREATE POLICY "Service role full access on centers"
-ON public.centers FOR ALL USING (true) WITH CHECK (true);
-
-CREATE POLICY "Allow authenticated users to view centers"
-ON public.centers FOR SELECT
-USING (auth.role() = 'authenticated');
-
--- 4. Standardize critical tables with is_same_center
+-- STANDARDIZED TABLES (Direct center_id)
 DO $$
 DECLARE
     t_name text;
 BEGIN
     FOR t_name IN SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN (
-        'students', 'teachers', 'attendance', 'teacher_attendance', 'homework', 'student_homework_records',
-        'tests', 'test_results', 'discipline_issues', 'lesson_plans', 'student_chapters', 'activities',
-        'center_events', 'invoices', 'payments', 'expenses', 'fee_structures', 'fee_headings',
+        'students', 'teachers', 'attendance', 'teacher_attendance', 'homework',
+        'tests', 'discipline_issues', 'lesson_plans', 'activities',
+        'center_events', 'invoices', 'expenses', 'fee_structures', 'fee_headings',
         'meetings', 'period_schedules', 'class_periods',
         'exams', 'exam_subjects', 'exam_marks', 'leave_applications', 'leave_categories',
         'center_feature_permissions', 'teacher_feature_permissions', 'broadcast_messages',
-        'class_substitutions'
+        'class_substitutions', 'notifications', 'activity_logs'
     )
     LOOP
-        -- Check if table has center_id column before applying policy
-        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = t_name AND column_name = 'center_id') THEN
-            -- Drop various policy name variants
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Centers can view their own %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Center users can view their students'' %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Center users can manage their own data on %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Teacher users can manage their own data on %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Admins can manage all data on %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Center users can manage their own students" ON public.students;');
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Center users can manage their own %I" ON public.%I;', t_name, t_name);
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = t_name AND column_name = 'center_id') THEN
+            PERFORM public.drop_all_policies('public', t_name);
+            EXECUTE FORMAT('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', t_name);
 
-            -- Create standard policies using is_same_center
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Center users can manage %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('CREATE POLICY "Center users can manage %I" ON public.%I FOR ALL USING (public.is_same_center(center_id));', t_name, t_name);
+            -- Main Center/Admin Policy
+            EXECUTE FORMAT('CREATE POLICY "Center and Admin access on %I" ON public.%I FOR ALL USING (public.is_same_center(center_id));', t_name, t_name);
 
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Teacher users can view %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('CREATE POLICY "Teacher users can view %I" ON public.%I FOR SELECT USING (public.is_same_center(center_id));', t_name, t_name);
+            -- Teacher Read Policy
+            EXECUTE FORMAT('CREATE POLICY "Teacher read access on %I" ON public.%I FOR SELECT USING (public.get_user_role() = ''teacher'' AND public.is_same_center(center_id));', t_name, t_name);
 
-            -- Add Service Role policy
-            EXECUTE FORMAT('DROP POLICY IF EXISTS "Service role full access on %I" ON public.%I;', t_name, t_name);
-            EXECUTE FORMAT('CREATE POLICY "Service role full access on %I" ON public.%I FOR ALL USING (true) WITH CHECK (true);', t_name, t_name);
+            -- Service Role
+            EXECUTE FORMAT('CREATE POLICY "Service role access on %I" ON public.%I FOR ALL USING (true) WITH CHECK (true);', t_name, t_name);
         END IF;
     END LOOP;
 END $$;
 
--- 5. Special case: parent_students table
+-- INDIRECT TABLES (linked via student_id)
 DO $$
+DECLARE
+    t_name text;
 BEGIN
-    DROP POLICY IF EXISTS "Center users can manage parent-student links in their center" ON public.parent_students;
-    DROP POLICY IF EXISTS "Center users can manage parent-student links" ON public.parent_students;
-    DROP POLICY IF EXISTS "Parent users can view their own linked students" ON public.parent_students;
-    DROP POLICY IF EXISTS "Admins can manage all data on parent_students" ON public.parent_students;
+    FOR t_name IN SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN (
+        'student_homework_records', 'test_results', 'student_chapters', 'student_activities'
+    )
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = t_name AND column_name = 'student_id') THEN
+            PERFORM public.drop_all_policies('public', t_name);
+            EXECUTE FORMAT('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', t_name);
+
+            -- Center/Admin Policy (check student's center)
+            EXECUTE FORMAT('CREATE POLICY "Center and Admin access on %I" ON public.%I FOR ALL USING (EXISTS (SELECT 1 FROM public.students s WHERE s.id = %I.student_id AND public.is_same_center(s.center_id)));', t_name, t_name, t_name);
+
+            -- Parent Policy (check parent_students junction)
+            EXECUTE FORMAT('CREATE POLICY "Parent access on %I" ON public.%I FOR SELECT USING (EXISTS (SELECT 1 FROM public.parent_students ps WHERE ps.student_id = %I.student_id AND ps.parent_user_id = auth.uid()));', t_name, t_name, t_name);
+
+            -- Teacher Read Policy
+            EXECUTE FORMAT('CREATE POLICY "Teacher read access on %I" ON public.%I FOR SELECT USING (public.get_user_role() = ''teacher'' AND EXISTS (SELECT 1 FROM public.students s WHERE s.id = %I.student_id AND public.is_same_center(s.center_id)));', t_name, t_name, t_name);
+
+            -- Service Role
+            EXECUTE FORMAT('CREATE POLICY "Service role access on %I" ON public.%I FOR ALL USING (true) WITH CHECK (true);', t_name, t_name);
+        END IF;
+    END LOOP;
 END $$;
 
-CREATE POLICY "Center users can manage parent-student links"
-ON public.parent_students FOR ALL
-USING (
-  public.get_user_role() = 'center'
-  AND EXISTS (
-    SELECT 1 FROM public.students s
-    WHERE s.id = parent_students.student_id
-    AND s.center_id = public.get_user_center_id()
-  )
-);
+-- SPECIAL CASES
 
-CREATE POLICY "Parent users can view their linked students"
-ON public.parent_students FOR SELECT
-USING (parent_user_id = auth.uid());
-
-CREATE POLICY "Admins can manage parent-student links"
-ON public.parent_students FOR ALL
-USING (public.get_user_role() = 'admin');
-
--- 6. Standardize notifications policies
-DO $$
-BEGIN
-    DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
-    DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
-    DROP POLICY IF EXISTS "Service role full access on notifications" ON public.notifications;
-    DROP POLICY IF EXISTS "Allow any user to insert notifications" ON public.notifications;
+-- parent_students
+DO $$ BEGIN
+    PERFORM public.drop_all_policies('public', 'parent_students');
+    ALTER TABLE public.parent_students ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY "Admin full access" ON public.parent_students FOR ALL USING (public.get_user_role() = 'admin');
+    CREATE POLICY "Center manage links" ON public.parent_students FOR ALL USING (public.get_user_role() = 'center' AND EXISTS (SELECT 1 FROM public.students s WHERE s.id = parent_students.student_id AND public.is_same_center(s.center_id)));
+    CREATE POLICY "Parent view own links" ON public.parent_students FOR SELECT USING (parent_user_id = auth.uid());
+    CREATE POLICY "Service role access" ON public.parent_students FOR ALL USING (true);
 END $$;
 
-CREATE POLICY "Service role full access on notifications"
-  ON public.notifications FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
-
-CREATE POLICY "Allow any user to insert notifications"
-  ON public.notifications FOR INSERT
-  WITH CHECK (true);
-
-CREATE POLICY "Users can view their own notifications"
-  ON public.notifications FOR SELECT
-  USING (
-    (user_id IS NULL AND public.is_same_center(center_id))
-    OR user_id = auth.uid()
-  );
-
-CREATE POLICY "Users can update their own notifications"
-  ON public.notifications FOR UPDATE
-  USING (
-    user_id = auth.uid()
-    OR (user_id IS NULL AND public.is_same_center(center_id))
-  );
-
--- 7. Fix Chat policies
-DO $$
-BEGIN
-    DROP POLICY IF EXISTS "Center users can manage conversations" ON public.chat_conversations;
-    DROP POLICY IF EXISTS "Parents can access their conversations" ON public.chat_conversations;
-    DROP POLICY IF EXISTS "Teachers can view center conversations" ON public.chat_conversations;
-    DROP POLICY IF EXISTS "Users can view messages in their conversations" ON public.chat_messages;
-    DROP POLICY IF EXISTS "Users can insert messages in their conversations" ON public.chat_messages;
-    DROP POLICY IF EXISTS "Users can update messages in their conversations" ON public.chat_messages;
+-- payments (linked via invoice_id)
+DO $$ BEGIN
+    PERFORM public.drop_all_policies('public', 'payments');
+    ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY "Center manage payments" ON public.payments FOR ALL USING (EXISTS (SELECT 1 FROM public.invoices i WHERE i.id = payments.invoice_id AND public.is_same_center(i.center_id)));
+    CREATE POLICY "Parent view payments" ON public.payments FOR SELECT USING (EXISTS (SELECT 1 FROM public.invoices i JOIN public.parent_students ps ON i.student_id = ps.student_id WHERE i.id = payments.invoice_id AND ps.parent_user_id = auth.uid()));
+    CREATE POLICY "Service role access" ON public.payments FOR ALL USING (true);
 END $$;
 
-CREATE POLICY "Center users can manage conversations"
-ON public.chat_conversations FOR ALL
-USING (
-  public.get_user_role() = 'center' AND public.is_same_center(center_id)
-)
-WITH CHECK (
-  public.get_user_role() = 'center' AND public.is_same_center(center_id)
-);
+-- chat_conversations
+DO $$ BEGIN
+    PERFORM public.drop_all_policies('public', 'chat_conversations');
+    ALTER TABLE public.chat_conversations ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY "Center manage conversations" ON public.chat_conversations FOR ALL USING (public.get_user_role() = 'center' AND public.is_same_center(center_id));
+    CREATE POLICY "Parent access conversations" ON public.chat_conversations FOR ALL USING (parent_user_id = auth.uid());
+    CREATE POLICY "Teacher view conversations" ON public.chat_conversations FOR SELECT USING (public.get_user_role() = 'teacher' AND public.is_same_center(center_id));
+    CREATE POLICY "Service role access" ON public.chat_conversations FOR ALL USING (true);
+END $$;
 
-CREATE POLICY "Parents can access their conversations"
-ON public.chat_conversations FOR ALL
-USING (parent_user_id = auth.uid())
-WITH CHECK (parent_user_id = auth.uid());
+-- chat_messages
+DO $$ BEGIN
+    PERFORM public.drop_all_policies('public', 'chat_messages');
+    ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY "Message access" ON public.chat_messages FOR ALL USING (EXISTS (SELECT 1 FROM public.chat_conversations cc WHERE cc.id = chat_messages.conversation_id AND (cc.parent_user_id = auth.uid() OR public.is_same_center(cc.center_id))));
+    CREATE POLICY "Service role access" ON public.chat_messages FOR ALL USING (true);
+END $$;
 
-CREATE POLICY "Teachers can view center conversations"
-ON public.chat_conversations FOR SELECT
-USING (
-  public.get_user_role() = 'teacher' AND public.is_same_center(center_id)
-);
-
-CREATE POLICY "Users can view messages in their conversations"
-ON public.chat_messages FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM public.chat_conversations cc
-    WHERE cc.id = chat_messages.conversation_id
-    AND (
-      cc.parent_user_id = auth.uid()
-      OR public.is_same_center(cc.center_id)
-    )
-  )
-);
-
-CREATE POLICY "Users can insert messages in their conversations"
-ON public.chat_messages FOR INSERT
-WITH CHECK (
-  sender_user_id = auth.uid()
-  AND EXISTS (
-    SELECT 1 FROM public.chat_conversations cc
-    WHERE cc.id = chat_messages.conversation_id
-    AND (
-      cc.parent_user_id = auth.uid()
-      OR public.is_same_center(cc.center_id)
-    )
-  )
-);
-
-CREATE POLICY "Users can update messages in their conversations"
-ON public.chat_messages FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM public.chat_conversations cc
-    WHERE cc.id = chat_messages.conversation_id
-    AND (
-      cc.parent_user_id = auth.uid()
-      OR public.is_same_center(cc.center_id)
-    )
-  )
-);
+-- Cleanup utility
+DROP FUNCTION IF EXISTS public.drop_all_policies(text, text);
