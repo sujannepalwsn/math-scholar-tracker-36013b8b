@@ -1,7 +1,7 @@
--- Fix RLS recursion and ensure consistent helper functions across the database
+-- Fix RLS recursion using a private view and SECURITY DEFINER functions
 -- Migration: 20260312000000_fix_rls_recursion_final.sql
 
--- 1. UTILITY: Helper to drop all policies on a table (Idempotency)
+-- 1. UTILITY: Helper to drop all policies on a table
 CREATE OR REPLACE FUNCTION public.drop_all_policies(table_schema text, table_name text)
 RETURNS void
 LANGUAGE plpgsql
@@ -16,8 +16,18 @@ BEGIN
 END;
 $$;
 
--- 2. CORE: Security Definer Helper Functions (The Fix for Recursion)
--- These bypass RLS on the users table by being SECURITY DEFINER and setting search_path
+-- 2. PRIVACY: Create a view to bypass RLS recursion on the users table
+-- This view is owned by postgres and will be used by our helper functions
+DROP VIEW IF EXISTS public.users_private_lookup CASCADE;
+CREATE VIEW public.users_private_lookup AS
+SELECT id, role, center_id, student_id, teacher_id
+FROM public.users;
+
+-- Ensure only the owner (postgres) can query this view directly
+REVOKE ALL ON public.users_private_lookup FROM public, anon, authenticated;
+
+-- 3. CORE: Security Definer Helper Functions
+-- These query the private view to avoid triggering RLS recursion
 
 CREATE OR REPLACE FUNCTION public.get_user_role()
 RETURNS text
@@ -26,7 +36,7 @@ STABLE
 SECURITY DEFINER
 SET search_path = public, auth
 AS $$
-  SELECT role FROM public.users WHERE id = auth.uid();
+  SELECT role FROM public.users_private_lookup WHERE id = auth.uid();
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_user_center_id()
@@ -36,7 +46,7 @@ STABLE
 SECURITY DEFINER
 SET search_path = public, auth
 AS $$
-  SELECT center_id FROM public.users WHERE id = auth.uid();
+  SELECT center_id FROM public.users_private_lookup WHERE id = auth.uid();
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_user_student_id()
@@ -46,7 +56,17 @@ STABLE
 SECURITY DEFINER
 SET search_path = public, auth
 AS $$
-  SELECT student_id FROM public.users WHERE id = auth.uid();
+  SELECT student_id FROM public.users_private_lookup WHERE id = auth.uid();
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_user_teacher_id()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+  SELECT teacher_id FROM public.users_private_lookup WHERE id = auth.uid();
 $$;
 
 CREATE OR REPLACE FUNCTION public.is_same_center(target_center_id uuid)
@@ -61,28 +81,41 @@ AS $$
     OR public.get_user_role() = 'admin';
 $$;
 
--- 3. APPLY: Standardized Non-Recursive Policies
-
--- USERS Table
+-- 4. APPLY: Standardized Policies for Users Table
 DO $$ BEGIN
     PERFORM public.drop_all_policies('public', 'users');
     ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+    -- Users can always see and update their own record
     CREATE POLICY "Allow users to view their own record" ON public.users FOR SELECT USING (id = auth.uid());
     CREATE POLICY "Allow users to update their own record" ON public.users FOR UPDATE USING (id = auth.uid());
+
+    -- Admins can manage all users
     CREATE POLICY "Allow admins to manage all users" ON public.users FOR ALL USING (public.get_user_role() = 'admin');
-    CREATE POLICY "Allow center users to view their center's users" ON public.users FOR SELECT USING (public.get_user_role() = 'center' AND center_id = public.get_user_center_id());
-    CREATE POLICY "Allow teachers to view their center's users" ON public.users FOR SELECT USING (public.get_user_role() = 'teacher' AND center_id = public.get_user_center_id());
+
+    -- Center users and teachers can see users in their center
+    CREATE POLICY "Allow center staff to view center users" ON public.users FOR SELECT
+    USING (
+        (public.get_user_role() IN ('center', 'teacher') AND center_id = public.get_user_center_id())
+    );
 END $$;
 
--- CENTERS Table
+-- 5. APPLY: Standardized Policies for Centers Table
 DO $$ BEGIN
     PERFORM public.drop_all_policies('public', 'centers');
     ALTER TABLE public.centers ENABLE ROW LEVEL SECURITY;
+
+    -- Allow all authenticated users to view center names/logos
     CREATE POLICY "Allow authenticated users to view centers" ON public.centers FOR SELECT USING (auth.role() = 'authenticated');
+
+    -- Center admins can manage their own center details
+    CREATE POLICY "Allow center admins to manage center" ON public.centers FOR ALL USING (public.get_user_role() = 'center' AND id = public.get_user_center_id());
+
+    -- Service role access
     CREATE POLICY "Service role full access on centers" ON public.centers FOR ALL USING (true) WITH CHECK (true);
 END $$;
 
--- STANDARDIZED TABLES (Direct center_id)
+-- 6. APPLY: Standardized Policies for Multi-tenant tables (Direct center_id)
 DO $$
 DECLARE
     t_name text;
@@ -104,7 +137,7 @@ BEGIN
             -- Main Center/Admin Policy
             EXECUTE FORMAT('CREATE POLICY "Center and Admin access on %I" ON public.%I FOR ALL USING (public.is_same_center(center_id));', t_name, t_name);
 
-            -- Teacher Read Policy
+            -- Teacher Read Policy (usually covered by is_same_center, but adding explicit SELECT if needed)
             EXECUTE FORMAT('CREATE POLICY "Teacher read access on %I" ON public.%I FOR SELECT USING (public.get_user_role() = ''teacher'' AND public.is_same_center(center_id));', t_name, t_name);
 
             -- Service Role
@@ -113,7 +146,7 @@ BEGIN
     END LOOP;
 END $$;
 
--- INDIRECT TABLES (linked via student_id)
+-- 7. APPLY: Standardized Policies for Multi-tenant tables (Indirect student_id)
 DO $$
 DECLARE
     t_name text;
@@ -141,7 +174,7 @@ BEGIN
     END LOOP;
 END $$;
 
--- SPECIAL CASES
+-- 8. SPECIAL CASES
 
 -- parent_students
 DO $$ BEGIN
