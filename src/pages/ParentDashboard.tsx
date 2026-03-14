@@ -228,10 +228,11 @@ const ParentDashboardContent = () => {
       const dayOfWeek = new Date().getDay();
       const { data, error } = await supabase
         .from("period_schedules")
-        .select("*, teachers(name), class_periods(*)")
+        .select("*, teachers(name), class_periods!inner(*)")
         .eq("center_id", user.center_id)
         .eq("grade", student.grade)
-        .eq("day_of_week", dayOfWeek);
+        .eq("day_of_week", dayOfWeek)
+        .eq("class_periods.is_published", true);
       if (error) throw error;
       return data || [];
     },

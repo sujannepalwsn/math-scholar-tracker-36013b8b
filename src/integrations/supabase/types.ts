@@ -2116,6 +2116,41 @@ export type Database = {
           },
         ]
       }
+      school_days: {
+        Row: {
+          center_id: string
+          created_at: string
+          date: string
+          id: string
+          is_school_day: boolean
+          reason: string | null
+        }
+        Insert: {
+          center_id: string
+          created_at?: string
+          date: string
+          id?: string
+          is_school_day?: boolean
+          reason?: string | null
+        }
+        Update: {
+          center_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          is_school_day?: boolean
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_days_center_id_fkey"
+            columns: ["center_id"]
+            isOneToOne: false
+            referencedRelation: "centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_chapters: {
         Row: {
           chapter_name: string | null

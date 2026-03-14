@@ -158,6 +158,29 @@ export default function ExamManagement() {
 
       const { error } = await supabase.from("exams").update({ status: "results_published" }).eq("id", exam.id);
       if (error) throw error;
+
+      // Notify Parents/Students
+      const { data: students, error: studError2 } = await supabase
+        .from("students")
+        .select("user_id")
+        .eq("center_id", centerId!)
+        .in("grade", exam.applicable_grades || [exam.grade])
+        .eq("is_active", true);
+
+      if (!studError2 && students) {
+        const studentUserIds = students.map(s => s.user_id).filter(Boolean);
+        if (studentUserIds.length > 0) {
+          const notifications = studentUserIds.map(uid => ({
+            user_id: uid,
+            center_id: centerId!,
+            title: "Exam Results Published",
+            message: `Results for ${exam.name} are now available.`,
+            type: "marks",
+            link: "/parent-results"
+          }));
+          await supabase.from("notifications").insert(notifications);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exams"] });
