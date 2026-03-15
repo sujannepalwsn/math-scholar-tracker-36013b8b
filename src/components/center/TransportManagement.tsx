@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Bus, Plus, Trash2, MapPin, Navigation, User } from "lucide-react";
+import { Bus, Plus, Trash2, MapPin, Navigation, User, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,6 +15,15 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
   const queryClient = useQueryClient();
   const [showAddRoute, setShowAddRoute] = useState(false);
   const [routeForm, setRouteForm] = useState({ name: "", start: "", end: "" });
+
+  const { data: students } = useQuery({
+    queryKey: ["students", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: routes } = useQuery({
     queryKey: ["transport-routes", centerId],
@@ -29,6 +38,17 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
     queryKey: ["transport-vehicles", centerId],
     queryFn: async () => {
       const { data, error } = await supabase.from("vehicles").select("*").eq("center_id", centerId);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: assignments } = useQuery({
+    queryKey: ["transport-assignments", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transport_assignments")
+        .select("*, students(name, grade), bus_routes(route_name), vehicles(vehicle_number)");
       if (error) throw error;
       return data;
     },
@@ -148,6 +168,40 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
                     </TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="assignments" className="space-y-4 pt-4">
+          <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Student</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Grade</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Route</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Vehicle</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assignments?.map((a: any) => (
+                  <TableRow key={a.id}>
+                    <TableCell className="font-bold">{a.students?.name}</TableCell>
+                    <TableCell className="text-xs">Grade {a.students?.grade}</TableCell>
+                    <TableCell className="text-xs font-bold text-blue-600">{a.bus_routes?.route_name}</TableCell>
+                    <TableCell className="text-xs font-black">{a.vehicles?.vehicle_number}</TableCell>
+                    <TableCell className="text-right">
+                       <Badge variant="success" className="text-[9px] uppercase font-black">Assigned</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {assignments?.length === 0 && (
+                   <TableRow>
+                     <TableCell colSpan={5} className="text-center py-12 text-slate-400 italic">No transport assignments discovered.</TableCell>
+                   </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
