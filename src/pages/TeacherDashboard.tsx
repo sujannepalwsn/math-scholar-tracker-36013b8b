@@ -10,6 +10,7 @@ import { KPICard } from "@/components/dashboard/KPICard"
 import { AlertList } from "@/components/dashboard/AlertList"
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
 import CenterLogo from "@/components/CenterLogo";
+import NotificationBell from "@/components/NotificationBell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -104,7 +105,7 @@ export default function TeacherDashboard() {
       if (!teacherId) return [];
       const dayOfWeek = new Date(dateRange.to).getDay();
 
-      // Get regular schedules
+      // Get regular schedules - only published for dashboard
       const { data: regular, error } = await supabase.from("period_schedules").select("*, class_periods!inner(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek).eq("class_periods.is_published", true);
       if (error) throw error;
 
@@ -440,10 +441,7 @@ export default function TeacherDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <CenterLogo size="lg" />
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="relative bg-white shadow-soft rounded-xl">
-            <Bell className="h-5 w-5 text-slate-600" />
-            <span className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-full border-2 border-white" />
-          </Button>
+          <NotificationBell />
           <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl shadow-soft">
             <div className="h-9 w-9 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden">
                <Users className="h-5 w-5 text-primary" />
@@ -981,13 +979,13 @@ export default function TeacherDashboard() {
 
       {/* Lesson Plan View Dialog */}
       <Dialog open={!!viewingLessonPlan} onOpenChange={(open) => !open && setViewingLessonPlan(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem]">
-          <DialogHeader>
-            <DialogTitle>Daily Lesson Plan Details</DialogTitle>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem] p-0 sm:p-6">
+          <DialogHeader className="p-6 pb-0 sm:p-0">
+            <DialogTitle className="text-xl font-black uppercase tracking-tight">Daily Lesson Plan Details</DialogTitle>
             <DialogDescription>Full pedagogical breakdown and roadmap.</DialogDescription>
           </DialogHeader>
           {viewingLessonPlan && (
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 p-6 pt-4 sm:p-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border p-6 rounded-3xl bg-primary/5 border-primary/10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                    <FileText className="h-24 w-24 text-primary" />

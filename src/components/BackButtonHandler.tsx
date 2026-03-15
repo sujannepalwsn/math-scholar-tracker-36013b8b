@@ -34,8 +34,16 @@ const BackButtonHandler = () => {
       }
 
       // If we are at the very beginning of our primed history,
-      // we might want to prevent going further back if we want to stay in the app,
-      // but usually the default browser behavior is what we want for navigation.
+      // we might want to prevent going further back if we want to stay in the app.
+      // In many WebViews, when you are at the first entry of history, back button closes the app.
+      // If our primed state is what's being popped, we re-push it to keep the app open
+      // unless we are on a login page or specific exit points.
+
+      if (event.state?.app_initialized && !['/login', '/login-parent', '/login-admin'].includes(location.pathname)) {
+        window.history.pushState({ app_initialized: true }, "");
+        // Optionally navigate to dashboard or home instead of doing nothing
+        navigate("/");
+      }
 
       console.log("Navigation intercepted by BackButtonHandler", location.pathname);
     };
