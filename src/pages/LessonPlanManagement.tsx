@@ -194,7 +194,9 @@ export default function LessonPlanManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Grades</SelectItem>
-                    {uniqueGrades.map(g => <SelectItem key={g} value={g!}>{g}</SelectItem>)}
+                    {uniqueGrades.map(g => (
+                      <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

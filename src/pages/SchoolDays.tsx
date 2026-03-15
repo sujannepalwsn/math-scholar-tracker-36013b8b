@@ -63,14 +63,21 @@ export default function SchoolDays() {
     mutationFn: async (payload: any) => {
       if (!centerId) throw new Error("Center ID is missing");
 
+      const upsertData: any = {
+        center_id: centerId,
+        date: payload.date,
+        is_school_day: payload.is_school_day
+      };
+
+      // Only add reason if it's explicitly provided and not null,
+      // to avoid issues if the column is missing in Postgrest cache
+      if (payload.reason) {
+        upsertData.reason = payload.reason;
+      }
+
       const { error } = await supabase
         .from("school_days")
-        .upsert({
-          center_id: centerId,
-          date: payload.date,
-          is_school_day: payload.is_school_day,
-          reason: payload.reason || null
-        }, { onConflict: 'center_id,date' });
+        .upsert(upsertData, { onConflict: 'center_id,date' });
       if (error) throw error;
     },
     onSuccess: () => {

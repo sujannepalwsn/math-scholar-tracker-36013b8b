@@ -467,7 +467,7 @@ export default function TeacherManagement() {
                   <SelectItem value="select-grade" disabled>Select Grade</SelectItem>
                   {uniqueGrades.map(g => {
                     const existing = classTeacherAssignments.find((a: any) => a.grade === g);
-                    return <SelectItem key={g} value={g!}>{g} {existing ? `(Currently: ${(existing as any).teachers?.name})` : ''}</SelectItem>;
+                    return <SelectItem key={g} value={g || "unassigned"}>{g} {existing ? `(Currently: ${(existing as any).teachers?.name})` : ''}</SelectItem>;
                   })}
                 </SelectContent>
               </Select>

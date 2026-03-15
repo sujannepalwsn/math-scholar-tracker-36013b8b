@@ -228,7 +228,9 @@ export default function LessonPlans() {
             </SelectTrigger>
             <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
               <SelectItem value="all">All Grades</SelectItem>
-              {uniqueGrades.map(g => <SelectItem key={g} value={g!}>{g}</SelectItem>)}
+              {uniqueGrades.map(g => (
+                <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {isTeacher && (
@@ -349,7 +351,9 @@ export default function LessonPlans() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">General</SelectItem>
-                      {uniqueGrades.map(g => <SelectItem key={g} value={g!}>{g}</SelectItem>)}
+                      {uniqueGrades.map(g => (
+                        <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -315,7 +315,9 @@ export default function TakeAttendance() {
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
                   {isTeacher && classTeacherGrades.length > 0 ? null : <SelectItem value="all">All Grades</SelectItem>}
-                  {allowedGrades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                  {allowedGrades.map((g) => (
+                    <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
