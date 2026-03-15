@@ -79,6 +79,7 @@ import ChapterPerformanceOverview from "./pages/ChapterPerformanceOverview";
 import TeacherPerformanceReport from "./pages/TeacherPerformanceReport";
 import LeaveApplications from "./pages/LeaveApplications";
 import LeaveManagement from "./pages/LeaveManagement";
+import LessonPlanManagement from "./pages/LessonPlanManagement";
 
 const queryClient = new QueryClient();
 
@@ -159,6 +160,7 @@ const App = () => (
               <Route path="/attendance" element={<ProtectedRoute role="center"><CenterLayout><TakeAttendance /></CenterLayout></ProtectedRoute>} />
               <Route path="/attendance-summary" element={<ProtectedRoute role="center"><CenterLayout><AttendanceSummary /></CenterLayout></ProtectedRoute>} />
               <Route path="/lesson-plans" element={<ProtectedRoute role="center"><CenterLayout><LessonPlans /></CenterLayout></ProtectedRoute>} />
+              <Route path="/lesson-plan-management" element={<ProtectedRoute role="center"><CenterLayout><LessonPlanManagement /></CenterLayout></ProtectedRoute>} />
               <Route path="/lesson-tracking" element={<ProtectedRoute role="center"><CenterLayout><LessonTracking /></CenterLayout></ProtectedRoute>} />
               <Route path="/homework" element={<ProtectedRoute role="center"><CenterLayout><HomeworkManagement /></CenterLayout></ProtectedRoute>} />
               <Route path="/activities" element={<ProtectedRoute role="center"><CenterLayout><PreschoolActivities /></CenterLayout></ProtectedRoute>} />

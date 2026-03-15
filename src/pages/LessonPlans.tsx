@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -49,7 +48,6 @@ export default function LessonPlans() {
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const isAdmin = user?.role === 'center';
   const isTeacher = user?.role === 'teacher';
 
   const { data: students = [] } = useQuery({
@@ -171,42 +169,6 @@ export default function LessonPlans() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans-all"] }); toast.success("Deleted!"); },
     onError: (error: any) => toast.error(error.message || "Failed to delete") });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status, remarks }: { id: string, status: string, remarks?: string }) => {
-      const updates: any = { status };
-      if (status === 'approved') {
-        updates.approved_by = user?.id;
-        updates.approved_at = new Date().toISOString();
-        updates.principal_remarks = remarks || null;
-      } else if (status === 'rejected') {
-        updates.rejection_reason = remarks || null;
-      }
-
-      const { error } = await supabase.from("lesson_plans").update(updates).eq("id", id);
-      if (error) throw error;
-
-      // Notify Teacher
-      if (viewingLessonPlan?.teacher_id) {
-        const { data: teacherUser } = await supabase.from("teachers").select("user_id").eq("id", viewingLessonPlan.teacher_id).single();
-        if (teacherUser?.user_id) {
-          await supabase.from("notifications").insert({
-            user_id: teacherUser.user_id,
-            center_id: user?.center_id,
-            title: status === 'approved' ? "Lesson Plan Approved" : "Lesson Plan Rejected",
-            message: status === 'approved' ? `Your lesson plan for ${viewingLessonPlan.topic} has been approved.` : `Your lesson plan for ${viewingLessonPlan.topic} was rejected. Reason: ${remarks}`,
-            type: "lesson_plan",
-            link: "/teacher/lesson-plans"
-          });
-        }
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lesson-plans-all"] });
-      toast.success("Status updated!");
-      setIsViewOpen(false);
-    },
-    onError: (error: any) => toast.error(error.message || "Failed to update status")
-  });
 
   const handleEditClick = (lp: LessonPlan) => {
     setEditingLessonPlan(lp);
@@ -236,27 +198,9 @@ export default function LessonPlans() {
   };
 
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
-  const pendingCount = lessonPlans.filter(lp => lp.status === 'pending').length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      {isAdmin && pendingCount > 0 && (
-        <Alert className="bg-amber-50 border-amber-200 rounded-3xl p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-amber-100 rounded-2xl">
-               <FileText className="h-6 w-6 text-amber-600" />
-            </div>
-            <div>
-              <AlertTitle className="text-lg font-black text-amber-900 uppercase tracking-tight">Review Required</AlertTitle>
-              <AlertDescription className="text-amber-700 font-medium">
-                There are <strong>{pendingCount}</strong> lesson plans awaiting institutional approval.
-                Prompt review ensures pedagogical consistency across all grades.
-              </AlertDescription>
-            </div>
-          </div>
-        </Alert>
-      )}
-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
@@ -540,35 +484,6 @@ export default function LessonPlans() {
                   </div>
                </div>
 
-               {/* Admin Decision Console */}
-               {isAdmin && viewingLessonPlan.status === 'pending' && (
-                  <div className="p-8 rounded-[2.5rem] bg-slate-900 text-white shadow-strong space-y-6">
-                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Institutional Review Notes</Label>
-                        <Textarea
-                          value={adminRemarks}
-                          onChange={(e) => setAdminRemarks(e.target.value)}
-                          placeholder="Provide feedback or justification for rejection..."
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/30 rounded-2xl h-24"
-                        />
-                     </div>
-                     <div className="flex gap-4">
-                        <Button
-                          variant="ghost"
-                          className="flex-1 h-12 rounded-xl font-black uppercase text-[10px] tracking-widest text-rose-400 hover:bg-rose-400/10 hover:text-rose-400"
-                          onClick={() => updateStatusMutation.mutate({ id: viewingLessonPlan.id, status: 'rejected', remarks: adminRemarks })}
-                        >
-                           <XCircle className="h-4 w-4 mr-2" /> Reject Plan
-                        </Button>
-                        <Button
-                          className="flex-[2] h-12 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white"
-                          onClick={() => updateStatusMutation.mutate({ id: viewingLessonPlan.id, status: 'approved', remarks: adminRemarks })}
-                        >
-                           <CheckCircle2 className="h-4 w-4 mr-2" /> Grant Approval
-                        </Button>
-                     </div>
-                  </div>
-               )}
 
                {/* Historical Decision Data */}
                {(viewingLessonPlan.status === 'approved' || viewingLessonPlan.status === 'rejected') && (
