@@ -441,7 +441,7 @@ export default function LessonPlans() {
 
       {/* View/Approval Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 overflow-hidden border-none shadow-strong">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-none shadow-strong">
           <style>
             {`
               @media print {
@@ -479,80 +479,80 @@ export default function LessonPlans() {
               {viewingLessonPlan && (
                 <>
                   <div className="text-center space-y-2 mb-8">
-                    <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-900 border-b-4 border-slate-900 inline-block pb-1">Daily Lesson Plan</h1>
+                    <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-slate-900 border-b-4 border-slate-900 inline-block pb-1">Daily Lesson Plan</h1>
                   </div>
 
                   {/* Header Box */}
                   <div className="border-2 border-slate-900 rounded-3xl overflow-hidden">
-                    <div className="grid grid-cols-2">
-                      <div className="border-r-2 border-slate-900 divide-y-2 divide-slate-900">
+                    <div className="grid grid-cols-1 md:grid-cols-2">
+                      <div className="md:border-r-2 border-slate-900 divide-y-2 divide-slate-900">
                         <div className="p-4 flex gap-2 items-center">
-                          <span className="font-black uppercase text-xs min-w-[100px]">Subject:</span>
-                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.subject}</span>
+                          <span className="font-black uppercase text-[10px] md:text-xs min-w-[80px] md:min-w-[100px]">Subject:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1 text-sm">{viewingLessonPlan.subject}</span>
                         </div>
                         <div className="p-4 flex gap-2 items-center">
-                          <span className="font-black uppercase text-xs min-w-[100px]">Unit:</span>
-                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.chapter || 'N/A'}</span>
+                          <span className="font-black uppercase text-[10px] md:text-xs min-w-[80px] md:min-w-[100px]">Unit:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1 text-sm">{viewingLessonPlan.chapter || 'N/A'}</span>
                         </div>
                         <div className="p-4 flex gap-2 items-center">
-                          <span className="font-black uppercase text-xs min-w-[100px]">Lesson Topic:</span>
-                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.topic || viewingLessonPlan.title}</span>
+                          <span className="font-black uppercase text-[10px] md:text-xs min-w-[80px] md:min-w-[100px]">Topic:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1 text-sm">{viewingLessonPlan.topic || viewingLessonPlan.title}</span>
                         </div>
                       </div>
-                      <div className="divide-y-2 divide-slate-900">
+                      <div className="divide-y-2 divide-slate-900 border-t-2 md:border-t-0 border-slate-900">
                         <div className="p-4 flex gap-2 items-center">
-                          <span className="font-black uppercase text-xs min-w-[80px]">Class:</span>
-                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.grade || 'General'}</span>
+                          <span className="font-black uppercase text-[10px] md:text-xs min-w-[80px]">Class:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1 text-sm">{viewingLessonPlan.grade || 'General'}</span>
                         </div>
                         <div className="p-4 flex gap-2 items-center">
-                          <span className="font-black uppercase text-xs min-w-[80px]">Period:</span>
-                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.period || 'N/A'}</span>
+                          <span className="font-black uppercase text-[10px] md:text-xs min-w-[80px]">Period:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1 text-sm">{viewingLessonPlan.period || 'N/A'}</span>
                         </div>
                         <div className="p-4 flex gap-2 items-center">
-                          <span className="font-black uppercase text-xs min-w-[80px]">Date:</span>
-                          <span className="font-bold border-b border-slate-400 flex-1">{format(new Date(viewingLessonPlan.lesson_date), "PPP")}</span>
+                          <span className="font-black uppercase text-[10px] md:text-xs min-w-[80px]">Date:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1 text-sm">{format(new Date(viewingLessonPlan.lesson_date), "PPP")}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Numbered Sections */}
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <section className="space-y-2">
-                      <h3 className="font-black text-lg flex items-start gap-2">
+                      <h3 className="font-black text-base md:text-lg flex items-start gap-2">
                         <span>1.</span>
                         <span className="uppercase">Learning Outcomes:</span>
                       </h3>
-                      <div className="pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
+                      <div className="pl-6 md:pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
                         {viewingLessonPlan.objectives || '____________________________________________________________________________________________________'}
                       </div>
                     </section>
 
                     <section className="space-y-2">
-                      <h3 className="font-black text-lg flex items-start gap-2">
+                      <h3 className="font-black text-base md:text-lg flex items-start gap-2">
                         <span>2.</span>
                         <span className="uppercase">Warm up & Review:</span>
                       </h3>
-                      <div className="pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
+                      <div className="pl-6 md:pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
                         {viewingLessonPlan.warm_up_review || '____________________________________________________________________________________________________'}
                       </div>
                     </section>
 
                     <section className="space-y-2">
-                      <h3 className="font-black text-lg flex items-start gap-2">
-                        <span className="uppercase ml-7">Teaching Aids:</span>
+                      <h3 className="font-black text-base md:text-lg flex items-start gap-2">
+                        <span className="uppercase ml-6 md:ml-7">Teaching Aids:</span>
                       </h3>
-                      <div className="pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
+                      <div className="pl-6 md:pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
                         {viewingLessonPlan.notes || '____________________________________________________________________________________________________'}
                       </div>
                     </section>
 
                     <section className="space-y-4">
-                      <h3 className="font-black text-lg flex items-start gap-2">
+                      <h3 className="font-black text-base md:text-lg flex items-start gap-2">
                         <span>3.</span>
                         <span className="uppercase">Teaching Learning Activities:</span>
                       </h3>
-                      <div className="pl-7 space-y-3">
+                      <div className="pl-6 md:pl-7 space-y-3">
                         {Array.isArray(viewingLessonPlan.learning_activities) && (viewingLessonPlan.learning_activities as string[]).length > 0 ? (
                           (viewingLessonPlan.learning_activities as string[]).map((act, i) => (
                             <div key={i} className="flex gap-2 text-sm font-medium border-b border-dotted border-slate-300 pb-1">
@@ -572,11 +572,11 @@ export default function LessonPlans() {
                     </section>
 
                     <section className="space-y-4">
-                      <h3 className="font-black text-lg flex items-start gap-2">
+                      <h3 className="font-black text-base md:text-lg flex items-start gap-2">
                         <span>4.</span>
                         <span className="uppercase">Class Review / Evaluation:</span>
                       </h3>
-                      <div className="pl-7 space-y-3">
+                      <div className="pl-6 md:pl-7 space-y-3">
                         {Array.isArray(viewingLessonPlan.evaluation_activities) && (viewingLessonPlan.evaluation_activities as string[]).length > 0 ? (
                           (viewingLessonPlan.evaluation_activities as string[]).map((act, i) => (
                             <div key={i} className="flex gap-2 text-sm font-medium border-b border-dotted border-slate-300 pb-1">
@@ -596,45 +596,45 @@ export default function LessonPlans() {
                     </section>
 
                     <section className="space-y-4">
-                      <h3 className="font-black text-lg flex items-start gap-2">
+                      <h3 className="font-black text-base md:text-lg flex items-start gap-2">
                         <span>5.</span>
                         <span className="uppercase">Assignments:</span>
                       </h3>
-                      <div className="border-2 border-slate-900 divide-x-2 divide-slate-900 grid grid-cols-2">
+                      <div className="border-2 border-slate-900 md:divide-x-2 divide-slate-900 grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden">
                         <div className="divide-y-2 divide-slate-900">
-                          <div className="bg-slate-50 p-2 text-center font-black uppercase text-xs">Class Work</div>
-                          <div className="p-4 text-sm font-medium min-h-[120px]">
+                          <div className="bg-slate-50 p-2 text-center font-black uppercase text-[10px]">Class Work</div>
+                          <div className="p-4 text-sm font-medium min-h-[80px] md:min-h-[120px]">
                             {viewingLessonPlan.class_work || '________________________________________'}
                           </div>
                         </div>
-                        <div className="divide-y-2 divide-slate-900">
-                          <div className="bg-slate-50 p-2 text-center font-black uppercase text-xs">Home Assignment</div>
-                          <div className="p-4 text-sm font-medium min-h-[120px]">
+                        <div className="divide-y-2 divide-slate-900 border-t-2 md:border-t-0 border-slate-900">
+                          <div className="bg-slate-50 p-2 text-center font-black uppercase text-[10px]">Home Assignment</div>
+                          <div className="p-4 text-sm font-medium min-h-[80px] md:min-h-[120px]">
                             {viewingLessonPlan.home_assignment || '________________________________________'}
                           </div>
                         </div>
                       </div>
                     </section>
 
-                    <section className="pt-4 flex items-center gap-4">
+                    <section className="pt-4 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                       <span className="font-black uppercase text-sm">Remarks:</span>
-                      <div className="flex-1 border-b border-dotted border-slate-900 min-h-[30px] font-bold italic text-slate-700">
+                      <div className="flex-1 border-b border-dotted border-slate-900 min-h-[30px] font-bold italic text-slate-700 text-sm">
                         {viewingLessonPlan.principal_remarks || viewingLessonPlan.rejection_reason || ''}
                       </div>
                     </section>
                   </div>
 
                   {/* Signatures */}
-                  <div className="pt-16 grid grid-cols-2 gap-20">
+                  <div className="pt-16 grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20 pb-10">
                     <div className="text-center space-y-2">
                       <div className="border-t-2 border-slate-900 pt-2">
-                        <p className="font-black uppercase text-xs">Subject Teacher's Signature</p>
+                        <p className="font-black uppercase text-[10px]">Subject Teacher's Signature</p>
                         <p className="text-[10px] font-bold text-slate-400 mt-1">{viewingLessonPlan.teachers?.name}</p>
                       </div>
                     </div>
                     <div className="text-center space-y-2">
                       <div className="border-t-2 border-slate-900 pt-2">
-                        <p className="font-black uppercase text-xs">Principal's Signature</p>
+                        <p className="font-black uppercase text-[10px]">Principal's Signature</p>
                       </div>
                     </div>
                   </div>

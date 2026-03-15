@@ -42,7 +42,7 @@ export default function MarksEntry() {
         .from("exams")
         .select("*")
         .eq("center_id", centerId)
-        .in("status", ["draft", "published"])
+        .in("status", ["draft", "published", "results_published"])
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -173,6 +173,19 @@ export default function MarksEntry() {
   });
 
   const handleMarkChange = (studentId: string, subjectId: string, value: string) => {
+    const subject = subjects.find((s: any) => s.id === subjectId);
+    if (subject && value !== "") {
+      const numValue = parseFloat(value);
+      if (numValue > subject.full_marks) {
+        toast.error(`Marks for ${subject.subject_name} cannot exceed full marks (${subject.full_marks})`);
+        return;
+      }
+      if (numValue < 0) {
+        toast.error("Marks cannot be negative");
+        return;
+      }
+    }
+
     setMarksData((prev) => ({
       ...prev,
       [studentId]: { ...prev[studentId], [subjectId]: value },

@@ -296,12 +296,17 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!centerId) return [];
       const dayOfWeek = new Date().getDay();
-      const { data, error } = await supabase
+      let query = supabase
         .from("period_schedules")
         .select("*, teachers(*), class_periods!inner(*)")
         .eq("center_id", centerId)
-        .eq("day_of_week", dayOfWeek)
-        .eq("class_periods.is_published", true);
+        .eq("day_of_week", dayOfWeek);
+
+      if (role !== 'admin' && role !== 'center') {
+        query = query.eq("class_periods.is_published", true);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },

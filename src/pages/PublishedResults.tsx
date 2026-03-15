@@ -37,8 +37,6 @@ export default function PublishedResults() {
       let query = supabase.from("exams")
         .select("*")
         .eq("center_id", centerId)
-        .gte("exam_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
-        .lte("exam_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"))
         .order("created_at", { ascending: false });
 
       if (user?.role === 'parent') {
