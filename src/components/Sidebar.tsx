@@ -38,7 +38,12 @@ export default function Sidebar({
 }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([
+    'Academics',
+    'Administration',
+    'Reports and Communication',
+    'Reports and Communications'
+  ]);
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
 

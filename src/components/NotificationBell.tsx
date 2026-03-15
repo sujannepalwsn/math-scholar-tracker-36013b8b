@@ -29,12 +29,9 @@ export default function NotificationBell() {
 
       if (user.role === 'admin') {
         // Super admin sees all
-      } else if (user.role === 'center') {
-        // Center admin sees their own and center-wide broadcasts
-        query = query.or(`user_id.eq.${user.id},and(user_id.is.null,center_id.eq.${user.center_id})`);
       } else {
-        // Teachers and Parents only see notifications specifically for them
-        query = query.eq("user_id", user.id);
+        // Center admin, Teachers and Parents see their own and center-wide broadcasts
+        query = query.or(`user_id.eq.${user.id},and(user_id.is.null,center_id.eq.${user.center_id})`);
       }
 
       const { data, error } = await query;
