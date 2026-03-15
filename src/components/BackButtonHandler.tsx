@@ -13,45 +13,50 @@ const BackButtonHandler = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // 1. Prime the history stack
-    // When a WebView starts, history.length is 1. If the user presses the back button,
-    // the WebView sees no history and tells the app to close.
-    // By pushing a dummy state, we ensure canGoBack() is true.
-    const primeHistory = () => {
+    // Sentinel management for mobile WebViews
+    const SENTINEL_STATE = { sentinel: true };
+    const DASHBOARD_PATHS = ['/', '/parent-dashboard', '/teacher-dashboard', '/admin-dashboard'];
+    const LOGIN_PATHS = ['/login', '/login-parent', '/login-admin'];
+
+    const ensureSentinel = () => {
+      // If history length is 1, push a sentinel so back button has something to pop
       if (window.history.length <= 1) {
-        window.history.pushState({ app_initialized: true }, "");
+        window.history.pushState(SENTINEL_STATE, "");
       }
     };
 
-    primeHistory();
+    ensureSentinel();
 
-    // 2. Global back button listener
     const handlePopState = (event: PopStateEvent) => {
-      // If the sidebar is handling its own popstate (see Sidebar.tsx),
-      // we let it do its thing.
-      if (event.state?.sidebarOpen) {
+      // Let sidebar and other UI elements handle their own popstate
+      if (event.state?.sidebarOpen || event.state?.menuOpen) {
         return;
       }
 
-      // If we are at the very beginning of our primed history,
-      // we might want to prevent going further back if we want to stay in the app.
-      // In many WebViews, when you are at the first entry of history, back button closes the app.
-      // If our primed state is what's being popped, we re-push it to keep the app open
-      // unless we are on a login page or specific exit points.
+      // If we popped into the sentinel or there's no more history,
+      // re-push sentinel and force stay in app
+      if (event.state?.sentinel || window.history.length <= 1) {
+        // Prevent closing by pushing state back
+        window.history.pushState(SENTINEL_STATE, "");
 
-      if (event.state?.app_initialized && !['/login', '/login-parent', '/login-admin'].includes(location.pathname)) {
-        window.history.pushState({ app_initialized: true }, "");
-        // Optionally navigate to dashboard or home instead of doing nothing
-        navigate("/");
+        // Use React Router location instead of window.location for HashRouter compatibility
+        const currentPath = location.pathname;
+        if (!DASHBOARD_PATHS.includes(currentPath) && !LOGIN_PATHS.includes(currentPath)) {
+          navigate("/");
+        }
       }
 
-      console.log("Navigation intercepted by BackButtonHandler", location.pathname);
+      console.log("Back button intercepted", location.pathname, event.state);
     };
 
     window.addEventListener('popstate', handlePopState);
 
+    // Periodically check history length - some Android WebViews behave oddly
+    const interval = setInterval(ensureSentinel, 2000);
+
     return () => {
       window.removeEventListener('popstate', handlePopState);
+      clearInterval(interval);
     };
   }, [navigate, location]);
 
