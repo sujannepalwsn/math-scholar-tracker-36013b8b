@@ -22,6 +22,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LibraryManagement from "@/components/center/LibraryManagement";
+import TransportManagement from "@/components/center/TransportManagement";
 
 type AttendanceRange = "weekly" | "monthly" | "yearly" | "overall";
 
@@ -650,6 +653,13 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 pb-24 md:pb-8">
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+          <TabsTrigger value="overview" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Overview</TabsTrigger>
+          <TabsTrigger value="logistics" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Logistics & Infrastructure</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6 outline-none">
       {/* Substitution Dialog */}
       <Dialog open={!!selectedVacantClass} onOpenChange={(open) => !open && setSelectedVacantClass(null)}>
         <DialogContent className="max-w-2xl">
@@ -1032,6 +1042,36 @@ export default function Dashboard() {
           }} />
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="logistics" className="space-y-8 outline-none">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
+              <CardHeader className="bg-primary/5 border-b border-border/20 px-8 py-6">
+                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                  <div className="p-2 rounded-xl bg-primary/10"><Book className="h-6 w-6 text-primary" /></div>
+                  Library Terminal
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <LibraryManagement centerId={centerId || ""} />
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
+              <CardHeader className="bg-blue-500/5 border-b border-border/20 px-8 py-6">
+                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                  <div className="p-2 rounded-xl bg-blue-500/10"><Bus className="h-6 w-6 text-blue-600" /></div>
+                  Transport Network
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <TransportManagement centerId={centerId || ""} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

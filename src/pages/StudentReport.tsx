@@ -17,6 +17,8 @@ import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
 import { Invoice, Payment } from "@/integrations/supabase/finance-types"
 import { formatCurrency, safeFormatDate, getGradeFormal } from "@/lib/utils" // Import safeFormatDate, formatCurrency, getGradeFormal
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import RegulatoryReports from "@/components/center/RegulatoryReports"
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -1206,6 +1208,13 @@ export default function StudentReport() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
+      <Tabs defaultValue="analytics" className="space-y-8">
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+          <TabsTrigger value="analytics" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Performance Analytics</TabsTrigger>
+          <TabsTrigger value="compliance" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Regulatory Compliance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="analytics" className="space-y-8 outline-none">
       {/* Header and Print/Export */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
@@ -2026,6 +2035,12 @@ export default function StudentReport() {
           )}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="compliance" className="outline-none">
+           <RegulatoryReports centerId={user?.center_id || ""} />
+        </TabsContent>
+      </Tabs>
 
       {/* Exam Schedule Dialog */}
       <Dialog open={!!selectedExamSchedule} onOpenChange={() => setSelectedExamSchedule(null)}>

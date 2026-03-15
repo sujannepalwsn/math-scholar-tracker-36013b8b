@@ -13,8 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import * as bcrypt from 'bcryptjs';
 import CenterFeaturePermissions from '@/components/admin/CenterFeaturePermissions';
+import SubscriptionManagement from '@/components/admin/SubscriptionManagement';
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const AdminDashboard = () => {
@@ -132,6 +134,13 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
       <div className="max-w-7xl mx-auto space-y-12">
+      <Tabs defaultValue="centers" className="space-y-8">
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+          <TabsTrigger value="centers" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Tuition Centers</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">SaaS Subscriptions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="centers" className="space-y-12 outline-none">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
@@ -284,6 +293,12 @@ const AdminDashboard = () => {
         </Card>
 
         <CenterFeaturePermissions />
+        </TabsContent>
+
+        <TabsContent value="subscriptions" className="outline-none">
+          <SubscriptionManagement />
+        </TabsContent>
+      </Tabs>
       </div>
     </div>
   );

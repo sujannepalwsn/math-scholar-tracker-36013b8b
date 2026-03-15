@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ExternalLink, MessageCircle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -453,7 +454,14 @@ export default function HomeworkManagement() {
                             }}
                           />
                         </TableCell>
-                        <TableCell className="font-bold text-slate-700">{s.students?.name}</TableCell>
+                        <TableCell className="">
+                           <div className="font-bold text-slate-700">{s.students?.name}</div>
+                           {s.submission_url && (
+                             <a href={s.submission_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-black text-blue-600 hover:underline uppercase tracking-tighter">
+                               <ExternalLink className="h-2.5 w-2.5" /> View Submission
+                             </a>
+                           )}
+                        </TableCell>
                         <TableCell>
                           <Select
                             value={s.status}
@@ -471,12 +479,19 @@ export default function HomeworkManagement() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Input
-                            defaultValue={s.teacher_remarks || ""}
-                            placeholder="Add remark..."
-                            className="h-8 text-xs rounded-lg border-muted/20"
-                            onBlur={e => updateStudentHomeworkRecordMutation.mutate({ id: s.id, status: s.status, teacher_remarks: e.target.value })}
-                          />
+                           <div className="flex gap-2 items-center">
+                            <Input
+                              defaultValue={s.teacher_remarks || ""}
+                              placeholder="Feedback..."
+                              className="h-8 text-xs rounded-lg border-muted/20"
+                              onBlur={e => updateStudentHomeworkRecordMutation.mutate({ id: s.id, status: s.status, teacher_remarks: e.target.value })}
+                            />
+                            {s.status === 'submitted' && (
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" title="Add Detailed Feedback">
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                           </div>
                         </TableCell>
                         <TableCell className="text-center">
                           {(s.status === 'completed' || s.status === 'checked') ? (

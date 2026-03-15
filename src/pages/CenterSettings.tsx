@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import ThemeSelector from "@/components/ThemeSelector";
 import * as bcrypt from 'bcryptjs';
+import NotificationSettings from "@/components/center/NotificationSettings";
 
 interface CenterTheme {
   primary: string;
@@ -273,6 +274,13 @@ export default function CenterSettings() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
+      <Tabs defaultValue="general" className="space-y-8">
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+          <TabsTrigger value="general" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">General & Identity</TabsTrigger>
+          <TabsTrigger value="communication" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Communication Hub</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-8 outline-none">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
@@ -656,6 +664,12 @@ export default function CenterSettings() {
           )}
         </Button>
       </div>
+        </TabsContent>
+
+        <TabsContent value="communication" className="outline-none">
+          <NotificationSettings centerId={user?.center_id || ""} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
