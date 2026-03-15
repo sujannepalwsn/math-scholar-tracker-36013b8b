@@ -180,7 +180,9 @@ export default function AttendanceSummary() {
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
                   <SelectItem value="all">All Classes</SelectItem>
-                  {classes.map((c) => <SelectItem key={c} value={c!}>{c}</SelectItem>)}
+                  {classes.map((c) => (
+                    <SelectItem key={c} value={c || "unassigned"}>{c}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

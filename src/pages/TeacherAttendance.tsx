@@ -251,12 +251,13 @@ export default function TeacherAttendancePage() {
       const teacherProfile = teachers.find(t => t.id === user?.teacher_id || t.user_id === user?.id);
       if (!teacherProfile) throw new Error("Teacher profile not found");
 
-      // Enforce shift boundaries
+      // Enforce shift boundaries (expected_check_in to expected_check_out)
       const currentTime = format(new Date(), "HH:mm");
-      if (teacherProfile.regular_in_time && teacherProfile.regular_out_time) {
-        if (currentTime < teacherProfile.regular_in_time || currentTime > teacherProfile.regular_out_time) {
-          throw new Error(`You can only mark attendance between ${teacherProfile.regular_in_time} and ${teacherProfile.regular_out_time}.`);
-        }
+      const checkInBoundary = teacherProfile.expected_check_in || teacherProfile.regular_in_time || "09:00";
+      const checkOutBoundary = teacherProfile.expected_check_out || teacherProfile.regular_out_time || "17:00";
+
+      if (currentTime < checkInBoundary || currentTime > checkOutBoundary) {
+        throw new Error(`You can only mark attendance between ${checkInBoundary} and ${checkOutBoundary}.`);
       }
 
       if (type === 'in') {
@@ -522,10 +523,14 @@ export default function TeacherAttendancePage() {
 
   const myTodayAttendance = existingAttendance.find(a => a.teacher_id === teacherProfile?.id);
   const isWithinTimeBoundary = useMemo(() => {
-    if (!teacherProfile?.regular_in_time || !teacherProfile?.regular_out_time) return true;
+    const checkInBoundary = teacherProfile?.expected_check_in || teacherProfile?.regular_in_time || "09:00";
+    const checkOutBoundary = teacherProfile?.expected_check_out || teacherProfile?.regular_out_time || "17:00";
     const currentTime = format(new Date(), "HH:mm");
-    return currentTime >= teacherProfile.regular_in_time && currentTime <= teacherProfile.regular_out_time;
+    return currentTime >= checkInBoundary && currentTime <= checkOutBoundary;
   }, [teacherProfile]);
+
+  const checkInBoundaryDisplay = teacherProfile?.expected_check_in || teacherProfile?.regular_in_time || "09:00";
+  const checkOutBoundaryDisplay = teacherProfile?.expected_check_out || teacherProfile?.regular_out_time || "17:00";
 
   // If teacher role, show check-in interface
   if (isTeacher) {
@@ -541,7 +546,7 @@ export default function TeacherAttendancePage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle className="font-black uppercase text-xs tracking-widest">Outside Shift Hours</AlertTitle>
             <AlertDescription className="text-xs font-bold">
-              You can only mark attendance between {teacherProfile?.regular_in_time} and {teacherProfile?.regular_out_time}.
+              You can only mark attendance between {checkInBoundaryDisplay} and {checkOutBoundaryDisplay}.
             </AlertDescription>
           </Alert>
         )}
@@ -560,11 +565,11 @@ export default function TeacherAttendancePage() {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-1 text-center p-4 rounded-3xl bg-muted/30 border border-muted-foreground/5">
                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Shift In</p>
-                <p className="text-xl font-black">{teacherProfile?.regular_in_time || "09:00"}</p>
+                <p className="text-xl font-black">{checkInBoundaryDisplay}</p>
               </div>
               <div className="space-y-1 text-center p-4 rounded-3xl bg-muted/30 border border-muted-foreground/5">
                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Shift Out</p>
-                <p className="text-xl font-black">{teacherProfile?.regular_out_time || "17:00"}</p>
+                <p className="text-xl font-black">{checkOutBoundaryDisplay}</p>
               </div>
             </div>
 
