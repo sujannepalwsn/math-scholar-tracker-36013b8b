@@ -17,19 +17,31 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ["notifications", user?.center_id],
+    queryKey: ["notifications", user?.id, user?.center_id],
     queryFn: async () => {
-      if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      if (!user?.id) return [];
+
+      let query = supabase
         .from("notifications")
         .select("*")
-        .eq("center_id", user.center_id)
         .order("created_at", { ascending: false })
         .limit(20);
+
+      if (user.role === 'admin') {
+        // Super admin sees all
+      } else if (user.role === 'center') {
+        // Center admin sees their own and center-wide broadcasts
+        query = query.or(`user_id.eq.${user.id},and(user_id.is.null,center_id.eq.${user.center_id})`);
+      } else {
+        // Teachers and Parents only see notifications specifically for them
+        query = query.eq("user_id", user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
+    enabled: !!user?.id,
     refetchInterval: 30000,
   });
 
@@ -100,7 +112,7 @@ export default function NotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 w-80 sm:w-96 bg-card border rounded-2xl shadow-elevated z-50 overflow-hidden">
+          <div className="fixed inset-x-4 top-16 sm:absolute sm:inset-auto sm:right-0 sm:top-12 sm:w-96 bg-card border rounded-2xl shadow-elevated z-50 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-bold text-sm">Notifications</h3>
               {unreadCount > 0 && (

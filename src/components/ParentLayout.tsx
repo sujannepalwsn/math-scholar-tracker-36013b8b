@@ -19,19 +19,25 @@ const navItems: Array<{
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
+
+  // Academics
   { to: "/parent-lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'parent' as const, category: 'Academics' },
-  { to: "/parent-student-report", label: "Academic Report", icon: BarChart3, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-results", label: "Exam Results", icon: GraduationCap, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-homework", label: "Homework", icon: Book, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const, category: 'Academics' },
   { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const, category: 'Academics' },
-  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-leave", label: "Leave Applications", icon: Plane, role: 'parent' as const, category: 'Reports and Communications' },
+
+  // Administration
   { to: "/parent-settings", label: "Settings", icon: Settings, role: 'parent' as const, category: 'Administration' },
+
+  // Reports and Communications
+  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-student-report", label: "Student Report", icon: BarChart3, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-leave", label: "Leave Applications", icon: Plane, role: 'parent' as const, category: 'Reports and Communications' },
+  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communications' },
 ];
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
@@ -107,6 +113,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         </Button>
       </header>
 
+      {/* Main Content */}
       <main className={cn(
         "flex-1 overflow-y-auto bg-background transition-all duration-200",
         "md:h-screen",

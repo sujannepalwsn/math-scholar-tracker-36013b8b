@@ -234,7 +234,11 @@ export default function TeacherAttendancePage() {
       }
 
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
       });
 
       const { latitude, longitude } = position.coords;
@@ -283,7 +287,23 @@ export default function TeacherAttendancePage() {
       setIsVerifying(false);
     },
     onError: (error: any) => {
-      toast.error(error.message);
+      let message = error.message;
+      if (error instanceof GeolocationPositionError) {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Location access denied. Please enable location permissions in your browser.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Location information is unavailable. Please check your GPS/network.";
+            break;
+          case error.TIMEOUT:
+            message = "Location request timed out. Please try again.";
+            break;
+        }
+      } else if (message.includes("kCLErrorLocationUnknown")) {
+        message = "Location tracking failed (Unknown error). Please ensure your GPS is active and try again.";
+      }
+      toast.error(message, { duration: 5000 });
       setIsVerifying(false);
     }
   });
