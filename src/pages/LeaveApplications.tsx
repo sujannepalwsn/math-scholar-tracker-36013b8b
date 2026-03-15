@@ -210,6 +210,7 @@ export default function LeaveApplications() {
         message: `${user?.username || 'A user'} has submitted a new ${leaveType} leave application.`,
         type: "leave_request",
         user_id: null, // Broadcast to center admins
+        link: "/leave-management"
       });
 
       if (error) {

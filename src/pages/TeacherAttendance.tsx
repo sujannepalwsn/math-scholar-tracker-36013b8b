@@ -62,8 +62,9 @@ export default function TeacherAttendancePage() {
   const [detailMonthFilter, setDetailMonthFilter] = useState<Date>(new Date());
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const today = new Date();
   const dateStr = format(selectedDate, "yyyy-MM-dd");
-  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const todayStr = format(today, "yyyy-MM-dd");
 
   // Fetch active teachers for the center
   const { data: teachers = [], isLoading: teachersLoading } = useQuery({

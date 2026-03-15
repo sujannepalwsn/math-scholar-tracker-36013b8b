@@ -65,6 +65,7 @@ import MeetingManagement from "./pages/MeetingManagement";
 import Messaging from "./pages/Messaging";
 import ClassRoutine from "./pages/ClassRoutine";
 import CalendarEvents from "./pages/CalendarEvents";
+import SchoolDays from "./pages/SchoolDays";
 
 import InitAdmin from "./pages/InitAdmin";
 import NotFound from "./pages/NotFound";
@@ -144,6 +145,7 @@ const App = () => (
               <Route path="/teacher/view-records" element={<ProtectedRoute role="teacher"><TeacherLayout><ViewRecords /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/summary" element={<ProtectedRoute role="teacher"><TeacherLayout><Summary /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/finance" element={<ProtectedRoute role="teacher"><TeacherLayout><AdminFinance /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher/my-attendance" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherAttendancePage /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher-meetings" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMeetings /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher-messages" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherMessaging /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/class-routine" element={<ProtectedRoute role="teacher"><TeacherLayout><ClassRoutine /></TeacherLayout></ProtectedRoute>} />
@@ -183,6 +185,7 @@ const App = () => (
               <Route path="/results-dashboard" element={<ProtectedRoute role="center"><CenterLayout><ResultsDashboard /></CenterLayout></ProtectedRoute>} />
               <Route path="/marksheet" element={<ProtectedRoute role="center"><CenterLayout><MarksheetView /></CenterLayout></ProtectedRoute>} />
               <Route path="/student-id-cards" element={<ProtectedRoute role="center"><CenterLayout><StudentIdCard /></CenterLayout></ProtectedRoute>} />
+              <Route path="/school-days" element={<ProtectedRoute role="center"><CenterLayout><SchoolDays /></CenterLayout></ProtectedRoute>} />
 
               {/* Teacher Result Routes */}
               <Route path="/teacher/exams" element={<ProtectedRoute role="teacher"><TeacherLayout><ExamManagement /></TeacherLayout></ProtectedRoute>} />

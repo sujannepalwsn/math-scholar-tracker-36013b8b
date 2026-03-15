@@ -105,7 +105,7 @@ export default function TeacherDashboard() {
       const dayOfWeek = new Date(dateRange.to).getDay();
 
       // Get regular schedules
-      const { data: regular, error } = await supabase.from("period_schedules").select("*, class_periods(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek);
+      const { data: regular, error } = await supabase.from("period_schedules").select("*, class_periods!inner(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek).eq("class_periods.is_published", true);
       if (error) throw error;
 
       // Get substitutions for today
@@ -478,10 +478,14 @@ export default function TeacherDashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <KPICard title="Daily Check-In" value="Attendance" description="Mark Presence" icon={User} color="green" onClick={() => navigate("/teacher/my-attendance")} />
         <KPICard title="Class Attendance" value={`${attendanceRate}%`} description="Presence Index" icon={Users} color="indigo" onClick={() => scrollToSection("attendance-section")} />
         <KPICard title="Today's Classes" value={todayClasses.length} description="Instruction Units" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />
         <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Active Submissions" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />
+        <KPICard title="Lesson Plans" value={allLessonPlans.length} description="Instructional Assets" icon={FileText} color="purple" onClick={() => navigate("/teacher/lesson-plans")} />
+        <KPICard title="Approvals" value={allLessonPlans.filter(lp => lp.status === 'pending').length} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/teacher/lesson-plans")} />
         <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Score Synthesis" icon={TrendingUp} color="purple" trendData={attendanceTrend} onClick={() => scrollToSection("tests-section")} />
+        <KPICard title="Messages" value="View" description="Admin Liaison" icon={MessageSquare} color="pink" onClick={() => navigate("/teacher-messages")} />
       </div>
 
       {/* Subject Wise Performance Cards */}
@@ -554,7 +558,7 @@ export default function TeacherDashboard() {
               </CardContent>
            </Card>
         </div>
-        <AlertList alerts={teacherAlerts} onViewAll={() => navigate("/teacher-messaging")} />
+        <AlertList alerts={teacherAlerts} onViewAll={() => navigate("/teacher-messages")} />
       </div>
 
       {/* Bottom Section */}
@@ -578,7 +582,7 @@ export default function TeacherDashboard() {
                      <div
                         key={att.id}
                         className="p-4 rounded-xl bg-white border border-slate-100 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => navigate("/teacher/meetings")}
+                        onClick={() => navigate("/teacher-meetings")}
                      >
                         <div className="space-y-1">
                            <p className="text-sm font-bold text-foreground/90">{att.meetings?.title}</p>
