@@ -380,9 +380,34 @@ export default function ClassRoutine() {
     setImportResults(null);
   };
 
-  const handleEditPeriod = (period: any) => { setEditingPeriod(period); setPeriodNumber(period.period_number.toString()); setStartTime(period.start_time); setEndTime(period.end_time); setShowPeriodDialog(true); };
-  const handleEditSchedule = (schedule: any) => { setEditingSchedule(schedule); setScheduleGrade(schedule.grade); setSchedulePeriodId(schedule.class_period_id); setScheduleDay(schedule.day_of_week.toString()); setScheduleSubject(schedule.subject); setScheduleTeacherId(schedule.teacher_id || "none"); setShowScheduleDialog(true); };
-  const handleEditSubject = (subject: any) => { setEditingSubjectId(subject.id); setSubjectName(subject.name); setShowSubjectDialog(true); };
+  const handleEditPeriod = (period: any) => {
+    setEditingPeriod(period);
+    setPeriodNumber(period.period_number.toString());
+    setStartTime(period.start_time);
+    setEndTime(period.end_time);
+    setShowPeriodDialog(true);
+  };
+
+  const handleEditSchedule = (schedule: any) => {
+    setEditingSchedule(schedule);
+    setScheduleGrade(schedule.grade);
+
+    // Handle potential joined objects from Supabase (alias:column_name replaces the column with the object)
+    const periodId = typeof schedule.class_period_id === 'object' ? schedule.class_period_id?.id : schedule.class_period_id;
+    const teacherId = typeof schedule.teacher_id === 'object' ? schedule.teacher_id?.id : schedule.teacher_id;
+
+    setSchedulePeriodId(periodId);
+    setScheduleDay(schedule.day_of_week.toString());
+    setScheduleSubject(schedule.subject);
+    setScheduleTeacherId(teacherId || "none");
+    setShowScheduleDialog(true);
+  };
+
+  const handleEditSubject = (subject: any) => {
+    setEditingSubjectId(subject.id);
+    setSubjectName(subject.name);
+    setShowSubjectDialog(true);
+  };
 
   const handlePeriodSubmit = (e: React.FormEvent) => { e.preventDefault(); editingPeriod ? updatePeriodMutation.mutate() : createPeriodMutation.mutate(); };
   const handleScheduleSubmit = (e: React.FormEvent) => { e.preventDefault(); editingSchedule ? updateScheduleMutation.mutate() : createScheduleMutation.mutate(); };
@@ -662,6 +687,299 @@ export default function ClassRoutine() {
         </div>
       </div>
 
+      <Tabs defaultValue="summary" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden">
+          <TabsTrigger value="summary" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Summary Table
+          </TabsTrigger>
+          <TabsTrigger value="schedule" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Institutional Schedule
+          </TabsTrigger>
+          <TabsTrigger value="periods" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Time Slots
+          </TabsTrigger>
+          <TabsTrigger value="subjects" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Subjects
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="summary" className="space-y-4">
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-xl font-black uppercase tracking-widest">Timetable Matrix</CardTitle>
+              <div className="flex items-center gap-2 print:hidden">
+                <Select value={summaryDay.toString()} onValueChange={(v) => setSummaryDay(parseInt(v))}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Select Day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS_OF_WEEK.map(d => (
+                      <SelectItem key={d.value} value={d.value.toString()}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="border-collapse border border-slate-200">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="border border-slate-200 bg-slate-50 font-black text-[10px] uppercase tracking-widest text-center min-w-[120px]">Period / Time</TableHead>
+                      {allGrades.map(g => (
+                        <TableHead key={g} className="border border-slate-200 bg-slate-50 font-black text-[10px] uppercase tracking-widest text-center min-w-[120px]">Grade {g}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {periods.map((p: any) => (
+                      <TableRow key={p.id}>
+                        <TableCell
+                          className="border border-slate-200 font-bold text-center text-xs py-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                          onClick={() => handleEditPeriod(p)}
+                        >
+                          <div className="font-black text-primary">Period {p.period_number}</div>
+                          <div className="text-[10px] text-muted-foreground">{p.start_time} - {p.end_time}</div>
+                        </TableCell>
+                        {allGrades.map(g => {
+                          const entry = allSchedules.find((s: any) => {
+                            const pid = typeof s.class_period_id === 'object' ? s.class_period_id?.id : s.class_period_id;
+                            return (pid === p.id || s.class_periods?.id === p.id) &&
+                                   s.grade === g &&
+                                   s.day_of_week === summaryDay;
+                          });
+                          const status = getStatus(entry);
+                          const sub = entry ? substitutions.find((s: any) => s.period_schedule_id === entry.id) : null;
+
+                          return (
+                            <TableCell
+                              key={g}
+                              className={cn(
+                                "border border-slate-200 text-center p-2 min-h-[80px] transition-colors relative",
+                                "cursor-pointer hover:bg-slate-50"
+                              )}
+                              onClick={() => {
+                                if (entry) {
+                                  handleEditSchedule(entry);
+                                } else {
+                                  resetScheduleForm();
+                                  setScheduleGrade(g);
+                                  setSchedulePeriodId(p.id);
+                                  setScheduleDay(summaryDay.toString());
+                                  setShowScheduleDialog(true);
+                                }
+                              }}
+                            >
+                              {entry ? (
+                                <div className="space-y-1">
+                                  <div className="font-black text-xs text-slate-800 uppercase tracking-tight leading-tight">{entry.subject}</div>
+                                  <div className="text-[10px] font-medium text-slate-500 italic">{entry.teachers?.name || "Unassigned"}</div>
+
+                                  {status && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className={cn("h-1.5 w-1.5 rounded-full mx-auto mt-1", getStatusColor(status))} />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p className="text-[10px] font-bold uppercase">{getStatusLabel(status)}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+
+                                  {sub && (
+                                    <div className="mt-1 flex flex-col items-center">
+                                      <div className="text-[8px] font-black text-blue-600 uppercase tracking-tighter">Fulfilled By:</div>
+                                      <div className="text-[9px] font-bold text-blue-800">{sub.substitute_teacher?.name}</div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic opacity-30">Vacant</div>
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-4 justify-center print:hidden">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-black uppercase text-slate-400">Teacher Present</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-rose-500" />
+                  <span className="text-[10px] font-black uppercase text-slate-400">Teacher Absent / Leave</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-amber-500" />
+                  <span className="text-[10px] font-black uppercase text-slate-400">Vacant</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-blue-500" />
+                  <span className="text-[10px] font-black uppercase text-slate-400">Vacant Fulfilled</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:hidden">
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{allGrades.map(g => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}</SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={() => setShowAddGradeDialog(true)}><Plus className="h-4 w-4 mr-1" /> Grade</Button>
+            </div>
+
+            <Button size="sm" onClick={() => { resetScheduleForm(); setShowScheduleDialog(true); }}><Plus className="h-4 w-4 mr-1" /> Add Entry</Button>
+          </div>
+
+          {schedulesLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {schedulesByDay.map(day => (
+                <Card key={day.value} className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+                  <CardHeader className="border-b border-muted/20 bg-primary/5 py-4">
+                    <CardTitle className="text-base font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
+                      <div className="p-1.5 rounded-lg bg-primary/10">
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                      </div>
+                      {day.label}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {day.schedules.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest opacity-40 italic text-pretty">No Sessions Programmed</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-muted/10">
+                        {day.schedules.map((schedule: any) => (
+                          <div key={schedule.id} className="group flex items-center justify-between p-4 transition-all duration-300 hover:bg-card/60">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="font-black text-foreground/90 text-sm group-hover:text-primary transition-colors truncate">{schedule.subject}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-black uppercase">Slot {schedule.class_periods?.period_number}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{schedule.class_periods?.start_time} - {schedule.class_periods?.end_time}</span>
+                              </div>
+                              {schedule.teachers?.name && (
+                                <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
+                                  <div className="h-1 w-1 rounded-full bg-slate-300" />
+                                  {schedule.teachers.name}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleEditSchedule(schedule)}>
+                                <Edit className="h-3.5 w-3.5 text-primary" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteScheduleMutation.mutate(schedule.id)}>
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="subjects" className="space-y-4">
+          <div className="flex justify-end print:hidden">
+            <Button size="sm" onClick={() => setShowSubjectDialog(true)}><Plus className="h-4 w-4 mr-1" /> Add Subject</Button>
+          </div>
+
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><BookOpen className="h-4 w-4" /> Subjects</CardTitle></CardHeader>
+            <CardContent>
+              {subjectsLoading ? <p>Loading...</p> : registeredSubjects.length === 0 ? <p className="text-muted-foreground text-center py-4">No subjects defined.</p> : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Name</TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest print:hidden">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {registeredSubjects.map((s: any) => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-bold">{s.name}</TableCell>
+                          <TableCell className="flex gap-1 print:hidden">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditSubject(s)}><Edit className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSubjectMutation.mutate(s.id)}><Trash2 className="h-3 w-3" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="periods" className="space-y-4">
+          <div className="flex justify-end print:hidden">
+            <Button size="sm" onClick={() => setShowPeriodDialog(true)}><Plus className="h-4 w-4 mr-1" /> Add Slot</Button>
+          </div>
+
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-4 w-4" /> Class Periods</CardTitle></CardHeader>
+            <CardContent>
+              {periodsLoading ? <p>Loading...</p> : periods.length === 0 ? <p className="text-muted-foreground text-center py-4">No periods defined.</p> : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Period</TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Start</TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest">End</TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Status</TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest print:hidden">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {periods.map((p: any) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-bold">Period {p.period_number}</TableCell>
+                          <TableCell className="text-sm font-medium">{p.start_time}</TableCell>
+                          <TableCell className="text-sm font-medium">{p.end_time}</TableCell>
+                          <TableCell>
+                            <Badge variant={p.is_published ? "default" : "secondary"} className="text-[10px] font-black uppercase tracking-widest">
+                              {p.is_published ? "Published" : "Draft"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="flex gap-1 print:hidden">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditPeriod(p)}><Edit className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deletePeriodMutation.mutate(p.id)}><Trash2 className="h-3 w-3" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Global Dialogs */}
       <Dialog open={showImportDialog} onOpenChange={(open) => { setShowImportDialog(open); if (!open) resetImport(); }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -787,413 +1105,130 @@ export default function ClassRoutine() {
         </DialogContent>
       </Dialog>
 
-      <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden">
-          <TabsTrigger value="summary" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-            Summary Table
-          </TabsTrigger>
-          <TabsTrigger value="schedule" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-            Institutional Schedule
-          </TabsTrigger>
-          <TabsTrigger value="periods" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-            Time Slots
-          </TabsTrigger>
-          <TabsTrigger value="subjects" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-            Subjects
-          </TabsTrigger>
-        </TabsList>
+      <Dialog open={showAddGradeDialog} onOpenChange={setShowAddGradeDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add New Grade</DialogTitle><DialogDescription>Enter a new grade name.</DialogDescription></DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input value={newGrade} onChange={(e) => setNewGrade(e.target.value)} placeholder="e.g., 11, Nursery" />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAddGradeDialog(false)}>Cancel</Button>
+              <Button onClick={() => {
+                if (newGrade.trim() && !allGrades.includes(newGrade.trim())) {
+                  const updated = [...customGrades, newGrade.trim()];
+                  setCustomGrades(updated);
+                  localStorage.setItem(`custom_grades_${user?.center_id}`, JSON.stringify(updated));
+                  setSelectedGrade(newGrade.trim());
+                  toast.success(`Grade "${newGrade.trim()}" added!`);
+                  setNewGrade(""); setShowAddGradeDialog(false);
+                }
+              }} disabled={!newGrade.trim()}>Add</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        <TabsContent value="summary" className="space-y-4">
-          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl font-black uppercase tracking-widest">Timetable Matrix</CardTitle>
-              <div className="flex items-center gap-2 print:hidden">
-                <Select value={summaryDay.toString()} onValueChange={(v) => setSummaryDay(parseInt(v))}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Select Day" />
-                  </SelectTrigger>
+      <Dialog open={showScheduleDialog} onOpenChange={(open) => { setShowScheduleDialog(open); if (!open) resetScheduleForm(); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{editingSchedule ? "Edit Schedule" : "Add Schedule"}</DialogTitle><DialogDescription>Configure a class schedule entry.</DialogDescription></DialogHeader>
+          <form onSubmit={handleScheduleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Grade *</Label>
+                <Select value={scheduleGrade} onValueChange={setScheduleGrade}>
+                  <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
+                  <SelectContent>{allGrades.map(g => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Period *</Label>
+                <Select value={schedulePeriodId} onValueChange={setSchedulePeriodId}>
+                  <SelectTrigger><SelectValue placeholder="Period" /></SelectTrigger>
+                  <SelectContent>{periods.map((p: any) => <SelectItem key={p.id} value={p.id}>Period {p.period_number} ({p.start_time}-{p.end_time})</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Day *</Label>
+                <Select value={scheduleDay} onValueChange={setScheduleDay}>
+                  <SelectTrigger><SelectValue placeholder="Select day" /></SelectTrigger>
                   <SelectContent>
-                    {DAYS_OF_WEEK.map(d => (
-                      <SelectItem key={d.value} value={d.value.toString()}>{d.label}</SelectItem>
-                    ))}
+                    <SelectItem value="weekdays">All Days (Sun-Fri)</SelectItem>
+                    {DAYS_OF_WEEK.map(day => <SelectItem key={day.value} value={day.value.toString()}>{day.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table className="border-collapse border border-slate-200">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="border border-slate-200 bg-slate-50 font-black text-[10px] uppercase tracking-widest text-center min-w-[120px]">Period / Time</TableHead>
-                      {allGrades.map(g => (
-                        <TableHead key={g} className="border border-slate-200 bg-slate-50 font-black text-[10px] uppercase tracking-widest text-center min-w-[120px]">Grade {g}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {periods.map((p: any) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="border border-slate-200 font-bold text-center text-xs py-4">
-                          <div className="font-black text-primary">Period {p.period_number}</div>
-                          <div className="text-[10px] text-muted-foreground">{p.start_time} - {p.end_time}</div>
-                        </TableCell>
-                        {allGrades.map(g => {
-                          const entry = allSchedules.find((s: any) =>
-                            s.class_period_id === p.id &&
-                            s.grade === g &&
-                            s.day_of_week === summaryDay
-                          );
-                          const status = getStatus(entry);
-                          const sub = entry ? substitutions.find((s: any) => s.period_schedule_id === entry.id) : null;
-
-                          return (
-                            <TableCell
-                              key={g}
-                              className={cn(
-                                "border border-slate-200 text-center p-2 min-h-[80px] transition-colors relative",
-                                "cursor-pointer hover:bg-slate-50"
-                              )}
-                              onClick={() => {
-                                if (entry) {
-                                  if (status === 'absent' || status === 'vacant') {
-                                    setSelectedVacantClass(entry);
-                                  } else {
-                                    handleEditSchedule(entry);
-                                  }
-                                } else {
-                                  // For vacant slots, maybe allow adding?
-                                  setScheduleGrade(g);
-                                  setSchedulePeriodId(p.id);
-                                  setScheduleDay(summaryDay.toString());
-                                  setShowScheduleDialog(true);
-                                }
-                              }}
-                            >
-                              {entry ? (
-                                <div className="space-y-1">
-                                  <div className="font-black text-xs text-slate-800 uppercase tracking-tight leading-tight">{entry.subject}</div>
-                                  <div className="text-[10px] font-medium text-slate-500 italic">{entry.teachers?.name || "Unassigned"}</div>
-
-                                  {status && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div className={cn("h-1.5 w-1.5 rounded-full mx-auto mt-1", getStatusColor(status))} />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p className="text-[10px] font-bold uppercase">{getStatusLabel(status)}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-
-                                  {sub && (
-                                    <div className="mt-1 flex flex-col items-center">
-                                      <div className="text-[8px] font-black text-blue-600 uppercase tracking-tighter">Fulfilled By:</div>
-                                      <div className="text-[9px] font-bold text-blue-800">{sub.substitute_teacher?.name}</div>
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic opacity-30">Vacant</div>
-                              )}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
+              <div className="space-y-1.5">
+                <Label>Subject *</Label>
+                <Select value={scheduleSubject || "none"} onValueChange={(v) => setScheduleSubject(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Select Subject</SelectItem>
+                    {registeredSubjects.map((s: any) => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className="mt-6 flex flex-wrap gap-4 justify-center print:hidden">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                  <span className="text-[10px] font-black uppercase text-slate-400">Teacher Present</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-rose-500" />
-                  <span className="text-[10px] font-black uppercase text-slate-400">Teacher Absent / Leave</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-amber-500" />
-                  <span className="text-[10px] font-black uppercase text-slate-400">Vacant</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-blue-500" />
-                  <span className="text-[10px] font-black uppercase text-slate-400">Vacant Fulfilled</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="schedule" className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:hidden">
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{allGrades.map(g => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}</SelectContent>
-              </Select>
-              <Dialog open={showAddGradeDialog} onOpenChange={setShowAddGradeDialog}>
-                <DialogTrigger asChild><Button variant="outline" size="sm"><Plus className="h-4 w-4 mr-1" /> Grade</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Add New Grade</DialogTitle><DialogDescription>Enter a new grade name.</DialogDescription></DialogHeader>
-                  <div className="space-y-4 py-2">
-                    <Input value={newGrade} onChange={(e) => setNewGrade(e.target.value)} placeholder="e.g., 11, Nursery" />
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setShowAddGradeDialog(false)}>Cancel</Button>
-                      <Button onClick={() => {
-                        if (newGrade.trim() && !allGrades.includes(newGrade.trim())) {
-                          const updated = [...customGrades, newGrade.trim()];
-                          setCustomGrades(updated);
-                          localStorage.setItem(`custom_grades_${user?.center_id}`, JSON.stringify(updated));
-                          setSelectedGrade(newGrade.trim());
-                          toast.success(`Grade "${newGrade.trim()}" added!`);
-                          setNewGrade(""); setShowAddGradeDialog(false);
-                        }
-                      }} disabled={!newGrade.trim()}>Add</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <Dialog open={showScheduleDialog} onOpenChange={(open) => { setShowScheduleDialog(open); if (!open) resetScheduleForm(); }}>
-              <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Entry</Button></DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader><DialogTitle>{editingSchedule ? "Edit Schedule" : "Add Schedule"}</DialogTitle><DialogDescription>Configure a class schedule entry.</DialogDescription></DialogHeader>
-                <form onSubmit={handleScheduleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label>Grade *</Label>
-                      <Select value={scheduleGrade} onValueChange={setScheduleGrade}>
-                        <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
-                        <SelectContent>{allGrades.map(g => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Period *</Label>
-                      <Select value={schedulePeriodId} onValueChange={setSchedulePeriodId}>
-                        <SelectTrigger><SelectValue placeholder="Period" /></SelectTrigger>
-                        <SelectContent>{periods.map((p: any) => <SelectItem key={p.id} value={p.id}>Period {p.period_number} ({p.start_time}-{p.end_time})</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label>Day *</Label>
-                      <Select value={scheduleDay} onValueChange={setScheduleDay}>
-                        <SelectTrigger><SelectValue placeholder="Select day" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="weekdays">All Days (Sun-Fri)</SelectItem>
-                          {DAYS_OF_WEEK.map(day => <SelectItem key={day.value} value={day.value.toString()}>{day.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Subject *</Label>
-                      <Select value={scheduleSubject} onValueChange={setScheduleSubject}>
-                        <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
-                        <SelectContent>
-                          {registeredSubjects.map((s: any) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
-                          {registeredSubjects.length === 0 && <SelectItem value="none" disabled>No subjects registered</SelectItem>}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Teacher (Optional)</Label>
-                    <Select value={scheduleTeacherId} onValueChange={setScheduleTeacherId}>
-                      <SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No teacher</SelectItem>
-                        {teachers.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
-                    <Button type="submit" disabled={!scheduleGrade || !schedulePeriodId || !isValidDay || !scheduleSubject}>
-                      {editingSchedule ? "Update" : "Create"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {schedulesLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {schedulesByDay.map(day => (
-                <Card key={day.value} className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-                  <CardHeader className="border-b border-muted/20 bg-primary/5 py-4">
-                    <CardTitle className="text-base font-black flex items-center gap-3 text-foreground/90 uppercase tracking-widest">
-                      <div className="p-1.5 rounded-lg bg-primary/10">
-                        <CalendarIcon className="h-4 w-4 text-primary" />
-                      </div>
-                      {day.label}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {day.schedules.length === 0 ? (
-                      <div className="p-8 text-center">
-                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest opacity-40 italic text-pretty">No Sessions Programmed</p>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-muted/10">
-                        {day.schedules.map((schedule: any) => (
-                          <div key={schedule.id} className="group flex items-center justify-between p-4 transition-all duration-300 hover:bg-card/60">
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <div className="font-black text-foreground/90 text-sm group-hover:text-primary transition-colors truncate">{schedule.subject}</div>
-                              <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-black uppercase">Slot {schedule.class_periods?.period_number}</span>
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{schedule.class_periods?.start_time} - {schedule.class_periods?.end_time}</span>
-                              </div>
-                              {schedule.teachers?.name && (
-                                <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
-                                  <div className="h-1 w-1 rounded-full bg-slate-300" />
-                                  {schedule.teachers.name}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleEditSchedule(schedule)}>
-                                <Edit className="h-3.5 w-3.5 text-primary" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteScheduleMutation.mutate(schedule.id)}>
-                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                    {scheduleSubject && !registeredSubjects.some((s: any) => s.name === scheduleSubject) && (
+                      <SelectItem key="legacy-subject" value={scheduleSubject}>{scheduleSubject}</SelectItem>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          )}
-        </TabsContent>
+            <div className="space-y-1.5">
+              <Label>Teacher (Optional)</Label>
+              <Select value={scheduleTeacherId} onValueChange={setScheduleTeacherId}>
+                <SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No teacher</SelectItem>
+                  {teachers.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
+              <Button type="submit" disabled={!scheduleGrade || !schedulePeriodId || !isValidDay || !scheduleSubject}>
+                {editingSchedule ? "Update" : "Create"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-        <TabsContent value="subjects" className="space-y-4">
-          <div className="flex justify-end print:hidden">
-            <Dialog open={showSubjectDialog} onOpenChange={(open) => { setShowSubjectDialog(open); if (!open) resetSubjectForm(); }}>
-              <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Subject</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>{editingSubjectId ? "Edit Subject" : "Add Subject"}</DialogTitle><DialogDescription>Define a subject name.</DialogDescription></DialogHeader>
-                <form onSubmit={handleSubjectSubmit} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label>Subject Name *</Label>
-                    <Input value={subjectName} onChange={(e) => setSubjectName(e.target.value)} placeholder="Mathematics" required />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setShowSubjectDialog(false)}>Cancel</Button>
-                    <Button type="submit" disabled={!subjectName}>{editingSubjectId ? "Update" : "Create"}</Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+      <Dialog open={showSubjectDialog} onOpenChange={(open) => { setShowSubjectDialog(open); if (!open) resetSubjectForm(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editingSubjectId ? "Edit Subject" : "Add Subject"}</DialogTitle><DialogDescription>Define a subject name.</DialogDescription></DialogHeader>
+          <form onSubmit={handleSubjectSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Subject Name *</Label>
+              <Input value={subjectName} onChange={(e) => setSubjectName(e.target.value)} placeholder="Mathematics" required />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowSubjectDialog(false)}>Cancel</Button>
+              <Button type="submit" disabled={!subjectName}>{editingSubjectId ? "Update" : "Create"}</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><BookOpen className="h-4 w-4" /> Subjects</CardTitle></CardHeader>
-            <CardContent>
-              {subjectsLoading ? <p>Loading...</p> : registeredSubjects.length === 0 ? <p className="text-muted-foreground text-center py-4">No subjects defined.</p> : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Name</TableHead>
-                        <TableHead className="font-black text-[10px] uppercase tracking-widest print:hidden">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {registeredSubjects.map((s: any) => (
-                        <TableRow key={s.id}>
-                          <TableCell className="font-bold">{s.name}</TableCell>
-                          <TableCell className="flex gap-1 print:hidden">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditSubject(s)}><Edit className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSubjectMutation.mutate(s.id)}><Trash2 className="h-3 w-3" /></Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="periods" className="space-y-4">
-          <div className="flex justify-end print:hidden">
-            <Dialog open={showPeriodDialog} onOpenChange={(open) => { setShowPeriodDialog(open); if (!open) resetPeriodForm(); }}>
-              <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Slot</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>{editingPeriod ? "Edit Slot" : "Add Slot"}</DialogTitle><DialogDescription>Define a class period time slot.</DialogDescription></DialogHeader>
-                <form onSubmit={handlePeriodSubmit} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label>Period Number *</Label>
-                    <Input type="number" value={periodNumber} onChange={(e) => setPeriodNumber(e.target.value)} placeholder="1" required min="1" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5"><Label>Start *</Label><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required /></div>
-                    <div className="space-y-1.5"><Label>End *</Label><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required /></div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setShowPeriodDialog(false)}>Cancel</Button>
-                    <Button type="submit" disabled={!periodNumber || !startTime || !endTime}>{editingPeriod ? "Update" : "Create"}</Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-4 w-4" /> Class Periods</CardTitle></CardHeader>
-            <CardContent>
-              {periodsLoading ? <p>Loading...</p> : periods.length === 0 ? <p className="text-muted-foreground text-center py-4">No periods defined.</p> : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Period</TableHead>
-                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Start</TableHead>
-                        <TableHead className="font-black text-[10px] uppercase tracking-widest">End</TableHead>
-                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Status</TableHead>
-                        <TableHead className="font-black text-[10px] uppercase tracking-widest print:hidden">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {periods.map((p: any) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-bold">Period {p.period_number}</TableCell>
-                          <TableCell className="text-sm font-medium">{p.start_time}</TableCell>
-                          <TableCell className="text-sm font-medium">{p.end_time}</TableCell>
-                          <TableCell>
-                            <Badge variant={p.is_published ? "default" : "secondary"} className="text-[10px] font-black uppercase tracking-widest">
-                              {p.is_published ? "Published" : "Draft"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="flex gap-1 print:hidden">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditPeriod(p)}><Edit className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deletePeriodMutation.mutate(p.id)}><Trash2 className="h-3 w-3" /></Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Dialog open={showPeriodDialog} onOpenChange={(open) => { setShowPeriodDialog(open); if (!open) resetPeriodForm(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editingPeriod ? "Edit Slot" : "Add Slot"}</DialogTitle><DialogDescription>Define a class period time slot.</DialogDescription></DialogHeader>
+          <form onSubmit={handlePeriodSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Period Number *</Label>
+              <Input type="number" value={periodNumber} onChange={(e) => setPeriodNumber(e.target.value)} placeholder="1" required min="1" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label>Start *</Label><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required /></div>
+              <div className="space-y-1.5"><Label>End *</Label><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required /></div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowPeriodDialog(false)}>Cancel</Button>
+              <Button type="submit" disabled={!periodNumber || !startTime || !endTime}>{editingPeriod ? "Update" : "Create"}</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

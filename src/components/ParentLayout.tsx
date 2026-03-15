@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, GraduationCap, Home, KeyRound, LogOut, MessageSquare, Paintbrush, Plane, Settings, Star, User, Video } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, GraduationCap, Home, KeyRound, LogOut, Menu, MessageSquare, Paintbrush, Plane, Settings, Star, User, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
+import NotificationBell from "./NotificationBell";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 
@@ -30,14 +31,14 @@ const navItems: Array<{
   // Administration
   { to: "/parent-settings", label: "Settings", icon: Settings, role: 'parent' as const, category: 'Administration' },
 
-  // Reports and Communications
-  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-student-report", label: "Student Report", icon: BarChart3, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-leave", label: "Leave Applications", icon: Plane, role: 'parent' as const, category: 'Reports and Communications' },
-  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communications' },
+  // Reports and Communication
+  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communication' },
+  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communication' },
+  { to: "/parent-student-report", label: "Student Report", icon: BarChart3, role: 'parent' as const, category: 'Reports and Communication' },
+  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communication' },
+  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communication' },
+  { to: "/parent-leave", label: "Leave Applications", icon: Plane, role: 'parent' as const, category: 'Reports and Communication' },
+  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communication' },
 ];
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
@@ -107,10 +108,18 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       />
 
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
-        <CenterLogo size="sm" showName={true} />
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)} className="h-9 w-9">
+            <Menu className="h-5 w-5" />
+          </Button>
+          <CenterLogo size="sm" showName={true} />
+        </div>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
