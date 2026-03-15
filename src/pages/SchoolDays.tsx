@@ -61,9 +61,16 @@ export default function SchoolDays() {
 
   const upsertMutation = useMutation({
     mutationFn: async (payload: any) => {
+      if (!centerId) throw new Error("Center ID is missing");
+
       const { error } = await supabase
         .from("school_days")
-        .upsert({ ...payload, center_id: centerId }, { onConflict: 'center_id,date' });
+        .upsert({
+          center_id: centerId,
+          date: payload.date,
+          is_school_day: payload.is_school_day,
+          reason: payload.reason || null
+        }, { onConflict: 'center_id,date' });
       if (error) throw error;
     },
     onSuccess: () => {

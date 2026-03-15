@@ -129,6 +129,7 @@ export default function LessonPlans() {
         class_work: classWork,
         home_assignment: homeAssignment,
         grade: selectedGrade === "all" ? null : selectedGrade,
+        class: selectedGrade === "all" ? "General" : selectedGrade,
         lesson_date: lessonDate,
         notes: notes || null,
         lesson_file_url: fileUrl,
@@ -495,7 +496,9 @@ export default function LessonPlans() {
                         </div>
                         <div>
                            <h4 className="text-sm font-black uppercase tracking-widest">{viewingLessonPlan.status === 'approved' ? "Approval Record" : "Rejection Dossier"}</h4>
-                           <p className="text-[10px] font-bold text-muted-foreground uppercase">Certified on {format(new Date(viewingLessonPlan.approved_at || viewingLessonPlan.updated_at), "PPP p")}</p>
+                           <p className="text-[10px] font-bold text-muted-foreground uppercase">
+                             Certified on {viewingLessonPlan.approved_at || viewingLessonPlan.updated_at ? format(new Date(viewingLessonPlan.approved_at || viewingLessonPlan.updated_at), "PPP p") : "Unknown"}
+                           </p>
                         </div>
                      </div>
                      <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
