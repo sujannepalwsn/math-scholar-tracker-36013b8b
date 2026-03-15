@@ -248,7 +248,7 @@ export default function TeacherAttendancePage() {
 
       // 2. Mark Attendance
       const timeStr = format(new Date(), "HH:mm:ss");
-      const teacherProfile = teachers.find(t => t.user_id === user?.id);
+      const teacherProfile = teachers.find(t => t.id === user?.teacher_id || t.user_id === user?.id);
       if (!teacherProfile) throw new Error("Teacher profile not found");
 
       // Enforce shift boundaries
@@ -308,7 +308,10 @@ export default function TeacherAttendancePage() {
       }
 
       if (recordsToUpsert.length > 0) {
-        const { error } = await supabase.from("teacher_attendance").upsert(recordsToUpsert, { onConflict: 'teacher_id,date' });
+        // Remove 'id' from records to let Supabase handle the upsert via the unique constraint (teacher_id, date)
+        // This avoids issues with mismatched keys or invalid/empty IDs in bulk operations.
+        const cleanRecords = recordsToUpsert.map(({ id, ...rest }) => rest);
+        const { error } = await supabase.from("teacher_attendance").upsert(cleanRecords, { onConflict: 'teacher_id,date' });
         if (error) throw error;
       }
     },
@@ -512,7 +515,11 @@ export default function TeacherAttendancePage() {
     };
   }, [teacherDetailAttendance]);
 
-  const teacherProfile = teachers.find(t => t.user_id === user?.id);
+  const teacherProfile = useMemo(() =>
+    teachers.find(t => t.id === user?.teacher_id || t.user_id === user?.id),
+    [teachers, user?.teacher_id, user?.id]
+  );
+
   const myTodayAttendance = existingAttendance.find(a => a.teacher_id === teacherProfile?.id);
   const isWithinTimeBoundary = useMemo(() => {
     if (!teacherProfile?.regular_in_time || !teacherProfile?.regular_out_time) return true;
@@ -898,15 +905,15 @@ export default function TeacherAttendancePage() {
           setSelectedTeacherDetail(null);
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="teacher-detail-title" aria-describedby="teacher-detail-description">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle id="teacher-detail-title" className="flex items-center gap-3 text-2xl font-black">
+            <DialogTitle className="flex items-center gap-3 text-2xl font-black">
               <div className="p-2 rounded-xl bg-primary/10 text-primary">
                 <User className="h-6 w-6" />
               </div>
               {selectedTeacherDetail?.name}
             </DialogTitle>
-            <DialogDescription id="teacher-detail-description">
+            <DialogDescription>
               In-depth attendance and punctuality analysis for the selected period.
             </DialogDescription>
           </DialogHeader>

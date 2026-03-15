@@ -266,6 +266,10 @@ export default function LessonPlanManagement() {
       {/* Review Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Lesson Plan Review</DialogTitle>
+            <DialogDescription>Detailed view for approving or rejecting a lesson plan.</DialogDescription>
+          </DialogHeader>
           {viewingLessonPlan && (
             <div className="space-y-8 py-4">
                <div className="flex flex-col md:flex-row justify-between gap-6 border-b pb-6">
