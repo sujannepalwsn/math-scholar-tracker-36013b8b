@@ -20,6 +20,8 @@ const navItems: Array<{
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const },
+
+  // Academics
   { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance', category: 'Academics' },
   { to: "/teacher/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'teacher' as const, featureName: 'lesson_plans', category: 'Academics' },
   { to: "/teacher/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'teacher' as const, featureName: 'lesson_tracking', category: 'Academics' },
@@ -31,20 +33,23 @@ const navItems: Array<{
   { to: "/teacher/my-attendance", label: "My Attendance", icon: Clock, role: 'teacher' as const, category: 'Academics' },
   { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'activities', category: 'Academics' },
   { to: "/teacher/discipline-issues", label: "Discipline", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues', category: 'Academics' },
+  { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine', category: 'Academics' },
+
+  // Administration
   { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance', category: 'Administration' },
   { to: "/teacher/settings", label: "Settings", icon: Settings, role: 'teacher' as const, category: 'Administration' },
 
-  { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
-  { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communications' },
-  { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communications' },
-  { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance', category: 'Reports and Communications' },
-  { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management', category: 'Reports and Communications' },
+  // Reports and Communications
   { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging', category: 'Reports and Communications' },
-  { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine', category: 'Reports and Communications' },
+  { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management', category: 'Reports and Communications' },
   { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events', category: 'Reports and Communications' },
-  { to: "/teacher/leave", label: "Leave Applications", icon: Plane, role: 'teacher' as const, category: 'Reports and Communications' },
-  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
   { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access', category: 'Reports and Communications' },
+  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communications' },
+  { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communications' },
+  { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communications' },
+  { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance', category: 'Reports and Communications' },
+  { to: "/teacher/leave", label: "Leave Applications", icon: Plane, role: 'teacher' as const, category: 'Reports and Communications' },
+  { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communications' },
 ];
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
@@ -122,6 +127,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         onMobileOpenChange={setMobileMenuOpen}
       />
 
+      {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
         <CenterLogo size="sm" showName={true} />
         <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
@@ -129,6 +135,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </Button>
       </header>
 
+      {/* Main Content */}
       <main className={cn(
         "flex-1 overflow-y-auto bg-background transition-all duration-200",
         "md:h-screen",

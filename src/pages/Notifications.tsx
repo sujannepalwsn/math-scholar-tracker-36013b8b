@@ -17,19 +17,29 @@ export default function Notifications() {
   const queryClient = useQueryClient();
 
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ["all-notifications", user?.center_id],
+    queryKey: ["all-notifications", user?.id, user?.center_id],
     queryFn: async () => {
-      if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      if (!user?.id) return [];
+
+      let query = supabase
         .from("notifications")
         .select("*")
-        .eq("center_id", user.center_id)
         .order("created_at", { ascending: false })
         .limit(100);
+
+      if (user.role === 'admin') {
+        // Super admin sees all
+      } else if (user.role === 'center') {
+        query = query.or(`user_id.eq.${user.id},and(user_id.is.null,center_id.eq.${user.center_id})`);
+      } else {
+        query = query.eq("user_id", user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.center_id,
+    enabled: !!user?.id,
   });
 
   const markReadMutation = useMutation({

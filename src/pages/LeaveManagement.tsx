@@ -87,6 +87,25 @@ export default function LeaveManagement() {
     enabled: !!user?.center_id,
   });
 
+  const createNotificationMutation = useMutation({
+    mutationFn: async ({ userId, status, teacherId }: { userId: string; status: string; teacherId: string | null }) => {
+      if (!user?.center_id) return;
+
+      const { error } = await supabase.from("notifications").insert({
+        center_id: user.center_id,
+        user_id: userId,
+        title: `Leave Application ${status.toUpperCase()}`,
+        message: `Your leave application has been ${status}.`,
+        type: "leave_status",
+        link: teacherId ? "/teacher/leave" : "/parent-leave"
+      });
+
+      if (error) {
+        console.error("Failed to send notification:", error);
+      }
+    }
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes: string }) => {
       const { error } = await supabase
@@ -98,40 +117,23 @@ export default function LeaveManagement() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["center-leave-applications"] });
       toast.success(`Application ${variables.status} successfully`);
-      setIsDetailOpen(false);
-      setSelectedApp(null);
-      setAdminNotes("");
 
-      // Notify user
+      // Notify user BEFORE nullifying selectedApp
       if (selectedApp) {
         createNotificationMutation.mutate({
           userId: selectedApp.user_id,
-          status: variables.status
+          status: variables.status,
+          teacherId: selectedApp.teacher_id
         });
       }
+
+      setIsDetailOpen(false);
+      setSelectedApp(null);
+      setAdminNotes("");
     },
     onError: (error: any) => {
       toast.error("Update failed: " + error.message);
     },
-  });
-
-  const createNotificationMutation = useMutation({
-    mutationFn: async ({ userId, status }: { userId: string; status: string }) => {
-      if (!user?.center_id) return;
-
-      const { error } = await supabase.from("notifications").insert({
-        center_id: user.center_id,
-        user_id: userId,
-        title: `Leave Application ${status.toUpperCase()}`,
-        message: `Your leave application has been ${status}.`,
-        type: "leave_status",
-        link: selectedApp.teacher_id ? "/teacher/leave" : "/parent-leave"
-      });
-
-      if (error) {
-        console.error("Failed to send notification:", error);
-      }
-    }
   });
 
   const filteredApps = applications.filter((app: any) => {

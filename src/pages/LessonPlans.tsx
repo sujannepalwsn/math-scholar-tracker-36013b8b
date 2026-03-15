@@ -152,7 +152,7 @@ export default function LessonPlans() {
           title: "New Lesson Plan Submitted",
           message: `${user?.username || 'A teacher'} has submitted a lesson plan for approval.`,
           type: "lesson_plan",
-          link: "/lesson-plans"
+          link: "/lesson-plan-management"
         });
       }
     },

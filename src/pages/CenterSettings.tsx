@@ -105,8 +105,23 @@ export default function CenterSettings() {
         toast.success("Coordinates updated!");
       },
       (error) => {
-        toast.error("Failed to get location: " + error.message);
-      }
+        let message = error.message;
+        if (error instanceof GeolocationPositionError) {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              message = "Location access denied. Please enable location permissions.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              message = "Location information is unavailable.";
+              break;
+            case error.TIMEOUT:
+              message = "Location request timed out.";
+              break;
+          }
+        }
+        toast.error("Failed to get location: " + message);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 

@@ -42,6 +42,7 @@ export default function ClassRoutine() {
 
   const [showPeriodDialog, setShowPeriodDialog] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [showSubjectDialog, setShowSubjectDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingPeriod, setEditingPeriod] = useState<any>(null);
   const [editingSchedule, setEditingSchedule] = useState<any>(null);
@@ -71,6 +72,9 @@ export default function ClassRoutine() {
   const [periodNumber, setPeriodNumber] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+
+  const [subjectName, setSubjectName] = useState("");
+  const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
 
   const [scheduleGrade, setScheduleGrade] = useState("");
   const [schedulePeriodId, setSchedulePeriodId] = useState("");
@@ -111,6 +115,16 @@ export default function ClassRoutine() {
     queryFn: async () => {
       if (!user?.center_id) return [];
       const { data, error } = await supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id });
+
+  const { data: registeredSubjects = [], isLoading: subjectsLoading } = useQuery({
+    queryKey: ["registered-subjects", user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase.from("subjects").select("*").eq("center_id", user.center_id).order("name");
       if (error) throw error;
       return data;
     },
@@ -162,6 +176,29 @@ export default function ClassRoutine() {
     },
     enabled: !!user?.center_id
   });
+
+  const createSubjectMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.center_id) throw new Error("Center ID not found");
+      const { error } = await supabase.from("subjects").insert({ center_id: user.center_id, name: subjectName });
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["registered-subjects"] }); toast.success("Subject added!"); setSubjectName(""); setShowSubjectDialog(false); },
+    onError: (error: any) => toast.error(error.message || "Failed to add subject") });
+
+  const updateSubjectMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingSubjectId) throw new Error("Subject ID not found");
+      const { error } = await supabase.from("subjects").update({ name: subjectName }).eq("id", editingSubjectId);
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["registered-subjects"] }); toast.success("Subject updated!"); setSubjectName(""); setEditingSubjectId(null); setShowSubjectDialog(false); },
+    onError: (error: any) => toast.error(error.message || "Failed to update subject") });
+
+  const deleteSubjectMutation = useMutation({
+    mutationFn: async (id: string) => { const { error } = await supabase.from("subjects").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["registered-subjects"] }); toast.success("Subject deleted!"); },
+    onError: (error: any) => toast.error(error.message || "Failed to delete subject") });
 
   const createPeriodMutation = useMutation({
     mutationFn: async () => {
@@ -317,7 +354,8 @@ export default function ClassRoutine() {
           center_id: user?.center_id,
           title: 'New Substitution Assigned',
           message: `You have been assigned to cover Grade ${selectedVacantClass.grade} ${selectedVacantClass.subject} today.`,
-          type: 'info'
+          type: 'info',
+          link: '/teacher/class-routine'
         });
       }
     },
@@ -331,6 +369,7 @@ export default function ClassRoutine() {
 
   const resetPeriodForm = () => { setPeriodNumber(""); setStartTime(""); setEndTime(""); setEditingPeriod(null); };
   const resetScheduleForm = () => { setScheduleGrade(""); setSchedulePeriodId(""); setScheduleDay(""); setScheduleSubject(""); setScheduleTeacherId("none"); setEditingSchedule(null); };
+  const resetSubjectForm = () => { setSubjectName(""); setEditingSubjectId(null); };
   const resetImport = () => {
     setImportFile(null);
     setImportPreview([]);
@@ -340,9 +379,11 @@ export default function ClassRoutine() {
 
   const handleEditPeriod = (period: any) => { setEditingPeriod(period); setPeriodNumber(period.period_number.toString()); setStartTime(period.start_time); setEndTime(period.end_time); setShowPeriodDialog(true); };
   const handleEditSchedule = (schedule: any) => { setEditingSchedule(schedule); setScheduleGrade(schedule.grade); setSchedulePeriodId(schedule.class_period_id); setScheduleDay(schedule.day_of_week.toString()); setScheduleSubject(schedule.subject); setScheduleTeacherId(schedule.teacher_id || "none"); setShowScheduleDialog(true); };
+  const handleEditSubject = (subject: any) => { setEditingSubjectId(subject.id); setSubjectName(subject.name); setShowSubjectDialog(true); };
 
   const handlePeriodSubmit = (e: React.FormEvent) => { e.preventDefault(); editingPeriod ? updatePeriodMutation.mutate() : createPeriodMutation.mutate(); };
   const handleScheduleSubmit = (e: React.FormEvent) => { e.preventDefault(); editingSchedule ? updateScheduleMutation.mutate() : createScheduleMutation.mutate(); };
+  const handleSubjectSubmit = (e: React.FormEvent) => { e.preventDefault(); editingSubjectId ? updateSubjectMutation.mutate() : createSubjectMutation.mutate(); };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -744,7 +785,7 @@ export default function ClassRoutine() {
       </Dialog>
 
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden">
+        <TabsList className="grid w-full grid-cols-4 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden">
           <TabsTrigger value="summary" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Summary Table
           </TabsTrigger>
@@ -753,6 +794,9 @@ export default function ClassRoutine() {
           </TabsTrigger>
           <TabsTrigger value="periods" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Time Slots
+          </TabsTrigger>
+          <TabsTrigger value="subjects" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Subjects
           </TabsTrigger>
         </TabsList>
 
@@ -805,11 +849,21 @@ export default function ClassRoutine() {
                               key={g}
                               className={cn(
                                 "border border-slate-200 text-center p-2 min-h-[80px] transition-colors relative",
-                                entry && "cursor-pointer hover:bg-slate-50"
+                                "cursor-pointer hover:bg-slate-50"
                               )}
                               onClick={() => {
-                                if (entry && (status === 'absent' || status === 'vacant')) {
-                                  setSelectedVacantClass(entry);
+                                if (entry) {
+                                  if (status === 'absent' || status === 'vacant') {
+                                    setSelectedVacantClass(entry);
+                                  } else {
+                                    handleEditSchedule(entry);
+                                  }
+                                } else {
+                                  // For vacant slots, maybe allow adding?
+                                  setScheduleGrade(g);
+                                  setSchedulePeriodId(p.id);
+                                  setScheduleDay(summaryDay.toString());
+                                  setShowScheduleDialog(true);
                                 }
                               }}
                             >
@@ -936,7 +990,13 @@ export default function ClassRoutine() {
                     </div>
                     <div className="space-y-1.5">
                       <Label>Subject *</Label>
-                      <Input value={scheduleSubject} onChange={(e) => setScheduleSubject(e.target.value)} placeholder="Mathematics" required />
+                      <Select value={scheduleSubject} onValueChange={setScheduleSubject}>
+                        <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+                        <SelectContent>
+                          {registeredSubjects.map((s: any) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                          {registeredSubjects.length === 0 && <SelectItem value="none" disabled>No subjects registered</SelectItem>}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="space-y-1.5">
@@ -1015,6 +1075,56 @@ export default function ClassRoutine() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="subjects" className="space-y-4">
+          <div className="flex justify-end print:hidden">
+            <Dialog open={showSubjectDialog} onOpenChange={(open) => { setShowSubjectDialog(open); if (!open) resetSubjectForm(); }}>
+              <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Subject</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>{editingSubjectId ? "Edit Subject" : "Add Subject"}</DialogTitle><DialogDescription>Define a subject name.</DialogDescription></DialogHeader>
+                <form onSubmit={handleSubjectSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Subject Name *</Label>
+                    <Input value={subjectName} onChange={(e) => setSubjectName(e.target.value)} placeholder="Mathematics" required />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setShowSubjectDialog(false)}>Cancel</Button>
+                    <Button type="submit" disabled={!subjectName}>{editingSubjectId ? "Update" : "Create"}</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><BookOpen className="h-4 w-4" /> Subjects</CardTitle></CardHeader>
+            <CardContent>
+              {subjectsLoading ? <p>Loading...</p> : registeredSubjects.length === 0 ? <p className="text-muted-foreground text-center py-4">No subjects defined.</p> : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest">Name</TableHead>
+                        <TableHead className="font-black text-[10px] uppercase tracking-widest print:hidden">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {registeredSubjects.map((s: any) => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-bold">{s.name}</TableCell>
+                          <TableCell className="flex gap-1 print:hidden">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditSubject(s)}><Edit className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSubjectMutation.mutate(s.id)}><Trash2 className="h-3 w-3" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="periods" className="space-y-4">
