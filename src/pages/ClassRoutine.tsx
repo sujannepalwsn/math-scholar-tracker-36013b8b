@@ -3,7 +3,8 @@ import React, { useState, useMemo } from "react";
 import {
   CalendarIcon, Clock, Edit, Plus, Trash2, Download,
   FileSpreadsheet, FileText, Printer, CheckCircle, XCircle,
-  Upload, AlertCircle, Loader2, UserMinus, UserCheck, RefreshCw
+  Upload, AlertCircle, Loader2, UserMinus, UserCheck, RefreshCw,
+  BookOpen
 } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -98,10 +99,12 @@ export default function ClassRoutine() {
     queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id).eq("grade", selectedGrade);
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
 
       if (user?.role === 'teacher' && user?.teacher_id) {
         query = query.eq('teacher_id', user.teacher_id);
+      } else {
+        query = query.eq("grade", selectedGrade);
       }
 
       const { data, error } = await query.order("day_of_week");
