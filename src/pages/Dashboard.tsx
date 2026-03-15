@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Search, TrendingUp, Users, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Package, Search, TrendingUp, Users, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LibraryManagement from "@/components/center/LibraryManagement";
 import TransportManagement from "@/components/center/TransportManagement";
+import AssetTracking from "@/components/center/AssetTracking";
 
 type AttendanceRange = "weekly" | "monthly" | "yearly" | "overall";
 
@@ -657,6 +658,7 @@ export default function Dashboard() {
         <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
           <TabsTrigger value="overview" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Overview</TabsTrigger>
           <TabsTrigger value="logistics" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Logistics & Infrastructure</TabsTrigger>
+          <TabsTrigger value="inventory" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Inventory & Assets</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 outline-none">
@@ -1070,6 +1072,20 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="inventory" className="outline-none">
+           <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
+              <CardHeader className="bg-primary/5 border-b border-border/20 px-8 py-6">
+                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                  <div className="p-2 rounded-xl bg-primary/10"><Package className="h-6 w-6 text-primary" /></div>
+                  Institutional Asset Registry
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <AssetTracking centerId={centerId || ""} />
+              </CardContent>
+           </Card>
         </TabsContent>
       </Tabs>
     </div>

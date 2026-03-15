@@ -7,13 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { MessageSquare, Mail, Bell, Settings } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export default function NotificationSettings({ centerId }: { centerId: string }) {
   const [smsKey, setSmsKey] = useState("");
   const [emailKey, setEmailKey] = useState("");
+  const [attendanceAlerts, setAttendanceAlerts] = useState(true);
+  const [feeReminders, setFeeReminders] = useState(true);
+  const [examResults, setExamResults] = useState(false);
 
   const saveSettings = () => {
-    toast.success("Notification provider credentials saved");
+    toast.success("Notification protocols updated");
   };
 
   return (
@@ -68,15 +72,15 @@ export default function NotificationSettings({ centerId }: { centerId: string })
           <div className="space-y-4 pt-4">
              <div className="flex justify-between items-center py-2 border-b">
                 <span className="font-bold">Attendance Alerts</span>
-                <div className="h-6 w-11 bg-emerald-500 rounded-full flex items-center px-1"><div className="h-4 w-4 bg-white rounded-full ml-auto" /></div>
+                <Switch checked={attendanceAlerts} onCheckedChange={setAttendanceAlerts} />
              </div>
              <div className="flex justify-between items-center py-2 border-b">
                 <span className="font-bold">Fee Reminders</span>
-                <div className="h-6 w-11 bg-emerald-500 rounded-full flex items-center px-1"><div className="h-4 w-4 bg-white rounded-full ml-auto" /></div>
+                <Switch checked={feeReminders} onCheckedChange={setFeeReminders} />
              </div>
              <div className="flex justify-between items-center py-2 border-b">
                 <span className="font-bold">Exam Results</span>
-                <div className="h-6 w-11 bg-slate-200 rounded-full flex items-center px-1"><div className="h-4 w-4 bg-white rounded-full" /></div>
+                <Switch checked={examResults} onCheckedChange={setExamResults} />
              </div>
           </div>
         </CardContent>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Clock, DollarSign, Edit, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
+import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -76,8 +76,11 @@ export default function TeacherManagement() {
         .select("*, users!teachers_user_id_fkey(id, username, is_active)")
         .eq("center_id", user.center_id)
         .order("name");
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching teachers:", error);
+        throw error;
+      }
+      return data || [];
     },
     enabled: !!user?.center_id });
 
