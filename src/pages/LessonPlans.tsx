@@ -116,8 +116,8 @@ export default function LessonPlans() {
       const payload: any = {
         center_id: user.center_id,
         teacher_id: user.teacher_id || null,
-        title,
-        description,
+        title: topic,
+        description: topic,
         subject,
         chapter,
         topic,
@@ -196,6 +196,10 @@ export default function LessonPlans() {
     setViewingLessonPlan(lp);
     setAdminRemarks(lp.status === 'rejected' ? lp.rejection_reason || "" : lp.principal_remarks || "");
     setIsViewOpen(true);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
@@ -329,22 +333,11 @@ export default function LessonPlans() {
           <div className="space-y-6 py-4">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Plan Title *</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Introduction to Quantum Mechanics" className="h-11 rounded-xl bg-card/50" />
-                </div>
-                <div className="space-y-1.5">
-                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Date *</Label>
-                   <Input type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} className="h-11 rounded-xl bg-card/50" />
-                </div>
-             </div>
-
-             <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Subject *</Label>
                   <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Math" className="h-11 rounded-xl bg-card/50" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Grade *</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Class *</Label>
                   <Select value={selectedGrade} onValueChange={setSelectedGrade}>
                     <SelectTrigger className="h-11 rounded-xl bg-card/50">
                       <SelectValue />
@@ -357,21 +350,44 @@ export default function LessonPlans() {
                     </SelectContent>
                   </Select>
                 </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Period</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Unit *</Label>
+                  <Input value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g. Unit 1" className="h-11 rounded-xl bg-card/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Period *</Label>
                   <Input value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="1st" className="h-11 rounded-xl bg-card/50" />
                 </div>
              </div>
 
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Lesson Topic *</Label>
+                  <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Linear Equations" className="h-11 rounded-xl bg-card/50" />
+                </div>
+                <div className="space-y-1.5">
+                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Date *</Label>
+                   <Input type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} className="h-11 rounded-xl bg-card/50" />
+                </div>
+             </div>
+
              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Objectives & Outcomes</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">1. Learning Outcomes</Label>
                 <Textarea value={objectives} onChange={(e) => setObjectives(e.target.value)} rows={3} placeholder="Define what students will master..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
+             </div>
+
+             <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">2. Warm up & Review</Label>
+                <Textarea value={warmUpReview} onChange={(e) => setWarmUpReview(e.target.value)} rows={3} placeholder="Previous lesson recap and engagement..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                    <div className="flex items-center justify-between">
-                     <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Learning Activities</Label>
+                     <Label className="text-[10px] font-black uppercase tracking-widest text-primary">3. Teaching Learning Activities</Label>
                      <Button variant="ghost" size="sm" className="h-6 px-2 text-[9px] font-black uppercase text-primary hover:bg-primary/5" onClick={() => setLearningActivities([...learningActivities, ""])}><PlusCircle className="h-3 w-3 mr-1" /> Add</Button>
                    </div>
                    <div className="space-y-2">
@@ -387,7 +403,7 @@ export default function LessonPlans() {
                 </div>
                 <div className="space-y-3">
                    <div className="flex items-center justify-between">
-                     <Label className="text-[10px] font-black uppercase tracking-widest text-violet-600">Evaluation Matrix</Label>
+                     <Label className="text-[10px] font-black uppercase tracking-widest text-violet-600">4. Class Review / Evaluation</Label>
                      <Button variant="ghost" size="sm" className="h-6 px-2 text-[9px] font-black uppercase text-violet-600 hover:bg-violet-50" onClick={() => setEvaluationActivities([...evaluationActivities, ""])}><PlusCircle className="h-3 w-3 mr-1" /> Add</Button>
                    </div>
                    <div className="space-y-2">
@@ -403,6 +419,17 @@ export default function LessonPlans() {
                 </div>
              </div>
 
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Class Work</Label>
+                  <Textarea value={classWork} onChange={(e) => setClassWork(e.target.value)} rows={3} placeholder="Activities to be done in class..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Home Assignment</Label>
+                  <Textarea value={homeAssignment} onChange={(e) => setHomeAssignment(e.target.value)} rows={3} placeholder="Homework for students..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
+                </div>
+             </div>
+
              <div className="flex gap-3 pt-4 border-t border-muted/10">
                 <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="flex-1 rounded-2xl font-bold">CANCEL</Button>
                 <Button variant="outline" onClick={() => saveLessonPlan.mutate(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 shadow-soft" disabled={saveLessonPlan.isPending}>SAVE DRAFT</Button>
@@ -414,104 +441,214 @@ export default function LessonPlans() {
 
       {/* View/Approval Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black">Plan Analysis & Approval</DialogTitle>
-            <DialogDescription className="font-medium">Verification of instructional architecture and objectives.</DialogDescription>
-          </DialogHeader>
-          {viewingLessonPlan && (
-            <div className="space-y-8 py-4">
-               <div className="flex flex-col md:flex-row justify-between gap-6 border-b pb-6">
-                  <div className="space-y-1">
-                     <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[10px] font-black uppercase tracking-widest mb-2">{viewingLessonPlan.subject} • GRADE {viewingLessonPlan.grade || 'ALL'}</Badge>
-                     <h2 className="text-3xl font-black text-foreground/90">{viewingLessonPlan.title || viewingLessonPlan.topic}</h2>
-                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                        <User className="h-3 w-3" /> Submitted by {viewingLessonPlan.teachers?.name} • <CalendarIcon className="h-3 w-3" /> {format(new Date(viewingLessonPlan.lesson_date), "PPP")}
-                     </p>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-2">
-                     <Badge className={cn("text-[10px] font-black uppercase px-3 py-1",
-                        viewingLessonPlan.status === 'approved' ? "bg-emerald-500" :
-                        viewingLessonPlan.status === 'pending' ? "bg-amber-500 animate-pulse" :
-                        viewingLessonPlan.status === 'rejected' ? "bg-rose-500" : "bg-slate-500")}>
-                        {viewingLessonPlan.status}
-                     </Badge>
-                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">REF: {viewingLessonPlan.id.slice(0,8)}</p>
-                  </div>
-               </div>
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 overflow-hidden border-none shadow-strong">
+          <style>
+            {`
+              @media print {
+                body * { visibility: hidden; }
+                .printable-area, .printable-area * { visibility: visible; }
+                .printable-area {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  width: 100%;
+                  padding: 20px;
+                }
+                .no-print { display: none !important; }
+              }
+            `}
+          </style>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                     <div className="space-y-2">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-primary" /> Learning Outcomes</h4>
-                        <p className="text-sm font-medium text-slate-600 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 leading-relaxed italic">"{viewingLessonPlan.objectives || 'None specified.'}"</p>
-                     </div>
-                     <div className="space-y-2">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-primary" /> Instructional Workflow</h4>
-                        <div className="space-y-2">
-                           {Array.isArray(viewingLessonPlan.learning_activities) && (viewingLessonPlan.learning_activities as string[]).map((act, i) => (
-                              <div key={i} className="flex gap-3 text-sm bg-white p-3 rounded-xl border shadow-sm">
-                                 <span className="font-black text-primary/40">{i+1}.</span>
-                                 <span className="text-slate-700 font-medium">{act}</span>
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-                  </div>
-                  <div className="space-y-6">
-                      <div className="space-y-2">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600 flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-violet-600" /> Evaluation Strategy</h4>
-                        <div className="space-y-2">
-                           {Array.isArray(viewingLessonPlan.evaluation_activities) && (viewingLessonPlan.evaluation_activities as string[]).map((act, i) => (
-                              <div key={i} className="flex gap-3 text-sm bg-violet-50/50 p-3 rounded-xl border border-violet-100">
-                                 <span className="font-black text-violet-400">{i+1}.</span>
-                                 <span className="text-slate-700 font-medium">{act}</span>
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                           <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Assignment</h4>
-                           <div className="text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">{viewingLessonPlan.home_assignment || 'N/A'}</div>
-                        </div>
-                        <div className="space-y-2">
-                           <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Resources</h4>
-                           {viewingLessonPlan.lesson_file_url ? (
-                              <Button variant="outline" size="sm" className="h-9 rounded-xl border-dashed border-2 w-full text-[10px] font-black uppercase tracking-tighter" asChild>
-                                 <a href={supabase.storage.from("lesson-files").getPublicUrl(viewingLessonPlan.lesson_file_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
-                                    <Download className="h-3 w-3 mr-2" /> View Asset
-                                 </a>
-                              </Button>
-                           ) : <div className="text-xs font-medium text-slate-300 italic p-3">No assets linked</div>}
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
-
-               {/* Historical Decision Data */}
-               {(viewingLessonPlan.status === 'approved' || viewingLessonPlan.status === 'rejected') && (
-                  <div className={cn("p-6 rounded-3xl border-2 border-dashed",
-                     viewingLessonPlan.status === 'approved' ? "bg-emerald-50/50 border-emerald-100" : "bg-rose-50/50 border-rose-100")}>
-                     <div className="flex items-center gap-3 mb-3">
-                        <div className={cn("p-2 rounded-xl", viewingLessonPlan.status === 'approved' ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600")}>
-                           {viewingLessonPlan.status === 'approved' ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                        </div>
-                        <div>
-                           <h4 className="text-sm font-black uppercase tracking-widest">{viewingLessonPlan.status === 'approved' ? "Approval Record" : "Rejection Dossier"}</h4>
-                           <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                             Certified on {viewingLessonPlan.approved_at || viewingLessonPlan.updated_at ? format(new Date(viewingLessonPlan.approved_at || viewingLessonPlan.updated_at), "PPP p") : "Unknown"}
-                           </p>
-                        </div>
-                     </div>
-                     <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
-                        "{viewingLessonPlan.status === 'approved' ? viewingLessonPlan.principal_remarks : viewingLessonPlan.rejection_reason || 'No remarks provided.'}"
-                     </p>
-                  </div>
-               )}
+          <div className="flex flex-col h-full bg-white">
+            <div className="no-print p-6 border-b flex items-center justify-between bg-slate-50/50">
+              <div>
+                <DialogTitle className="text-2xl font-black">Daily Lesson Plan</DialogTitle>
+                <DialogDescription className="font-medium">Verification and official record of pedagogical activities.</DialogDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handlePrint} className="rounded-xl h-10 px-4 font-bold gap-2">
+                  <Printer className="h-4 w-4" /> PRINT PLAN
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsViewOpen(false)} className="rounded-xl h-10 w-10">
+                  <XCircle className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
-          )}
+
+            <div className="p-8 printable-area space-y-8 text-slate-800">
+              {viewingLessonPlan && (
+                <>
+                  <div className="text-center space-y-2 mb-8">
+                    <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-900 border-b-4 border-slate-900 inline-block pb-1">Daily Lesson Plan</h1>
+                  </div>
+
+                  {/* Header Box */}
+                  <div className="border-2 border-slate-900 rounded-3xl overflow-hidden">
+                    <div className="grid grid-cols-2">
+                      <div className="border-r-2 border-slate-900 divide-y-2 divide-slate-900">
+                        <div className="p-4 flex gap-2 items-center">
+                          <span className="font-black uppercase text-xs min-w-[100px]">Subject:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.subject}</span>
+                        </div>
+                        <div className="p-4 flex gap-2 items-center">
+                          <span className="font-black uppercase text-xs min-w-[100px]">Unit:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.chapter || 'N/A'}</span>
+                        </div>
+                        <div className="p-4 flex gap-2 items-center">
+                          <span className="font-black uppercase text-xs min-w-[100px]">Lesson Topic:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.topic || viewingLessonPlan.title}</span>
+                        </div>
+                      </div>
+                      <div className="divide-y-2 divide-slate-900">
+                        <div className="p-4 flex gap-2 items-center">
+                          <span className="font-black uppercase text-xs min-w-[80px]">Class:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.grade || 'General'}</span>
+                        </div>
+                        <div className="p-4 flex gap-2 items-center">
+                          <span className="font-black uppercase text-xs min-w-[80px]">Period:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1">{viewingLessonPlan.period || 'N/A'}</span>
+                        </div>
+                        <div className="p-4 flex gap-2 items-center">
+                          <span className="font-black uppercase text-xs min-w-[80px]">Date:</span>
+                          <span className="font-bold border-b border-slate-400 flex-1">{format(new Date(viewingLessonPlan.lesson_date), "PPP")}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Numbered Sections */}
+                  <div className="space-y-6">
+                    <section className="space-y-2">
+                      <h3 className="font-black text-lg flex items-start gap-2">
+                        <span>1.</span>
+                        <span className="uppercase">Learning Outcomes:</span>
+                      </h3>
+                      <div className="pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
+                        {viewingLessonPlan.objectives || '____________________________________________________________________________________________________'}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2">
+                      <h3 className="font-black text-lg flex items-start gap-2">
+                        <span>2.</span>
+                        <span className="uppercase">Warm up & Review:</span>
+                      </h3>
+                      <div className="pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
+                        {viewingLessonPlan.warm_up_review || '____________________________________________________________________________________________________'}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2">
+                      <h3 className="font-black text-lg flex items-start gap-2">
+                        <span className="uppercase ml-7">Teaching Aids:</span>
+                      </h3>
+                      <div className="pl-7 text-sm font-medium leading-relaxed border-b border-dotted border-slate-300 pb-2 min-h-[40px]">
+                        {viewingLessonPlan.notes || '____________________________________________________________________________________________________'}
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h3 className="font-black text-lg flex items-start gap-2">
+                        <span>3.</span>
+                        <span className="uppercase">Teaching Learning Activities:</span>
+                      </h3>
+                      <div className="pl-7 space-y-3">
+                        {Array.isArray(viewingLessonPlan.learning_activities) && (viewingLessonPlan.learning_activities as string[]).length > 0 ? (
+                          (viewingLessonPlan.learning_activities as string[]).map((act, i) => (
+                            <div key={i} className="flex gap-2 text-sm font-medium border-b border-dotted border-slate-300 pb-1">
+                              <span className="font-bold">{String.fromCharCode(97 + i)}.</span>
+                              <span>{act}</span>
+                            </div>
+                          ))
+                        ) : (
+                          ['a', 'b', 'c', 'd'].map((char) => (
+                            <div key={char} className="flex gap-2 text-sm font-medium border-b border-dotted border-slate-300 pb-1 text-slate-300">
+                              <span className="font-bold">{char}.</span>
+                              <span>____________________________________________________________________________________________________</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h3 className="font-black text-lg flex items-start gap-2">
+                        <span>4.</span>
+                        <span className="uppercase">Class Review / Evaluation:</span>
+                      </h3>
+                      <div className="pl-7 space-y-3">
+                        {Array.isArray(viewingLessonPlan.evaluation_activities) && (viewingLessonPlan.evaluation_activities as string[]).length > 0 ? (
+                          (viewingLessonPlan.evaluation_activities as string[]).map((act, i) => (
+                            <div key={i} className="flex gap-2 text-sm font-medium border-b border-dotted border-slate-300 pb-1">
+                              <span className="font-bold">{String.fromCharCode(97 + i)}.</span>
+                              <span>{act}</span>
+                            </div>
+                          ))
+                        ) : (
+                          ['a', 'b', 'c', 'd'].map((char) => (
+                            <div key={char} className="flex gap-2 text-sm font-medium border-b border-dotted border-slate-300 pb-1 text-slate-300">
+                              <span className="font-bold">{char}.</span>
+                              <span>____________________________________________________________________________________________________</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h3 className="font-black text-lg flex items-start gap-2">
+                        <span>5.</span>
+                        <span className="uppercase">Assignments:</span>
+                      </h3>
+                      <div className="border-2 border-slate-900 divide-x-2 divide-slate-900 grid grid-cols-2">
+                        <div className="divide-y-2 divide-slate-900">
+                          <div className="bg-slate-50 p-2 text-center font-black uppercase text-xs">Class Work</div>
+                          <div className="p-4 text-sm font-medium min-h-[120px]">
+                            {viewingLessonPlan.class_work || '________________________________________'}
+                          </div>
+                        </div>
+                        <div className="divide-y-2 divide-slate-900">
+                          <div className="bg-slate-50 p-2 text-center font-black uppercase text-xs">Home Assignment</div>
+                          <div className="p-4 text-sm font-medium min-h-[120px]">
+                            {viewingLessonPlan.home_assignment || '________________________________________'}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="pt-4 flex items-center gap-4">
+                      <span className="font-black uppercase text-sm">Remarks:</span>
+                      <div className="flex-1 border-b border-dotted border-slate-900 min-h-[30px] font-bold italic text-slate-700">
+                        {viewingLessonPlan.principal_remarks || viewingLessonPlan.rejection_reason || ''}
+                      </div>
+                    </section>
+                  </div>
+
+                  {/* Signatures */}
+                  <div className="pt-16 grid grid-cols-2 gap-20">
+                    <div className="text-center space-y-2">
+                      <div className="border-t-2 border-slate-900 pt-2">
+                        <p className="font-black uppercase text-xs">Subject Teacher's Signature</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1">{viewingLessonPlan.teachers?.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-center space-y-2">
+                      <div className="border-t-2 border-slate-900 pt-2">
+                        <p className="font-black uppercase text-xs">Principal's Signature</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="no-print p-6 bg-slate-50 border-t flex justify-end gap-3">
+               <Button variant="ghost" onClick={() => setIsViewOpen(false)} className="rounded-xl font-bold">CLOSE PREVIEW</Button>
+               <Button onClick={handlePrint} className="rounded-xl font-black uppercase tracking-widest gap-2">
+                 <Printer className="h-4 w-4" /> PRINT RECORD
+               </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
