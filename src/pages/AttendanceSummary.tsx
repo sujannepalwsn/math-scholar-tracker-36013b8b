@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
-import { cn } from "@/lib/utils";
 
 interface AttendanceStats {
   studentId: string;
