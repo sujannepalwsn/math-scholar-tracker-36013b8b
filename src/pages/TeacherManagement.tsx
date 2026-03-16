@@ -310,10 +310,10 @@ export default function TeacherManagement() {
                 ENROL FACULTY
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="teacher-dialog-title" aria-describedby="teacher-dialog-description">
             <DialogHeader>
-              <DialogTitle>{editingTeacher ? "Edit Teacher" : "Add New Teacher(s)"}</DialogTitle>
-              <DialogDescription>{editingTeacher ? "Update details." : "Add individually or in bulk."}</DialogDescription>
+              <DialogTitle id="teacher-dialog-title">{editingTeacher ? "Edit Teacher" : "Add New Teacher(s)"}</DialogTitle>
+              <DialogDescription id="teacher-dialog-description">{editingTeacher ? "Update details." : "Add individually or in bulk."}</DialogDescription>
             </DialogHeader>
             {editingTeacher ? (
               <div className="space-y-4 py-4">
@@ -639,10 +639,10 @@ export default function TeacherManagement() {
 
       {/* HR Module Dialog */}
       <Dialog open={showHRDialog} onOpenChange={setShowHRDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl" aria-labelledby="hr-terminal-title" aria-describedby="hr-terminal-description">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black uppercase tracking-tight">Faculty HR Terminal</DialogTitle>
-            <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+            <DialogTitle id="hr-terminal-title" className="text-2xl font-black uppercase tracking-tight">Faculty HR Terminal</DialogTitle>
+            <DialogDescription id="hr-terminal-description" className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                Managing profile for {selectedTeacherForHR?.name}
             </DialogDescription>
           </DialogHeader>

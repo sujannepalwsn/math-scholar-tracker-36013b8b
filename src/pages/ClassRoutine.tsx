@@ -1072,10 +1072,10 @@ export default function ClassRoutine() {
       </Dialog>
 
       <Dialog open={!!selectedVacantClass} onOpenChange={(open) => !open && setSelectedVacantClass(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-labelledby="vacant-fulfillment-title" aria-describedby="vacant-fulfillment-description">
           <DialogHeader>
-            <DialogTitle>Vacant Period Fulfilment</DialogTitle>
-            <DialogDescription>
+            <DialogTitle id="vacant-fulfillment-title">Vacant Period Fulfilment</DialogTitle>
+            <DialogDescription id="vacant-fulfillment-description">
               Assign a substitute for Grade {selectedVacantClass?.grade} {selectedVacantClass?.subject}
             </DialogDescription>
           </DialogHeader>
