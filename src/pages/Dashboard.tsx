@@ -318,13 +318,17 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!centerId) return [];
       const dayOfWeek = new Date().getDay();
+
+      // No routines scheduled for Saturday (6)
+      if (dayOfWeek === 6) return [];
+
       let query = supabase
         .from("period_schedules")
         .select("*, teachers(*), class_periods!inner(*)")
         .eq("center_id", centerId)
         .eq("day_of_week", dayOfWeek);
 
-      if (role !== 'admin' && role !== 'center') {
+      if (role !== 'admin' && role !== 'center' && role !== 'super_admin') {
         query = query.eq("class_periods.is_published", true);
       }
 

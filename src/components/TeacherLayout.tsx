@@ -20,7 +20,7 @@ const navItems: Array<{
   unreadCount?: number;
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
-  { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const },
+  { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const, featureName: 'dashboard_access' },
 
   // Academics
   { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance', category: 'Academics' },
@@ -28,11 +28,11 @@ const navItems: Array<{
   { to: "/teacher/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'teacher' as const, featureName: 'lesson_tracking', category: 'Academics' },
   { to: "/teacher/homework-management", label: "Homework", icon: Book, role: 'teacher' as const, featureName: 'homework_management', category: 'Academics' },
   { to: "/teacher/test-management", label: "Tests", icon: ClipboardCheck, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
-  { to: "/teacher/exams", label: "Exams & Results", icon: GraduationCap, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
-  { to: "/teacher/published-results", label: "Published Results", icon: Award, role: 'teacher' as const, category: 'Academics' },
+  { to: "/teacher/exams", label: "Exams & Results", icon: GraduationCap, role: 'teacher' as const, featureName: 'exams_results', category: 'Academics' },
+  { to: "/teacher/published-results", label: "Published Results", icon: Award, role: 'teacher' as const, featureName: 'published_results', category: 'Academics' },
   { to: "/teacher/marks-entry", label: "Marks Entry", icon: PenTool, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
   { to: "/teacher/my-attendance", label: "My Attendance", icon: Clock, role: 'teacher' as const, category: 'Academics' },
-  { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'activities', category: 'Academics' },
+  { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'preschool_activities', category: 'Academics' },
   { to: "/teacher/discipline-issues", label: "Discipline", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues', category: 'Academics' },
   { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine', category: 'Academics' },
 
@@ -49,7 +49,7 @@ const navItems: Array<{
   { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communication' },
   { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communication' },
   { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance', category: 'Reports and Communication' },
-  { to: "/teacher/leave", label: "Leave Applications", icon: Plane, role: 'teacher' as const, category: 'Reports and Communication' },
+  { to: "/teacher/leave", label: "Leave Applications", icon: Plane, role: 'teacher' as const, featureName: 'leave_management', category: 'Reports and Communication' },
   { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communication' },
 ];
 

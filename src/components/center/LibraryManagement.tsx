@@ -41,13 +41,14 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
   const { data: loans, isLoading: loansLoading } = useQuery({
     queryKey: ["book-loans", centerId],
     queryFn: async () => {
-      // Joining with books and users (simplified)
+      // Joining with books, users and students
       const { data, error } = await supabase
         .from("book_loans")
         .select(`
           *,
           books:book_id(title),
-          users:user_id(username)
+          users:user_id(username),
+          students:student_id(name)
         `)
         .eq("center_id", centerId)
         .order("issue_date", { ascending: false });
@@ -279,7 +280,7 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
                 {loans?.map((l: any) => (
                   <TableRow key={l.id}>
                     <TableCell className="font-bold">{l.books?.title}</TableCell>
-                    <TableCell className="text-sm">{l.users?.username}</TableCell>
+                    <TableCell className="text-sm">{l.students?.name || l.users?.username || 'N/A'}</TableCell>
                     <TableCell className="text-xs">{l.issue_date}</TableCell>
                     <TableCell className="text-xs">{l.due_date}</TableCell>
                     <TableCell>
