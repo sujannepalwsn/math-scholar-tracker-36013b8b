@@ -16,7 +16,14 @@ import { cn } from "@/lib/utils";
 export default function StaffHRModule({ teacherId, teacherName }: { teacherId: string, teacherName: string }) {
   const queryClient = useQueryClient();
   const [showAddDoc, setShowAddDoc] = useState(false);
+  const [showAddContract, setShowAddContract] = useState(false);
+  const [showAddEvaluation, setShowAddEvaluation] = useState(false);
+  const [showAddPayroll, setShowAddPayroll] = useState(false);
+
   const [docForm, setDocForm] = useState({ name: "", type: "Contract", url: "" });
+  const [contractForm, setContractForm] = useState({ type: "Permanent", start: "", end: "", salary: "" });
+  const [evaluationForm, setEvaluationForm] = useState({ date: new Date().toISOString().split('T')[0], rating: "5", comments: "" });
+  const [payrollForm, setPayrollForm] = useState({ month: "March", year: "2026", basic: "", allowance: "0", deduction: "0" });
 
   const { data: contracts } = useQuery({
     queryKey: ["staff-contracts", teacherId],
@@ -45,6 +52,15 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
     },
   });
 
+  const { data: payrollLogs } = useQuery({
+    queryKey: ["payroll-logs", teacherId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("payroll_logs").select("*").eq("teacher_id", teacherId).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { user } = useAuth();
   const centerId = user?.center_id;
 
@@ -67,16 +83,178 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
     }
   });
 
+  const addContractMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("staff_contracts").insert({
+        center_id: centerId,
+        teacher_id: teacherId,
+        contract_type: contractForm.type,
+        start_date: contractForm.start,
+        end_date: contractForm.end || null,
+        salary: parseFloat(contractForm.salary) || 0,
+        status: 'Active'
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff-contracts"] });
+      setShowAddContract(false);
+      toast.success("Contract record added");
+    }
+  });
+
+  const addEvaluationMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("performance_evaluations").insert({
+        center_id: centerId,
+        teacher_id: teacherId,
+        evaluation_date: evaluationForm.date,
+        rating: parseInt(evaluationForm.rating),
+        comments: evaluationForm.comments,
+        evaluator_id: user?.id
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff-evaluations"] });
+      setShowAddEvaluation(false);
+      toast.success("Evaluation logged");
+    }
+  });
+
+  const addPayrollMutation = useMutation({
+    mutationFn: async () => {
+      const basic = parseFloat(payrollForm.basic) || 0;
+      const allowance = parseFloat(payrollForm.allowance) || 0;
+      const deduction = parseFloat(payrollForm.deduction) || 0;
+      const { error } = await supabase.from("payroll_logs").insert({
+        center_id: centerId,
+        teacher_id: teacherId,
+        month: payrollForm.month,
+        year: payrollForm.year,
+        basic_pay: basic,
+        allowances: allowance,
+        deductions: deduction,
+        net_payable: basic + allowance - deduction,
+        status: 'Paid',
+        paid_at: new Date().toISOString()
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payroll-logs"] });
+      setShowAddPayroll(false);
+      toast.success("Payroll record logged");
+    }
+  });
+
+  const { data: teacherProfile } = useQuery({
+    queryKey: ["teacher-profile", teacherId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("teachers").select("*").eq("id", teacherId).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview">
         <TabsList className="bg-slate-100 p-1 rounded-xl h-12">
           <TabsTrigger value="overview" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Global Overview</TabsTrigger>
+          <TabsTrigger value="profile" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Extended Profile</TabsTrigger>
           <TabsTrigger value="contracts" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Tenure & Salary</TabsTrigger>
           <TabsTrigger value="payroll" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Payroll Logs</TabsTrigger>
           <TabsTrigger value="performance" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">KPIs</TabsTrigger>
           <TabsTrigger value="documents" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Digital Vault</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="profile" className="pt-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="rounded-3xl border border-slate-100 bg-white shadow-soft">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Personal Details</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Gender</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.gender || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Date of Birth</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.date_of_birth || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Employee ID</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.employee_id || 'N/A'}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Address</span>
+                  <p className="text-xs font-bold text-slate-700">{teacherProfile?.address || 'N/A'}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border border-slate-100 bg-white shadow-soft">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Qualifications & Skills</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {teacherProfile?.qualifications && Array.isArray(teacherProfile.qualifications) ? (
+                    teacherProfile.qualifications.map((q: any, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="bg-blue-50 text-blue-700 border-none font-black text-[10px]">
+                        {q}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-xs italic text-slate-400">No qualifications logged.</span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border border-slate-100 bg-white shadow-soft">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Bank Details</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Account Name</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.bank_details?.account_name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Account Number</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.bank_details?.account_number || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Bank / Branch</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.bank_details?.bank_name || 'N/A'}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border border-slate-100 bg-white shadow-soft">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Emergency Contact</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Contact Person</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.emergency_contact?.name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Relation</span>
+                  <span className="font-bold text-slate-700">{teacherProfile?.emergency_contact?.relation || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">Phone</span>
+                  <span className="font-bold text-blue-600">{teacherProfile?.emergency_contact?.phone || 'N/A'}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="overview" className="pt-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -85,7 +263,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
                 <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-600"><ShieldCheck className="h-6 w-6" /></div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600/60 leading-none mb-1">Employement Status</p>
-                  <p className="text-xl font-black text-emerald-700">Permanent</p>
+                  <p className="text-xl font-black text-emerald-700">{contracts?.[0]?.contract_type || (teacherProfile?.is_active ? "Active" : "Inactive")}</p>
                 </div>
               </CardContent>
             </Card>
@@ -94,7 +272,11 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
                 <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-600"><Award className="h-6 w-6" /></div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-blue-600/60 leading-none mb-1">Performance Index</p>
-                  <p className="text-xl font-black text-blue-700">{evaluations?.[0]?.rating ? `${evaluations[0].rating}.0/5.0` : "PENDING"}</p>
+                  <p className="text-xl font-black text-blue-700">
+                    {evaluations && evaluations.length > 0
+                      ? (evaluations.reduce((acc, curr) => acc + (curr.rating || 0), 0) / evaluations.length).toFixed(1)
+                      : "0.0"}/5.0
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -102,8 +284,12 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
               <CardContent className="p-6 flex items-center gap-4">
                 <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-600"><Calendar className="h-6 w-6" /></div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600/60 leading-none mb-1">Current Tenure</p>
-                  <p className="text-xl font-black text-indigo-700">1.4 Years</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600/60 leading-none mb-1">Tenure</p>
+                  <p className="text-xl font-black text-indigo-700">
+                    {teacherProfile?.hire_date
+                      ? `${(Math.abs(new Date().getTime() - new Date(teacherProfile.hire_date).getTime()) / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1)} Years`
+                      : "N/A"}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -112,55 +298,78 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <Card className="rounded-[2.5rem] border border-slate-100 bg-white shadow-soft">
                 <CardHeader className="pb-2">
-                   <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Payroll Health</CardTitle>
+                   <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Payroll Overview</CardTitle>
                 </CardHeader>
                 <CardContent className="p-8 flex flex-col items-center justify-center space-y-4">
-                   <div className="relative h-32 w-32">
-                      <svg className="h-full w-full" viewBox="0 0 36 36">
-                         <path className="stroke-slate-100 fill-none" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                         <path className="stroke-emerald-500 fill-none" strokeWidth="3" strokeDasharray="85, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                         <span className="text-xl font-black text-slate-700">85%</span>
-                         <span className="text-[8px] font-bold text-slate-400 uppercase">Paid</span>
-                      </div>
+                   <div className="text-center">
+                      <p className="text-3xl font-black text-slate-700">₹{payrollLogs?.reduce((acc: number, curr: any) => acc + (curr.net_payable || 0), 0).toLocaleString()}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Disbursed (All Time)</p>
                    </div>
-                   <p className="text-xs font-medium text-slate-500 text-center">85% of fiscal year commitments have been successfully disbursed.</p>
+                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500" style={{ width: '100%' }} />
+                   </div>
+                   <p className="text-xs font-medium text-slate-500 text-center">Faculty payroll records are synchronized with the institutional ledger.</p>
                 </CardContent>
              </Card>
 
              <Card className="rounded-[2.5rem] border border-slate-100 bg-white shadow-soft">
                 <CardHeader className="pb-2">
-                   <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Contract Compliance</CardTitle>
+                   <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Document Compliance</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                   <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50">
-                      <div className="flex items-center gap-3">
-                         <FileCheck className="h-5 w-5 text-emerald-500" />
-                         <span className="text-xs font-bold text-slate-600">Signed Contract</span>
-                      </div>
-                      <Badge variant="success" className="text-[8px] font-black uppercase">Verified</Badge>
-                   </div>
-                   <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50">
-                      <div className="flex items-center gap-3">
-                         <ShieldCheck className="h-5 w-5 text-emerald-500" />
-                         <span className="text-xs font-bold text-slate-600">Police Verification</span>
-                      </div>
-                      <Badge variant="success" className="text-[8px] font-black uppercase">Verified</Badge>
-                   </div>
-                   <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50">
-                      <div className="flex items-center gap-3">
-                         <AlertCircle className="h-5 w-5 text-amber-500" />
-                         <span className="text-xs font-bold text-slate-600">Medical Certificate</span>
-                      </div>
-                      <Badge variant="warning" className="text-[8px] font-black uppercase">Expiring</Badge>
-                   </div>
+                   {['Contract', 'Police Verification', 'Medical Certificate'].map((docType) => {
+                      const hasDoc = documents?.some((d: any) => d.document_type === docType);
+                      return (
+                        <div key={docType} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50">
+                          <div className="flex items-center gap-3">
+                             {hasDoc ? <FileCheck className="h-5 w-5 text-emerald-500" /> : <AlertCircle className="h-5 w-5 text-amber-500" />}
+                             <span className="text-xs font-bold text-slate-600">{docType}</span>
+                          </div>
+                          <Badge variant={hasDoc ? "success" : "warning"} className="text-[8px] font-black uppercase">
+                            {hasDoc ? "Verified" : "Missing"}
+                          </Badge>
+                        </div>
+                      );
+                   })}
                 </CardContent>
              </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="payroll" className="pt-6">
+        <TabsContent value="payroll" className="pt-6 space-y-4">
+           <div className="flex justify-end">
+              <Button size="sm" onClick={() => setShowAddPayroll(!showAddPayroll)} className="h-8 rounded-lg text-[9px] font-black uppercase">
+                {showAddPayroll ? "Cancel" : "Log Disbursement"}
+              </Button>
+           </div>
+
+           {showAddPayroll && (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Month</Label>
+                  <Input value={payrollForm.month} onChange={e => setPayrollForm({...payrollForm, month: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Year</Label>
+                  <Input value={payrollForm.year} onChange={e => setPayrollForm({...payrollForm, year: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Basic</Label>
+                  <Input type="number" value={payrollForm.basic} onChange={e => setPayrollForm({...payrollForm, basic: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Allow/Ded</Label>
+                  <div className="flex gap-1">
+                    <Input type="number" placeholder="Allow" value={payrollForm.allowance} onChange={e => setPayrollForm({...payrollForm, allowance: e.target.value})} className="h-9 text-xs" />
+                    <Input type="number" placeholder="Ded" value={payrollForm.deduction} onChange={e => setPayrollForm({...payrollForm, deduction: e.target.value})} className="h-9 text-xs" />
+                  </div>
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={() => addPayrollMutation.mutate()} className="w-full h-9 text-[9px] font-black uppercase">Commit</Button>
+                </div>
+              </div>
+           )}
+
            <div className="border rounded-[2rem] overflow-hidden bg-white shadow-soft">
             <Table>
               <TableHeader className="bg-slate-50">
@@ -174,35 +383,67 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {[
-                  { month: "March 2026", basic: 45000, allowance: 5000, deduction: 2000, status: "Paid" },
-                  { month: "February 2026", basic: 45000, allowance: 5000, deduction: 2000, status: "Paid" },
-                  { month: "January 2026", basic: 45000, allowance: 5000, deduction: 2000, status: "Paid" },
-                ].map((p, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="px-6 py-4">
-                       <div className="flex items-center gap-3">
-                          <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                          <span className="font-bold text-slate-700">{p.month}</span>
-                       </div>
-                    </TableCell>
-                    <TableCell className="text-xs font-medium text-slate-500">₹{p.basic.toLocaleString()}</TableCell>
-                    <TableCell className="text-xs font-medium text-emerald-600">+ ₹{p.allowance.toLocaleString()}</TableCell>
-                    <TableCell className="text-xs font-medium text-rose-500">- ₹{p.deduction.toLocaleString()}</TableCell>
-                    <TableCell className="font-black text-slate-700">₹{(p.basic + p.allowance - p.deduction).toLocaleString()}</TableCell>
-                    <TableCell className="text-right px-6">
-                       <Button variant="ghost" size="sm" className="h-8 rounded-lg text-blue-600 hover:bg-blue-50 font-black text-[10px] uppercase">
-                          <FileText className="h-3.5 w-3.5 mr-1" /> PDF
-                       </Button>
-                    </TableCell>
+                {payrollLogs && payrollLogs.length > 0 ? (
+                  payrollLogs.map((p: any) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="px-6 py-4">
+                         <div className="flex items-center gap-3">
+                            <div className={cn("h-2 w-2 rounded-full", p.status === 'Paid' ? "bg-emerald-500" : "bg-amber-500")} />
+                            <span className="font-bold text-slate-700">{p.month} {p.year}</span>
+                         </div>
+                      </TableCell>
+                      <TableCell className="text-xs font-medium text-slate-500">₹{p.basic_pay.toLocaleString()}</TableCell>
+                      <TableCell className="text-xs font-medium text-emerald-600">+ ₹{p.allowances.toLocaleString()}</TableCell>
+                      <TableCell className="text-xs font-medium text-rose-500">- ₹{p.deductions.toLocaleString()}</TableCell>
+                      <TableCell className="font-black text-slate-700">₹{p.net_payable.toLocaleString()}</TableCell>
+                      <TableCell className="text-right px-6">
+                         <Button variant="ghost" size="sm" className="h-8 rounded-lg text-blue-600 hover:bg-blue-50 font-black text-[10px] uppercase">
+                            <FileText className="h-3.5 w-3.5 mr-1" /> PDF
+                         </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 italic">No payroll logs discovered.</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
         </TabsContent>
 
-        <TabsContent value="contracts" className="pt-4">
+        <TabsContent value="contracts" className="pt-4 space-y-4">
+           <div className="flex justify-end">
+              <Button size="sm" onClick={() => setShowAddContract(!showAddContract)} className="h-8 rounded-lg text-[9px] font-black uppercase">
+                {showAddContract ? "Cancel" : "Add Contract Record"}
+              </Button>
+           </div>
+
+           {showAddContract && (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Type</Label>
+                  <Input value={contractForm.type} onChange={e => setContractForm({...contractForm, type: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Start Date</Label>
+                  <Input type="date" value={contractForm.start} onChange={e => setContractForm({...contractForm, start: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">End Date</Label>
+                  <Input type="date" value={contractForm.end} onChange={e => setContractForm({...contractForm, end: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Salary</Label>
+                  <Input type="number" value={contractForm.salary} onChange={e => setContractForm({...contractForm, salary: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={() => addContractMutation.mutate()} className="w-full h-9 text-[9px] font-black uppercase">Save</Button>
+                </div>
+              </div>
+           )}
+
            <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
             <Table>
               <TableHeader className="bg-slate-50">
@@ -229,7 +470,33 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
           </div>
         </TabsContent>
 
-        <TabsContent value="performance" className="pt-4">
+        <TabsContent value="performance" className="pt-4 space-y-4">
+          <div className="flex justify-end">
+              <Button size="sm" onClick={() => setShowAddEvaluation(!showAddEvaluation)} className="h-8 rounded-lg text-[9px] font-black uppercase">
+                {showAddEvaluation ? "Cancel" : "Log Performance Index"}
+              </Button>
+           </div>
+
+           {showAddEvaluation && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Date</Label>
+                  <Input type="date" value={evaluationForm.date} onChange={e => setEvaluationForm({...evaluationForm, date: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Rating (1-5)</Label>
+                  <Input type="number" min="1" max="5" value={evaluationForm.rating} onChange={e => setEvaluationForm({...evaluationForm, rating: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Comments</Label>
+                  <Input value={evaluationForm.comments} onChange={e => setEvaluationForm({...evaluationForm, comments: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={() => addEvaluationMutation.mutate()} className="w-full h-9 text-[9px] font-black uppercase">Commit</Button>
+                </div>
+              </div>
+           )}
+
           <div className="space-y-4">
             {evaluations?.map((e: any) => (
               <Card key={e.id} className="rounded-2xl border-none shadow-soft">

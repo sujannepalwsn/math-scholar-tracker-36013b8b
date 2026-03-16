@@ -35,9 +35,10 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
         .from("book_loans")
         .select(`
           *,
-          books (title),
-          users (username)
+          books:book_id(title),
+          users:user_id(username)
         `)
+        .eq("center_id", centerId)
         .order("issue_date", { ascending: false });
       if (error) throw error;
       return data;

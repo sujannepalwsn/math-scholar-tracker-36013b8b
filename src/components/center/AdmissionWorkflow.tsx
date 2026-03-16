@@ -66,8 +66,6 @@ export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
     },
   });
 
-  if (isLoading) return <div>Loading applications...</div>;
-
   const [showPublicForm, setShowPublicForm] = useState(false);
   const [publicFormData, setPublicFormData] = useState({
     studentName: "",
@@ -96,6 +94,8 @@ export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
       setPublicFormData({ studentName: "", parentName: "", parentEmail: "", parentPhone: "", appliedGrade: "" });
     }
   });
+
+  if (isLoading) return <div>Loading applications...</div>;
 
   return (
     <div className="space-y-4">

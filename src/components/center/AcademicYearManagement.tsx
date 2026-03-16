@@ -18,8 +18,14 @@ export default function AcademicYearManagement({ centerId }: { centerId: string 
   const { data: years } = useQuery({
     queryKey: ["academic-years", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("academic_years").select("*").eq("school_id", centerId).order("start_date", { ascending: false });
-      if (error) throw error;
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("academic_years").select("*").eq("center_id", centerId).order("start_date", { ascending: false });
+      if (error) {
+        // Fallback for school_id if center_id doesn't exist yet
+        const { data: schoolData, error: schoolError } = await supabase.from("academic_years").select("*").eq("school_id", centerId).order("start_date", { ascending: false });
+        if (schoolError) throw error;
+        return schoolData;
+      }
       return data;
     },
   });

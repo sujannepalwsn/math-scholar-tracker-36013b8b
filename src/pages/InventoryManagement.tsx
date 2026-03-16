@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import AssetTracking from "@/components/center/AssetTracking";
 import LibraryManagement from "@/components/center/LibraryManagement";
+import ConsumablesManagement from "@/components/center/ConsumablesManagement";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function InventoryManagement() {
@@ -66,35 +67,7 @@ export default function InventoryManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
-               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {[
-                    { item: "A4 Paper Reams", stock: 45, min: 20, unit: "Packs" },
-                    { item: "Whiteboard Markers", stock: 12, min: 15, unit: "Units" },
-                    { item: "Hand Sanitizer", stock: 8, min: 10, unit: "Liters" },
-                    { item: "Cleaning Detergent", stock: 24, min: 5, unit: "Bottles" },
-                  ].map((s, idx) => (
-                    <Card key={idx} className="rounded-2xl border-none shadow-soft bg-slate-50 p-6">
-                       <div className="flex justify-between items-start mb-4">
-                          <p className="text-xs font-black uppercase tracking-widest text-slate-500">{s.item}</p>
-                          {s.stock < s.min && <Badge className="bg-rose-500 text-white border-none text-[8px]">LOW STOCK</Badge>}
-                       </div>
-                       <div className="flex items-end gap-2">
-                          <span className="text-3xl font-black text-slate-700">{s.stock}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase mb-1">{s.unit}</span>
-                       </div>
-                       <div className="mt-4 h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                          <div className={cn("h-full", s.stock < s.min ? "bg-rose-500" : "bg-emerald-500")} style={{ width: `${Math.min(100, (s.stock/50)*100)}%` }} />
-                       </div>
-                    </Card>
-                  ))}
-               </div>
-
-               <div className="flex justify-center p-8 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                  <div className="text-center space-y-3">
-                     <p className="text-sm font-medium text-slate-500 italic">Full inventory procurement workflow (PO generation, GRN entry) is being synchronized.</p>
-                     <Button variant="outline" className="rounded-xl font-black text-[10px] uppercase tracking-widest h-10 px-6">Access Global Catalog</Button>
-                  </div>
-               </div>
+               <ConsumablesManagement centerId={centerId} />
             </CardContent>
           </Card>
         </TabsContent>
