@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AcademicYearManagement from "@/components/center/AcademicYearManagement";
 
 const CLOSURE_REASONS = [
   "Holiday",
@@ -110,10 +112,17 @@ export default function SchoolDays() {
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
       <PageHeader
-        title="School Days Management"
-        description="Control institutional operations and attendance availability."
+        title="Academic Calendar & Cycles"
+        description="Control institutional operations, academic years, and attendance availability."
       />
 
+      <Tabs defaultValue="days" className="space-y-8">
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+          <TabsTrigger value="days" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Operational Days</TabsTrigger>
+          <TabsTrigger value="years" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Years</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="days" className="outline-none">
       <div className="grid gap-8 lg:grid-cols-3">
         <Card className="lg:col-span-1 border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md h-fit">
           <CardHeader>
@@ -220,6 +229,12 @@ export default function SchoolDays() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="years" className="outline-none">
+          <AcademicYearManagement centerId={centerId || ""} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

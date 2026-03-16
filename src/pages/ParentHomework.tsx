@@ -11,10 +11,13 @@ import { Badge } from "@/components/ui/badge"
 import { format, isPast } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
 
 export default function ParentHomework() {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   if (!user?.student_id) {
@@ -60,6 +63,24 @@ export default function ParentHomework() {
   const completedHomework = homeworkStatus.filter((hs: any) => hs.status === 'completed' || hs.status === 'checked');
   const overdueHomework = homeworkStatus.filter((hs: any) => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && hs.status !== 'completed' && hs.status !== 'checked');
 
+  const submitHomeworkMutation = useMutation({
+    mutationFn: async ({ recordId, url }: { recordId: string, url: string }) => {
+      const { error } = await supabase
+        .from('student_homework_records')
+        .update({
+          submission_url: url,
+          status: 'submitted',
+          submitted_at: new Date().toISOString()
+        } as any)
+        .eq('id', recordId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['parent-homework-records'] });
+      toast.success("Homework submitted successfully!");
+    }
+  });
+
   const HomeworkTable = ({ data, emptyMessage, isOverdue = false }: { data: any[], emptyMessage: string, isOverdue?: boolean }) => (
     <div className="overflow-x-auto">
       {data.length === 0 ? (
@@ -103,15 +124,36 @@ export default function ParentHomework() {
                   <p className="text-[10px] font-medium text-slate-500 line-clamp-2 italic">{hs.teacher_remarks || "No institutional remarks."}</p>
                 </TableCell>
                 <TableCell className="px-6 py-4 text-right">
-                  {hs.homework?.attachment_url ? (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" asChild>
+                  <div className="flex justify-end gap-2">
+                  {hs.homework?.attachment_url && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" asChild title="Download Assignment">
                       <a href={supabase.storage.from("homework-attachments").getPublicUrl(hs.homework.attachment_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
                         <Download className="h-4 w-4 text-primary" />
                       </a>
                     </Button>
-                  ) : (
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">None</span>
                   )}
+                  {hs.status !== 'completed' && hs.status !== 'checked' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-xl bg-white shadow-soft"
+                      onClick={() => {
+                        const url = prompt("Enter your submission URL (e.g. Google Drive link):");
+                        if (url) submitHomeworkMutation.mutate({ recordId: hs.id, url });
+                      }}
+                      title="Submit Homework"
+                    >
+                      <FileUp className="h-4 w-4 text-emerald-600" />
+                    </Button>
+                  )}
+                  {hs.submission_url && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" asChild title="View My Submission">
+                       <a href={hs.submission_url} target="_blank" rel="noopener noreferrer">
+                         <CheckCircle className="h-4 w-4 text-blue-600" />
+                       </a>
+                    </Button>
+                  )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

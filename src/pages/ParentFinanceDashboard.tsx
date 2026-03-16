@@ -116,8 +116,17 @@ const ParentFinanceDashboard = () => {
     setShowInvoiceDialog(true);
   };
 
-  const handleOnlinePayment = (invoiceId: string, amount: number) => {
-    alert(`Initiating secure payment gateway for ${formatCurrency(amount)}...`);
+  const handleOnlinePayment = async (invoiceId: string, amount: number) => {
+    // 1. Fetch gateway settings for this center
+    const { data: settings } = await supabase.from('payment_gateway_settings').select('provider, api_key').eq('center_id', student?.center_id).eq('is_active', true).maybeSingle();
+
+    if (!settings) {
+      toast.error("Online payment is not configured for this center. Please contact school admin.");
+      return;
+    }
+
+    toast.info(`Redirecting to ${settings.provider} for amount ${formatCurrency(amount)}...`);
+    // Framework for integration logic goes here
   };
 
   const handleDownloadPdf = (invoiceId: string) => {

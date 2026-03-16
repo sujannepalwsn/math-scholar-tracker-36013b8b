@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import TimetableAutomation from "@/components/center/TimetableAutomation";
 
 // Sunday(0) to Friday(5) only
 const DAYS_OF_WEEK = [
@@ -688,15 +689,18 @@ export default function ClassRoutine() {
       </div>
 
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden">
+        <TabsList className="grid w-full grid-cols-5 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden">
           <TabsTrigger value="summary" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Summary Table
           </TabsTrigger>
           <TabsTrigger value="schedule" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-            Institutional Schedule
+            Schedule
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+            Automation
           </TabsTrigger>
           <TabsTrigger value="periods" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-            Time Slots
+            Slots
           </TabsTrigger>
           <TabsTrigger value="subjects" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Subjects
@@ -826,6 +830,10 @@ export default function ClassRoutine() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="automation" className="outline-none">
+           <TimetableAutomation centerId={user?.center_id || ""} />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">

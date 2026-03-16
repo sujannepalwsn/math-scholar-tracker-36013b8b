@@ -95,28 +95,39 @@ export default function MarksheetView() {
     enabled: !!selectedExamId,
   });
 
-  const { data: marks = [] } = useQuery({
-    queryKey: ["marksheet-marks", selectedExamId, selectedStudentId],
+  const { data: gradingSystems } = useQuery({
+    queryKey: ["grading-systems", centerId],
     queryFn: async () => {
-      if (!selectedExamId || !selectedStudentId) return [];
-      const { data, error } = await supabase.from("exam_marks").select("*").eq("exam_id", selectedExamId).eq("student_id", selectedStudentId);
+      const { data } = await supabase.from("grading_systems").select("*").eq("center_id", centerId);
+      return data;
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: marks = [] } = useQuery({
+    queryKey: ["marksheet-marks", selectedExamId],
+    queryFn: async () => {
+      if (!selectedExamId) return [];
+      const { data, error } = await supabase.from("exam_marks").select("*").eq("exam_id", selectedExamId);
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedExamId && !!selectedStudentId,
+    enabled: !!selectedExamId,
   });
 
   const marksheetData = useMemo(() => {
-    if (!marks.length || !subjects.length) return null;
     const student = students.find((s: any) => s.id === selectedStudentId);
-    if (!student) return null;
+    if (!student || !subjects.length) return null;
+
+    const studentMarks = marks.filter((m: any) => m.student_id === selectedStudentId);
+    if (!studentMarks.length) return null;
 
     let totalObtained = 0;
     let totalFull = 0;
     let allPassed = true;
 
     const subjectResults = subjects.map((subj: any) => {
-      const mark = marks.find((m: any) => m.exam_subject_id === subj.id);
+      const mark = studentMarks.find((m: any) => m.exam_subject_id === subj.id);
       const obtained = mark?.marks_obtained || 0;
       totalObtained += obtained;
       totalFull += subj.full_marks;
@@ -127,16 +138,40 @@ export default function MarksheetView() {
 
     const percentage = totalFull > 0 ? (totalObtained / totalFull) * 100 : 0;
 
+    // Rank calculation
+    const allStudentScores = students.map(s => {
+      const sMarks = marks.filter((m: any) => m.student_id === s.id);
+      const total = sMarks.reduce((acc, m) => acc + (m.marks_obtained || 0), 0);
+      return { id: s.id, total };
+    }).sort((a, b) => b.total - a.total);
+
+    const rank = allStudentScores.findIndex(s => s.id === selectedStudentId) + 1;
+
+    // Use dynamic grading system if available
+    const gradingSystem = gradingSystems?.find((gs: any) => gs.id === selectedExam?.grading_system_id);
+    let calculatedGrade = getGradeFormal(percentage);
+    let calculatedGPA = "0.0";
+
+    if (gradingSystem) {
+      const range = gradingSystem.ranges.find((r: any) => percentage >= r.min && percentage <= r.max);
+      if (range) {
+        calculatedGrade = range.grade;
+        calculatedGPA = range.gpa.toFixed(2);
+      }
+    }
+
     return {
       student,
       subjectResults,
       totalObtained,
       totalFull,
       percentage,
-      grade: getGradeFormal(percentage),
+      grade: calculatedGrade,
+      gpa: calculatedGPA,
+      rank,
       passed: allPassed,
     };
-  }, [marks, subjects, students, selectedStudentId]);
+  }, [marks, subjects, students, selectedStudentId, gradingSystems, selectedExam]);
 
   const handlePrint = () => {
     const content = printRef.current;
@@ -270,7 +305,11 @@ export default function MarksheetView() {
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-2xl font-bold text-foreground">{marksheetData.grade}</p>
-                  <p className="text-xs text-muted-foreground">Grade</p>
+                  <p className="text-xs text-muted-foreground">Grade / GPA: {marksheetData.gpa}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-2xl font-bold text-foreground">{marksheetData.rank}</p>
+                  <p className="text-xs text-muted-foreground">Class Rank</p>
                 </div>
                 <div className={cn("p-3 rounded-lg", marksheetData.passed ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20")}>
                   <p className={cn("text-2xl font-bold", marksheetData.passed ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")}>

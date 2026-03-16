@@ -17,6 +17,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 import { cn, safeFormatDate } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ExamSettings from "@/components/center/ExamSettings";
 
 const grades = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
@@ -36,12 +38,32 @@ export default function ExamManagement() {
     end_date: "",
     description: "",
     status: "draft",
+    exam_type_id: "",
+    grading_system_id: "",
   });
 
   // Subject management for exam
   const [showSubjectDialog, setShowSubjectDialog] = useState(false);
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [subjectForm, setSubjectForm] = useState({ subject_name: "", full_marks: "100", pass_marks: "40" });
+
+  const { data: examTypes } = useQuery({
+    queryKey: ["exam-types", centerId],
+    queryFn: async () => {
+      const { data } = await supabase.from("exam_types").select("*").eq("center_id", centerId);
+      return data;
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: gradingSystems } = useQuery({
+    queryKey: ["grading-systems", centerId],
+    queryFn: async () => {
+      const { data } = await supabase.from("grading_systems").select("*").eq("center_id", centerId);
+      return data;
+    },
+    enabled: !!centerId,
+  });
 
   const { data: exams = [], isLoading } = useQuery({
     queryKey: ["exams", centerId],
@@ -228,7 +250,9 @@ export default function ExamManagement() {
       start_date: "",
       end_date: "",
       description: "",
-      status: "draft"
+      status: "draft",
+      exam_type_id: "",
+      grading_system_id: "",
     });
     setEditingExam(null);
     setShowForm(false);
@@ -243,6 +267,8 @@ export default function ExamManagement() {
       end_date: exam.end_date || exam.exam_date || "",
       description: exam.description || "",
       status: exam.status,
+      exam_type_id: exam.exam_type_id || "",
+      grading_system_id: exam.grading_system_id || "",
     });
     setEditingExam(exam);
     setShowForm(true);
@@ -263,11 +289,18 @@ export default function ExamManagement() {
     <div className="space-y-6">
       <PageHeader title="Exam Management" description="Create and manage exams, configure subjects" />
 
-      <div className="flex justify-end">
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Create Exam
-        </Button>
-      </div>
+      <Tabs defaultValue="exams" className="space-y-6">
+        <TabsList className="bg-white/50 border border-slate-100 p-1 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+          <TabsTrigger value="exams" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Exams</TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Settings & Scales</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="exams" className="space-y-6 outline-none">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4 mr-2" /> Create Exam
+            </Button>
+          </div>
 
       {/* Exam Form Dialog */}
       <Dialog open={showForm} onOpenChange={(v) => { if (!v) resetForm(); }}>
@@ -305,6 +338,30 @@ export default function ExamManagement() {
                   </div>
                 </PopoverContent>
               </Popover>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Exam Type</Label>
+                <Select value={formData.exam_type_id} onValueChange={(v) => setFormData({...formData, exam_type_id: v})}>
+                  <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                  <SelectContent>
+                    {examTypes?.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Grading System</Label>
+                <Select value={formData.grading_system_id} onValueChange={(v) => setFormData({...formData, grading_system_id: v})}>
+                  <SelectTrigger><SelectValue placeholder="System" /></SelectTrigger>
+                  <SelectContent>
+                    {gradingSystems?.map((gs: any) => (
+                      <SelectItem key={gs.id} value={gs.id}>{gs.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
               <Label>Academic Year</Label>
@@ -468,6 +525,11 @@ export default function ExamManagement() {
           ))
         )}
       </div>
+        </TabsContent>
+        <TabsContent value="settings" className="outline-none">
+          <ExamSettings centerId={centerId || ""} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

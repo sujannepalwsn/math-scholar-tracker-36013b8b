@@ -12,6 +12,7 @@ import InvoiceManagement from '@/components/finance/InvoiceManagement';
 import PaymentTracking from '@/components/finance/PaymentTracking';
 import ExpenseManagement from '@/components/finance/ExpenseManagement';
 import FinanceReports from '@/components/finance/FinanceReports';
+import FinanceSettings from '@/components/finance/FinanceSettings';
 import { formatCurrency } from "@/integrations/supabase/finance-types"
 import { cn } from "@/lib/utils"
 
@@ -176,12 +177,13 @@ const AdminFinance = () => {
         )}
 
         <Tabs defaultValue="invoices" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-5 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft">
+          <TabsList className="grid w-full grid-cols-6 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft">
             <TabsTrigger value="invoices" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Invoices</TabsTrigger>
             <TabsTrigger value="fees" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Fees</TabsTrigger>
             <TabsTrigger value="payments" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Payments</TabsTrigger>
             <TabsTrigger value="expenses" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Expenses</TabsTrigger>
             <TabsTrigger value="reports" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Analytics</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="invoices"><InvoiceManagement /></TabsContent>
@@ -189,6 +191,7 @@ const AdminFinance = () => {
           <TabsContent value="payments"><PaymentTracking /></TabsContent>
           <TabsContent value="expenses"><ExpenseManagement /></TabsContent>
           <TabsContent value="reports"><FinanceReports /></TabsContent>
+          <TabsContent value="settings"><FinanceSettings centerId={user?.center_id || ""} /></TabsContent>
         </Tabs>
       </div>
     </div>

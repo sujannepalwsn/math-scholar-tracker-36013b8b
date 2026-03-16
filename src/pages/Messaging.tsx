@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, MessageCircleMore, MessageSquare, Radio, Search, Send, Users } from "lucide-react";
+import { ArrowLeft, Megaphone, MessageCircleMore, MessageSquare, Radio, Search, Send, Users } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import NoticeBoard from "@/components/center/NoticeBoard";
 
 export default function Messaging() {
   const { user } = useAuth();
@@ -408,16 +409,17 @@ export default function Messaging() {
         <p className="text-sm text-muted-foreground">Communicate with parents and teachers</p>
       </div>
 
-      <Tabs defaultValue="direct" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-10">
-          <TabsTrigger value="direct" className="text-xs font-semibold gap-1.5">
+      <Tabs defaultValue="direct" className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-3 h-14 bg-card/40 backdrop-blur-md rounded-2xl p-1.5 border border-border/40 shadow-soft">
+          <TabsTrigger value="direct" className="rounded-xl data-[state=active]:shadow-soft font-black uppercase text-[10px] tracking-widest gap-2">
             <MessageSquare className="h-4 w-4" /> Direct Messages
           </TabsTrigger>
-          {user?.role === "center" && (
-            <TabsTrigger value="broadcast" className="text-xs font-semibold gap-1.5">
-              <Radio className="h-4 w-4" /> Broadcast
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="broadcast" className="rounded-xl data-[state=active]:shadow-soft font-black uppercase text-[10px] tracking-widest gap-2">
+            <Radio className="h-4 w-4" /> Broadcast
+          </TabsTrigger>
+          <TabsTrigger value="notices" className="rounded-xl data-[state=active]:shadow-soft font-black uppercase text-[10px] tracking-widest gap-2">
+            <Megaphone className="h-4 w-4" /> Digital Board
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="direct">
@@ -437,9 +439,8 @@ export default function Messaging() {
           </Card>
         </TabsContent>
 
-        {user?.role === "center" && (
           <TabsContent value="broadcast">
-            <Card className="border shadow-soft">
+            <Card className="border shadow-soft rounded-[2.5rem] overflow-hidden">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <MessageCircleMore className="h-5 w-5" /> Send Broadcast Message
@@ -470,7 +471,10 @@ export default function Messaging() {
               </CardContent>
             </Card>
           </TabsContent>
-        )}
+
+          <TabsContent value="notices">
+             <NoticeBoard centerId={user?.center_id || ""} />
+          </TabsContent>
       </Tabs>
     </div>
   );

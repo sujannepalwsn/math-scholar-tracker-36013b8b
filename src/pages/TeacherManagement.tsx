@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Clock, DollarSign, Edit, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
+import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +19,7 @@ import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import * as bcrypt from 'bcryptjs';
 import TeacherFeaturePermissions from '@/components/center/TeacherFeaturePermissions';
+import StaffHRModule from '@/components/center/StaffHRModule';
 
 type Teacher = Tables<'teachers'>;
 
@@ -58,6 +59,9 @@ export default function TeacherManagement() {
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [selectedTeacherForPermissions, setSelectedTeacherForPermissions] = useState<Teacher | null>(null);
 
+  const [showHRDialog, setShowHRDialog] = useState(false);
+  const [selectedTeacherForHR, setSelectedTeacherForHR] = useState<Teacher | null>(null);
+
   // Class teacher assignment states
   const [showClassTeacherDialog, setShowClassTeacherDialog] = useState(false);
   const [selectedTeacherForClassAssign, setSelectedTeacherForClassAssign] = useState<Teacher | null>(null);
@@ -72,8 +76,11 @@ export default function TeacherManagement() {
         .select("*, users!teachers_user_id_fkey(id, username, is_active)")
         .eq("center_id", user.center_id)
         .order("name");
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching teachers:", error);
+        throw error;
+      }
+      return data || [];
     },
     enabled: !!user?.center_id });
 
@@ -236,6 +243,7 @@ export default function TeacherManagement() {
   const handleCreateLoginClick = (teacher: Teacher) => { setSelectedTeacherForLogin(teacher); setTeacherUsername(teacher.email || ''); setTeacherPassword(''); setIsCreatingTeacherLogin(true); };
   const handleManagePermissionsClick = (teacher: Teacher) => { setSelectedTeacherForPermissions(teacher); setShowPermissionsDialog(true); };
   const handleClassTeacherClick = (teacher: Teacher) => { setSelectedTeacherForClassAssign(teacher); setClassTeacherGrade("select-grade"); setShowClassTeacherDialog(true); };
+  const handleHRClick = (teacher: Teacher) => { setSelectedTeacherForHR(teacher); setShowHRDialog(true); };
 
   const totalMonthlySalary = teachers.reduce((sum, t: any) => sum + (t.monthly_salary || 0), 0);
 
@@ -433,6 +441,9 @@ export default function TeacherManagement() {
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleClassTeacherClick(teacher)} title="Assign Grade Oversight">
                               <GraduationCap className="h-3.5 w-3.5 text-primary" />
                             </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleHRClick(teacher)} title="HR & Documents">
+                              <FileText className="h-3.5 w-3.5 text-blue-600" />
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleManagePermissionsClick(teacher)}>
                               <Settings className="h-3.5 w-3.5 text-slate-500" />
                             </Button>
@@ -507,6 +518,19 @@ export default function TeacherManagement() {
             <DialogDescription>Toggle features for {selectedTeacherForPermissions?.name}.</DialogDescription>
           </DialogHeader>
           {selectedTeacherForPermissions && <TeacherFeaturePermissions teacherId={selectedTeacherForPermissions.id} teacherName={selectedTeacherForPermissions.name} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* HR Module Dialog */}
+      <Dialog open={showHRDialog} onOpenChange={setShowHRDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tight">Faculty HR Terminal</DialogTitle>
+            <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+               Managing profile for {selectedTeacherForHR?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTeacherForHR && <StaffHRModule teacherId={selectedTeacherForHR.id} teacherName={selectedTeacherForHR.name} />}
         </DialogContent>
       </Dialog>
     </div>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Bell, Book, BookOpen, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Search, TrendingUp, Users, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Package, Search, TrendingUp, Users, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LibraryManagement from "@/components/center/LibraryManagement";
+import TransportManagement from "@/components/center/TransportManagement";
+import AssetTracking from "@/components/center/AssetTracking";
+import DigitalNoticeBoard from "@/components/center/NoticeBoard";
 
 type AttendanceRange = "weekly" | "monthly" | "yearly" | "overall";
 
@@ -700,7 +705,7 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       {/* Top Header - redesigned */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">Welcome back, {user?.username?.split("@")[0]}</p>
@@ -714,11 +719,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left/Main Column */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-8">
           {/* KPI Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
             <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" onClick={() => navigate("/register")} />
             <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" onClick={() => navigate("/teachers")} />
             <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} onClick={() => navigate("/attendance")} />
@@ -1019,7 +1024,8 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-8">
+          <DigitalNoticeBoard centerId={centerId || ""} />
           <AlertList alerts={recentAlerts} onViewAll={() => navigate("/messages")} onItemClick={(a) => {
             if (a.id.startsWith('vacant-')) {
               const classId = a.id.replace('vacant-', '');
