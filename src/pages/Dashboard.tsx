@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LibraryManagement from "@/components/center/LibraryManagement";
 import TransportManagement from "@/components/center/TransportManagement";
 import AssetTracking from "@/components/center/AssetTracking";
+import DigitalNoticeBoard from "@/components/center/NoticeBoard";
 
 type AttendanceRange = "weekly" | "monthly" | "yearly" | "overall";
 
@@ -1032,6 +1033,7 @@ export default function Dashboard() {
 
         {/* Right Column */}
         <div className="lg:col-span-4 space-y-6">
+          <DigitalNoticeBoard centerId={centerId || ""} />
           <AlertList alerts={recentAlerts} onViewAll={() => navigate("/messages")} onItemClick={(a) => {
             if (a.id.startsWith('vacant-')) {
               const classId = a.id.replace('vacant-', '');

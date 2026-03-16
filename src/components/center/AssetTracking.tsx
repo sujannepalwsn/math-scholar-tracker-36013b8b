@@ -14,7 +14,7 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showAddAsset, setShowAddAsset] = useState(false);
-  const [assetForm, setAssetForm] = useState({ name: "", category: "", location: "", condition: "Good" });
+  const [assetForm, setAssetForm] = useState({ name: "", category: "", location: "", condition: "Good", serial_number: "", purchase_price: "", purchase_date: "", warranty_expiry: "" });
 
   const { data: assets, isLoading } = useQuery({
     queryKey: ["school-assets", centerId],
@@ -34,12 +34,16 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
         category: assetForm.category,
         location: assetForm.location,
         condition: assetForm.condition,
-      });
+        asset_tag: assetForm.serial_number,
+        purchase_date: assetForm.purchase_date || null,
+        purchase_price: parseFloat(assetForm.purchase_price) || null,
+        warranty_expiry: assetForm.warranty_expiry || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-assets"] });
-      setAssetForm({ name: "", category: "", location: "", condition: "Good" });
+      setAssetForm({ name: "", category: "", location: "", condition: "Good", serial_number: "", purchase_price: "", purchase_date: "", warranty_expiry: "" });
       setShowAddAsset(false);
       toast.success("Asset logged in registry");
     }
@@ -65,23 +69,48 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
       </div>
 
       {showAddAsset && (
-        <Card className="rounded-3xl border-none shadow-strong bg-slate-50">
+        <Card className="rounded-3xl border-none shadow-strong bg-slate-50 overflow-hidden">
+          <CardHeader className="bg-slate-100/50 py-4 px-6 border-b">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500">New Asset Procurement</CardTitle>
+          </CardHeader>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Asset Name</Label>
-                <Input value={assetForm.name} onChange={e => setAssetForm({...assetForm, name: e.target.value})} className="h-10 rounded-lg" placeholder="Projector X1" />
+                <Label className="text-[10px] font-black uppercase text-slate-400">Asset Name *</Label>
+                <Input value={assetForm.name} onChange={e => setAssetForm({...assetForm, name: e.target.value})} className="h-10 rounded-lg bg-white" placeholder="e.g. Dell Latitude 5420" />
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px] font-black uppercase text-slate-400">Category</Label>
-                <Input value={assetForm.category} onChange={e => setAssetForm({...assetForm, category: e.target.value})} className="h-10 rounded-lg" placeholder="Electronics" />
+                <Input value={assetForm.category} onChange={e => setAssetForm({...assetForm, category: e.target.value})} className="h-10 rounded-lg bg-white" placeholder="e.g. IT Equipment" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] font-black uppercase text-slate-400">Serial / Asset Tag</Label>
+                <Input value={assetForm.serial_number} onChange={e => setAssetForm({...assetForm, serial_number: e.target.value})} className="h-10 rounded-lg bg-white" placeholder="TAG-12345" />
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px] font-black uppercase text-slate-400">Location</Label>
-                <Input value={assetForm.location} onChange={e => setAssetForm({...assetForm, location: e.target.value})} className="h-10 rounded-lg" placeholder="Room 204" />
+                <Input value={assetForm.location} onChange={e => setAssetForm({...assetForm, location: e.target.value})} className="h-10 rounded-lg bg-white" placeholder="e.g. IT Lab 1" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] font-black uppercase text-slate-400">Purchase Date</Label>
+                <Input type="date" value={assetForm.purchase_date} onChange={e => setAssetForm({...assetForm, purchase_date: e.target.value})} className="h-10 rounded-lg bg-white" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] font-black uppercase text-slate-400">Cost (USD)</Label>
+                <Input type="number" value={assetForm.purchase_price} onChange={e => setAssetForm({...assetForm, purchase_price: e.target.value})} className="h-10 rounded-lg bg-white" placeholder="0.00" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] font-black uppercase text-slate-400">Warranty Expiry</Label>
+                <Input type="date" value={assetForm.warranty_expiry} onChange={e => setAssetForm({...assetForm, warranty_expiry: e.target.value})} className="h-10 rounded-lg bg-white" />
               </div>
               <div className="flex items-end">
-                <Button onClick={() => addAssetMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest bg-slate-900 text-white">Commit Asset</Button>
+                <Button
+                  onClick={() => addAssetMutation.mutate()}
+                  disabled={!assetForm.name || addAssetMutation.isPending}
+                  className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest bg-primary text-white shadow-strong hover:scale-[1.02] transition-all"
+                >
+                  {addAssetMutation.isPending ? "Syncing..." : "Commit Asset"}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -92,30 +121,60 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Asset</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Category</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Location</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Condition</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-right px-6">Actions</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Asset Details</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Identification</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Procurement</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Lifecycle</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-right px-6">Operations</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={5} className="text-center py-12">Loading inventory...</TableCell></TableRow>
             ) : filteredAssets?.map((a: any) => (
-              <TableRow key={a.id}>
-                <TableCell className="px-6 font-bold">{a.name}</TableCell>
-                <TableCell><Badge variant="secondary" className="text-[9px] uppercase font-black">{a.category || "General"}</Badge></TableCell>
+              <TableRow key={a.id} className="group hover:bg-slate-50/50 transition-colors">
+                <TableCell className="px-6 py-4">
+                  <div className="flex flex-col">
+                    <span className="font-black text-slate-700 leading-tight">{a.name}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{a.category || "UNCATEGORIZED"}</span>
+                  </div>
+                </TableCell>
                 <TableCell>
-                   <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                      <MapPin className="h-3 w-3" /> {a.location || "Unset"}
+                   <div className="flex flex-col gap-1">
+                      <Badge variant="secondary" className="w-fit text-[9px] font-black tracking-widest bg-indigo-50 text-indigo-700 border-none">
+                        TAG: {a.asset_tag || "N/A"}
+                      </Badge>
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                         <MapPin className="h-3 w-3" /> {a.location || "UNASSIGNED"}
+                      </div>
                    </div>
                 </TableCell>
                 <TableCell>
-                   <Badge variant="outline" className="text-[9px] font-black uppercase border-slate-200">{a.condition}</Badge>
+                   <div className="flex flex-col">
+                      <span className="text-xs font-black text-slate-600">${a.purchase_price || "0.00"}</span>
+                      <span className="text-[9px] font-medium text-slate-400 uppercase">{a.purchase_date ? new Date(a.purchase_date).toLocaleDateString() : "DATE UNSET"}</span>
+                   </div>
+                </TableCell>
+                <TableCell>
+                   <div className="flex flex-col gap-1.5">
+                      <Badge variant="outline" className={cn(
+                        "w-fit text-[9px] font-black uppercase px-2 py-0",
+                        a.condition === 'Excellent' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                        a.condition === 'Good' ? "bg-blue-50 text-blue-700 border-blue-200" :
+                        "bg-amber-50 text-amber-700 border-amber-200"
+                      )}>{a.condition}</Badge>
+                      {a.warranty_expiry && (
+                         <span className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter">
+                            WARRANTY EXPIRES: {new Date(a.warranty_expiry).toLocaleDateString()}
+                         </span>
+                      )}
+                   </div>
                 </TableCell>
                 <TableCell className="text-right px-6">
-                   <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100"><Settings className="h-3.5 w-3.5 text-slate-400" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 text-rose-500"><Trash2 className="h-3.5 w-3.5" /></Button>
+                   </div>
                 </TableCell>
               </TableRow>
             ))}

@@ -80,6 +80,9 @@ import TeacherPerformanceReport from "./pages/TeacherPerformanceReport";
 import LeaveApplications from "./pages/LeaveApplications";
 import LeaveManagement from "./pages/LeaveManagement";
 import LessonPlanManagement from "./pages/LessonPlanManagement";
+import InventoryManagement from "./pages/InventoryManagement";
+import HRManagement from "./pages/HRManagement";
+import TransportManagementPage from "./pages/TransportManagement";
 
 const queryClient = new QueryClient();
 
@@ -188,6 +191,9 @@ const App = () => (
               <Route path="/marksheet" element={<ProtectedRoute role="center"><CenterLayout><MarksheetView /></CenterLayout></ProtectedRoute>} />
               <Route path="/student-id-cards" element={<ProtectedRoute role="center"><CenterLayout><StudentIdCard /></CenterLayout></ProtectedRoute>} />
               <Route path="/school-days" element={<ProtectedRoute role="center"><CenterLayout><SchoolDays /></CenterLayout></ProtectedRoute>} />
+              <Route path="/inventory" element={<ProtectedRoute role="center"><CenterLayout><InventoryManagement /></CenterLayout></ProtectedRoute>} />
+              <Route path="/hr-management" element={<ProtectedRoute role="center"><CenterLayout><HRManagement /></CenterLayout></ProtectedRoute>} />
+              <Route path="/transport" element={<ProtectedRoute role="center"><CenterLayout><TransportManagementPage /></CenterLayout></ProtectedRoute>} />
 
               {/* Teacher Result Routes */}
               <Route path="/teacher/exams" element={<ProtectedRoute role="teacher"><TeacherLayout><ExamManagement /></TeacherLayout></ProtectedRoute>} />

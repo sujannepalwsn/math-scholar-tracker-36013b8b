@@ -14,7 +14,11 @@ import { Badge } from "@/components/ui/badge";
 export default function TransportManagement({ centerId }: { centerId: string }) {
   const queryClient = useQueryClient();
   const [showAddRoute, setShowAddRoute] = useState(false);
+  const [showAddVehicle, setShowAddVehicle] = useState(false);
+  const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [routeForm, setRouteForm] = useState({ name: "", start: "", end: "" });
+  const [vehicleForm, setVehicleForm] = useState({ number: "", capacity: "32", driver: "", phone: "" });
+  const [assignForm, setAssignForm] = useState({ studentId: "", routeId: "", vehicleId: "" });
 
   const { data: students } = useQuery({
     queryKey: ["students", centerId],
@@ -69,6 +73,42 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
       setRouteForm({ name: "", start: "", end: "" });
       setShowAddRoute(false);
       toast.success("Bus route added");
+    }
+  });
+
+  const addVehicleMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("vehicles").insert({
+        center_id: centerId,
+        vehicle_number: vehicleForm.number,
+        capacity: parseInt(vehicleForm.capacity),
+        driver_name: vehicleForm.driver,
+        driver_phone: vehicleForm.phone,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transport-vehicles"] });
+      setVehicleForm({ number: "", capacity: "32", driver: "", phone: "" });
+      setShowAddVehicle(false);
+      toast.success("Vehicle added to fleet");
+    }
+  });
+
+  const assignTransportMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("transport_assignments").insert({
+        student_id: assignForm.studentId,
+        route_id: assignForm.routeId,
+        vehicle_id: assignForm.vehicleId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transport-assignments"] });
+      setAssignForm({ studentId: "", routeId: "", vehicleId: "" });
+      setShowAddAssignment(false);
+      toast.success("Transport assigned to student");
     }
   });
 
@@ -145,6 +185,40 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
         </TabsContent>
 
         <TabsContent value="vehicles" className="space-y-4 pt-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowAddVehicle(!showAddVehicle)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+              {showAddVehicle ? "Cancel" : "Add Vehicle"}
+            </Button>
+          </div>
+
+          {showAddVehicle && (
+            <Card className="rounded-2xl border-none shadow-soft bg-emerald-50">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">Vehicle No</Label>
+                    <Input value={vehicleForm.number} onChange={(e) => setVehicleForm({...vehicleForm, number: e.target.value})} className="h-10 rounded-lg" placeholder="BA-1-KA-1234" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">Capacity</Label>
+                    <Input type="number" value={vehicleForm.capacity} onChange={(e) => setVehicleForm({...vehicleForm, capacity: e.target.value})} className="h-10 rounded-lg" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">Driver Name</Label>
+                    <Input value={vehicleForm.driver} onChange={(e) => setVehicleForm({...vehicleForm, driver: e.target.value})} className="h-10 rounded-lg" placeholder="John Doe" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">Contact No</Label>
+                    <Input value={vehicleForm.phone} onChange={(e) => setVehicleForm({...vehicleForm, phone: e.target.value})} className="h-10 rounded-lg" placeholder="98XXXXXXXX" />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={() => addVehicleMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200">Commit</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
             <Table>
               <TableHeader className="bg-slate-50">
@@ -174,6 +248,57 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
         </TabsContent>
 
         <TabsContent value="assignments" className="space-y-4 pt-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowAddAssignment(!showAddAssignment)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+              {showAddAssignment ? "Cancel" : "New Assignment"}
+            </Button>
+          </div>
+
+          {showAddAssignment && (
+            <Card className="rounded-2xl border-none shadow-soft bg-indigo-50">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">Student</Label>
+                    <select
+                      value={assignForm.studentId}
+                      onChange={(e) => setAssignForm({...assignForm, studentId: e.target.value})}
+                      className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">Select Student</option>
+                      {students?.map((s: any) => <option key={s.id} value={s.id}>{s.name} (Grade {s.grade})</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">Route</Label>
+                    <select
+                      value={assignForm.routeId}
+                      onChange={(e) => setAssignForm({...assignForm, routeId: e.target.value})}
+                      className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">Select Route</option>
+                      {routes?.map((r: any) => <option key={r.id} value={r.id}>{r.route_name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">Vehicle</Label>
+                    <select
+                      value={assignForm.vehicleId}
+                      onChange={(e) => setAssignForm({...assignForm, vehicleId: e.target.value})}
+                      className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">Select Vehicle</option>
+                      {vehicles?.map((v: any) => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={() => assignTransportMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">Assign Student</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
             <Table>
               <TableHeader className="bg-slate-50">
