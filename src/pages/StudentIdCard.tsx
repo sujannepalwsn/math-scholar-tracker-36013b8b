@@ -141,9 +141,9 @@ export default function StudentIdCard() {
           {filteredStudents.map((s: any) => (
             <Card key={s.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setSelectedStudentId(s.id)}>
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                   {s.photo_url ? (
-                    <img src={s.photo_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    <img src={s.photo_url.startsWith('http') ? s.photo_url : supabase.storage.from('activity-photos').getPublicUrl(s.photo_url).data.publicUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
                   ) : (
                     <User className="h-5 w-5 text-primary" />
                   )}
@@ -172,7 +172,7 @@ export default function StudentIdCard() {
                 </div>
                 <div className="p-5">
                   <div className="h-20 w-20 rounded-full border-[3px] mx-auto mb-3 flex items-center justify-center bg-muted overflow-hidden" style={{ borderColor: cardConfig.primaryColor }}>
-                    {s.photo_url ? <img src={s.photo_url} alt="" className="h-full w-full object-cover" /> : <User className="h-10 w-10 text-muted-foreground" />}
+                    {s.photo_url ? <img src={s.photo_url.startsWith('http') ? s.photo_url : supabase.storage.from('activity-photos').getPublicUrl(s.photo_url).data.publicUrl} alt="" className="h-full w-full object-cover" /> : <User className="h-10 w-10 text-muted-foreground" />}
                   </div>
                   <p className="text-center font-bold text-lg text-slate-800 mb-3">{s.name}</p>
                   <div className="space-y-1.5 text-sm">
@@ -219,7 +219,7 @@ export default function StudentIdCard() {
                 <div className="p-5 bg-card">
                   <div className="h-20 w-20 rounded-full border-[3px] mx-auto mb-3 flex items-center justify-center bg-muted overflow-hidden" style={{ borderColor: cardConfig.primaryColor }}>
                     {selectedStudent.photo_url ? (
-                      <img src={selectedStudent.photo_url} alt="" className="h-full w-full object-cover" />
+                      <img src={selectedStudent.photo_url.startsWith('http') ? selectedStudent.photo_url : supabase.storage.from('activity-photos').getPublicUrl(selectedStudent.photo_url).data.publicUrl} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <User className="h-10 w-10 text-muted-foreground" />
                     )}

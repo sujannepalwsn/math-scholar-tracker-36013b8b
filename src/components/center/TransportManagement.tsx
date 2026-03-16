@@ -52,7 +52,12 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transport_assignments")
-        .select("*, students(name, grade), bus_routes(route_name), vehicles(vehicle_number)")
+        .select(`
+          *,
+          students:student_id(name, grade),
+          bus_routes:route_id(route_name),
+          vehicles:vehicle_id(vehicle_number)
+        `)
         .eq("center_id", centerId);
       if (error) throw error;
       return data;

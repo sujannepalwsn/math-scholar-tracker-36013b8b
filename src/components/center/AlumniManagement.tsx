@@ -40,6 +40,7 @@ export default function AlumniManagement({ centerId }: { centerId: string }) {
   const generateTCMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("transfer_certificates").insert({
+        center_id: centerId,
         student_id: selectedStudentForTC.id,
         leaving_date: tcData.leavingDate,
         reason_for_leaving: tcData.reason,

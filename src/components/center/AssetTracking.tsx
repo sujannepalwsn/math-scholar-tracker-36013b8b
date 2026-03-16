@@ -29,17 +29,20 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
 
   const addAssetMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("assets").insert({
+      const payload: any = {
         center_id: centerId,
         name: assetForm.name,
         category: assetForm.category,
         location: assetForm.location,
         condition: assetForm.condition,
-        asset_tag: assetForm.serial_number,
-        purchase_date: assetForm.purchase_date || null,
-        purchase_price: parseFloat(assetForm.purchase_price) || null,
-        warranty_expiry: assetForm.warranty_expiry || null,
-      } as any);
+      };
+
+      if (assetForm.serial_number) payload.asset_tag = assetForm.serial_number;
+      if (assetForm.purchase_date) payload.purchase_date = assetForm.purchase_date;
+      if (assetForm.purchase_price) payload.purchase_price = parseFloat(assetForm.purchase_price);
+      if (assetForm.warranty_expiry) payload.warranty_expiry = assetForm.warranty_expiry;
+
+      const { error } = await supabase.from("assets").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -52,8 +55,25 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
 
   const filteredAssets = assets?.filter(a => a.name.toLowerCase().includes(search.toLowerCase()) || a.category?.toLowerCase().includes(search.toLowerCase()));
 
+  const totalValuation = assets?.reduce((acc, curr) => acc + (curr.purchase_price || 0), 0) || 0;
+
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="rounded-3xl border-none shadow-soft bg-blue-50 p-6">
+           <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Total Assets</p>
+           <p className="text-3xl font-black text-blue-700">{assets?.length || 0}</p>
+        </Card>
+        <Card className="rounded-3xl border-none shadow-soft bg-emerald-50 p-6">
+           <p className="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-1">Registry Valuation</p>
+           <p className="text-3xl font-black text-emerald-700">₹{totalValuation.toLocaleString()}</p>
+        </Card>
+        <Card className="rounded-3xl border-none shadow-soft bg-amber-50 p-6">
+           <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-1">Avg. Condition</p>
+           <p className="text-3xl font-black text-amber-700">Good</p>
+        </Card>
+      </div>
+
       <div className="flex justify-between items-center">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -97,7 +117,7 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
                 <Input type="date" value={assetForm.purchase_date} onChange={e => setAssetForm({...assetForm, purchase_date: e.target.value})} className="h-10 rounded-lg bg-white" />
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Cost (USD)</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-400">Cost (₹)</Label>
                 <Input type="number" value={assetForm.purchase_price} onChange={e => setAssetForm({...assetForm, purchase_price: e.target.value})} className="h-10 rounded-lg bg-white" placeholder="0.00" />
               </div>
               <div className="space-y-1">
@@ -152,7 +172,7 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
                 </TableCell>
                 <TableCell>
                    <div className="flex flex-col">
-                      <span className="text-xs font-black text-slate-600">${a.purchase_price || "0.00"}</span>
+                      <span className="text-xs font-black text-slate-600">₹{a.purchase_price || "0.00"}</span>
                       <span className="text-[9px] font-medium text-slate-400 uppercase">{a.purchase_date ? new Date(a.purchase_date).toLocaleDateString() : "DATE UNSET"}</span>
                    </div>
                 </TableCell>

@@ -47,6 +47,16 @@ export default function TeacherManagement() {
   const [regularOutTime, setRegularOutTime] = useState("17:00");
   const [expectedCheckIn, setExpectedCheckIn] = useState("09:00");
   const [expectedCheckOut, setExpectedCheckOut] = useState("17:00");
+  const [employeeId, setEmployeeId] = useState("");
+  const [address, setAddress] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("Male");
+  const [bankAccountName, setBankAccountName] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [emergencyContactName, setEmergencyContactName] = useState("");
+  const [emergencyContactRelation, setEmergencyContactRelation] = useState("");
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState("");
 
   const [bulkText, setBulkText] = useState("");
   const [parsedBulkEntries, setParsedBulkEntries] = useState<BulkTeacherEntry[]>([]);
@@ -119,6 +129,9 @@ export default function TeacherManagement() {
     setHireDate(format(new Date(), "yyyy-MM-dd"));
     setMonthlySalary(""); setRegularInTime("09:00"); setRegularOutTime("17:00");
     setExpectedCheckIn("09:00"); setExpectedCheckOut("17:00");
+    setEmployeeId(""); setAddress(""); setDob(""); setGender("Male");
+    setBankAccountName(""); setBankAccountNumber(""); setBankName("");
+    setEmergencyContactName(""); setEmergencyContactRelation(""); setEmergencyContactPhone("");
     setEditingTeacher(null); setBulkText(""); setParsedBulkEntries([]);
   };
 
@@ -142,7 +155,11 @@ export default function TeacherManagement() {
         center_id: user.center_id, name, contact_number: contactNumber || null, email: email || null,
         hire_date: hireDate, is_active: true, monthly_salary: parseFloat(monthlySalary) || 0,
         regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
-        expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00' } as any).select().single();
+        expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00',
+        employee_id: employeeId || null, address: address || null, date_of_birth: dob || null, gender,
+        bank_details: { account_name: bankAccountName, account_number: bankAccountNumber, bank_name: bankName },
+        emergency_contact: { name: emergencyContactName, relation: emergencyContactRelation, phone: emergencyContactPhone }
+      } as any).select().single();
       if (error) throw error;
       const { error: permError } = await supabase.from('teacher_feature_permissions').insert({
         teacher_id: newTeacher.id, take_attendance: true, lesson_tracking: true, homework_management: true,
@@ -178,7 +195,11 @@ export default function TeacherManagement() {
       const { error } = await supabase.from("teachers").update({
         name, contact_number: contactNumber || null, email: email || null, hire_date: hireDate,
         monthly_salary: parseFloat(monthlySalary) || 0, regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
-        expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00' } as any).eq("id", editingTeacher.id);
+        expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00',
+        employee_id: employeeId || null, address: address || null, date_of_birth: dob || null, gender,
+        bank_details: { account_name: bankAccountName, account_number: bankAccountNumber, bank_name: bankName },
+        emergency_contact: { name: emergencyContactName, relation: emergencyContactRelation, phone: emergencyContactPhone }
+      } as any).eq("id", editingTeacher.id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher updated!"); setIsDialogOpen(false); resetForm(); },
@@ -236,6 +257,14 @@ export default function TeacherManagement() {
     setMonthlySalary(teacher.monthly_salary?.toString() || "");
     setRegularInTime(teacher.regular_in_time || "09:00"); setRegularOutTime(teacher.regular_out_time || "17:00");
     setExpectedCheckIn(teacher.expected_check_in || "09:00"); setExpectedCheckOut(teacher.expected_check_out || "17:00");
+    setEmployeeId(teacher.employee_id || ""); setAddress(teacher.address || "");
+    setDob(teacher.date_of_birth || ""); setGender(teacher.gender || "Male");
+    setBankAccountName(teacher.bank_details?.account_name || "");
+    setBankAccountNumber(teacher.bank_details?.account_number || "");
+    setBankName(teacher.bank_details?.bank_name || "");
+    setEmergencyContactName(teacher.emergency_contact?.name || "");
+    setEmergencyContactRelation(teacher.emergency_contact?.relation || "");
+    setEmergencyContactPhone(teacher.emergency_contact?.phone || "");
     setIsDialogOpen(true);
   };
 
@@ -283,50 +312,130 @@ export default function TeacherManagement() {
             </DialogHeader>
             {editingTeacher ? (
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-                  <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Contact Number</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
-                  <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label><DollarSign className="h-4 w-4 inline" /> Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-in Boundary</Label><Input type="time" value={expectedCheckIn} onChange={(e) => setExpectedCheckIn(e.target.value)} /></div>
-                  <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-out Boundary</Label><Input type="time" value={expectedCheckOut} onChange={(e) => setExpectedCheckOut(e.target.value)} /></div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular Start Time</Label><Input type="time" value={regularInTime} onChange={(e) => setRegularInTime(e.target.value)} /></div>
-                  <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular End Time</Label><Input type="time" value={regularOutTime} onChange={(e) => setRegularOutTime(e.target.value)} /></div>
-                </div>
+                <Tabs defaultValue="basic" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                    <TabsTrigger value="hr">HR & Bank</TabsTrigger>
+                    <TabsTrigger value="timing">Timing</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="basic" className="space-y-4 pt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Contact Number</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
+                    </div>
+                    <div className="space-y-2"><Label>Address</Label><Textarea value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+                  </TabsContent>
+                  <TabsContent value="hr" className="space-y-4 pt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-2"><Label>Employee ID</Label><Input value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>DOB</Label><Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Gender</Label>
+                        <Select value={gender} onValueChange={setGender}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Monthly Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
+                    </div>
+                    <div className="border p-3 rounded-lg space-y-3">
+                       <Label className="font-bold">Bank Details</Label>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1"><Label className="text-[10px]">Account Name</Label><Input value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} /></div>
+                          <div className="space-y-1"><Label className="text-[10px]">Account Number</Label><Input value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} /></div>
+                          <div className="space-y-1"><Label className="text-[10px]">Bank Name</Label><Input value={bankName} onChange={(e) => setBankName(e.target.value)} /></div>
+                       </div>
+                    </div>
+                    <div className="border p-3 rounded-lg space-y-3">
+                       <Label className="font-bold">Emergency Contact</Label>
+                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="space-y-1"><Label className="text-[10px]">Name</Label><Input value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} /></div>
+                          <div className="space-y-1"><Label className="text-[10px]">Relation</Label><Input value={emergencyContactRelation} onChange={(e) => setEmergencyContactRelation(e.target.value)} /></div>
+                          <div className="space-y-1"><Label className="text-[10px]">Phone</Label><Input value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} /></div>
+                       </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="timing" className="space-y-4 pt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-in Boundary</Label><Input type="time" value={expectedCheckIn} onChange={(e) => setExpectedCheckIn(e.target.value)} /></div>
+                      <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-out Boundary</Label><Input type="time" value={expectedCheckOut} onChange={(e) => setExpectedCheckOut(e.target.value)} /></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular Start Time</Label><Input type="time" value={regularInTime} onChange={(e) => setRegularInTime(e.target.value)} /></div>
+                      <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular End Time</Label><Input type="time" value={regularOutTime} onChange={(e) => setRegularOutTime(e.target.value)} /></div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
                 <Button onClick={handleSubmit} disabled={!name || updateTeacherMutation.isPending} className="w-full">{updateTeacherMutation.isPending ? "Updating..." : "Update Teacher"}</Button>
               </div>
             ) : (
               <Tabs defaultValue="individual" className="mt-4">
                 <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="individual">Individual</TabsTrigger><TabsTrigger value="bulk">Bulk</TabsTrigger></TabsList>
                 <TabsContent value="individual" className="space-y-4 pt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Contact</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label><DollarSign className="h-4 w-4 inline" /> Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-in Boundary</Label><Input type="time" value={expectedCheckIn} onChange={(e) => setExpectedCheckIn(e.target.value)} /></div>
-                    <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-out Boundary</Label><Input type="time" value={expectedCheckOut} onChange={(e) => setExpectedCheckOut(e.target.value)} /></div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular Start Time</Label><Input type="time" value={regularInTime} onChange={(e) => setRegularInTime(e.target.value)} /></div>
-                    <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular End Time</Label><Input type="time" value={regularOutTime} onChange={(e) => setRegularOutTime(e.target.value)} /></div>
-                  </div>
+                  <Tabs defaultValue="basic" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                      <TabsTrigger value="hr">HR & Bank</TabsTrigger>
+                      <TabsTrigger value="timing">Timing</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="basic" className="space-y-4 pt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label>Contact</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
+                      </div>
+                      <div className="space-y-2"><Label>Address</Label><Textarea value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+                    </TabsContent>
+                    <TabsContent value="hr" className="space-y-4 pt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2"><Label>Employee ID</Label><Input value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} /></div>
+                        <div className="space-y-2"><Label>DOB</Label><Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Gender</Label>
+                          <Select value={gender} onValueChange={setGender}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label>Monthly Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
+                      </div>
+                      <div className="border p-3 rounded-lg space-y-3">
+                         <Label className="font-bold">Bank Details</Label>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1"><Label className="text-[10px]">Account Name</Label><Input value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} /></div>
+                            <div className="space-y-1"><Label className="text-[10px]">Account Number</Label><Input value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} /></div>
+                            <div className="space-y-1"><Label className="text-[10px]">Bank Name</Label><Input value={bankName} onChange={(e) => setBankName(e.target.value)} /></div>
+                         </div>
+                      </div>
+                      <div className="border p-3 rounded-lg space-y-3">
+                         <Label className="font-bold">Emergency Contact</Label>
+                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="space-y-1"><Label className="text-[10px]">Name</Label><Input value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} /></div>
+                            <div className="space-y-1"><Label className="text-[10px]">Relation</Label><Input value={emergencyContactRelation} onChange={(e) => setEmergencyContactRelation(e.target.value)} /></div>
+                            <div className="space-y-1"><Label className="text-[10px]">Phone</Label><Input value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} /></div>
+                         </div>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="timing" className="space-y-4 pt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-in Boundary</Label><Input type="time" value={expectedCheckIn} onChange={(e) => setExpectedCheckIn(e.target.value)} /></div>
+                        <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Expected Check-out Boundary</Label><Input type="time" value={expectedCheckOut} onChange={(e) => setExpectedCheckOut(e.target.value)} /></div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular Start Time</Label><Input type="time" value={regularInTime} onChange={(e) => setRegularInTime(e.target.value)} /></div>
+                        <div className="space-y-2"><Label><Clock className="h-4 w-4 inline" /> Regular End Time</Label><Input type="time" value={regularOutTime} onChange={(e) => setRegularOutTime(e.target.value)} /></div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                   <Button onClick={handleSubmit} disabled={!name || createTeacherMutation.isPending} className="w-full">{createTeacherMutation.isPending ? "Adding..." : "Add Teacher"}</Button>
                 </TabsContent>
                 <TabsContent value="bulk" className="space-y-4 pt-4">

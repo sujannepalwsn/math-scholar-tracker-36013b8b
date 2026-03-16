@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Download, GraduationCap, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X } from "lucide-react";
+import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -47,7 +47,14 @@ export default function RegisterStudent() {
     grade: "",
     school_name: "",
     parent_name: "",
-    contact_number: "" });
+    contact_number: "",
+    date_of_birth: "",
+    gender: "Male",
+    blood_group: "",
+    address: "",
+    photo_url: ""
+  });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Student | null>(null);
   const [isCreatingParent, setIsCreatingParent] = useState(false);
@@ -90,9 +97,25 @@ export default function RegisterStudent() {
   // Single student create
   const createMutation = useMutation({
     mutationFn: async (student: typeof formData) => {
+      let photo_url = student.photo_url;
+
+      if (photoFile) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `student-photos/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('activity-photos') // Using existing bucket for simplicity
+          .upload(filePath, photoFile);
+
+        if (uploadError) throw uploadError;
+        photo_url = filePath;
+      }
+
       const { error } = await supabase.from("students").insert([
         {
           ...student,
+          photo_url,
           center_id: user?.center_id },
       ]);
       if (error) throw error;
@@ -104,7 +127,14 @@ export default function RegisterStudent() {
         grade: "",
         school_name: "",
         parent_name: "",
-        contact_number: "" });
+        contact_number: "",
+        date_of_birth: "",
+        gender: "Male",
+        blood_group: "",
+        address: "",
+        photo_url: ""
+      });
+      setPhotoFile(null);
       toast.success("Student registered successfully!");
     },
     onError: () => {
@@ -113,7 +143,22 @@ export default function RegisterStudent() {
 
   // Update
   const updateMutation = useMutation({
-    mutationFn: async (student: Student) => {
+    mutationFn: async (student: any) => {
+      let photo_url = student.photo_url;
+
+      if (photoFile) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `student-photos/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('activity-photos')
+          .upload(filePath, photoFile);
+
+        if (uploadError) throw uploadError;
+        photo_url = filePath;
+      }
+
       const { error } = await supabase
         .from("students")
         .update({
@@ -121,7 +166,13 @@ export default function RegisterStudent() {
           grade: student.grade,
           school_name: student.school_name,
           parent_name: student.parent_name,
-          contact_number: student.contact_number })
+          contact_number: student.contact_number,
+          date_of_birth: student.date_of_birth,
+          gender: student.gender,
+          blood_group: student.blood_group,
+          address: student.address,
+          photo_url
+        })
         .eq("id", student.id);
       if (error) throw error;
     },
@@ -362,7 +413,7 @@ export default function RegisterStudent() {
     createMutation.mutate(formData);
   };
 
-  const handleEdit = (student: Student) => {
+  const handleEdit = (student: any) => {
     setEditingId(student.id);
     setEditData({ ...student });
   };
@@ -493,6 +544,49 @@ export default function RegisterStudent() {
                   className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="dob" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Date of Birth</Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Gender</Label>
+                <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
+                  <SelectTrigger className="h-12 rounded-2xl bg-card/50 border-none shadow-soft">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="blood_group" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Blood Group</Label>
+                <Input
+                  id="blood_group"
+                  value={formData.blood_group}
+                  onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
+                  placeholder="e.g. O+"
+                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="photo" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Student Photo</Label>
+                <Input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20 p-2"
+                />
+              </div>
             </div>
 
             {/* Actions */}
@@ -609,19 +703,45 @@ export default function RegisterStudent() {
                     <TableRow key={student.id} className="group transition-all duration-300 hover:bg-card/60">
                       <TableCell className="px-8 py-5">
                         {editingId === student.id ? (
+                          <div className="space-y-2 min-w-[150px]">
                           <Input
                             value={editData?.name}
                             className="h-9 rounded-xl text-xs font-bold"
                             onChange={(e) =>
-                              setEditData((prev) =>
+                              setEditData((prev: any) =>
                                 prev ? { ...prev, name: e.target.value } : null
                               )
                             }
                           />
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="h-8 text-[8px]"
+                            onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                          />
+                          <Input
+                            type="date"
+                            value={(editData as any)?.date_of_birth}
+                            className="h-8 text-[8px]"
+                            onChange={(e) => setEditData((prev: any) => prev ? { ...prev, date_of_birth: e.target.value } : null)}
+                          />
+                          <Select value={(editData as any)?.gender} onValueChange={(v) => setEditData((prev: any) => prev ? { ...prev, gender: v } : null)}>
+                            <SelectTrigger className="h-8 text-[8px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Male">Male</SelectItem>
+                              <SelectItem value="Female">Female</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          </div>
                         ) : (
                           <div className="flex items-center gap-3">
-                             <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                                <UserIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+                             <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 transition-colors overflow-hidden">
+                                {(student as any).photo_url ? (
+                                  <img src={(student as any).photo_url.startsWith('http') ? (student as any).photo_url : supabase.storage.from('activity-photos').getPublicUrl((student as any).photo_url).data.publicUrl} alt="" className="h-8 w-8 object-cover" />
+                                ) : (
+                                  <UserIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+                                )}
                              </div>
                              <p className="font-black text-slate-700 text-sm group-hover:text-primary transition-colors leading-none">{student.name}</p>
                           </div>
@@ -629,32 +749,54 @@ export default function RegisterStudent() {
                       </TableCell>
                       <TableCell className="px-8 py-5">
                         {editingId === student.id ? (
+                          <div className="space-y-2 min-w-[80px]">
                           <Input
                             value={editData?.grade}
                             className="h-9 rounded-xl text-xs font-bold"
                             onChange={(e) =>
-                              setEditData((prev) =>
+                              setEditData((prev: any) =>
                                 prev ? { ...prev, grade: e.target.value } : null
                               )
                             }
                           />
+                          <Input
+                            placeholder="Blood"
+                            value={(editData as any)?.blood_group}
+                            className="h-8 text-[8px]"
+                            onChange={(e) => setEditData((prev: any) => prev ? { ...prev, blood_group: e.target.value } : null)}
+                          />
+                          </div>
                         ) : (
-                          <Badge variant="secondary" className="bg-primary/5 text-primary/70 border-none rounded-lg text-[10px] font-black uppercase tracking-tighter">Grade {student.grade}</Badge>
+                          <div className="space-y-1">
+                             <Badge variant="secondary" className="bg-primary/5 text-primary/70 border-none rounded-lg text-[10px] font-black uppercase tracking-tighter">Grade {student.grade}</Badge>
+                             {(student as any).blood_group && <p className="text-[9px] font-bold text-rose-500">{(student as any).blood_group}</p>}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="px-8 py-5">
                         {editingId === student.id ? (
+                          <div className="space-y-2 min-w-[120px]">
                           <Input
                             value={editData?.school_name}
                             className="h-9 rounded-xl text-xs font-bold"
                             onChange={(e) =>
-                              setEditData((prev) =>
+                              setEditData((prev: any) =>
                                 prev ? { ...prev, school_name: e.target.value } : null
                               )
                             }
                           />
+                          <Textarea
+                            placeholder="Address"
+                            value={(editData as any)?.address}
+                            className="h-16 text-[8px]"
+                            onChange={(e) => setEditData((prev: any) => prev ? { ...prev, address: e.target.value } : null)}
+                          />
+                          </div>
                         ) : (
-                          <p className="text-xs font-bold text-slate-500">{student.school_name}</p>
+                          <div className="space-y-1">
+                            <p className="text-xs font-bold text-slate-500">{student.school_name}</p>
+                            {(student as any).address && <p className="text-[10px] text-slate-400 truncate max-w-[100px]">{(student as any).address}</p>}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="px-8 py-5">
@@ -663,7 +805,7 @@ export default function RegisterStudent() {
                             value={editData?.parent_name}
                             className="h-9 rounded-xl text-xs font-bold"
                             onChange={(e) =>
-                              setEditData((prev) =>
+                              setEditData((prev: any) =>
                                 prev ? { ...prev, parent_name: e.target.value } : null
                               )
                             }
@@ -678,7 +820,7 @@ export default function RegisterStudent() {
                             value={editData?.contact_number}
                             className="h-9 rounded-xl text-xs font-bold"
                             onChange={(e) =>
-                              setEditData((prev) =>
+                              setEditData((prev: any) =>
                                 prev ? { ...prev, contact_number: e.target.value } : null
                               )
                             }
@@ -691,10 +833,10 @@ export default function RegisterStudent() {
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           {editingId === student.id ? (
                             <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-green-50 text-green-600 hover:bg-green-100" onClick={handleSave}>
-                                <Save className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-green-50 text-green-600 hover:bg-green-100" onClick={handleSave} disabled={updateMutation.isPending}>
+                                {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100" onClick={handleCancel}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100" onClick={handleCancel} disabled={updateMutation.isPending}>
                                 <X className="h-4 w-4" />
                               </Button>
                             </>
