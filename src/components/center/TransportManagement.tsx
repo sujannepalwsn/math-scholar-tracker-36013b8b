@@ -52,7 +52,8 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transport_assignments")
-        .select("*, students(name, grade), bus_routes(route_name), vehicles(vehicle_number)");
+        .select("*, students(name, grade), bus_routes(route_name), vehicles(vehicle_number)")
+        .eq("center_id", centerId);
       if (error) throw error;
       return data;
     },
@@ -98,6 +99,7 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
   const assignTransportMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("transport_assignments").insert({
+        center_id: centerId,
         student_id: assignForm.studentId,
         route_id: assignForm.routeId,
         vehicle_id: assignForm.vehicleId,

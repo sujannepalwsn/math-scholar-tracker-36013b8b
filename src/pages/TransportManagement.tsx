@@ -2,6 +2,8 @@ import React from "react";
 import { Bus, MapPin, Shield, Route, Users, Navigation, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import TransportManagement from "@/components/center/TransportManagement";
 
