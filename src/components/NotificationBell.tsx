@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Bell, CheckCheck, ExternalLink } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,36 @@ export default function NotificationBell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+
+  // Real-time subscription for notifications
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channelName = user.role === 'admin' ? 'global-notifications' : `notifications-${user.id}`;
+    const channel = supabase.channel(channelName);
+
+    channel.on('broadcast', { event: 'new-notification' }, (payload) => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.info(`${payload.payload.title}: ${payload.payload.message}`);
+    }).subscribe();
+
+    const dbChannel = supabase
+      .channel('db-notifications')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: user.role === 'admin' ? undefined : `user_id=eq.${user.id}`
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(dbChannel);
+    };
+  }, [user?.id, queryClient]);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications", user?.id, user?.center_id],

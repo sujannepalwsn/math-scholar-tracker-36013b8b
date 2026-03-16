@@ -42,6 +42,20 @@ const FEATURES = [
   { name: 'finance', label: 'Finance' },
 ];
 
+const TEACHER_FEATURES = [
+  { name: 'dashboard_access', label: 'Dashboard' },
+  { name: 'students_registration', label: 'Students Registration' },
+  { name: 'teacher_management', label: 'Teachers Registration' },
+  { name: 'teachers_attendance', label: 'Teachers Attendance' },
+  { name: 'hr_management', label: 'HR Management' },
+  { name: 'leave_management', label: 'Leave Management' },
+  { name: 'student_id_cards', label: 'Student ID Cards' },
+  { name: 'inventory_assets', label: 'Inventory & Assets' },
+  { name: 'transport_tracking', label: 'Transport & Tracking' },
+  { name: 'school_days', label: 'School Days' },
+  { name: 'settings_access', label: 'Settings' },
+];
+
 export default function CenterFeaturePermissions() {
   const queryClient = useQueryClient();
 
@@ -52,6 +66,26 @@ export default function CenterFeaturePermissions() {
         .from('centers')
         .select('*')
         .order('name');
+      if (error) throw error;
+      return data;
+    } });
+
+  const { data: teachers = [] } = useQuery({
+    queryKey: ['admin-teachers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teachers')
+        .select('*, centers(name)');
+      if (error) throw error;
+      return data;
+    } });
+
+  const { data: teacherPermissions = [] } = useQuery({
+    queryKey: ['teacher-feature-permissions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teacher_feature_permissions')
+        .select('*');
       if (error) throw error;
       return data;
     } });
@@ -68,6 +102,11 @@ export default function CenterFeaturePermissions() {
 
   const permissionsByCenter = permissions.reduce((acc, perm) => {
     acc[perm.center_id] = perm;
+    return acc;
+  }, {} as Record<string, any>);
+
+  const permissionsByTeacher = teacherPermissions.reduce((acc, perm) => {
+    acc[perm.teacher_id] = perm;
     return acc;
   }, {} as Record<string, any>);
 
@@ -96,8 +135,37 @@ export default function CenterFeaturePermissions() {
       toast.error(error.message || 'Failed to update feature permission');
     } });
 
+  const updateTeacherPermissionMutation = useMutation({
+    mutationFn: async ({ teacherId, featureName, isEnabled }: { teacherId: string; featureName: string; isEnabled: boolean }) => {
+      const existingPerm = permissionsByTeacher[teacherId];
+
+      if (existingPerm) {
+        const { error } = await supabase
+          .from('teacher_feature_permissions')
+          .update({ [featureName]: isEnabled })
+          .eq('teacher_id', teacherId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('teacher_feature_permissions')
+          .insert({ teacher_id: teacherId, [featureName]: isEnabled });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teacher-feature-permissions'] });
+      toast.success('Teacher permission updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update teacher permission');
+    } });
+
   const handleToggle = (centerId: string, featureName: string, currentStatus: boolean) => {
     updatePermissionMutation.mutate({ centerId, featureName, isEnabled: !currentStatus });
+  };
+
+  const handleTeacherToggle = (teacherId: string, featureName: string, currentStatus: boolean) => {
+    updateTeacherPermissionMutation.mutate({ teacherId, featureName, isEnabled: !currentStatus });
   };
 
   if (centersLoading || permissionsLoading) {
@@ -105,6 +173,7 @@ export default function CenterFeaturePermissions() {
   }
 
   return (
+    <div className="space-y-8">
     <Card>
       <CardHeader>
         <CardTitle>Manage Center Feature Permissions</CardTitle>
@@ -144,5 +213,48 @@ export default function CenterFeaturePermissions() {
         </div>
       </CardContent>
     </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Teacher Administrative Permissions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-auto max-h-[500px]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="sticky left-0 top-0 bg-background z-20">Teacher Name (Center)</TableHead>
+                {TEACHER_FEATURES.map(feature => (
+                  <TableHead key={feature.name} className="text-center min-w-[120px] sticky top-0 bg-background z-10">{feature.label}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {teachers.map((teacher: any) => (
+                <TableRow key={teacher.id}>
+                  <TableCell className="font-medium sticky left-0 bg-card z-10 whitespace-nowrap">
+                    {teacher.name} <span className="text-[10px] text-muted-foreground">({teacher.centers?.name})</span>
+                  </TableCell>
+                  {TEACHER_FEATURES.map(feature => {
+                    const tPerm = permissionsByTeacher[teacher.id];
+                    const isEnabled = tPerm?.[feature.name] ?? false;
+                    return (
+                      <TableCell key={feature.name} className="text-center">
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={() => handleTeacherToggle(teacher.id, feature.name, isEnabled)}
+                          disabled={updateTeacherPermissionMutation.isPending}
+                        />
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+    </div>
   );
 }

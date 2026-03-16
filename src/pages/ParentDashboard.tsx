@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
-import { QueryClient, QueryClientProvider, useMutation, useQuery } from "@tanstack/react-query"
+import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient as useTanstackQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
@@ -47,6 +47,7 @@ interface ChapterPerformanceGroup {
 const ParentDashboardContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useTanstackQueryClient();
   const today = new Date().toISOString().split("T")[0];
   
   const [dateRange, setDateRange] = useState({
@@ -221,6 +222,21 @@ const ParentDashboardContent = () => {
       return data;
     },
     enabled: !!user?.center_id });
+
+  const { data: transportAssignment } = useQuery({
+    queryKey: ['student-transport', activeStudentId],
+    queryFn: async () => {
+      if (!activeStudentId) return null;
+      const { data, error } = await supabase
+        .from('transport_assignments')
+        .select('*, vehicles(*), bus_routes(*)')
+        .eq('student_id', activeStudentId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!activeStudentId
+  });
 
   const { data: studentRoutine = [] } = useQuery({
     queryKey: ["student-routine", student?.grade, user?.center_id],
@@ -582,9 +598,50 @@ const ParentDashboardContent = () => {
         <AlertList alerts={parentAlerts} onViewAll={() => navigate("/parent-messages")} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <ClassSchedule classes={formattedRoutine} title="Daily Learning Schedule" />
-        <Card className="md:col-span-2 border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20">
+
+        {transportAssignment && (
+          <Card className="border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20 overflow-hidden">
+            <CardHeader className="bg-emerald-500/5 border-b border-emerald-100">
+               <CardTitle className="text-sm font-black uppercase tracking-widest text-emerald-600 flex items-center gap-2">
+                 <Bus className="h-4 w-4" /> Live Transit
+               </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+               <div className="h-48 bg-slate-100 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[url('https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+ff0000(0,0)/0,0,1,0,0/400x200?access_token=none')] bg-cover bg-center opacity-40"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                     <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-xl border shadow-lg text-center">
+                        <p className="text-[10px] font-black uppercase text-slate-400 leading-none mb-1">Current Position</p>
+                        <p className="font-bold text-slate-700">{transportAssignment.vehicles?.last_latitude ? `${transportAssignment.vehicles.last_latitude.toFixed(4)}, ${transportAssignment.vehicles.last_longitude.toFixed(4)}` : "Awaiting GPS Signal"}</p>
+                     </div>
+                  </div>
+               </div>
+               <div className="p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                     <div>
+                        <p className="text-xs font-black text-slate-700">{transportAssignment.vehicles?.vehicle_name || transportAssignment.vehicles?.vehicle_number}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">{transportAssignment.bus_routes?.route_name}</p>
+                     </div>
+                     <Badge variant="success" className="text-[8px] font-black uppercase">On Route</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                     <div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase">Driver</p>
+                        <p className="text-[10px] font-bold text-slate-700">{transportAssignment.vehicles?.driver_name}</p>
+                     </div>
+                     <div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase">Contact</p>
+                        <p className="text-[10px] font-bold text-primary">{transportAssignment.vehicles?.driver_phone}</p>
+                     </div>
+                  </div>
+               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className={cn("border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20", !transportAssignment ? "md:col-span-2" : "")}>
           <CardHeader><CardTitle className="text-lg font-bold">Educational Milestones</CardTitle></CardHeader>
           <CardContent className="p-6">
             <p className="text-sm text-muted-foreground italic">Comprehensive tracking of your child's educational journey and institutional engagements.</p>

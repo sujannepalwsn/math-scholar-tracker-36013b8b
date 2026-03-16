@@ -182,6 +182,7 @@ export default function StudentIdCard() {
                       ["Roll Number", s.roll_number || "-"],
                       ["Date of Birth", safeFormatDate(s.date_of_birth, "MMM dd, yyyy")],
                       ["Guardian", s.parent_name || "-"],
+                      ["Contact", s.contact_number || s.parent_phone || "-"],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between border-b border-border pb-1">
                         <span className="text-muted-foreground text-xs">{label}</span>
@@ -190,8 +191,19 @@ export default function StudentIdCard() {
                     ))}
                   </div>
                 </div>
-                <div className="bg-slate-50 p-2 text-center text-[10px] text-muted-foreground">
+                <div className="bg-slate-50 p-2 text-center text-[10px] text-muted-foreground flex flex-col gap-1">
                   {center?.phone && <span>Contact: {center.phone}</span>}
+                  {cardConfig.showQR && (
+                    <div className="flex justify-center mt-1">
+                      <div className="bg-white p-1 border">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${s.student_id_number}`}
+                          alt="QR Code"
+                          className="h-8 w-8"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -246,9 +258,20 @@ export default function StudentIdCard() {
                 </div>
 
                 {/* Footer */}
-                <div className="bg-muted p-2 text-center text-[10px] text-muted-foreground">
+                <div className="bg-muted p-2 text-center text-[10px] text-muted-foreground flex flex-col gap-1">
                   {center?.phone && <span>Contact: {center.phone}</span>}
                   {center?.email && <span> • {center.email}</span>}
+                  {cardConfig.showQR && (
+                    <div className="flex justify-center mt-1">
+                      <div className="bg-white p-1 border">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${selectedStudent.student_id_number}`}
+                          alt="QR Code"
+                          className="h-8 w-8"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

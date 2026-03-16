@@ -10,6 +10,7 @@ import CenterLogo from "./CenterLogo";
 import NotificationBell from "./NotificationBell";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 
 const navItems: Array<{
   to: string;
@@ -66,6 +67,8 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const { dynamicCategories, dynamicItems, getIcon } = useDynamicNavigation();
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -95,9 +98,23 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const updatedNavItems = navItems.map(item =>
-    item.to === "/messages" ? { ...item, unreadCount: unreadMessageCount } : item
-  );
+  const updatedNavItems = dynamicItems.length > 0
+    ? dynamicItems.map(it => {
+        const cat = dynamicCategories.find(c => c.id === it.category_id);
+        return {
+          to: it.route,
+          label: it.name,
+          icon: getIcon(it.icon),
+          role: it.role as any,
+          featureName: it.feature_name,
+          category: cat?.name,
+          unreadCount: it.route === "/messages" ? unreadMessageCount : undefined,
+          is_active: it.is_active
+        };
+      }).filter(it => it.is_active !== false)
+    : navItems.map(item =>
+        item.to === "/messages" ? { ...item, unreadCount: unreadMessageCount } : item
+      );
 
   const headerContent = (
     <CenterLogo size="md" showName={true} />

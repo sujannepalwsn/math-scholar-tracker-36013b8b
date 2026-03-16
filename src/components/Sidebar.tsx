@@ -78,8 +78,13 @@ export default function Sidebar({
       if (user?.role === 'center' && user.centerPermissions) {
         return user.centerPermissions[item.featureName] !== false;
       }
-      if (user?.role === 'teacher' && user.teacherPermissions) {
-        return user.teacherPermissions[item.featureName] !== false;
+      if (user?.role === 'teacher') {
+        // Teachers can have their own specific feature permissions (administrative toggles)
+        if (user.teacherPermissions && user.teacherPermissions[item.featureName] !== undefined) {
+          return user.teacherPermissions[item.featureName] === true;
+        }
+        // Fallback to default teacher permissions if not explicitly set
+        return user.teacherPermissions?.[item.featureName] !== false;
       }
     }
     return true;

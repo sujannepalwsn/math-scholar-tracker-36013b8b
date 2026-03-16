@@ -163,6 +163,18 @@ export default function Messaging() {
         type: 'info',
         link: link
       });
+
+      // Realtime channel broadcast for immediate UI update in other clients
+      const channel = supabase.channel(`notifications-${recipientId || user.center_id}`);
+      await channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.send({
+            type: 'broadcast',
+            event: 'new-notification',
+            payload: { title, message: newMessage.trim() }
+          });
+        }
+      });
     },
     onSuccess: () => {
       setNewMessage("");
