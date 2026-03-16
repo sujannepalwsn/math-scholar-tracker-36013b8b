@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogDescription } from "@/components/ui/dialog"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
@@ -28,7 +29,7 @@ const TEACHER_FEATURES = [
   { name: 'messaging', label: 'Messages' },
   { name: 'meetings_management', label: 'Meetings' },
   { name: 'calendar_events', label: 'Calendar & Events' },
-  { name: 'student_report_access', label: 'Student Report' },
+  { name: 'student_report', label: 'Student Report' }, // Aligned with center permissions
   { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'summary', label: 'Summary' },
   { name: 'teacher_reports', label: 'Teacher Reports' },
@@ -114,21 +115,22 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
           </TableHeader>
           <TableBody>
             {TEACHER_FEATURES.filter(f => {
-              // Only show features enabled for the center by super admin
-              // If centerPermissions is missing, we default to showing (permissive)
               if (!centerPermissions) return true;
               const centerVal = centerPermissions[f.name as keyof typeof centerPermissions];
               return centerVal !== false;
             }).map(feature => {
-              // Get current status from permissions, default to true if not set
-              const isEnabled = permissions?.[feature.name as keyof typeof permissions] ?? true;
+              // Map student_report to student_report_access for the database update if necessary
+              // but for consistency let's use the DB names.
+              const dbFieldName = feature.name === 'student_report' ? 'student_report_access' : feature.name;
+              const isEnabled = permissions?.[dbFieldName as keyof typeof permissions] ?? true;
+
               return (
                 <TableRow key={feature.name}>
                   <TableCell className="font-medium">{feature.label}</TableCell>
                   <TableCell className="text-center">
                     <Switch
                       checked={Boolean(isEnabled)}
-                      onCheckedChange={() => handleToggle(feature.name, Boolean(isEnabled))}
+                      onCheckedChange={() => handleToggle(dbFieldName, Boolean(isEnabled))}
                       disabled={updatePermissionMutation.isPending}
                     />
                   </TableCell>

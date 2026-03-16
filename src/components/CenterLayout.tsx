@@ -20,7 +20,7 @@ const navItems: Array<{
   unreadCount?: number;
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
-  { to: "/", label: "Dashboard", icon: Home, role: 'center' as const },
+  { to: "/", label: "Dashboard", icon: Home, role: 'center' as const, featureName: 'dashboard_access' },
 
   // Academics Group
   { to: "/attendance", label: "Take Attendance", icon: CheckSquare, role: 'center' as const, featureName: 'take_attendance', category: 'Academics' },
@@ -29,22 +29,22 @@ const navItems: Array<{
   { to: "/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'center' as const, featureName: 'lesson_tracking', category: 'Academics' },
   { to: "/homework", label: "Homework", icon: Book, role: 'center' as const, featureName: 'homework_management', category: 'Academics' },
   { to: "/tests", label: "Tests", icon: ClipboardCheck, role: 'center' as const, featureName: 'test_management', category: 'Academics' },
-  { to: "/exams", label: "Exams & Results", icon: GraduationCap, role: 'center' as const, featureName: 'test_management', category: 'Academics' },
-  { to: "/published-results", label: "Published Results", icon: Award, role: 'center' as const, category: 'Academics' },
+  { to: "/exams", label: "Exams & Results", icon: GraduationCap, role: 'center' as const, featureName: 'exams_results', category: 'Academics' },
+  { to: "/published-results", label: "Published Results", icon: Award, role: 'center' as const, featureName: 'published_results', category: 'Academics' },
   { to: "/activities", label: "Activities", icon: Paintbrush, role: 'center' as const, featureName: 'preschool_activities', category: 'Academics' },
   { to: "/discipline", label: "Discipline", icon: AlertTriangle, role: 'center' as const, featureName: 'discipline_issues', category: 'Academics' },
 
   // Administration Group
-  { to: "/register", label: "Students Registration", icon: UserPlus, role: 'center' as const, featureName: 'register_student', category: 'Administration' },
+  { to: "/register", label: "Students Registration", icon: UserPlus, role: 'center' as const, featureName: 'students_registration', category: 'Administration' },
   { to: "/teachers", label: "Teachers Registration", icon: Users, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
-  { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
-  { to: "/hr-management", label: "HR Management", icon: Award, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
-  { to: "/leave-management", label: "Leave Management", icon: Plane, role: 'center' as const, category: 'Administration' },
-  { to: "/student-id-cards", label: "Student ID Cards", icon: IdCard, role: 'center' as const, category: 'Administration' },
-  { to: "/inventory", label: "Inventory & Assets", icon: Archive, role: 'center' as const, category: 'Administration' },
-  { to: "/transport", label: "Transport & Tracking", icon: Bus, role: 'center' as const, category: 'Administration' },
-  { to: "/school-days", label: "School Days", icon: CalendarDays, role: 'center' as const, category: 'Administration' },
-  { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const, category: 'Administration' },
+  { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teachers_attendance', category: 'Administration' },
+  { to: "/hr-management", label: "HR Management", icon: Award, role: 'center' as const, featureName: 'hr_management', category: 'Administration' },
+  { to: "/leave-management", label: "Leave Management", icon: Plane, role: 'center' as const, featureName: 'leave_management', category: 'Administration' },
+  { to: "/student-id-cards", label: "Student ID Cards", icon: IdCard, role: 'center' as const, featureName: 'student_id_cards', category: 'Administration' },
+  { to: "/inventory", label: "Inventory & Assets", icon: Archive, role: 'center' as const, featureName: 'inventory_assets', category: 'Administration' },
+  { to: "/transport", label: "Transport & Tracking", icon: Bus, role: 'center' as const, featureName: 'transport_tracking', category: 'Administration' },
+  { to: "/school-days", label: "School Days", icon: CalendarDays, role: 'center' as const, featureName: 'school_days', category: 'Administration' },
+  { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const, featureName: 'settings_access', category: 'Administration' },
 
   // Reports and Communication Group
   { to: "/messages", label: "Messages", icon: MessageSquare, role: 'center' as const, featureName: 'messaging', category: 'Reports and Communication' },
@@ -53,8 +53,8 @@ const navItems: Array<{
   { to: "/student-report", label: "Student Report", icon: User, role: 'center' as const, featureName: 'student_report', category: 'Reports and Communication' },
   { to: "/attendance-summary", label: "Attendance Summary", icon: Calendar, role: 'center' as const, featureName: 'attendance_summary', category: 'Reports and Communication' },
   { to: "/summary", label: "Summary", icon: BarChart3, role: 'center' as const, featureName: 'summary', category: 'Reports and Communication' },
-  { to: "/teacher-performance", label: "Teacher Reports", icon: BarChart3, role: 'center' as const, category: 'Reports and Communication' },
-  { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'lesson_tracking', category: 'Reports and Communication' },
+  { to: "/teacher-performance", label: "Teacher Reports", icon: BarChart3, role: 'center' as const, featureName: 'teacher_reports', category: 'Reports and Communication' },
+  { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'chapter_performance', category: 'Reports and Communication' },
   { to: "/records", label: "View Records", icon: FileText, role: 'center' as const, featureName: 'view_records', category: 'Reports and Communication' },
   { to: "/finance", label: "Finance", icon: DollarSign, role: 'center' as const, featureName: 'finance', category: 'Reports and Communication' },
   { to: "/ai-insights", label: "AI Insights", icon: Brain, role: 'center' as const, featureName: 'ai_insights', category: 'Reports and Communication' },

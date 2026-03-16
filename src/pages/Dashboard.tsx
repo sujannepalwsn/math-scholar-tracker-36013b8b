@@ -318,6 +318,10 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!centerId) return [];
       const dayOfWeek = new Date().getDay();
+
+      // No routines scheduled for Saturday (6)
+      if (dayOfWeek === 6) return [];
+
       let query = supabase
         .from("period_schedules")
         .select("*, teachers(*), class_periods!inner(*)")

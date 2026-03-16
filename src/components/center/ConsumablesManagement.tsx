@@ -47,6 +47,19 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
     enabled: !!centerId,
   });
 
+  const { data: logs, isLoading: logsLoading } = useQuery({
+    queryKey: ["consumable-logs", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("consumable_logs")
+        .select("*, students(name, grade), teachers(name), consumables(name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!centerId,
+  });
+
   const distributeMutation = useMutation({
     mutationFn: async () => {
       if (!showDistribute) return;
@@ -137,7 +150,14 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <Tabs defaultValue="inventory">
+        <TabsList className="bg-slate-100 p-1 rounded-xl h-12">
+          <TabsTrigger value="inventory" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Live Inventory</TabsTrigger>
+          <TabsTrigger value="logs" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Distribution History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="inventory" className="space-y-6 pt-4">
+          <div className="flex justify-between items-center">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -294,6 +314,55 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
           </TableBody>
         </Table>
       </div>
+        </TabsContent>
+
+        <TabsContent value="logs" className="pt-4">
+          <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Date</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Item</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Recipient</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Qty</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-right px-6">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logsLoading ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-12 text-xs">Loading logs...</TableCell></TableRow>
+                ) : logs?.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-12 text-slate-400 italic text-xs">No distribution records discovered.</TableCell></TableRow>
+                ) : logs?.map((log: any) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(log.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="font-bold">{log.consumables?.name}</TableCell>
+                    <TableCell>
+                      {log.students ? (
+                        <div className="flex flex-col">
+                          <span className="font-bold text-indigo-600 text-xs">{log.students.name}</span>
+                          <span className="text-[8px] uppercase font-black text-slate-400">Student (Grade {log.students.grade})</span>
+                        </div>
+                      ) : log.teachers ? (
+                        <div className="flex flex-col">
+                          <span className="font-bold text-emerald-600 text-xs">{log.teachers.name}</span>
+                          <span className="text-[8px] uppercase font-black text-slate-400">Teacher</span>
+                        </div>
+                      ) : <span className="text-slate-400 italic text-xs">Internal / Disposal</span>}
+                    </TableCell>
+                    <TableCell className="font-black text-xs">{log.quantity}</TableCell>
+                    <TableCell className="text-right px-6">
+                      <Badge variant="outline" className="text-[9px] uppercase font-black border-slate-200">
+                        {log.action_type}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

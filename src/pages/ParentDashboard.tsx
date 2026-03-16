@@ -227,6 +227,8 @@ const ParentDashboardContent = () => {
     queryFn: async () => {
       if (!student?.grade || !user?.center_id) return [];
       const dayOfWeek = new Date().getDay();
+      if (dayOfWeek === 6) return []; // No routines on Saturday
+
       const { data, error } = await supabase
         .from("period_schedules")
         .select("*, teachers(name), class_periods!inner(*)")
