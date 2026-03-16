@@ -24,7 +24,12 @@ ALTER TABLE IF EXISTS public.performance_evaluations ADD COLUMN IF NOT EXISTS ce
 ALTER TABLE IF EXISTS public.staff_documents ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
 ALTER TABLE IF EXISTS public.transport_assignments ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
 
--- 3. Enhance teachers table
+-- 3. Fix assets table missing columns (Fix 400 error)
+ALTER TABLE IF EXISTS public.assets ADD COLUMN IF NOT EXISTS asset_tag text;
+ALTER TABLE IF EXISTS public.assets ADD COLUMN IF NOT EXISTS purchase_price numeric;
+ALTER TABLE IF EXISTS public.assets ADD COLUMN IF NOT EXISTS warranty_expiry date;
+
+-- 4. Enhance teachers table
 ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS employee_id text;
 ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS address text;
 ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS date_of_birth date;
@@ -34,7 +39,7 @@ ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS bank_details json
 ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS emergency_contact jsonb DEFAULT '{}'::jsonb;
 ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS department text;
 
--- 4. Create payroll_logs table
+-- 5. Create payroll_logs table
 CREATE TABLE IF NOT EXISTS public.payroll_logs (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE,
@@ -50,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.payroll_logs (
     created_at timestamptz DEFAULT now()
 );
 
--- 5. Create consumables table
+-- 6. Create consumables table
 CREATE TABLE IF NOT EXISTS public.consumables (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE,
@@ -64,7 +69,7 @@ CREATE TABLE IF NOT EXISTS public.consumables (
     updated_at timestamptz DEFAULT now()
 );
 
--- 6. Enable RLS and add Policies (Fix 401 Unauthorized errors)
+-- 7. Enable RLS and add Policies (Fix 401 Unauthorized errors)
 ALTER TABLE public.academic_years ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payroll_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consumables ENABLE ROW LEVEL SECURITY;
@@ -96,3 +101,15 @@ END $$;
 -- Exception for public admission applications
 DROP POLICY IF EXISTS "Public can submit admission" ON public.admission_applications;
 CREATE POLICY "Public can submit admission" ON public.admission_applications FOR INSERT WITH CHECK (true);
+
+-- 8. Storage Buckets configuration (Fix Image loading errors)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('activity-photos', 'activity-photos', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Drop existing policies for storage.objects if they exist to ensure fresh application
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'activity-photos');
+
+DROP POLICY IF EXISTS "Authenticated users can upload" ON storage.objects;
+CREATE POLICY "Authenticated users can upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'activity-photos' AND auth.role() = 'authenticated');
