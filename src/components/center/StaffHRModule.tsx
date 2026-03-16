@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { FileText, Plus, Trash2, Upload, ExternalLink, ShieldCheck, UserCheck, DollarSign, PieChart, Calendar, AlertCircle } from "lucide-react";
+import { FileText, Plus, Trash2, Upload, ExternalLink, ShieldCheck, UserCheck, DollarSign, PieChart, Calendar, AlertCircle, Award, FileCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -44,9 +45,13 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
     },
   });
 
+  const { user } = useAuth();
+  const centerId = user?.center_id;
+
   const addDocMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("staff_documents").insert({
+        center_id: centerId,
         teacher_id: teacherId,
         document_name: docForm.name,
         document_type: docForm.type,

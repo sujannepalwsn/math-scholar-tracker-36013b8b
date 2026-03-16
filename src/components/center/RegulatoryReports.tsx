@@ -13,14 +13,66 @@ import { Badge } from "@/components/ui/badge";
 export default function RegulatoryReports({ centerId }: { centerId: string }) {
   const [isExporting, setIsExporting] = useState(false);
 
+  const { data: students = [] } = useQuery({
+    queryKey: ["students-for-reports", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: teachers = [] } = useQuery({
+    queryKey: ["teachers-for-reports", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("teachers").select("*").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const exportNepalCompliance = (type: string) => {
     setIsExporting(true);
     toast.info(`Generating ${type} in Nepal Education Dept format...`);
 
-    setTimeout(() => {
+    try {
+      if (type === "Enrollment Matrix") {
+        const header = ["Student Name", "Grade", "Parent Name", "Contact", "Admission Date"];
+        const rows = students.map(s => [s.name, s.grade, s.parent_name, s.contact_number, s.created_at]);
+        const csvContent = [header, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Nepal_Enrollment_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Enrollment Matrix exported!");
+      } else if (type === "Faculty Registry") {
+        const header = ["Teacher Name", "Subject", "Email", "Phone", "Status"];
+        const rows = teachers.map(t => [t.name, t.subject, t.email, t.phone, t.is_active ? "Active" : "Inactive"]);
+        const csvContent = [header, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Nepal_Faculty_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Faculty Registry exported!");
+      } else {
+        // Mock for PDF
+        setTimeout(() => {
+          toast.success(`${type} (PDF) exported successfully!`);
+        }, 1000);
+      }
+    } catch (err) {
+      toast.error("Export failed");
+    } finally {
       setIsExporting(false);
-      toast.success(`${type} exported successfully!`);
-    }, 1500);
+    }
   };
 
   return (

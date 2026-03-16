@@ -64,27 +64,54 @@ export default function TransportManagementPage() {
         </TabsList>
 
         <TabsContent value="tracking" className="outline-none">
-          <Card className="rounded-[2.5rem] border-none shadow-strong bg-slate-900 overflow-hidden relative min-h-[500px]">
-            <div className="absolute inset-0 opacity-20 bg-[url('https://api.mapbox.com/styles/v1/mapbox/dark-v10/static/0,0,1,0,0/800x600?access_token=none')] bg-cover"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
-            <div className="relative p-12 flex flex-col items-center justify-center h-full text-center space-y-6">
-               <div className="p-4 rounded-full bg-emerald-500/20 animate-pulse">
-                  <Navigation className="h-12 w-12 text-emerald-400" />
-               </div>
-               <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Live Fleet Radar</h2>
-               <p className="text-slate-400 max-w-lg font-medium">Real-time GPS telemetry integration. All vehicles currently on established routes are being monitored for speed, location, and idle time.</p>
-               <div className="flex gap-4">
-                  <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-                     <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Active Now</p>
-                     <p className="text-xl font-black text-white">4 Buses</p>
-                  </div>
-                  <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-                     <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest">In Depot</p>
-                     <p className="text-xl font-black text-white">8 Buses</p>
-                  </div>
-               </div>
-            </div>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+             <Card className="lg:col-span-8 rounded-[2.5rem] border-none shadow-strong bg-slate-900 overflow-hidden relative min-h-[600px]">
+                <div className="absolute inset-0 opacity-20 bg-[url('https://api.mapbox.com/styles/v1/mapbox/dark-v10/static/0,0,1,0,0/800x600?access_token=none')] bg-cover"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                <div className="relative p-12 flex flex-col items-center justify-center h-full text-center space-y-6">
+                   <div className="p-4 rounded-full bg-emerald-500/20 animate-pulse">
+                      <Navigation className="h-12 w-12 text-emerald-400" />
+                   </div>
+                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Live Fleet Radar</h2>
+                   <p className="text-slate-400 max-w-lg font-medium">Real-time GPS telemetry integration. All vehicles currently on established routes are being monitored for speed, location, and idle time.</p>
+                </div>
+             </Card>
+
+             <div className="lg:col-span-4 space-y-6">
+                <Card className="rounded-3xl border border-slate-100 bg-white shadow-soft overflow-hidden">
+                   <CardHeader className="bg-slate-50 border-b py-4">
+                      <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500">In-Transit Status</CardTitle>
+                   </CardHeader>
+                   <CardContent className="p-0">
+                      <div className="divide-y max-h-[500px] overflow-y-auto">
+                         {[
+                           { bus: "B104", route: "Morning North", status: "Delayed", color: "rose", eta: "12m" },
+                           { bus: "B202", route: "Main Campus", status: "On Time", color: "emerald", eta: "4m" },
+                           { bus: "B305", route: "East Loop", status: "Arrived", color: "blue", eta: "0m" },
+                           { bus: "B101", route: "West Station", status: "On Time", color: "emerald", eta: "8m" },
+                         ].map((v, idx) => (
+                           <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                              <div className="flex items-center gap-4">
+                                 <div className={`h-10 w-10 rounded-xl bg-${v.color}-500/10 flex items-center justify-center text-${v.color}-600`}>
+                                    <Bus className="h-5 w-5" />
+                                 </div>
+                                 <div>
+                                    <p className="font-black text-slate-700 leading-none">{v.bus}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">{v.route}</p>
+                                 </div>
+                              </div>
+                              <div className="text-right">
+                                 <Badge className={`bg-${v.color}-500 text-white border-none text-[8px] font-black`}>{v.status}</Badge>
+                                 <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">ETA: {v.eta}</p>
+                              </div>
+                           </div>
+                         ))}
+                      </div>
+                   </CardContent>
+                </Card>
+                <Button className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black uppercase text-[10px] tracking-widest shadow-strong">Broadcast to Drivers</Button>
+             </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="management" className="outline-none">

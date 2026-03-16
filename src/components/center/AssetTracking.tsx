@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Package, Plus, Trash2, Search, MapPin, User, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function AssetTracking({ centerId }: { centerId: string }) {
   const queryClient = useQueryClient();

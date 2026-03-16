@@ -47,6 +47,7 @@ export default function StudentPromotion({ centerId }: { centerId: string }) {
 
       // 2. Create promotion history records
       const historyRecords = selectedStudentIds.map(id => ({
+        center_id: centerId,
         student_id: id,
         from_grade: fromGrade,
         to_grade: toGrade,

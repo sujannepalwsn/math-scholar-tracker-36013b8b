@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Book, Plus, Trash2, Search, BookOpen, RotateCcw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function LibraryManagement({ centerId }: { centerId: string }) {
   const queryClient = useQueryClient();
@@ -214,8 +215,4 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
       </Tabs>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
 }

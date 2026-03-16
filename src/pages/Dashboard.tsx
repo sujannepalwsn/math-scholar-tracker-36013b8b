@@ -655,14 +655,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 pb-24 md:pb-8">
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
-          <TabsTrigger value="overview" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Overview</TabsTrigger>
-          <TabsTrigger value="logistics" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Logistics & Infrastructure</TabsTrigger>
-          <TabsTrigger value="inventory" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Inventory & Assets</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6 outline-none">
       {/* Substitution Dialog */}
       <Dialog open={!!selectedVacantClass} onOpenChange={(open) => !open && setSelectedVacantClass(null)}>
         <DialogContent className="max-w-2xl">
@@ -713,7 +705,7 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       {/* Top Header - redesigned */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">Welcome back, {user?.username?.split("@")[0]}</p>
@@ -727,11 +719,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left/Main Column */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-8">
           {/* KPI Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
             <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" onClick={() => navigate("/register")} />
             <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" onClick={() => navigate("/teachers")} />
             <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} onClick={() => navigate("/attendance")} />
@@ -1032,7 +1024,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-8">
           <DigitalNoticeBoard centerId={centerId || ""} />
           <AlertList alerts={recentAlerts} onViewAll={() => navigate("/messages")} onItemClick={(a) => {
             if (a.id.startsWith('vacant-')) {
@@ -1046,50 +1038,6 @@ export default function Dashboard() {
           }} />
         </div>
       </div>
-        </TabsContent>
-
-        <TabsContent value="logistics" className="space-y-8 outline-none">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
-              <CardHeader className="bg-primary/5 border-b border-border/20 px-8 py-6">
-                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
-                  <div className="p-2 rounded-xl bg-primary/10"><Book className="h-6 w-6 text-primary" /></div>
-                  Library Terminal
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8">
-                <LibraryManagement centerId={centerId || ""} />
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
-              <CardHeader className="bg-blue-500/5 border-b border-border/20 px-8 py-6">
-                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
-                  <div className="p-2 rounded-xl bg-blue-500/10"><Bus className="h-6 w-6 text-blue-600" /></div>
-                  Transport Network
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8">
-                <TransportManagement centerId={centerId || ""} />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="inventory" className="outline-none">
-           <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
-              <CardHeader className="bg-primary/5 border-b border-border/20 px-8 py-6">
-                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
-                  <div className="p-2 rounded-xl bg-primary/10"><Package className="h-6 w-6 text-primary" /></div>
-                  Institutional Asset Registry
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8">
-                <AssetTracking centerId={centerId || ""} />
-              </CardContent>
-           </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
   const queryClient = useQueryClient();
@@ -224,8 +225,4 @@ export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
       </Dialog>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
 }
