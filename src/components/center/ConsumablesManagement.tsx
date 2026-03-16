@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Package, Plus, Trash2, Search, Filter, MinusCircle, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ConsumablesManagement({ centerId }: { centerId: string }) {
