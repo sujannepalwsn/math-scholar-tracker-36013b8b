@@ -4,8 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter as BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import CenterLayout from "./components/CenterLayout";
@@ -87,9 +89,31 @@ import TransportManagementPage from "./pages/TransportManagement";
 
 const queryClient = new QueryClient();
 
+const ActivityTracker = () => {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const updateActivity = async () => {
+      await supabase
+        .from('users')
+        .update({ last_active_at: new Date().toISOString() })
+        .eq('id', user.id);
+    };
+
+    updateActivity();
+    const interval = setInterval(updateActivity, 5 * 60 * 1000); // Every 5 mins
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <ActivityTracker />
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />

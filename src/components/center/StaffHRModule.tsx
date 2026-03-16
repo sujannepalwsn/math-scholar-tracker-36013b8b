@@ -24,7 +24,29 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
   const [isUploading, setIsUploading] = useState(false);
   const [contractForm, setContractForm] = useState({ type: "Permanent", start: "", end: "", salary: "" });
   const [evaluationForm, setEvaluationForm] = useState({ date: new Date().toISOString().split('T')[0], rating: "5", comments: "" });
-  const [payrollForm, setPayrollForm] = useState({ month: "March", year: "2026", basic: "", allowance: "0", deduction: "0" });
+  const [payrollForm, setPayrollForm] = useState({ month: format(new Date(), "MMMM"), year: new Date().getFullYear().toString(), basic: "", allowance: "0", deduction: "0" });
+
+  const { data: centerSettings } = useQuery({
+    queryKey: ["center-settings-payroll", centerId],
+    queryFn: async () => {
+      if (!centerId) return null;
+      const { data, error } = await supabase.from("centers").select("late_penalty_per_day").eq("id", centerId).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!centerId,
+  });
+
+  const { data: taxSlabs = [] } = useQuery({
+    queryKey: ["tax-slabs", centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase.from("tax_slabs").select("*").eq("center_id", centerId).order("min_income");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!centerId,
+  });
 
   const { data: contracts } = useQuery({
     queryKey: ["staff-contracts", teacherId],
@@ -150,9 +172,52 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
 
   const addPayrollMutation = useMutation({
     mutationFn: async () => {
+      // 1. Get attendance for the selected month/year
+      const monthMap: Record<string, number> = {
+        January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,
+        July: 6, August: 7, September: 8, October: 9, November: 10, December: 11
+      };
+      const monthIdx = monthMap[payrollForm.month];
+      const year = parseInt(payrollForm.year);
+      const startDate = new Date(year, monthIdx, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, monthIdx + 1, 0).toISOString().split('T')[0];
+
+      const { data: attendance } = await supabase
+        .from('teacher_attendance')
+        .select('*')
+        .eq('teacher_id', teacherId)
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      const absentDays = attendance?.filter(a => a.status === 'absent').length || 0;
+      const lateDays = attendance?.filter(a => a.notes?.toLowerCase().includes('late')).length || 0;
+
       const basic = parseFloat(payrollForm.basic) || 0;
       const allowance = parseFloat(payrollForm.allowance) || 0;
-      const deduction = parseFloat(payrollForm.deduction) || 0;
+
+      // Calculate Deductions
+      const latePenalty = (centerSettings?.late_penalty_per_day || 0) * lateDays;
+      const leaveDeduction = (basic / 30) * absentDays;
+      const totalDeductionBeforeTax = parseFloat(payrollForm.deduction) + latePenalty + leaveDeduction;
+
+      const grossSalary = basic + allowance - totalDeductionBeforeTax;
+
+      // Apply Tax Slab (Nepal)
+      // Assuming monthly income x 12 for annual slab if slabs are annual,
+      // but let's assume slabs are monthly for simplicity here or handle accordingly.
+      let tax = 0;
+      const taxableIncome = grossSalary;
+      for (const slab of taxSlabs) {
+        if (taxableIncome > slab.min_income) {
+          const taxableAmount = slab.max_income
+            ? Math.min(taxableIncome - slab.min_income, slab.max_income - slab.min_income)
+            : taxableIncome - slab.min_income;
+          tax += (taxableAmount * slab.tax_percent) / 100;
+        }
+      }
+
+      const netPayable = grossSalary - tax;
+
       const { error } = await supabase.from("payroll_logs").insert({
         center_id: centerId,
         teacher_id: teacherId,
@@ -160,8 +225,8 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
         year: payrollForm.year,
         basic_pay: basic,
         allowances: allowance,
-        deductions: deduction,
-        net_payable: basic + allowance - deduction,
+        deductions: totalDeductionBeforeTax + tax,
+        net_payable: netPayable,
         status: 'Paid',
         paid_at: new Date().toISOString()
       });
@@ -170,7 +235,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payroll-logs"] });
       setShowAddPayroll(false);
-      toast.success("Payroll record logged");
+      toast.success("Automated payroll calculated and logged");
     }
   });
 

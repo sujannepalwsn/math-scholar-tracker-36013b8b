@@ -14,6 +14,9 @@ import { useToast } from "@/hooks/use-toast"
 import * as bcrypt from 'bcryptjs';
 import CenterFeaturePermissions from '@/components/admin/CenterFeaturePermissions';
 import SubscriptionManagement from '@/components/admin/SubscriptionManagement';
+import CenterAnalytics from '@/components/admin/CenterAnalytics';
+import SuperAdminBilling from '@/components/admin/SuperAdminBilling';
+import UsageMonitoring from '@/components/admin/UsageMonitoring';
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -135,9 +138,12 @@ const AdminDashboard = () => {
     <div className="space-y-8 animate-in fade-in duration-1000">
       <div className="max-w-7xl mx-auto space-y-12">
       <Tabs defaultValue="centers" className="space-y-8">
-        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
-          <TabsTrigger value="centers" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Tuition Centers</TabsTrigger>
-          <TabsTrigger value="subscriptions" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">SaaS Subscriptions</TabsTrigger>
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto">
+          <TabsTrigger value="centers" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Tuition Centers</TabsTrigger>
+          <TabsTrigger value="analytics" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Center Analytics</TabsTrigger>
+          <TabsTrigger value="billing" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Billing System</TabsTrigger>
+          <TabsTrigger value="usage" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Data Usage</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">SaaS Subscriptions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="centers" className="space-y-12 outline-none">
@@ -293,6 +299,18 @@ const AdminDashboard = () => {
         </Card>
 
         <CenterFeaturePermissions />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="outline-none">
+          <CenterAnalytics />
+        </TabsContent>
+
+        <TabsContent value="billing" className="outline-none">
+          <SuperAdminBilling />
+        </TabsContent>
+
+        <TabsContent value="usage" className="outline-none">
+          <UsageMonitoring />
         </TabsContent>
 
         <TabsContent value="subscriptions" className="outline-none">

@@ -86,6 +86,34 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
         updated_at: new Date().toISOString()
       }).eq('id', showDistribute);
       if (updateError) throw updateError;
+
+      // 3. Finance Integration: Create Invoice for Students
+      if (distForm.recipientType === 'student') {
+        const item = consumables?.find(c => c.id === showDistribute);
+        const totalAmount = (item?.unit_price || 0) * amount;
+
+        if (totalAmount > 0) {
+          const { data: inv, error: invError } = await supabase.from('invoices').insert({
+            center_id: centerId,
+            student_id: distForm.recipientId,
+            total_amount: totalAmount,
+            status: 'unpaid',
+            invoice_date: new Date().toISOString().split('T')[0],
+            invoice_number: `INV-INV-${Date.now()}`,
+            notes: `Purchase: ${item?.name} x ${amount}`
+          }).select().single();
+
+          if (!invError && inv) {
+            await supabase.from('invoice_items').insert({
+              invoice_id: inv.id,
+              description: `${item?.name} x ${amount}`,
+              quantity: amount,
+              unit_amount: item?.unit_price || 0,
+              total_amount: totalAmount
+            });
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consumables"] });

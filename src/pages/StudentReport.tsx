@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { endOfMonth, format, isPast, startOfMonth, subYears } from "date-fns" // Added subYears, isPast
+import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
@@ -38,8 +39,10 @@ interface ChapterPerformance {
 
 export default function StudentReport() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlStudentId = searchParams.get("student_id");
 
-  const [selectedStudentId, setSelectedStudentId] = useState<string>("none"); // Changed initial state to "none"
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(urlStudentId || "none"); // Changed initial state to "none"
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: subYears(new Date(), 1), // Default to last year
     to: endOfMonth(new Date()) });

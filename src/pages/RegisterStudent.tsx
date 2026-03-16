@@ -52,7 +52,8 @@ export default function RegisterStudent() {
     gender: "Male",
     blood_group: "",
     address: "",
-    photo_url: ""
+    photo_url: "",
+    roll_number: ""
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -120,10 +121,34 @@ export default function RegisterStudent() {
         photo_url = fileName;
       }
 
+      // Get center short code and last student ID for safe sequence generation
+      const { data: center } = await supabase.from('centers').select('short_code').eq('id', user.center_id).single();
+      const { data: lastStudent } = await supabase
+        .from('students')
+        .select('student_id_number')
+        .eq('center_id', user.center_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const year = new Date().getFullYear();
+      let sequence = 1;
+
+      if (lastStudent?.student_id_number) {
+        const parts = lastStudent.student_id_number.split('-');
+        if (parts.length === 3) {
+          const lastSeq = parseInt(parts[2]);
+          if (!isNaN(lastSeq)) sequence = lastSeq + 1;
+        }
+      }
+
+      const studentIdNumber = `${center?.short_code || 'SCH'}-${year}-${sequence.toString().padStart(4, '0')}`;
+
       const { error } = await supabase.from("students").insert([
         {
           ...student,
           photo_url,
+          student_id_number: studentIdNumber,
           center_id: user?.center_id },
       ]);
       if (error) throw error;
@@ -140,7 +165,8 @@ export default function RegisterStudent() {
         gender: "Male",
         blood_group: "",
         address: "",
-        photo_url: ""
+        photo_url: "",
+        roll_number: ""
       });
       setPhotoFile(null);
       toast.success("Student registered successfully!");
@@ -513,6 +539,16 @@ export default function RegisterStudent() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   placeholder="Enter full name"
+                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="roll_number" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Roll Number</Label>
+                <Input
+                  id="roll_number"
+                  value={formData.roll_number}
+                  onChange={(e) => setFormData({ ...formData, roll_number: e.target.value })}
+                  placeholder="e.g. 01"
                   className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
                 />
               </div>

@@ -19,7 +19,7 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [routeForm, setRouteForm] = useState({ name: "", start: "", end: "" });
-  const [vehicleForm, setVehicleForm] = useState({ number: "", capacity: "32", driver: "", phone: "" });
+  const [vehicleForm, setVehicleForm] = useState({ number: "", capacity: "32", driver: "", phone: "", name: "", gps_id: "" });
   const [assignForm, setAssignForm] = useState({ routeId: "", vehicleId: "" });
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [filterGrade, setFilterGrade] = useState<string>("all");
@@ -94,12 +94,14 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
         capacity: parseInt(vehicleForm.capacity),
         driver_name: vehicleForm.driver,
         driver_phone: vehicleForm.phone,
+        vehicle_name: vehicleForm.name,
+        gps_device_id: vehicleForm.gps_id
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transport-vehicles"] });
-      setVehicleForm({ number: "", capacity: "32", driver: "", phone: "" });
+      setVehicleForm({ number: "", capacity: "32", driver: "", phone: "", name: "", gps_id: "" });
       setShowAddVehicle(false);
       toast.success("Vehicle added to fleet");
     }
@@ -228,7 +230,11 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
           {showAddVehicle && (
             <Card className="rounded-2xl border-none shadow-soft bg-emerald-50">
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">Vehicle Name</Label>
+                    <Input value={vehicleForm.name} onChange={(e) => setVehicleForm({...vehicleForm, name: e.target.value})} className="h-10 rounded-lg" placeholder="Bus A" />
+                  </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">Vehicle No</Label>
                     <Input value={vehicleForm.number} onChange={(e) => setVehicleForm({...vehicleForm, number: e.target.value})} className="h-10 rounded-lg" placeholder="BA-1-KA-1234" />
@@ -245,7 +251,11 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
                     <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">Contact No</Label>
                     <Input value={vehicleForm.phone} onChange={(e) => setVehicleForm({...vehicleForm, phone: e.target.value})} className="h-10 rounded-lg" placeholder="98XXXXXXXX" />
                   </div>
-                  <div className="flex items-end">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60">GPS Device ID</Label>
+                    <Input value={vehicleForm.gps_id} onChange={(e) => setVehicleForm({...vehicleForm, gps_id: e.target.value})} className="h-10 rounded-lg" placeholder="GPS-123" />
+                  </div>
+                  <div className="flex items-end lg:col-span-6">
                     <Button onClick={() => addVehicleMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200">Commit</Button>
                   </div>
                 </div>

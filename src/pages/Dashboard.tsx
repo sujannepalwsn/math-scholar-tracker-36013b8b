@@ -839,7 +839,7 @@ export default function Dashboard() {
                     <p className="p-8 text-center text-xs italic text-muted-foreground">No data available</p>
                   ) : (
                     highestPerformers.slice(0, 10).map((r: any) => (
-                      <div key={r.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?studentId=${r.student_id}`)}>
+                      <div key={r.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?student_id=${r.student_id}`)}>
                         <div>
                           <p className="text-sm font-bold">{r.students?.name}</p>
                           <p className="text-[10px] text-muted-foreground">{r.tests?.name}</p>
@@ -864,7 +864,7 @@ export default function Dashboard() {
                     <p className="p-8 text-center text-xs italic text-muted-foreground">No critical alerts</p>
                   ) : (
                     lowestPerformers.slice(0, 10).map((r: any) => (
-                      <div key={r.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?studentId=${r.student_id}`)}>
+                      <div key={r.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?student_id=${r.student_id}`)}>
                         <div>
                           <p className="text-sm font-bold">{r.students?.name}</p>
                           <p className="text-[10px] text-muted-foreground">{r.tests?.name}</p>
