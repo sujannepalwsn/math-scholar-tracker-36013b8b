@@ -57,6 +57,7 @@ export default function TeacherManagement() {
   const [emergencyContactName, setEmergencyContactName] = useState("");
   const [emergencyContactRelation, setEmergencyContactRelation] = useState("");
   const [emergencyContactPhone, setEmergencyContactPhone] = useState("");
+  const [qualifications, setQualifications] = useState("");
 
   const [bulkText, setBulkText] = useState("");
   const [parsedBulkEntries, setParsedBulkEntries] = useState<BulkTeacherEntry[]>([]);
@@ -132,6 +133,7 @@ export default function TeacherManagement() {
     setEmployeeId(""); setAddress(""); setDob(""); setGender("Male");
     setBankAccountName(""); setBankAccountNumber(""); setBankName("");
     setEmergencyContactName(""); setEmergencyContactRelation(""); setEmergencyContactPhone("");
+    setQualifications("");
     setEditingTeacher(null); setBulkText(""); setParsedBulkEntries([]);
   };
 
@@ -157,6 +159,7 @@ export default function TeacherManagement() {
         regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
         expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00',
         employee_id: employeeId || null, address: address || null, date_of_birth: dob || null, gender,
+        qualifications: qualifications.split(',').map(q => q.trim()).filter(Boolean),
         bank_details: { account_name: bankAccountName, account_number: bankAccountNumber, bank_name: bankName },
         emergency_contact: { name: emergencyContactName, relation: emergencyContactRelation, phone: emergencyContactPhone }
       } as any).select().single();
@@ -197,6 +200,7 @@ export default function TeacherManagement() {
         monthly_salary: parseFloat(monthlySalary) || 0, regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
         expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00',
         employee_id: employeeId || null, address: address || null, date_of_birth: dob || null, gender,
+        qualifications: qualifications.split(',').map(q => q.trim()).filter(Boolean),
         bank_details: { account_name: bankAccountName, account_number: bankAccountNumber, bank_name: bankName },
         emergency_contact: { name: emergencyContactName, relation: emergencyContactRelation, phone: emergencyContactPhone }
       } as any).eq("id", editingTeacher.id);
@@ -265,6 +269,7 @@ export default function TeacherManagement() {
     setEmergencyContactName(teacher.emergency_contact?.name || "");
     setEmergencyContactRelation(teacher.emergency_contact?.relation || "");
     setEmergencyContactPhone(teacher.emergency_contact?.phone || "");
+    setQualifications(Array.isArray(teacher.qualifications) ? teacher.qualifications.join(', ') : "");
     setIsDialogOpen(true);
   };
 
@@ -342,6 +347,7 @@ export default function TeacherManagement() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2"><Label>Monthly Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Skills & Qualifications (Comma Separated)</Label><Input value={qualifications} onChange={(e) => setQualifications(e.target.value)} placeholder="B.Ed, Mathematics, 5y Experience" /></div>
                     </div>
                     <div className="border p-3 rounded-lg space-y-3">
                        <Label className="font-bold">Bank Details</Label>
@@ -407,6 +413,7 @@ export default function TeacherManagement() {
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2"><Label>Monthly Salary</Label><Input type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Skills & Qualifications (Comma Separated)</Label><Input value={qualifications} onChange={(e) => setQualifications(e.target.value)} placeholder="B.Ed, Mathematics, 5y Experience" /></div>
                       </div>
                       <div className="border p-3 rounded-lg space-y-3">
                          <Label className="font-bold">Bank Details</Label>

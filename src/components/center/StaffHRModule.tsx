@@ -21,6 +21,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
   const [showAddPayroll, setShowAddPayroll] = useState(false);
 
   const [docForm, setDocForm] = useState({ name: "", type: "Contract", url: "" });
+  const [isUploading, setIsUploading] = useState(false);
   const [contractForm, setContractForm] = useState({ type: "Permanent", start: "", end: "", salary: "" });
   const [evaluationForm, setEvaluationForm] = useState({ date: new Date().toISOString().split('T')[0], rating: "5", comments: "" });
   const [payrollForm, setPayrollForm] = useState({ month: "March", year: "2026", basic: "", allowance: "0", deduction: "0" });
@@ -79,9 +80,34 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
       queryClient.invalidateQueries({ queryKey: ["staff-documents"] });
       setDocForm({ name: "", type: "Contract", url: "" });
       setShowAddDoc(false);
-      toast.success("Document uploaded successfully");
+      toast.success("Document record added");
     }
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !centerId) return;
+
+    try {
+      setIsUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${centerId}/${teacherId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('staff-documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      setDocForm({ ...docForm, url: filePath });
+      toast.success("File uploaded to secure vault. Please name it and save.");
+    } catch (error: any) {
+      toast.error("Upload failed: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const addContractMutation = useMutation({
     mutationFn: async () => {
@@ -524,28 +550,48 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
           </div>
 
           {showAddDoc && (
-            <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-              <Input placeholder="Doc Name" value={docForm.name} onChange={(e) => setDocForm({...docForm, name: e.target.value})} className="h-9 text-xs" />
-              <Input placeholder="URL" value={docForm.url} onChange={(e) => setDocForm({...docForm, url: e.target.value})} className="h-9 text-xs" />
-              <Button onClick={() => addDocMutation.mutate()} className="h-9 text-[9px] font-black uppercase">Save</Button>
+            <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Document Name</Label>
+                  <Input placeholder="e.g. Master's Degree" value={docForm.name} onChange={(e) => setDocForm({...docForm, name: e.target.value})} className="h-9 text-xs" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase text-slate-400">Upload File</Label>
+                  <div className="flex gap-2">
+                    <Input type="file" onChange={handleFileUpload} className="h-9 text-xs" disabled={isUploading} />
+                  </div>
+                </div>
+              </div>
+              <Button onClick={() => addDocMutation.mutate()} disabled={!docForm.name || !docForm.url || addDocMutation.isPending} className="w-full h-9 text-[9px] font-black uppercase">
+                {addDocMutation.isPending ? "Saving..." : "Secure Record"}
+              </Button>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            {documents?.map((d: any) => (
-              <Card key={d.id} className="rounded-2xl border-none shadow-soft hover:bg-slate-50 transition-colors cursor-pointer group">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors"><FileText className="h-5 w-5" /></div>
-                    <div>
-                      <p className="font-black text-xs text-slate-700">{d.document_name}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{d.document_type}</p>
-                    </div>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-slate-300" />
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {documents?.map((d: any) => {
+              const publicUrl = d.document_url.startsWith('http')
+                ? d.document_url
+                : supabase.storage.from('staff-documents').getPublicUrl(d.document_url).data.publicUrl;
+
+              return (
+                <a key={d.id} href={publicUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <Card className="rounded-2xl border-none shadow-soft hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors"><FileText className="h-5 w-5" /></div>
+                        <div>
+                          <p className="font-black text-xs text-slate-700">{d.document_name}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{d.document_type}</p>
+                        </div>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-slate-300" />
+                    </CardContent>
+                  </Card>
+                </a>
+              );
+            })}
           </div>
         </TabsContent>
       </Tabs>

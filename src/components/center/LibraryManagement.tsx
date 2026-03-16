@@ -16,7 +16,18 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
   const queryClient = useQueryClient();
   const [bookSearch, setBookSearch] = useState("");
   const [showAddBook, setShowAddBook] = useState(false);
+  const [showIssueForm, setShowIssueForm] = useState(false);
   const [bookForm, setBookForm] = useState({ title: "", author: "", isbn: "", category: "", copies: "1" });
+  const [issueForm, setIssueForm] = useState({ bookId: "", studentId: "", dueDate: "" });
+
+  const { data: students } = useQuery({
+    queryKey: ["active-students-library", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("students").select("id, name, grade").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: books, isLoading: booksLoading } = useQuery({
     queryKey: ["library-books", centerId],
@@ -43,6 +54,34 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
       if (error) throw error;
       return data;
     },
+  });
+
+  const issueBookMutation = useMutation({
+    mutationFn: async () => {
+      const { error: loanError } = await supabase.from("book_loans").insert({
+        center_id: centerId,
+        book_id: issueForm.bookId,
+        student_id: issueForm.studentId,
+        issue_date: new Date().toISOString().split('T')[0],
+        due_date: issueForm.dueDate,
+        status: 'Issued'
+      } as any);
+      if (loanError) throw loanError;
+
+      // Decrement available copies
+      const { data: book } = await supabase.from('books').select('available_copies').eq('id', issueForm.bookId).single();
+      if (book) {
+        await supabase.from('books').update({ available_copies: Math.max(0, book.available_copies - 1) }).eq('id', issueForm.bookId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["book-loans"] });
+      queryClient.invalidateQueries({ queryKey: ["library-books"] });
+      setIssueForm({ bookId: "", studentId: "", dueDate: "" });
+      setShowIssueForm(false);
+      toast.success("Book issued successfully");
+    },
+    onError: (error: any) => toast.error(error.message)
   });
 
   const addBookMutation = useMutation({
@@ -176,6 +215,54 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
         </TabsContent>
 
         <TabsContent value="loans" className="space-y-4 pt-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowIssueForm(!showIssueForm)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+              {showIssueForm ? "Cancel" : "New Issue"}
+            </Button>
+          </div>
+
+          {showIssueForm && (
+            <Card className="rounded-2xl border-none shadow-soft bg-emerald-50">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-emerald-800/60">Book</Label>
+                    <select
+                      value={issueForm.bookId}
+                      onChange={e => setIssueForm({...issueForm, bookId: e.target.value})}
+                      className="w-full h-10 rounded-lg border bg-white px-3 py-2 text-sm"
+                    >
+                      <option value="">Select Book</option>
+                      {books?.filter((b: any) => b.available_copies > 0).map((b: any) => (
+                        <option key={b.id} value={b.id}>{b.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-emerald-800/60">Student</Label>
+                    <select
+                      value={issueForm.studentId}
+                      onChange={e => setIssueForm({...issueForm, studentId: e.target.value})}
+                      className="w-full h-10 rounded-lg border bg-white px-3 py-2 text-sm"
+                    >
+                      <option value="">Select Student</option>
+                      {students?.map((s: any) => (
+                        <option key={s.id} value={s.id}>{s.name} (Grade {s.grade})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-emerald-800/60">Due Date</Label>
+                    <Input type="date" value={issueForm.dueDate} onChange={e => setIssueForm({...issueForm, dueDate: e.target.value})} className="h-10 rounded-lg" />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={() => issueBookMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200">Confirm Issue</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
             <Table>
               <TableHeader className="bg-slate-50">
