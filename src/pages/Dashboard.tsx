@@ -119,6 +119,23 @@ export default function Dashboard() {
     refetchInterval: 30000,
   });
 
+  const { data: todayApprovedLeaves = [] } = useQuery({
+    queryKey: ["approved-leaves-dashboard", centerId, today],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data, error } = await supabase
+        .from("leave_applications")
+        .select("*")
+        .eq("center_id", centerId)
+        .eq("status", "approved")
+        .lte("start_date", today)
+        .gte("end_date", today);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!centerId,
+  });
+
   const { data: homeworkStats = [] } = useQuery({
     queryKey: ["homework-stats-dashboard", centerId, dateRange.from, dateRange.to],
     queryFn: async () => {
@@ -468,10 +485,35 @@ export default function Dashboard() {
       const isMissingAttendance = !sub && ps.teacher_id && (() => {
         const att = teacherAttendance.find((a: any) => a.teacher_id === ps.teacher_id);
         if (att) return false;
+        // Check if teacher is on approved leave
+        const leave = todayApprovedLeaves.find((l: any) => l.teacher_id === ps.teacher_id);
+        if (leave) return true;
+
         if (!ps.teachers?.expected_check_in) return false;
         const [h, m] = ps.teachers.expected_check_in.split(':').map(Number);
         const cutoff = new Date(); cutoff.setHours(h, m, 0);
         return new Date() > cutoff;
+      })();
+
+      const isOnLeave = !sub && ps.teacher_id && (() => {
+        const leave = todayApprovedLeaves.find((l: any) => l.teacher_id === ps.teacher_id);
+        if (!leave) return false;
+
+        // Mid-day leave check
+        if (leave.start_time && leave.end_time && ps.class_periods) {
+          const [sh, sm] = ps.class_periods.start_time.split(':').map(Number);
+          const [eh, em] = ps.class_periods.end_time.split(':').map(Number);
+          const periodStart = sh * 60 + sm;
+          const periodEnd = eh * 60 + em;
+
+          const [lsh, lsm] = leave.start_time.split(':').map(Number);
+          const [leh, lem] = leave.end_time.split(':').map(Number);
+          const leaveStart = lsh * 60 + lsm;
+          const leaveEnd = leh * 60 + lem;
+
+          return periodStart < leaveEnd && periodEnd > leaveStart;
+        }
+        return true; // Full day leave
       })();
 
       return {
@@ -483,7 +525,7 @@ export default function Dashboard() {
       teacher: sub ? `${sub.substitute_teacher?.name} (Sub)` : (ps.teachers?.name || "Unassigned"),
       subject: ps.subject,
       isSubstitution: !!sub,
-      isVacant: !sub && (!ps.teacher_id || isMissingAttendance || (() => {
+      isVacant: !sub && (!ps.teacher_id || isMissingAttendance || isOnLeave || (() => {
         const att = teacherAttendance.find((a: any) => a.teacher_id === ps.teacher_id);
         return att?.status === 'absent' || att?.status === 'leave';
       })()),
@@ -847,18 +889,19 @@ export default function Dashboard() {
                   ) : (
                     teachers.map((t) => {
                       const attendance = teacherAttendance.find((ta) => ta.teacher_id === t.id);
-                      const status = attendance?.status || "pending";
+                      const leave = todayApprovedLeaves.find((l: any) => l.teacher_id === t.id);
+                      const status = leave ? "leave" : (attendance?.status || "pending");
 
                       return (
                         <div key={t.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate("/teachers")}>
                           <div className="flex items-center gap-3">
                             <div className={cn(
                               "h-8 w-8 rounded-full flex items-center justify-center",
-                              status === "present" ? "bg-success/10" : status === "absent" ? "bg-destructive/10" : "bg-warning/10"
+                              status === "present" ? "bg-success/10" : (status === "absent" || status === "leave") ? "bg-destructive/10" : "bg-warning/10"
                             )}>
                               <Users className={cn(
                                 "h-4 w-4",
-                                status === "present" ? "text-success" : status === "absent" ? "text-destructive" : "text-warning"
+                                status === "present" ? "text-success" : (status === "absent" || status === "leave") ? "text-destructive" : "text-warning"
                               )} />
                             </div>
                             <div>
@@ -867,10 +910,10 @@ export default function Dashboard() {
                             </div>
                           </div>
                           <Badge
-                            variant={status === "present" ? "success" : status === "absent" ? "destructive" : "warning"}
+                            variant={status === "present" ? "success" : (status === "absent" || status === "leave") ? "destructive" : "warning"}
                             className="font-bold text-[9px] uppercase"
                           >
-                            {status === "present" ? "Present" : status === "absent" ? "Absent" : "Not Marked"}
+                            {status === "present" ? "Present" : status === "leave" ? "On Leave" : status === "absent" ? "Absent" : "Not Marked"}
                           </Badge>
                         </div>
                       );

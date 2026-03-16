@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Bus, Plus, Trash2, MapPin, Navigation, User, Users } from "lucide-react";
+import { Bus, Plus, Trash2, MapPin, Navigation, User, Users, CheckSquare, Square, Filter } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 export default function TransportManagement({ centerId }: { centerId: string }) {
   const queryClient = useQueryClient();
@@ -18,7 +20,9 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
   const [showAddAssignment, setShowAddAssignment] = useState(false);
   const [routeForm, setRouteForm] = useState({ name: "", start: "", end: "" });
   const [vehicleForm, setVehicleForm] = useState({ number: "", capacity: "32", driver: "", phone: "" });
-  const [assignForm, setAssignForm] = useState({ studentId: "", routeId: "", vehicleId: "" });
+  const [assignForm, setAssignForm] = useState({ routeId: "", vehicleId: "" });
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [filterGrade, setFilterGrade] = useState<string>("all");
 
   const { data: students } = useQuery({
     queryKey: ["students", centerId],
@@ -103,21 +107,44 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
 
   const assignTransportMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("transport_assignments").insert({
+      if (selectedStudents.length === 0) throw new Error("Please select at least one student");
+
+      const inserts = selectedStudents.map(studentId => ({
         center_id: centerId,
-        student_id: assignForm.studentId,
+        student_id: studentId,
         route_id: assignForm.routeId,
         vehicle_id: assignForm.vehicleId,
-      });
+      }));
+
+      const { error } = await supabase.from("transport_assignments").insert(inserts);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transport-assignments"] });
-      setAssignForm({ studentId: "", routeId: "", vehicleId: "" });
+      setAssignForm({ routeId: "", vehicleId: "" });
+      setSelectedStudents([]);
       setShowAddAssignment(false);
-      toast.success("Transport assigned to student");
-    }
+      toast.success(`Transport assigned to ${selectedStudents.length} students`);
+    },
+    onError: (error: any) => toast.error(error.message)
   });
+
+  const uniqueGrades = Array.from(new Set(students?.map(s => s.grade))).sort();
+  const filteredStudents = students?.filter(s => filterGrade === "all" || s.grade === filterGrade) || [];
+
+  const toggleStudent = (id: string) => {
+    setSelectedStudents(prev =>
+      prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAllFiltered = () => {
+    if (selectedStudents.length === filteredStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      setSelectedStudents(filteredStudents.map(s => s.id));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -263,45 +290,92 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
 
           {showAddAssignment && (
             <Card className="rounded-2xl border-none shadow-soft bg-indigo-50">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">Student</Label>
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">1. Filter Grade</Label>
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-600">
+                        <Filter className="h-3 w-3" />
+                        Refine List
+                      </div>
+                    </div>
                     <select
-                      value={assignForm.studentId}
-                      onChange={(e) => setAssignForm({...assignForm, studentId: e.target.value})}
-                      className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      value={filterGrade}
+                      onChange={(e) => setFilterGrade(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold"
                     >
-                      <option value="">Select Student</option>
-                      {students?.map((s: any) => <option key={s.id} value={s.id}>{s.name} (Grade {s.grade})</option>)}
+                      <option value="all">All Grades</option>
+                      {uniqueGrades.map(g => <option key={g} value={g || ''}>Grade {g}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">Route</Label>
+
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">2. Select Route</Label>
                     <select
                       value={assignForm.routeId}
                       onChange={(e) => setAssignForm({...assignForm, routeId: e.target.value})}
-                      className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      className="w-full h-10 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold"
                     >
-                      <option value="">Select Route</option>
+                      <option value="">Choose Route</option>
                       {routes?.map((r: any) => <option key={r.id} value={r.id}>{r.route_name}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">Vehicle</Label>
+
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">3. Select Vehicle</Label>
                     <select
                       value={assignForm.vehicleId}
                       onChange={(e) => setAssignForm({...assignForm, vehicleId: e.target.value})}
-                      className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      className="w-full h-10 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold"
                     >
-                      <option value="">Select Vehicle</option>
+                      <option value="">Choose Vehicle</option>
                       {vehicles?.map((v: any) => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
                     </select>
                   </div>
-                  <div className="flex items-end">
-                    <Button onClick={() => assignTransportMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">Assign Student</Button>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-800/60">4. Select Students ({selectedStudents.length} selected)</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleAllFiltered}
+                      className="h-6 text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-100"
+                    >
+                      {selectedStudents.length === filteredStudents.length ? "Deselect All" : "Select All Filtered"}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[200px] overflow-y-auto p-3 bg-white rounded-xl border border-indigo-100">
+                    {filteredStudents.map((s: any) => (
+                      <div
+                        key={s.id}
+                        onClick={() => toggleStudent(s.id)}
+                        className={cn(
+                          "flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all",
+                          selectedStudents.includes(s.id)
+                            ? "bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300"
+                            : "bg-slate-50 border-slate-100 hover:border-indigo-200"
+                        )}
+                      >
+                        <Checkbox checked={selectedStudents.includes(s.id)} onCheckedChange={() => toggleStudent(s.id)} />
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-slate-700 truncate">{s.name}</p>
+                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Grade {s.grade}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
+                <Button
+                  onClick={() => assignTransportMutation.mutate()}
+                  disabled={selectedStudents.length === 0 || !assignForm.routeId || !assignForm.vehicleId || assignTransportMutation.isPending}
+                  className="w-full h-12 rounded-xl font-black uppercase text-xs tracking-widest bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-200"
+                >
+                  {assignTransportMutation.isPending ? "Processing..." : `Assign ${selectedStudents.length} Student(s) to Route`}
+                </Button>
               </CardContent>
             </Card>
           )}

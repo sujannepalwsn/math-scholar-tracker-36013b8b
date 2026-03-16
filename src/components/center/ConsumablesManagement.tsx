@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Package, Plus, Trash2, Search, Filter } from "lucide-react";
+import { Package, Plus, Trash2, Search, Filter, MinusCircle, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,25 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
       return data;
     },
     enabled: !!centerId,
+  });
+
+  const updateStockMutation = useMutation({
+    mutationFn: async ({ id, amount, type }: { id: string, amount: number, type: 'consume' | 'dispose' }) => {
+      const { data: current } = await supabase.from('consumables').select('current_stock').eq('id', id).single();
+      if (!current) throw new Error("Item not found");
+
+      const newStock = Math.max(0, current.current_stock - amount);
+      const { error } = await supabase.from('consumables').update({
+        current_stock: newStock,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consumables"] });
+      toast.success("Inventory stock adjusted successfully");
+    },
+    onError: (error: any) => toast.error(error.message)
   });
 
   const addMutation = useMutation({
@@ -127,7 +146,35 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
                 </TableCell>
                 <TableCell className="text-xs font-bold text-slate-500">₹{c.unit_price}</TableCell>
                 <TableCell className="text-right px-6">
-                   <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                   <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-lg text-[9px] font-black uppercase text-amber-600 border-amber-200 hover:bg-amber-50"
+                        onClick={() => {
+                          const amount = window.prompt("Enter quantity to consume:");
+                          if (amount && !isNaN(parseFloat(amount))) {
+                            updateStockMutation.mutate({ id: c.id, amount: parseFloat(amount), type: 'consume' });
+                          }
+                        }}
+                      >
+                        <MinusCircle className="h-3 w-3 mr-1" /> Consume
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-lg text-[9px] font-black uppercase text-slate-500 border-slate-200"
+                        onClick={() => {
+                          const amount = window.prompt("Enter quantity to dispose/dump:");
+                          if (amount && !isNaN(parseFloat(amount))) {
+                            updateStockMutation.mutate({ id: c.id, amount: parseFloat(amount), type: 'dispose' });
+                          }
+                        }}
+                      >
+                         Dump
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                   </div>
                 </TableCell>
               </TableRow>
             ))}
