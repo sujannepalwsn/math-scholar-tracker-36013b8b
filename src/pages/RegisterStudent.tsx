@@ -97,19 +97,27 @@ export default function RegisterStudent() {
   // Single student create
   const createMutation = useMutation({
     mutationFn: async (student: typeof formData) => {
+      if (!user?.center_id) throw new Error("Security Context: Center ID not verified. Registration aborted.");
       let photo_url = student.photo_url;
 
       if (photoFile) {
         const fileExt = photoFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `student-photos/${fileName}`;
+        const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        console.log('Uploading photo:', fileName);
 
         const { error: uploadError } = await supabase.storage
-          .from('activity-photos') // Using existing bucket for simplicity
-          .upload(filePath, photoFile);
+          .from('activity-photos')
+          .upload(fileName, photoFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-        if (uploadError) throw uploadError;
-        photo_url = filePath;
+        if (uploadError) {
+          console.error('Upload Error:', uploadError);
+          throw uploadError;
+        }
+        photo_url = fileName;
       }
 
       const { error } = await supabase.from("students").insert([
@@ -144,19 +152,27 @@ export default function RegisterStudent() {
   // Update
   const updateMutation = useMutation({
     mutationFn: async (student: any) => {
+      if (!user?.center_id) throw new Error("Security Context: Center ID not verified. Update aborted.");
       let photo_url = student.photo_url;
 
       if (photoFile) {
         const fileExt = photoFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `student-photos/${fileName}`;
+        const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        console.log('Updating photo:', fileName);
 
         const { error: uploadError } = await supabase.storage
           .from('activity-photos')
-          .upload(filePath, photoFile);
+          .upload(fileName, photoFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-        if (uploadError) throw uploadError;
-        photo_url = filePath;
+        if (uploadError) {
+          console.error('Upload Error:', uploadError);
+          throw uploadError;
+        }
+        photo_url = fileName;
       }
 
       const { error } = await supabase

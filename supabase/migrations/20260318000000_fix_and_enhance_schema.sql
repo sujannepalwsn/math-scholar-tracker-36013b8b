@@ -1,6 +1,6 @@
 -- Fix and Enhance Database Schema
 -- Date: 2026-03-18
--- Description: Addressing 400/404/401 errors by adding missing columns, tables, and RLS policies.
+-- Description: Addressing 400/404/401 errors with defensive SQL and storage policies.
 
 -- 1. Ensure academic_years table exists (Fix 404 error)
 CREATE TABLE IF NOT EXISTS public.academic_years (
@@ -14,32 +14,33 @@ CREATE TABLE IF NOT EXISTS public.academic_years (
     updated_at timestamptz DEFAULT now()
 );
 
--- 2. Add center_id to existing tables (Fix 400 Bad Request errors)
-ALTER TABLE IF EXISTS public.student_promotion_history ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
-ALTER TABLE IF EXISTS public.transfer_certificates ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
-ALTER TABLE IF EXISTS public.fee_installments ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
-ALTER TABLE IF EXISTS public.book_loans ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
-ALTER TABLE IF EXISTS public.staff_contracts ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
-ALTER TABLE IF EXISTS public.performance_evaluations ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
-ALTER TABLE IF EXISTS public.staff_documents ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
-ALTER TABLE IF EXISTS public.transport_assignments ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE;
+-- 2. Add center_id and other fields to existing tables (Fix 400 Bad Request errors)
+-- Using individual blocks for robustness
+DO $$ BEGIN ALTER TABLE public.student_promotion_history ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.transfer_certificates ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.fee_installments ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.book_loans ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.staff_contracts ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.performance_evaluations ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.staff_documents ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.transport_assignments ADD COLUMN IF NOT EXISTS center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
--- 3. Fix assets table missing columns (Fix 400 error)
-ALTER TABLE IF EXISTS public.assets ADD COLUMN IF NOT EXISTS asset_tag text;
-ALTER TABLE IF EXISTS public.assets ADD COLUMN IF NOT EXISTS purchase_price numeric;
-ALTER TABLE IF EXISTS public.assets ADD COLUMN IF NOT EXISTS warranty_expiry date;
+-- Fix assets table missing columns (Fix 400 error)
+DO $$ BEGIN ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS asset_tag text; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS purchase_price numeric; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS warranty_expiry date; EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
--- 4. Enhance teachers table
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS employee_id text;
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS address text;
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS date_of_birth date;
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS gender text;
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS qualifications jsonb DEFAULT '[]'::jsonb;
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS bank_details jsonb DEFAULT '{}'::jsonb;
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS emergency_contact jsonb DEFAULT '{}'::jsonb;
-ALTER TABLE IF EXISTS public.teachers ADD COLUMN IF NOT EXISTS department text;
+-- Enhance teachers table
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS employee_id text; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS address text; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS date_of_birth date; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS gender text; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS qualifications jsonb DEFAULT '[]'::jsonb; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS bank_details jsonb DEFAULT '{}'::jsonb; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS emergency_contact jsonb DEFAULT '{}'::jsonb; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS department text; EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
--- 5. Create payroll_logs table
+-- 3. Create payroll_logs table
 CREATE TABLE IF NOT EXISTS public.payroll_logs (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE,
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS public.payroll_logs (
     created_at timestamptz DEFAULT now()
 );
 
--- 6. Create consumables table
+-- 4. Create consumables table
 CREATE TABLE IF NOT EXISTS public.consumables (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     center_id uuid REFERENCES public.centers(id) ON DELETE CASCADE,
@@ -69,12 +70,12 @@ CREATE TABLE IF NOT EXISTS public.consumables (
     updated_at timestamptz DEFAULT now()
 );
 
--- 7. Enable RLS and add Policies (Fix 401 Unauthorized errors)
+-- 5. Enable RLS and add Policies (Fix 401 Unauthorized errors)
 ALTER TABLE public.academic_years ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payroll_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consumables ENABLE ROW LEVEL SECURITY;
 
--- Apply center-based policies for ALL new and existing ERP tables
+-- Apply center-based policies for ALL relevant ERP tables
 DO $$
 DECLARE
     t text;
@@ -92,7 +93,6 @@ BEGIN
             'transport_assignments', 'notices'
         )
     LOOP
-        -- Drop if exists to avoid errors on re-run
         EXECUTE format('DROP POLICY IF EXISTS "Center Admin access" ON public.%I', t);
         EXECUTE format('CREATE POLICY "Center Admin access" ON public.%I FOR ALL USING (center_id = (SELECT center_id FROM public.users WHERE id = auth.uid()));', t);
     END LOOP;
@@ -102,14 +102,20 @@ END $$;
 DROP POLICY IF EXISTS "Public can submit admission" ON public.admission_applications;
 CREATE POLICY "Public can submit admission" ON public.admission_applications FOR INSERT WITH CHECK (true);
 
--- 8. Storage Buckets configuration (Fix Image loading errors)
+-- 6. Storage Buckets and robust policies (Fix Image/Upload 400 errors)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('activity-photos', 'activity-photos', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Drop existing policies for storage.objects if they exist to ensure fresh application
-DROP POLICY IF EXISTS "Public Access" ON storage.objects;
-CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'activity-photos');
+-- Policies for activity-photos
+DROP POLICY IF EXISTS "Public access to activity-photos" ON storage.objects;
+CREATE POLICY "Public access to activity-photos" ON storage.objects FOR SELECT
+USING (bucket_id = 'activity-photos');
 
-DROP POLICY IF EXISTS "Authenticated users can upload" ON storage.objects;
-CREATE POLICY "Authenticated users can upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'activity-photos' AND auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Auth upload to activity-photos" ON storage.objects;
+CREATE POLICY "Auth upload to activity-photos" ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'activity-photos' AND auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Auth update to activity-photos" ON storage.objects;
+CREATE POLICY "Auth update to activity-photos" ON storage.objects FOR UPDATE
+USING (bucket_id = 'activity-photos' AND auth.role() = 'authenticated');

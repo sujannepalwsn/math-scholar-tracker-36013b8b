@@ -29,6 +29,7 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
 
   const addAssetMutation = useMutation({
     mutationFn: async () => {
+      if (!centerId) throw new Error("Security Context: Center ID not verified. Operation aborted.");
       const payload: any = {
         center_id: centerId,
         name: assetForm.name,
