@@ -57,7 +57,6 @@ const navItems: Array<{
   { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'chapter_performance', category: 'Reports and Communication' },
   { to: "/records", label: "View Records", icon: FileText, role: 'center' as const, featureName: 'view_records', category: 'Reports and Communication' },
   { to: "/finance", label: "Finance", icon: DollarSign, role: 'center' as const, featureName: 'finance', category: 'Reports and Communication' },
-  { to: "/ai-insights", label: "AI Insights", icon: Brain, role: 'center' as const, featureName: 'ai_insights', category: 'Reports and Communication' },
 ];
 
 export default function CenterLayout({ children }: { children: React.ReactNode }) {
@@ -116,17 +115,10 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     </div>
   );
 
-  const filteredNavItems = updatedNavItems.filter(item => {
-    if (item.featureName && user?.centerPermissions) {
-      return user.centerPermissions[item.featureName] !== false;
-    }
-    return true;
-  });
-
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
       <Sidebar
-        navItems={filteredNavItems}
+        navItems={updatedNavItems}
         headerContent={headerContent}
         footerContent={footerContent}
         onCollapseChange={setSidebarCollapsed}
@@ -163,7 +155,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         </div>
       </main>
 
-      <BottomNav navItems={filteredNavItems} />
+      <BottomNav navItems={updatedNavItems} />
     </div>
   );
 }

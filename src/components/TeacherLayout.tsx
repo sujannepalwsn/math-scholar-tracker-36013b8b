@@ -44,7 +44,7 @@ const navItems: Array<{
   { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging', category: 'Reports and Communication' },
   { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management', category: 'Reports and Communication' },
   { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events', category: 'Reports and Communication' },
-  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report_access', category: 'Reports and Communication' },
+  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report', category: 'Reports and Communication' },
   { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communication' },
   { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communication' },
   { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communication' },
@@ -109,18 +109,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     </div>
   );
 
-  const filteredTeacherNavItems = updatedNavItems.filter(item => {
-    if (item.featureName && user?.teacherPermissions) {
-      const permission = user.teacherPermissions[item.featureName];
-      return permission !== false;
-    }
-    return true;
-  });
-
   return (
     <div className="flex min-h-screen bg-background flex-col md:flex-row">
       <Sidebar
-        navItems={filteredTeacherNavItems}
+        navItems={updatedNavItems}
         headerContent={headerContent}
         footerContent={footerContent}
         onCollapseChange={setSidebarCollapsed}
@@ -157,7 +149,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </div>
       </main>
 
-      <BottomNav navItems={filteredTeacherNavItems} />
+      <BottomNav navItems={updatedNavItems} />
     </div>
   );
 }

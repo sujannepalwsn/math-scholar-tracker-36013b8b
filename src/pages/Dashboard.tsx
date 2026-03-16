@@ -332,7 +332,7 @@ export default function Dashboard() {
         query = query.eq("class_periods.is_published", true);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.order('class_period_id', { ascending: true });
       if (error) throw error;
       return data || [];
     },
