@@ -105,8 +105,12 @@ export default function TeacherDashboard() {
       if (!teacherId) return [];
       const dayOfWeek = new Date(dateRange.to).getDay();
 
-      // Get regular schedules - only published for dashboard
-      const { data: regular, error } = await supabase.from("period_schedules").select("*, class_periods!inner(*)").eq("teacher_id", teacherId).eq("day_of_week", dayOfWeek).eq("class_periods.is_published", true);
+      // Get regular schedules
+      const { data: regular, error } = await supabase
+        .from("period_schedules")
+        .select("*, class_periods!inner(*)")
+        .eq("teacher_id", teacherId)
+        .eq("day_of_week", dayOfWeek);
       if (error) throw error;
 
       // Get substitutions for today
@@ -114,7 +118,7 @@ export default function TeacherDashboard() {
         .from("class_substitutions")
         .select("*, period_schedules(*, class_periods(*))")
         .eq("substitute_teacher_id", teacherId)
-        .eq("date", dateRange.to);
+        .eq("date", today); // Always look for today's subs on the dashboard
       if (subError) throw subError;
 
       const mappedSubs = (subs || []).map(s => ({
@@ -122,7 +126,11 @@ export default function TeacherDashboard() {
         isSubstitution: true
       }));
 
-      return [...(regular || []), ...mappedSubs];
+      // Merge and remove duplicates if any
+      const all = [...(regular || []), ...mappedSubs];
+      return all.sort((a: any, b: any) =>
+        (a.class_periods?.period_number || 0) - (b.class_periods?.period_number || 0)
+      );
     },
     enabled: !!teacherId });
 

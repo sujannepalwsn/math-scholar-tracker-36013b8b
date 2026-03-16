@@ -15,7 +15,27 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [showDistribute, setShowDistribute] = useState<string | null>(null);
+  const [distForm, setDistForm] = useState({ amount: "1", recipientType: "student", recipientId: "", notes: "" });
   const [form, setForm] = useState({ name: "", category: "Stationery", unit: "Packs", stock: "0", min: "5", price: "0" });
+
+  const { data: students } = useQuery({
+    queryKey: ["active-students-inventory", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("students").select("id, name, grade").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: teachers } = useQuery({
+    queryKey: ["active-teachers-inventory", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("teachers").select("id, name").eq("center_id", centerId).eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: consumables, isLoading } = useQuery({
     queryKey: ["consumables", centerId],
@@ -25,6 +45,41 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
       return data;
     },
     enabled: !!centerId,
+  });
+
+  const distributeMutation = useMutation({
+    mutationFn: async () => {
+      if (!showDistribute) return;
+      const amount = parseFloat(distForm.amount);
+      const { data: current } = await supabase.from('consumables').select('current_stock').eq('id', showDistribute).single();
+      if (!current || current.current_stock < amount) throw new Error("Insufficient stock");
+
+      // 1. Record Log
+      const { error: logError } = await supabase.from('consumable_logs').insert({
+        center_id: centerId,
+        consumable_id: showDistribute,
+        student_id: distForm.recipientType === 'student' ? distForm.recipientId : null,
+        teacher_id: distForm.recipientType === 'teacher' ? distForm.recipientId : null,
+        quantity: amount,
+        action_type: 'distributed',
+        notes: distForm.notes
+      });
+      if (logError) throw logError;
+
+      // 2. Update Stock
+      const { error: updateError } = await supabase.from('consumables').update({
+        current_stock: current.current_stock - amount,
+        updated_at: new Date().toISOString()
+      }).eq('id', showDistribute);
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consumables"] });
+      setShowDistribute(null);
+      setDistForm({ amount: "1", recipientType: "student", recipientId: "", notes: "" });
+      toast.success("Items distributed and stock updated");
+    },
+    onError: (error: any) => toast.error(error.message)
   });
 
   const updateStockMutation = useMutation({
@@ -38,6 +93,17 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
         updated_at: new Date().toISOString()
       }).eq('id', id);
       if (error) throw error;
+
+      // Record disposition log
+      if (type === 'dispose') {
+        await supabase.from('consumable_logs').insert({
+          center_id: centerId,
+          consumable_id: id,
+          quantity: amount,
+          action_type: 'disposed',
+          notes: 'Routine inventory disposal'
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consumables"] });
@@ -85,6 +151,58 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
           {showAdd ? "Cancel" : "Add Item"}
         </Button>
       </div>
+
+      {showDistribute && (
+        <Card className="rounded-3xl border-none shadow-strong bg-indigo-50 overflow-hidden mb-6">
+          <CardHeader className="bg-indigo-100/50 py-4 px-6 border-b border-indigo-200">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-indigo-700 flex items-center gap-2">
+               <Package className="h-4 w-4" /> Distribute {consumables?.find(c => c.id === showDistribute)?.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="space-y-1">
+                <Label className="text-[10px] font-black uppercase text-indigo-800/60">Qty</Label>
+                <Input type="number" value={distForm.amount} onChange={e => setDistForm({...distForm, amount: e.target.value})} className="h-10 rounded-lg bg-white border-indigo-200" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] font-black uppercase text-indigo-800/60">To</Label>
+                <select
+                  value={distForm.recipientType}
+                  onChange={e => setDistForm({...distForm, recipientType: e.target.value as any, recipientId: ""})}
+                  className="w-full h-10 rounded-lg bg-white border border-indigo-200 px-3 text-sm"
+                >
+                  <option value="student">Student</option>
+                  <option value="teacher">Teacher</option>
+                </select>
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <Label className="text-[10px] font-black uppercase text-indigo-800/60">Recipient</Label>
+                <select
+                  value={distForm.recipientId}
+                  onChange={e => setDistForm({...distForm, recipientId: e.target.value})}
+                  className="w-full h-10 rounded-lg bg-white border border-indigo-200 px-3 text-sm"
+                >
+                  <option value="">Select Recipient</option>
+                  {distForm.recipientType === 'student'
+                    ? students?.map(s => <option key={s.id} value={s.id}>{s.name} (Grade {s.grade})</option>)
+                    : teachers?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)
+                  }
+                </select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={() => distributeMutation.mutate()}
+                  disabled={!distForm.recipientId || distributeMutation.isPending}
+                  className="w-full h-10 rounded-lg font-black uppercase text-[10px] bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {distributeMutation.isPending ? "Syncing..." : "Distribute"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showAdd && (
         <Card className="rounded-3xl border-none shadow-strong bg-slate-50 overflow-hidden">
@@ -150,28 +268,23 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 rounded-lg text-[9px] font-black uppercase text-amber-600 border-amber-200 hover:bg-amber-50"
-                        onClick={() => {
-                          const amount = window.prompt("Enter quantity to consume:");
-                          if (amount && !isNaN(parseFloat(amount))) {
-                            updateStockMutation.mutate({ id: c.id, amount: parseFloat(amount), type: 'consume' });
-                          }
-                        }}
+                        className="h-8 rounded-lg text-[9px] font-black uppercase text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                        onClick={() => setShowDistribute(c.id)}
                       >
-                        <MinusCircle className="h-3 w-3 mr-1" /> Consume
+                        <Package className="h-3 w-3 mr-1" /> Distribute
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         className="h-8 rounded-lg text-[9px] font-black uppercase text-slate-500 border-slate-200"
                         onClick={() => {
-                          const amount = window.prompt("Enter quantity to dispose/dump:");
+                          const amount = window.prompt("Enter quantity to dispose/discard:");
                           if (amount && !isNaN(parseFloat(amount))) {
                             updateStockMutation.mutate({ id: c.id, amount: parseFloat(amount), type: 'dispose' });
                           }
                         }}
                       >
-                         Dump
+                         Discard
                       </Button>
                       <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
                    </div>

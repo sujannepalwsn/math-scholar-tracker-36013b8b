@@ -58,6 +58,18 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
 
   const totalValuation = assets?.reduce((acc, curr) => acc + (curr.purchase_price || 0), 0) || 0;
 
+  const updateAssetStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: string }) => {
+      const { error } = await supabase.from('assets').update({ status }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-assets"] });
+      toast.success("Asset status updated");
+    },
+    onError: (error: any) => toast.error(error.message)
+  });
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -179,12 +191,17 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
                 </TableCell>
                 <TableCell>
                    <div className="flex flex-col gap-1.5">
-                      <Badge variant="outline" className={cn(
-                        "w-fit text-[9px] font-black uppercase px-2 py-0",
-                        a.condition === 'Excellent' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                        a.condition === 'Good' ? "bg-blue-50 text-blue-700 border-blue-200" :
-                        "bg-amber-50 text-amber-700 border-amber-200"
-                      )}>{a.condition}</Badge>
+                      <div className="flex gap-1">
+                        <Badge variant="outline" className={cn(
+                          "w-fit text-[9px] font-black uppercase px-2 py-0",
+                          a.condition === 'Excellent' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                          a.condition === 'Good' ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          "bg-amber-50 text-amber-700 border-amber-200"
+                        )}>{a.condition}</Badge>
+                        {a.status !== 'Active' && (
+                           <Badge className="bg-rose-500 text-white text-[9px] font-black uppercase px-2 py-0 border-none">{a.status}</Badge>
+                        )}
+                      </div>
                       {a.warranty_expiry && (
                          <span className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter">
                             WARRANTY EXPIRES: {new Date(a.warranty_expiry).toLocaleDateString()}
@@ -194,6 +211,20 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
                 </TableCell>
                 <TableCell className="text-right px-6">
                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {a.status === 'Active' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 rounded-lg text-[9px] font-black uppercase text-rose-600 border-rose-200 hover:bg-rose-50"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to dispose/dump this fixed asset? This action is recorded in history.")) {
+                              updateAssetStatusMutation.mutate({ id: a.id, status: 'Disposed' });
+                            }
+                          }}
+                        >
+                           Dump Asset
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100"><Settings className="h-3.5 w-3.5 text-slate-400" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 text-rose-500"><Trash2 className="h-3.5 w-3.5" /></Button>
                    </div>

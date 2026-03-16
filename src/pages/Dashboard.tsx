@@ -324,7 +324,7 @@ export default function Dashboard() {
         .eq("center_id", centerId)
         .eq("day_of_week", dayOfWeek);
 
-      if (role !== 'admin' && role !== 'center') {
+      if (role !== 'admin' && role !== 'center' && role !== 'super_admin') {
         query = query.eq("class_periods.is_published", true);
       }
 
