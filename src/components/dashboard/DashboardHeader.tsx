@@ -51,6 +51,8 @@ export default function DashboardHeader() {
     queryKey: ["current-academic-year", user?.center_id],
     queryFn: async () => {
       if (!user?.center_id) return null;
+
+      // We only use center_id as the primary filter to avoid 400 errors if columns don't exist
       const { data, error } = await supabase
         .from("academic_years")
         .select("name")
@@ -58,16 +60,11 @@ export default function DashboardHeader() {
         .eq("is_current", true)
         .maybeSingle();
 
-      // Try school_id if center_id fails (legacy compatibility)
-      if (error || !data) {
-         const { data: legacyData } = await supabase
-          .from("academic_years")
-          .select("name")
-          .eq("school_id", user.center_id)
-          .eq("is_current", true)
-          .maybeSingle();
-         return legacyData;
+      if (error) {
+        console.error("Error fetching academic year with center_id:", error);
+        // Fallback or retry logic if needed, but avoid sending invalid column names
       }
+
       return data;
     },
     enabled: !!user?.center_id
@@ -253,9 +250,9 @@ export default function DashboardHeader() {
         <div className="flex flex-row gap-3 md:gap-12 items-start">
           {/* Logo Section */}
           <div className="relative group shrink-0">
-            <div className="relative h-20 w-20 sm:h-32 sm:w-32 md:h-48 md:w-48 rounded-2xl sm:rounded-[2.5rem] overflow-hidden bg-[#f0f7ff] shadow-inner flex items-center justify-center p-2 sm:p-6 border-2 sm:border-4 border-white">
+            <div className="relative h-20 w-20 sm:h-32 sm:w-32 md:h-48 md:w-48 rounded-2xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-2 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm">
               {formData.logo_url ? (
-                <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-sm" />
+                <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-md" />
               ) : (
                 <div className="flex flex-col items-center gap-2 opacity-20">
                   <Building className="h-12 w-12 text-primary" />
