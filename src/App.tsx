@@ -44,6 +44,7 @@ import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
 import ParentLogin from "./pages/ParentLogin";
+import TeacherLogin from "./pages/TeacherLogin";
 import PublicAdmission from "./pages/PublicAdmission";
 
 import AdminDashboard from "./pages/AdminDashboard";
@@ -130,6 +131,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/login-admin" element={<AdminLogin />} />
               <Route path="/login-parent" element={<ParentLogin />} />
+              <Route path="/login-teacher" element={<TeacherLogin />} />
               <Route path="/apply" element={<PublicAdmission />} />
               <Route
                 path="/change-password"
