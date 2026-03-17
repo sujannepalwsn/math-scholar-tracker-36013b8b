@@ -50,7 +50,10 @@ export default function AboutInstitution() {
     social_links: {} as SocialLinks,
     phone: "",
     email: "",
-    address: ""
+    address: "",
+    principal_name: "",
+    website_url: "",
+    short_code: ""
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -106,7 +109,10 @@ export default function AboutInstitution() {
         social_links: (center as any).social_links || {},
         phone: center.phone || "",
         email: center.email || "",
-        address: center.address || ""
+        address: center.address || "",
+        principal_name: center.principal_name || "",
+        website_url: center.website_url || "",
+        short_code: center.short_code || ""
       });
     }
   }, [center]);
@@ -127,8 +133,11 @@ export default function AboutInstitution() {
           social_links: formData.social_links as any,
           phone: formData.phone,
           email: formData.email,
-          address: formData.address
-        } as any)
+          address: formData.address,
+          principal_name: formData.principal_name,
+          website_url: formData.website_url,
+          short_code: formData.short_code
+        })
         .eq("id", user.center_id);
       if (error) throw error;
     },
@@ -607,6 +616,42 @@ export default function AboutInstitution() {
                         />
                       ) : (
                         <p className="font-bold text-foreground/80">{formData.address || "Not specified"}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 rounded-xl bg-muted/50 text-primary mt-1">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Principal Name</p>
+                      {isEditing ? (
+                        <Input
+                          value={formData.principal_name}
+                          onChange={(e) => setFormData({ ...formData, principal_name: e.target.value })}
+                          className="rounded-xl h-10"
+                        />
+                      ) : (
+                        <p className="font-bold text-foreground/80">{formData.principal_name || "Not specified"}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 rounded-xl bg-muted/50 text-primary mt-1">
+                      <Hash className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">School Code</p>
+                      {isEditing ? (
+                        <Input
+                          value={formData.short_code}
+                          onChange={(e) => setFormData({ ...formData, short_code: e.target.value })}
+                          className="rounded-xl h-10"
+                        />
+                      ) : (
+                        <p className="font-bold text-foreground/80">{formData.short_code || "Not specified"}</p>
                       )}
                     </div>
                   </div>

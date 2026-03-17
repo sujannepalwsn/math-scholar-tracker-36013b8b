@@ -473,6 +473,7 @@ export type Database = {
           phone: string | null
           principal_name: string | null
           radius_meters: number | null
+          short_code: string | null
           theme: Json | null
           website_url: string | null
           updated_at: string
@@ -490,6 +491,7 @@ export type Database = {
           phone?: string | null
           principal_name?: string | null
           radius_meters?: number | null
+          short_code?: string | null
           theme?: Json | null
           website_url?: string | null
           updated_at?: string
@@ -507,6 +509,7 @@ export type Database = {
           phone?: string | null
           principal_name?: string | null
           radius_meters?: number | null
+          short_code?: string | null
           theme?: Json | null
           website_url?: string | null
           updated_at?: string
