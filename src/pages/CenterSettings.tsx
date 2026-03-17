@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Building, ImageIcon, KeyRound, Loader2, MapPin, Palette, Phone as PhoneIcon, Save, Settings, ShieldCheck, User, Locate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import RegulatoryReports from "@/components/center/RegulatoryReports";
 import TimetableAutomation from "@/components/center/TimetableAutomation";
 import AcademicYearManagement from "@/components/center/AcademicYearManagement";
 import PayrollSettings from "@/components/center/PayrollSettings";
+import SchoolProfileSettings from "@/components/center/SchoolProfileSettings";
 
 interface CenterTheme {
   primary: string;
@@ -32,6 +34,8 @@ interface CenterTheme {
 export default function CenterSettings() {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "general";
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -281,9 +285,10 @@ export default function CenterSettings() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <Tabs defaultValue="general" className="space-y-8">
+      <Tabs defaultValue={defaultTab} className="space-y-8">
         <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto">
           <TabsTrigger value="general" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">General</TabsTrigger>
+          <TabsTrigger value="profile" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">School Profile</TabsTrigger>
           <TabsTrigger value="payroll" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Payroll Config</TabsTrigger>
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Cycles</TabsTrigger>
           <TabsTrigger value="communication" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Communication</TabsTrigger>
@@ -688,6 +693,23 @@ export default function CenterSettings() {
 
         <TabsContent value="communication" className="outline-none">
           <NotificationSettings centerId={user?.center_id || ""} />
+        </TabsContent>
+
+        <TabsContent value="profile" className="outline-none">
+          <Card className="border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
+            <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+              <CardTitle className="text-xl font-black flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Building className="h-6 w-6 text-primary" />
+                </div>
+                Institutional Identity Settings
+              </CardTitle>
+              <CardDescription className="font-medium text-slate-500">Manage your school's mission, vision, and public profile.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
+              <SchoolProfileSettings centerId={user?.center_id || ""} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="academic" className="outline-none">

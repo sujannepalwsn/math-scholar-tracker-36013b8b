@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Building, Edit2, Save, X, BookOpen, Target, Eye, User, Loader2, Info } from "lucide-react";
+import { Building, Edit2, Save, X, BookOpen, Target, Eye, User, Loader2, Info, ArrowRight } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -104,20 +105,31 @@ export default function AboutSchool() {
         </div>
 
         {canEdit && (
-          <Button
-            onClick={() => setIsEditing(!isEditing)}
-            variant={isEditing ? "outline" : "default"}
-            className={cn(
-              "rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest shadow-soft transition-all",
-              isEditing ? "border-2" : "bg-gradient-to-r from-primary to-violet-600"
-            )}
-          >
-            {isEditing ? (
-              <><X className="h-4 w-4 mr-2" /> CANCEL EDITING</>
-            ) : (
-              <><Edit2 className="h-4 w-4 mr-2" /> EDIT INFORMATION</>
-            )}
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest shadow-soft border-2"
+            >
+              <Link to="/settings?tab=profile">
+                GO TO ADMINISTRATIVE SECTION <ArrowRight className="h-4 w-4 ml-2" />
+              </Link>
+            </Button>
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? "outline" : "default"}
+              className={cn(
+                "rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest shadow-soft transition-all",
+                isEditing ? "border-2" : "bg-gradient-to-r from-primary to-violet-600"
+              )}
+            >
+              {isEditing ? (
+                <><X className="h-4 w-4 mr-2" /> CANCEL EDITING</>
+              ) : (
+                <><Edit2 className="h-4 w-4 mr-2" /> EDIT INFORMATION</>
+              )}
+            </Button>
+          </div>
         )}
       </div>
 
