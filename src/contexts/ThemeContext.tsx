@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client"
-import { useAuth } from "./AuthContext"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface CenterTheme {
   primary: string;
