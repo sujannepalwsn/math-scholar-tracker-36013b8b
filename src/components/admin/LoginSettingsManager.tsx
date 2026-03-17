@@ -182,9 +182,6 @@ const LoginSettingsManager = () => {
                               onBlur={(e) => updateMutation.mutate({ page_type: type.id, button_text: e.target.value })}
                             />
                           </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                        <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label className="text-sm font-bold">Username Label</Label>
                             <Input
@@ -199,8 +196,6 @@ const LoginSettingsManager = () => {
                               onBlur={(e) => updateMutation.mutate({ page_type: type.id, username_placeholder: e.target.value })}
                             />
                           </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label className="text-sm font-bold">Password Label</Label>
                             <Input
