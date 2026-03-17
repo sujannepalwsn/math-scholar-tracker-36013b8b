@@ -167,6 +167,10 @@ export default function Sidebar({
         if (user.teacherPermissions && user.teacherPermissions[item.featureName] !== undefined) {
           return user.teacherPermissions[item.featureName] === true;
         }
+        // If not explicitly set in teacherPermissions, check centerPermissions for global feature status
+        if (user.centerPermissions && user.centerPermissions[item.featureName] === false) {
+          return false;
+        }
         // Fallback to default teacher permissions if not explicitly set
         return user.teacherPermissions?.[item.featureName] !== false;
       }
