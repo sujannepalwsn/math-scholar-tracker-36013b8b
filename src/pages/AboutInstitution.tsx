@@ -3,7 +3,7 @@ import {
   Building, Edit2, Save, X, Target, Eye, User, Loader2,
   Info, MapPin, Phone, Mail, Globe, Facebook, Twitter,
   Instagram, Linkedin, GraduationCap, Users, BookOpen,
-  School, Plus, Trash2, CheckCircle2, ChevronRight
+  School, Plus, Trash2, CheckCircle2, ChevronRight, Hash
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
