@@ -17,7 +17,6 @@ import NotificationSettings from "@/components/center/NotificationSettings";
 import RegulatoryReports from "@/components/center/RegulatoryReports";
 import TimetableAutomation from "@/components/center/TimetableAutomation";
 import AcademicYearManagement from "@/components/center/AcademicYearManagement";
-import NavigationManager from "@/components/center/NavigationManager";
 import PayrollSettings from "@/components/center/PayrollSettings";
 
 interface CenterTheme {
@@ -285,7 +284,6 @@ export default function CenterSettings() {
       <Tabs defaultValue="general" className="space-y-8">
         <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto">
           <TabsTrigger value="general" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">General</TabsTrigger>
-          <TabsTrigger value="navigation" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Navigation</TabsTrigger>
           <TabsTrigger value="payroll" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Payroll Config</TabsTrigger>
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Cycles</TabsTrigger>
           <TabsTrigger value="communication" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Communication</TabsTrigger>
@@ -721,22 +719,6 @@ export default function CenterSettings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="navigation" className="outline-none">
-          <Card className="border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
-            <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-              <CardTitle className="text-xl font-black flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-primary/10">
-                  <Settings className="h-6 w-6 text-primary" />
-                </div>
-                Navigation Management
-              </CardTitle>
-              <CardDescription className="font-medium">Customize sidebar structure and visibility.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
-              <NavigationManager centerId={user?.center_id || ""} />
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

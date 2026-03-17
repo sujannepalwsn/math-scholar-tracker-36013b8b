@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X, Settings, GripVertical, Trash2, RefreshCcw, Edit2 } from "lucide-react";
 
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/contexts/AuthContext"
+import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface NavItem {
   to: string;
@@ -38,6 +41,22 @@ export default function Sidebar({
 }: SidebarProps) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [categoryNameInput, setCategoryNameInput] = useState("");
+  const [draggedItem, setDraggedItem] = useState<{ type: 'category' | 'item', id: string, role?: string } | null>(null);
+
+  const {
+    dynamicCategories,
+    dynamicItems,
+    getIcon,
+    updateCategoryName,
+    deleteCategory,
+    updateOrders,
+    toggleItemActive,
+    syncDefaults
+  } = useDynamicNavigation();
+
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     'Academics',
     'Administration',
@@ -72,7 +91,72 @@ export default function Sidebar({
     );
   };
 
+  const handleDragStart = (e: React.DragEvent, type: 'category' | 'item', id: string, role?: string) => {
+    if (!isEditMode) return;
+    setDraggedItem({ type, id, role });
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetType: 'category' | 'item', targetId: string, targetCategoryName?: string) => {
+    if (!isEditMode || !draggedItem) return;
+    e.preventDefault();
+
+    const role = draggedItem.role || user?.role;
+    const itemsForRole = dynamicItems.filter(it => it.role === role);
+
+    if (draggedItem.type === 'category' && targetType === 'category') {
+      const newCategories = [...dynamicCategories];
+      const draggedIdx = newCategories.findIndex(c => c.id === draggedItem.id);
+      const targetIdx = newCategories.findIndex(c => c.id === targetId);
+      const [removed] = newCategories.splice(draggedIdx, 1);
+      newCategories.splice(targetIdx, 0, removed);
+      updateOrders.mutate({
+        type: 'categories',
+        updates: newCategories.map((c, i) => ({ id: c.id, order: i, name: c.name, center_id: user?.center_id }))
+      });
+    } else if (draggedItem.type === 'item') {
+      const draggedItemObj = dynamicItems.find(it => it.id === draggedItem.id);
+      if (!draggedItemObj) return;
+
+      if (targetType === 'category') {
+        updateOrders.mutate({
+          type: 'items',
+          updates: [{ ...draggedItemObj, category_id: targetId }]
+        });
+      } else if (targetType === 'item') {
+        const targetItem = dynamicItems.find(it => it.id === targetId);
+        if (!targetItem) return;
+
+        const newItems = [...itemsForRole];
+        const draggedIdx = newItems.findIndex(it => it.id === draggedItem.id);
+        const targetIdx = newItems.findIndex(it => it.id === targetId);
+        const [removed] = newItems.splice(draggedIdx, 1);
+        removed.category_id = targetItem.category_id;
+        newItems.splice(targetIdx, 0, removed);
+
+        updateOrders.mutate({
+          type: 'items',
+          updates: newItems.map((it, i) => ({
+            id: it.id,
+            order: i,
+            category_id: it.category_id,
+            center_id: user?.center_id,
+            name: it.name,
+            route: it.route
+          }))
+        });
+      }
+    }
+    setDraggedItem(null);
+  };
+
   const filteredNavItems = navItems.filter(item => {
+    if ((item as any).is_active === false && !isEditMode) return false;
     if (item.role && user?.role !== item.role) return false;
     if (item.featureName) {
       if (user?.role === 'center' && user.centerPermissions) {
@@ -97,30 +181,86 @@ export default function Sidebar({
 
     const flushCategory = (category: string, children: React.ReactNode[]) => {
       const isExpanded = expandedCategories.includes(category);
+      const catObj = dynamicCategories.find(c => c.name === category);
+
+      const categoryHeader = (
+        <div
+          className="flex items-center group/cat"
+          draggable={isEditMode && !!catObj}
+          onDragStart={(e) => catObj && handleDragStart(e, 'category', catObj.id)}
+          onDragOver={handleDragOver}
+          onDrop={(e) => {
+            if (catObj) {
+              handleDrop(e, 'category', catObj.id);
+            } else if (isEditMode) {
+              // Handle drop on static categories that might not be in DB yet
+              e.preventDefault();
+            }
+          }}
+        >
+          {isEditMode && catObj && (
+            <GripVertical className="h-3 w-3 text-muted-foreground/30 mr-1 cursor-grab active:cursor-grabbing" />
+          )}
+          <button
+            onClick={() => toggleCategory(category)}
+            className="flex items-center justify-between flex-1 px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+          >
+            {isEditMode && catObj && editingCategoryId === catObj.id ? (
+              <div className="flex items-center gap-1 w-full" onClick={e => e.stopPropagation()}>
+                <Input
+                  autoFocus
+                  className="h-6 text-[10px] py-0 px-2 uppercase font-black"
+                  value={categoryNameInput}
+                  onChange={e => setCategoryNameInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      updateCategoryName.mutate({ id: catObj.id, name: categoryNameInput });
+                      setEditingCategoryId(null);
+                    }
+                  }}
+                  onBlur={() => setEditingCategoryId(null)}
+                />
+              </div>
+            ) : (
+              <span className="flex items-center gap-2">
+                {category}
+                {isEditMode && catObj && (
+                  <Edit2
+                    className="h-2.5 w-2.5 opacity-0 group-hover/cat:opacity-100 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingCategoryId(catObj.id);
+                      setCategoryNameInput(catObj.name);
+                    }}
+                  />
+                )}
+              </span>
+            )}
+            {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+          {isEditMode && catObj && (
+            <button
+              onClick={() => catObj && deleteCategory.mutate(catObj.id)}
+              className="p-1 opacity-0 group-hover/cat:opacity-100 text-rose-500 hover:text-rose-600"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      );
+
       if (isMobile) {
         return (
-          <div key={`mob-cat-group-${category}`} className="space-y-0.5">
-            <button
-              onClick={() => toggleCategory(category)}
-              className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mt-4 first:mt-0 hover:text-foreground transition-colors"
-            >
-              {category}
-              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </button>
+          <div key={`mob-cat-group-${category}`} className="space-y-0.5 mt-4 first:mt-0">
+            {categoryHeader}
             {isExpanded && children}
           </div>
         );
       } else {
         return (
-          <div key={`cat-group-${category}`} className="space-y-0.5">
+          <div key={`cat-group-${category}`} className="space-y-0.5 mt-5 first:mt-0">
             {!isCollapsed ? (
-              <button
-                onClick={() => toggleCategory(category)}
-                className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mt-5 first:mt-0 hover:text-foreground transition-colors"
-              >
-                {category}
-                {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              </button>
+              categoryHeader
             ) : (
               <div className="mx-3 border-t border-border my-3 first:hidden" />
             )}
@@ -142,49 +282,90 @@ export default function Sidebar({
       const Icon = item.icon;
       const isActive = location.pathname === item.to;
 
+      const dItem = dynamicItems.find(it => it.route === item.to && it.role === (item.role || user?.role));
+      const isItemActive = (item as any).is_active !== false;
+
       const link = isMobile ? (
-        <Link
+        <div
           key={item.to}
-          to={item.to}
-          onClick={handleMobileClose}
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-            isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
+          className="flex items-center group/item"
+          draggable={isEditMode && !!dItem}
+          onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
+          onDragOver={handleDragOver}
+          onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
         >
-          <Icon className="h-4 w-4 shrink-0" />
-          <span className="flex items-center justify-between flex-1 truncate">
-            {item.label}
-            {item.unreadCount && item.unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
-                {item.unreadCount}
-              </Badge>
+          {isEditMode && dItem && (
+            <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
+              <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
+              <Switch
+                className="scale-50 h-3 w-6"
+                checked={isItemActive}
+                onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
+              />
+            </div>
+          )}
+          <Link
+            to={item.to}
+            onClick={handleMobileClose}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors flex-1",
+              isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              !isItemActive && "opacity-50 grayscale"
             )}
-          </span>
-        </Link>
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="flex items-center justify-between flex-1 truncate">
+              {item.label}
+              {item.unreadCount && item.unreadCount > 0 && (
+                <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
+                  {item.unreadCount}
+                </Badge>
+              )}
+            </span>
+          </Link>
+        </div>
       ) : (
         <Tooltip key={item.to} delayDuration={0}>
           <TooltipTrigger asChild>
-            <Link
-              to={item.to}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                isCollapsed ? "justify-center px-0" : ""
-              )}
+            <div
+              className="flex items-center group/item"
+              draggable={isEditMode && !!dItem}
+              onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!isCollapsed && (
-                <span className="flex items-center justify-between w-full truncate">
-                  {item.label}
-                  {item.unreadCount && item.unreadCount > 0 && (
-                    <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
-                      {item.unreadCount}
-                    </Badge>
-                  )}
-                </span>
+              {isEditMode && dItem && !isCollapsed && (
+                <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
+                  <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
+                  <Switch
+                    className="scale-50 h-3 w-6"
+                    checked={isItemActive}
+                    onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
+                  />
+                </div>
               )}
-            </Link>
+              <Link
+                to={item.to}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex-1",
+                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  isCollapsed ? "justify-center px-0" : "",
+                  !isItemActive && "opacity-50 grayscale"
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {!isCollapsed && (
+                  <span className="flex items-center justify-between w-full truncate">
+                    {item.label}
+                    {item.unreadCount && item.unreadCount > 0 && (
+                      <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
+                        {item.unreadCount}
+                      </Badge>
+                    )}
+                  </span>
+                )}
+              </Link>
+            </div>
           </TooltipTrigger>
           {isCollapsed && (
             <TooltipContent side="right">
@@ -234,7 +415,35 @@ export default function Sidebar({
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
           {renderNavLinks(filteredNavItems, false)}
         </nav>
-        <div className="mt-auto p-4 border-t">
+        <div className="mt-auto p-4 border-t space-y-4">
+          {user?.role === 'center' && (
+            <div className="space-y-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={cn(
+                  "w-full justify-start gap-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all",
+                  isEditMode ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                )}
+              >
+                <Settings className={cn("h-4 w-4", isEditMode && "animate-spin-slow")} />
+                {!isCollapsed && (isEditMode ? "LOCK NAVIGATION" : "EDIT NAVIGATION")}
+              </Button>
+              {isEditMode && !isCollapsed && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncDefaults.mutate()}
+                  disabled={syncDefaults.isPending}
+                  className="w-full justify-start gap-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5"
+                >
+                  <RefreshCcw className={cn("h-3 w-3", syncDefaults.isPending && "animate-spin")} />
+                  SYNC DEFAULTS
+                </Button>
+              )}
+            </div>
+          )}
           {!isCollapsed && <div className="text-sm text-muted-foreground">{footerContent}</div>}
           {isCollapsed && <div className="flex justify-center">{footerContent}</div>}
         </div>

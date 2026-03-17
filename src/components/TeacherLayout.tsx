@@ -13,25 +13,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 
-const getIconByName = (name: string) => {
-  const icons: Record<string, React.ElementType> = {
-    Home, CheckSquare, Clock, LayoutList, BookOpen, Book,
-    ClipboardCheck, GraduationCap, Award, Paintbrush, AlertTriangle,
-    UserPlus, Users, UserCheck, Plane, IdCard, Archive, Bus,
-    CalendarDays, Settings, MessageSquare, Video, Calendar,
-    User, BarChart3, TrendingUp, FileText, DollarSign, PenTool, Brain, Star
-  };
-  return icons[name] || Home;
-};
-
-const navItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher').map(it => ({
-  to: it.route,
-  label: it.name,
-  icon: getIconByName(it.icon),
-  role: it.role as any,
-  featureName: it.feature_name,
-  category: it.category as any
-}));
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher');
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -84,10 +66,16 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           unreadCount: it.route === "/teacher-messages" ? unreadMessageCount : undefined,
           is_active: it.is_active
         };
-      }).filter(it => it.is_active !== false)
-    : navItems.map(item =>
-        item.to === "/teacher-messages" ? { ...item, unreadCount: unreadMessageCount } : item
-      );
+      })
+    : staticNavItems.map(item => ({
+        to: item.route,
+        label: item.name,
+        icon: getIcon(item.icon),
+        role: item.role as any,
+        featureName: item.feature_name,
+        category: item.category as any,
+        unreadCount: item.route === "/teacher-messages" ? unreadMessageCount : undefined
+      }));
 
   const headerContent = (
     <CenterLogo size="md" showName={true} />
