@@ -40,6 +40,7 @@ const FEATURES = [
   { name: 'chapter_performance', label: 'Chapter Performance' },
   { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance' },
+  { name: 'about_institution', label: 'About Institution' },
 ];
 
 const TEACHER_FEATURES = [
@@ -54,6 +55,7 @@ const TEACHER_FEATURES = [
   { name: 'transport_tracking', label: 'Transport & Tracking' },
   { name: 'school_days', label: 'School Days' },
   { name: 'settings_access', label: 'Settings' },
+  { name: 'about_institution', label: 'About Institution' },
 ];
 
 export default function CenterFeaturePermissions() {

@@ -19,7 +19,6 @@ import RegulatoryReports from "@/components/center/RegulatoryReports";
 import TimetableAutomation from "@/components/center/TimetableAutomation";
 import AcademicYearManagement from "@/components/center/AcademicYearManagement";
 import PayrollSettings from "@/components/center/PayrollSettings";
-import SchoolProfileSettings from "@/components/center/SchoolProfileSettings";
 
 interface CenterTheme {
   primary: string;
@@ -288,7 +287,6 @@ export default function CenterSettings() {
       <Tabs defaultValue={defaultTab} className="space-y-8">
         <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto">
           <TabsTrigger value="general" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">General</TabsTrigger>
-          <TabsTrigger value="profile" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">School Profile</TabsTrigger>
           <TabsTrigger value="payroll" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Payroll Config</TabsTrigger>
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Cycles</TabsTrigger>
           <TabsTrigger value="communication" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Communication</TabsTrigger>
@@ -345,50 +343,13 @@ export default function CenterSettings() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address" className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                Address / Location
-              </Label>
+              <Label htmlFor="shortCode">Center Short Code (for ID generation)</Label>
               <Input
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="123 Main Street, City"
+                id="shortCode"
+                value={shortCode}
+                onChange={(e) => setShortCode(e.target.value)}
+                placeholder="e.g., KTM"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="shortCode">Center Short Code (for ID generation)</Label>
-                  <Input
-                    id="shortCode"
-                    value={shortCode}
-                    onChange={(e) => setShortCode(e.target.value)}
-                    placeholder="e.g., KTM"
-                  />
-                </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-1">
-                  <PhoneIcon className="h-4 w-4" />
-                  Phone
-                </Label>
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="9876543210"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="center@example.com"
-                />
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -693,23 +654,6 @@ export default function CenterSettings() {
 
         <TabsContent value="communication" className="outline-none">
           <NotificationSettings centerId={user?.center_id || ""} />
-        </TabsContent>
-
-        <TabsContent value="profile" className="outline-none">
-          <Card className="border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
-            <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-              <CardTitle className="text-xl font-black flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-primary/10">
-                  <Building className="h-6 w-6 text-primary" />
-                </div>
-                Institutional Identity Settings
-              </CardTitle>
-              <CardDescription className="font-medium text-slate-500">Manage your school's mission, vision, and public profile.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
-              <SchoolProfileSettings centerId={user?.center_id || ""} />
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="academic" className="outline-none">
