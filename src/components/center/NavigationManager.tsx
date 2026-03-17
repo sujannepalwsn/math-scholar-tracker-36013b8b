@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { GripVertical, Plus, Trash2, Save, FolderPlus, ChevronRight, ChevronDown } from "lucide-react";
+import { GripVertical, Plus, Trash2, Save, FolderPlus, ChevronRight, ChevronDown, RefreshCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
+import { DEFAULT_NAV_CATEGORIES, DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 
 interface NavCategory {
   id: string;
@@ -170,26 +171,59 @@ export default function NavigationManager({ centerId }: { centerId: string }) {
 
   const seedNavItemsMutation = useMutation({
     mutationFn: async () => {
-      // Basic seed data from CenterLayout
-      const defaultItems = [
-        { name: "Dashboard", route: "/", icon: "Home", role: "center", feature_name: "dashboard_access" },
-        { name: "Take Attendance", route: "/attendance", icon: "CheckSquare", role: "center", feature_name: "take_attendance" },
-        { name: "Class Routine", route: "/class-routine", icon: "Clock", role: "center", feature_name: "class_routine" },
-        { name: "Students Registration", route: "/register", icon: "UserPlus", role: "center", feature_name: "students_registration" },
-        { name: "HR Management", route: "/hr-management", icon: "Award", role: "center", feature_name: "hr_management" },
-        { name: "Inventory & Assets", route: "/inventory", icon: "Archive", role: "center", feature_name: "inventory_assets" },
-        { name: "Transport & Tracking", route: "/transport", icon: "Bus", role: "center", feature_name: "transport_tracking" },
-        { name: "Settings", route: "/settings", icon: "Settings", role: "center", feature_name: "settings_access" },
-      ];
+      if (!confirm("This will synchronize your navigation with institutional defaults. Existing custom categories will be preserved, but missing default items and categories will be added. Continue?")) return;
 
-      const { error } = await supabase.from("nav_items").insert(
-        defaultItems.map((it, i) => ({ ...it, center_id: centerId, order: i }))
-      );
-      if (error) throw error;
+      // 1. Seed Categories
+      for (const cat of DEFAULT_NAV_CATEGORIES) {
+        const existing = categories.find(c => c.name === cat.name);
+        if (!existing) {
+          const { data, error } = await supabase
+            .from("nav_categories")
+            .insert({ center_id: centerId, name: cat.name, order: cat.order })
+            .select()
+            .single();
+          if (error) throw error;
+          if (data) categories.push(data as NavCategory);
+        }
+      }
+
+      // Re-fetch categories to ensure we have the latest IDs
+      const { data: latestCats } = await supabase
+        .from("nav_categories")
+        .select("*")
+        .eq("center_id", centerId);
+
+      const currentCats = latestCats || categories;
+
+      // 2. Seed Items
+      const itemsToInsert = [];
+      for (const it of DEFAULT_NAV_ITEMS) {
+        const existing = items.find(existingItem => existingItem.route === it.route);
+        if (!existing) {
+          const category = it.category ? currentCats.find(c => c.name === it.category) : null;
+          itemsToInsert.push({
+            center_id: centerId,
+            category_id: category?.id || null,
+            name: it.name,
+            route: it.route,
+            icon: it.icon,
+            role: it.role,
+            feature_name: it.feature_name,
+            order: it.order,
+            is_active: true
+          });
+        }
+      }
+
+      if (itemsToInsert.length > 0) {
+        const { error } = await supabase.from("nav_items").insert(itemsToInsert);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["nav-categories"] });
       queryClient.invalidateQueries({ queryKey: ["nav-items"] });
-      toast.success("Default items seeded");
+      toast.success("Navigation synchronized with defaults");
     },
   });
 
@@ -207,11 +241,9 @@ export default function NavigationManager({ centerId }: { centerId: string }) {
           <Button onClick={() => addCategoryMutation.mutate(newCategoryName)} disabled={!newCategoryName} size="sm" className="rounded-xl">
             <FolderPlus className="h-4 w-4 mr-2" /> Add Category
           </Button>
-          {items.length === 0 && (
-            <Button variant="outline" onClick={() => seedNavItemsMutation.mutate()} size="sm" className="rounded-xl">
-              Seed Defaults
-            </Button>
-          )}
+          <Button variant="outline" onClick={() => seedNavItemsMutation.mutate()} size="sm" className="rounded-xl border-primary/20 text-primary hover:bg-primary/5">
+            <RefreshCcw className="h-4 w-4 mr-2" /> Synchronize Defaults
+          </Button>
         </div>
       </div>
 
