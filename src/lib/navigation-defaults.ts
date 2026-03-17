@@ -29,6 +29,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Inventory & Assets", route: "/inventory", icon: "Archive", role: "center", feature_name: "inventory_assets", category: 'Administration', order: 17 },
   { name: "Transport & Tracking", route: "/transport", icon: "Bus", role: "center", feature_name: "transport_tracking", category: 'Administration', order: 18 },
   { name: "School Days", route: "/school-days", icon: "CalendarDays", role: "center", feature_name: "school_days", category: 'Administration', order: 19 },
+  { name: "About School", route: "/about-school", icon: "Building", role: "center", category: 'Administration', order: 19.5 },
   { name: "Settings", route: "/settings", icon: "Settings", role: "center", feature_name: "settings_access", category: 'Administration', order: 20 },
 
   // Reports and Communication Group
@@ -58,6 +59,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Discipline", route: "/teacher/discipline-issues", icon: "AlertTriangle", role: "teacher", feature_name: "discipline_issues", category: 'Academics', order: 11 },
   { name: "Class Routine", route: "/teacher/class-routine", icon: "Clock", role: "teacher", feature_name: "class_routine", category: 'Academics', order: 12 },
   { name: "Chapter Performance", route: "/teacher/chapter-performance", icon: "TrendingUp", role: "teacher", feature_name: "chapter_performance", category: 'Administration', order: 13 },
+  { name: "About School", route: "/teacher/about", icon: "Building", role: "teacher", category: 'Administration', order: 13.5 },
   { name: "Settings", route: "/teacher/settings", icon: "Settings", role: "teacher", category: 'Administration', order: 14 },
   { name: "Messages", route: "/teacher-messages", icon: "MessageSquare", role: "teacher", feature_name: "messaging", category: 'Reports and Communication', order: 15 },
   { name: "Meetings", route: "/teacher-meetings", icon: "Video", role: "teacher", feature_name: "meetings_management", category: 'Reports and Communication', order: 16 },
@@ -77,6 +79,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Homework", route: "/parent-homework", icon: "Book", role: "parent", category: 'Academics', order: 3 },
   { name: "Activities", route: "/parent-activities", icon: "Paintbrush", role: "parent", category: 'Academics', order: 4 },
   { name: "Discipline", route: "/parent-discipline", icon: "AlertTriangle", role: "parent", category: 'Academics', order: 5 },
+  { name: "About School", route: "/parent-about", icon: "Building", role: "parent", category: 'Administration', order: 5.5 },
   { name: "Settings", route: "/parent-settings", icon: "Settings", role: "parent", category: 'Administration', order: 6 },
   { name: "Messages", route: "/parent-messages", icon: "MessageSquare", role: "parent", category: 'Reports and Communication', order: 7 },
   { name: "Meetings", route: "/parent-meetings", icon: "Video", role: "parent", category: 'Reports and Communication', order: 8 },
