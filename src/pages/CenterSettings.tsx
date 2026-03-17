@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Building, ImageIcon, KeyRound, Loader2, MapPin, Palette, Phone as PhoneIcon, Save, Settings, ShieldCheck, User, Locate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,8 @@ interface CenterTheme {
 export default function CenterSettings() {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "general";
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -281,7 +284,7 @@ export default function CenterSettings() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <Tabs defaultValue="general" className="space-y-8">
+      <Tabs defaultValue={defaultTab} className="space-y-8">
         <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto">
           <TabsTrigger value="general" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">General</TabsTrigger>
           <TabsTrigger value="payroll" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Payroll Config</TabsTrigger>
@@ -340,50 +343,13 @@ export default function CenterSettings() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address" className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                Address / Location
-              </Label>
+              <Label htmlFor="shortCode">Center Short Code (for ID generation)</Label>
               <Input
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="123 Main Street, City"
+                id="shortCode"
+                value={shortCode}
+                onChange={(e) => setShortCode(e.target.value)}
+                placeholder="e.g., KTM"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="shortCode">Center Short Code (for ID generation)</Label>
-                  <Input
-                    id="shortCode"
-                    value={shortCode}
-                    onChange={(e) => setShortCode(e.target.value)}
-                    placeholder="e.g., KTM"
-                  />
-                </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-1">
-                  <PhoneIcon className="h-4 w-4" />
-                  Phone
-                </Label>
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="9876543210"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="center@example.com"
-                />
-              </div>
             </div>
           </CardContent>
         </Card>

@@ -35,6 +35,7 @@ const TEACHER_FEATURES = [
   { name: 'teacher_reports', label: 'Teacher Reports' },
   { name: 'chapter_performance', label: 'Chapter Performance' },
   { name: 'view_records', label: 'View Records' },
+  { name: 'about_institution', label: 'About Institution' },
 ];
 
 export default function TeacherFeaturePermissions({ teacherId, teacherName }: { teacherId: string; teacherName: string }) {

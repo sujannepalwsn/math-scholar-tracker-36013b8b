@@ -42,6 +42,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Chapter Performance", route: "/chapter-performance-overview", icon: "TrendingUp", role: "center", feature_name: "chapter_performance", category: 'Reports and Communication', order: 28 },
   { name: "View Records", route: "/records", icon: "FileText", role: "center", feature_name: "view_records", category: 'Reports and Communication', order: 29 },
   { name: "Finance", route: "/finance", icon: "DollarSign", role: "center", feature_name: "finance", category: 'Reports and Communication', order: 30 },
+  { name: "About Institution", route: "/about-institution", icon: "Building", role: "center", feature_name: "about_institution", category: null, order: 31 },
 
   // Teacher Defaults
   { name: "Dashboard", route: "/teacher-dashboard", icon: "Home", role: "teacher", feature_name: "dashboard_access", category: null, order: 0 },
@@ -69,6 +70,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Finance", route: "/teacher/finance", icon: "DollarSign", role: "teacher", feature_name: "finance", category: 'Reports and Communication', order: 22 },
   { name: "Leave Applications", route: "/teacher/leave", icon: "Plane", role: "teacher", feature_name: "leave_management", category: 'Reports and Communication', order: 23 },
   { name: "AI Insights", route: "/teacher/ai-insights", icon: "Brain", role: "teacher", feature_name: "ai_insights", category: 'Reports and Communication', order: 24 },
+  { name: "About Institution", route: "/teacher/about-institution", icon: "Building", role: "teacher", feature_name: "about_institution", category: null, order: 25 },
 
   // Parent Defaults
   { name: "Dashboard", route: "/parent-dashboard", icon: "Home", role: "parent", category: null, order: 0 },
@@ -85,4 +87,5 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Finance", route: "/parent-finance", icon: "DollarSign", role: "parent", category: 'Reports and Communication', order: 11 },
   { name: "Leave Applications", route: "/parent-leave", icon: "Plane", role: "parent", category: 'Reports and Communication', order: 12 },
   { name: "Chapter Rating", route: "/parent-chapter-rating", icon: "Star", role: "parent", category: 'Reports and Communication', order: 13 },
+  { name: "About Institution", route: "/parent-about-institution", icon: "Building", role: "parent", feature_name: "about_institution", category: null, order: 14 },
 ];
