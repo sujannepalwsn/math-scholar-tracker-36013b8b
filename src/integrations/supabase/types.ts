@@ -106,6 +106,12 @@ export type Database = {
           primary_color: string | null
           created_at: string
           updated_at: string
+          background_urls: string[] | null
+          features: Json | null
+          developer_info: Json | null
+          help_info: Json | null
+          marketing_title: string | null
+          marketing_subtitle: string | null
         }
         Insert: {
           page_type: string
@@ -122,6 +128,12 @@ export type Database = {
           primary_color?: string | null
           created_at?: string
           updated_at?: string
+          background_urls?: string[] | null
+          features?: Json | null
+          developer_info?: Json | null
+          help_info?: Json | null
+          marketing_title?: string | null
+          marketing_subtitle?: string | null
         }
         Update: {
           page_type?: string
@@ -138,6 +150,12 @@ export type Database = {
           primary_color?: string | null
           created_at?: string
           updated_at?: string
+          background_urls?: string[] | null
+          features?: Json | null
+          developer_info?: Json | null
+          help_info?: Json | null
+          marketing_title?: string | null
+          marketing_subtitle?: string | null
         }
         Relationships: []
       }
