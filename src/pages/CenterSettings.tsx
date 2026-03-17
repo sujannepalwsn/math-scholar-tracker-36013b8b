@@ -19,6 +19,7 @@ import RegulatoryReports from "@/components/center/RegulatoryReports";
 import TimetableAutomation from "@/components/center/TimetableAutomation";
 import AcademicYearManagement from "@/components/center/AcademicYearManagement";
 import PayrollSettings from "@/components/center/PayrollSettings";
+import SubscriptionPlans from "@/components/center/SubscriptionPlans";
 
 interface CenterTheme {
   primary: string;
@@ -292,6 +293,7 @@ export default function CenterSettings() {
           <TabsTrigger value="communication" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Communication</TabsTrigger>
           <TabsTrigger value="compliance" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Compliance</TabsTrigger>
           <TabsTrigger value="automation" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Automation</TabsTrigger>
+          <TabsTrigger value="subscription" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">SaaS Plan</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-8 outline-none">
@@ -683,6 +685,10 @@ export default function CenterSettings() {
               <PayrollSettings centerId={user?.center_id || ""} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="subscription" className="outline-none">
+           <SubscriptionPlans />
         </TabsContent>
 
       </Tabs>

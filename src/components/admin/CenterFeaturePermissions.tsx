@@ -55,6 +55,9 @@ const TEACHER_FEATURES = [
   { name: 'transport_tracking', label: 'Transport & Tracking' },
   { name: 'school_days', label: 'School Days' },
   { name: 'settings_access', label: 'Settings' },
+  { name: 'messaging', label: 'Messages' },
+  { name: 'meetings_management', label: 'Meetings' },
+  { name: 'finance', label: 'Finance' },
   { name: 'about_institution', label: 'About Institution' },
 ];
 
