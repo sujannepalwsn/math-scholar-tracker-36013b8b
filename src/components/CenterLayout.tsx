@@ -53,8 +53,9 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const updatedNavItems = dynamicItems.filter(it => it.role === 'center').length > 0
-    ? dynamicItems.filter(it => it.role === 'center').map(it => {
+  const centerDynamicItems = dynamicItems.filter(it => it.role === 'center');
+  const updatedNavItems = centerDynamicItems.length > 1
+    ? centerDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
         return {
           to: it.route,

@@ -53,8 +53,9 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const updatedNavItems = dynamicItems.filter(it => it.role === 'parent').length > 0
-    ? dynamicItems.filter(it => it.role === 'parent').map(it => {
+  const parentDynamicItems = dynamicItems.filter(it => it.role === 'parent');
+  const updatedNavItems = parentDynamicItems.length > 1
+    ? parentDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
         return {
           to: it.route,
