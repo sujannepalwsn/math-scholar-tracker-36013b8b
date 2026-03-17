@@ -126,36 +126,47 @@ export default function DashboardHeader() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'bg') => {
     const file = e.target.files?.[0];
-    if (!file || !user?.center_id) return;
+    if (!file) return;
 
-    // Optional: add image compression/validation here if needed
-    const toastId = toast.loading(`Uploading ${type}...`);
+    if (!user?.center_id) {
+      toast.error("Center ID not found. Please log in again.");
+      return;
+    }
+
+    const toastId = toast.loading(`Uploading institutional ${type}...`);
 
     try {
+      console.log(`Starting upload for ${type}:`, { name: file.name, size: file.size, type: file.type });
+
       const fileExt = file.name.split('.').pop();
       const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
       const filePath = `${user.center_id}/${type}-${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Supabase Storage Error:", uploadError);
+        throw new Error(uploadError.message || "Upload to storage failed");
+      }
+
+      console.log("Upload successful, fetching public URL...", data);
 
       const { data: { publicUrl } } = supabase.storage
         .from(bucket)
         .getPublicUrl(filePath);
 
-      // We update the local state immediately
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
       toast.dismiss(toastId);
-      toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready! Save to apply permanently.`);
+      toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready! Click "Save Changes" to apply.`);
     } catch (error: any) {
+      console.error("Institutional File Upload Detail:", error);
       toast.dismiss(toastId);
-      toast.error(`Upload failed: ` + error.message);
+      toast.error(`Upload failed: ${error.message || "Unknown error"}. Please check file permissions.`);
     }
   };
 
@@ -170,107 +181,113 @@ export default function DashboardHeader() {
   const canEdit = user?.role === 'center';
 
   return (
-    <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20 mb-8 relative">
+    <Card className="border-none shadow-elevated overflow-hidden rounded-[3.5rem] bg-white mb-8 relative">
       {/* Background Image Overlay */}
       {formData.header_bg_url && (
         <div
-          className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-cover bg-center"
+          className="absolute inset-0 z-0 opacity-10 pointer-events-none bg-cover bg-center"
           style={{ backgroundImage: `url(${formData.header_bg_url})` }}
         />
       )}
 
-      <CardContent className="p-0 relative z-10">
-        {isEditMode && (
-          <div className="absolute top-4 left-4 z-20">
-            <label className="p-2 rounded-xl bg-white/80 backdrop-blur-sm shadow-soft border border-border/50 cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
-              <ImageIcon className="h-4 w-4" />
-              Change Background
-              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
-            </label>
-          </div>
-        )}
+      <CardContent className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8">
+        {/* Top Navigation Row: Name, Bell, Edit */}
+        <div className="flex flex-row justify-between items-start gap-4">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            {isEditMode ? (
+              <Input
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="text-xl md:text-3xl font-black h-auto py-1 px-3 -ml-3 bg-slate-50 border-primary/20 rounded-xl"
+                placeholder="School Name"
+              />
+            ) : (
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-800 truncate">
+                {formData.name || "School Name"}
+              </h1>
+            )}
 
-        <div className="flex flex-row items-center lg:items-stretch">
-          {/* Logo Section */}
-          <div className="relative group w-24 md:w-32 lg:w-48 bg-primary/5 flex items-center justify-center p-4 md:p-6 lg:p-8 border-r border-border/10">
-            <div className="relative h-16 w-16 md:h-24 md:w-24 lg:h-32 lg:w-32 rounded-2xl md:rounded-3xl overflow-hidden bg-white shadow-soft flex items-center justify-center border-2 md:border-4 border-white">
-              {formData.logo_url ? (
-                <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain" />
+            <div className="flex items-center gap-2 text-[#4285f4]">
+              <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+              {isEditMode ? (
+                <Input
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl"
+                  placeholder="Address"
+                />
               ) : (
-                <div className="flex flex-col items-center gap-1 opacity-20">
-                  <Building className="h-8 w-8 text-primary" />
-                  {isEditMode && <span className="text-[8px] font-black uppercase">Upload Logo</span>}
+                <span className="text-xs md:text-base font-bold truncate opacity-80">{formData.address || "Address not specified"}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <div className="p-1 rounded-full bg-white shadow-soft border border-slate-100">
+              <NotificationBell />
+            </div>
+            {canEdit && (
+              <Button
+                onClick={() => isEditMode ? setIsEditMode(false) : setIsEditMode(true)}
+                variant="ghost"
+                className={cn(
+                  "rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-widest h-12 md:h-14 px-4 md:px-8 shadow-sm transition-all active:scale-95",
+                  isEditMode
+                    ? "bg-rose-100 text-rose-600 hover:bg-rose-200"
+                    : "bg-[#dbeafe] text-[#3b82f6] hover:bg-[#bfdbfe]"
+                )}
+              >
+                {isEditMode ? (
+                  <><X className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cancel</span></>
+                ) : (
+                  <><Edit2 className="h-4 w-4 md:mr-2" /> <span>EDIT INFO</span></>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Content Row: Logo and Details Grid */}
+        <div className="flex flex-row gap-3 md:gap-12 items-start">
+          {/* Logo Section */}
+          <div className="relative group shrink-0">
+            <div className="relative h-20 w-20 sm:h-32 sm:w-32 md:h-48 md:w-48 rounded-2xl sm:rounded-[2.5rem] overflow-hidden bg-[#f0f7ff] shadow-inner flex items-center justify-center p-2 sm:p-6 border-2 sm:border-4 border-white">
+              {formData.logo_url ? (
+                <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-sm" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 opacity-20">
+                  <Building className="h-12 w-12 text-primary" />
+                  {isEditMode && <span className="text-[10px] font-black uppercase">Upload Logo</span>}
                 </div>
               )}
               {isEditMode && (
-                <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-6 w-6 md:h-8 md:w-8 text-white" />
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo')} />
+                <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                  <Camera className="h-8 w-8 text-white" />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'logo')}
+                  />
                 </label>
               )}
             </div>
+            {isEditMode && (
+              <div className="mt-3 flex justify-center">
+                <label className="p-2 rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
+                  <ImageIcon className="h-4 w-4" />
+                  Background
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
+                </label>
+              </div>
+            )}
           </div>
 
-          {/* Details Section */}
-          <div className="flex-1 p-4 md:p-6 lg:p-8 space-y-4 md:space-y-6 overflow-hidden">
-            <div className="flex flex-row justify-between items-center md:items-start gap-4">
-              <div className="space-y-1 md:space-y-2 flex-1 min-w-0">
-                {isEditMode ? (
-                  <Input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="text-lg md:text-2xl lg:text-3xl font-black h-auto py-1 px-2 -ml-2 bg-white/50 border-primary/20"
-                    placeholder="School Name"
-                  />
-                ) : (
-                  <h1 className="text-lg md:text-2xl lg:text-4xl font-black tracking-tight text-foreground/90 truncate">
-                    {formData.name || "School Name"}
-                  </h1>
-                )}
-
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-3 w-3 md:h-4 md:w-4 shrink-0 text-primary" />
-                  {isEditMode ? (
-                    <Input
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      className="h-7 md:h-8 text-[10px] md:text-sm bg-white/50 border-primary/20"
-                      placeholder="Address"
-                    />
-                  ) : (
-                    <span className="text-[10px] md:text-sm font-medium truncate">{formData.address || "Address not specified"}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="hidden md:flex flex-col items-end mr-2">
-                  <p className="text-xs font-black text-foreground/90 leading-none">{user?.username?.split('@')[0]}</p>
-                  <Badge variant="outline" className="mt-1 text-[9px] font-black uppercase tracking-widest border-primary/20 text-primary bg-primary/5">
-                    {user?.role}
-                  </Badge>
-                </div>
-                <NotificationBell />
-                {canEdit && (
-                  <Button
-                    onClick={() => isEditMode ? setIsEditMode(false) : setIsEditMode(true)}
-                    variant={isEditMode ? "outline" : "ghost"}
-                    size="sm"
-                    className={cn(
-                      "rounded-xl font-black uppercase text-[10px] tracking-widest h-10 px-4",
-                      isEditMode ? "border-2 border-rose-500 text-rose-500 hover:bg-rose-50" : "bg-primary/10 text-primary hover:bg-primary/20"
-                    )}
-                  >
-                    {isEditMode ? <><X className="h-3.5 w-3.5 mr-2" /> Cancel</> : <><Edit2 className="h-3.5 w-3.5 mr-2" /> Edit Info</>}
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Grid of details */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4 md:gap-x-8 pt-3 md:pt-4 border-t border-border/10">
+          {/* Details Grid */}
+          <div className="flex-1 min-w-0">
+            <div className="grid grid-cols-2 gap-y-3 md:gap-y-8 gap-x-2 md:gap-x-12">
               <DetailItem
                 icon={User}
                 label="Principal"
@@ -343,23 +360,32 @@ export default function DashboardHeader() {
   );
 }
 
-function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: any) {
+interface DetailItemProps {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  isEdit?: boolean;
+  name?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
   return (
-    <div className="flex items-start gap-3 group">
-      <div className="p-2 rounded-xl bg-muted/50 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300">
-        <Icon className="h-3.5 w-3.5" />
+    <div className="flex items-center gap-1.5 md:gap-4 group">
+      <div className="p-1.5 md:p-3 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
+        <Icon className="h-3 w-3 md:h-5 md:w-5" />
       </div>
-      <div className="space-y-0.5 flex-1 min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <div className="space-y-0 flex-1 min-w-0">
+        <p className="text-[7px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
         {isEdit ? (
           <Input
             name={name}
             value={value}
             onChange={onChange}
-            className="h-7 text-xs px-2 bg-white/50 border-primary/10 rounded-lg focus-visible:ring-primary/20"
+            className="h-6 md:h-10 text-[9px] md:text-sm px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
           />
         ) : (
-          <p className="text-sm font-bold text-foreground/80 truncate">{value || "---"}</p>
+          <p className="text-[9px] md:text-lg font-black text-slate-700 truncate tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
         )}
       </div>
     </div>
