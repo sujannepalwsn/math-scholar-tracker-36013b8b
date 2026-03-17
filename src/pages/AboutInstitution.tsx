@@ -160,23 +160,23 @@ export default function AboutInstitution() {
       name: "",
       description: ""
     };
-    setFormData({ ...formData, facilities: [...formData.facilities, newFacility] });
+    setFormData(prev => ({ ...prev, facilities: [...(prev.facilities || []), newFacility] }));
   };
 
   const updateFacility = (id: string, field: keyof Facility, value: string) => {
-    const updated = formData.facilities.map(f => f.id === id ? { ...f, [field]: value } : f);
-    setFormData({ ...formData, facilities: updated });
+    const updated = (formData.facilities || []).map(f => f.id === id ? { ...f, [field]: value } : f);
+    setFormData(prev => ({ ...prev, facilities: updated }));
   };
 
   const removeFacility = (id: string) => {
-    setFormData({ ...formData, facilities: formData.facilities.filter(f => f.id !== id) });
+    setFormData(prev => ({ ...prev, facilities: (prev.facilities || []).filter(f => f.id !== id) }));
   };
 
   const updateSocialLink = (platform: keyof SocialLinks, value: string) => {
-    setFormData({
-      ...formData,
-      social_links: { ...formData.social_links, [platform]: value }
-    });
+    setFormData(prev => ({
+      ...prev,
+      social_links: { ...(prev.social_links || {}), [platform]: value }
+    }));
   };
 
   if (isCenterLoading) {
@@ -489,7 +489,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {formData.facilities.map((facility) => (
+                {(formData.facilities || []).map((facility) => (
                   <Card key={facility.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeFacility(facility.id)}
@@ -527,8 +527,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {formData.facilities.length > 0 ? (
-                  formData.facilities.map((facility) => (
+                {(formData.facilities || []).length > 0 ? (
+                  (formData.facilities || []).map((facility) => (
                     <Card key={facility.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all hover:-translate-y-1">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-center gap-3">
@@ -688,15 +688,15 @@ export default function AboutInstitution() {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{platform.label}</p>
                         {isEditing ? (
                           <Input
-                            value={formData.social_links[platform.id as keyof SocialLinks] || ""}
+                            value={(formData.social_links || {})[platform.id as keyof SocialLinks] || ""}
                             onChange={(e) => updateSocialLink(platform.id as keyof SocialLinks, e.target.value)}
                             className="rounded-xl h-10"
                             placeholder={`URL for ${platform.label}`}
                           />
                         ) : (
-                          formData.social_links[platform.id as keyof SocialLinks] ? (
+                          (formData.social_links || {})[platform.id as keyof SocialLinks] ? (
                             <a
-                              href={formData.social_links[platform.id as keyof SocialLinks]}
+                              href={(formData.social_links || {})[platform.id as keyof SocialLinks]}
                               target="_blank"
                               rel="noreferrer"
                               className="font-bold text-primary hover:underline flex items-center gap-2"
