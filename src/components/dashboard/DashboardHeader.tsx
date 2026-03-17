@@ -128,15 +128,20 @@ export default function DashboardHeader() {
     const file = e.target.files?.[0];
     if (!file || !user?.center_id) return;
 
+    // Optional: add image compression/validation here if needed
+    const toastId = toast.loading(`Uploading ${type}...`);
+
     try {
       const fileExt = file.name.split('.').pop();
       const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
-      const filePath = `${user.center_id}/${type}-${Math.random()}.${fileExt}`;
+      const filePath = `${user.center_id}/${type}-${Date.now()}.${fileExt}`;
 
-      // Check if bucket exists, if not we might need to handle it or assume it exists
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) throw uploadError;
 
@@ -144,10 +149,13 @@ export default function DashboardHeader() {
         .from(bucket)
         .getPublicUrl(filePath);
 
+      // We update the local state immediately
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
-      toast.success(`${type === 'logo' ? 'Logo' : 'Background'} uploaded! Remember to save changes.`);
+      toast.dismiss(toastId);
+      toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready! Save to apply permanently.`);
     } catch (error: any) {
-      toast.error(`Error uploading ${type}: ` + error.message);
+      toast.dismiss(toastId);
+      toast.error(`Upload failed: ` + error.message);
     }
   };
 
