@@ -385,11 +385,14 @@ export default function Sidebar({
       if (currentCategory) {
         currentCategoryItems.push(link);
       } else {
+        // Uncategorized items are added to the general list immediately
         renderedItems.push(link);
       }
 
-      if (index === items.length - 1 && currentCategory) {
-        renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
+      if (index === items.length - 1) {
+        if (currentCategory) {
+          renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
+        }
       }
     });
 
