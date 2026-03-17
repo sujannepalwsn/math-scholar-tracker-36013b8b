@@ -53,8 +53,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const updatedNavItems = dynamicItems.filter(it => it.role === 'teacher').length > 0
-    ? dynamicItems.filter(it => it.role === 'teacher').map(it => {
+  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher');
+  const updatedNavItems = teacherDynamicItems.length > 1
+    ? teacherDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
         return {
           to: it.route,
