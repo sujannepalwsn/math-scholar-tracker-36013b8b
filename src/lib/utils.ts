@@ -21,7 +21,7 @@ export function safeFormatDate(dateInput: string | Date | null | undefined, form
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'INR',
+    currency: 'NPR',
     maximumFractionDigits: 0 }).format(amount);
 };
 
