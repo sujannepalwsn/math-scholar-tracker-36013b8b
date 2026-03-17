@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import CenterLogo from "@/components/CenterLogo";
 import NotificationBell from "@/components/NotificationBell";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -750,20 +751,8 @@ export default function Dashboard() {
           </div>
         </DialogContent>
       </Dialog>
-      {/* Top Header - redesigned */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Welcome back, {user?.username?.split("@")[0]}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <NotificationBell />
-          <div className="flex items-center gap-2 bg-card p-1.5 pr-3 rounded-xl shadow-soft border">
-            <CalendarIcon className="h-4 w-4 text-muted-foreground ml-2" />
-            <span className="text-xs font-medium text-foreground">{format(new Date(), "eee, MMM d, yyyy")}</span>
-          </div>
-        </div>
-      </div>
+      {/* Top Header - School Details */}
+      <DashboardHeader />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left/Main Column */}

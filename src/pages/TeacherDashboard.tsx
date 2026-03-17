@@ -11,6 +11,7 @@ import { AlertList } from "@/components/dashboard/AlertList"
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
 import CenterLogo from "@/components/CenterLogo";
 import NotificationBell from "@/components/NotificationBell";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -445,22 +446,8 @@ export default function TeacherDashboard() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <CenterLogo size="lg" />
-        <div className="flex items-center gap-4">
-          <NotificationBell />
-          <div className="flex items-center gap-3 bg-white p-1.5 pr-4 rounded-2xl shadow-soft">
-            <div className="h-9 w-9 bg-primary/10 rounded-xl flex items-center justify-center overflow-hidden">
-               <Users className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-foreground/90 leading-none">{user?.username?.split('@')[0]}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Teacher</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Top Header - School Details */}
+      <DashboardHeader />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-2 bg-card/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-border/40">

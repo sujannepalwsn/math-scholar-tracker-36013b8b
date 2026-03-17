@@ -471,8 +471,11 @@ export type Database = {
           longitude: number | null
           name: string
           phone: string | null
+          principal_name: string | null
           radius_meters: number | null
+          short_code: string | null
           theme: Json | null
+          website_url: string | null
           updated_at: string
         }
         Insert: {
@@ -486,8 +489,11 @@ export type Database = {
           longitude?: number | null
           name: string
           phone?: string | null
+          principal_name?: string | null
           radius_meters?: number | null
+          short_code?: string | null
           theme?: Json | null
+          website_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -501,8 +507,11 @@ export type Database = {
           longitude?: number | null
           name?: string
           phone?: string | null
+          principal_name?: string | null
           radius_meters?: number | null
+          short_code?: string | null
           theme?: Json | null
+          website_url?: string | null
           updated_at?: string
         }
         Relationships: []
