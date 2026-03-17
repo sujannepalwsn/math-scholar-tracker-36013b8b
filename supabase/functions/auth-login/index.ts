@@ -147,6 +147,7 @@ serve(async (req) => {
           calendar_events: permissionsData.calendar_events ?? true,
           class_routine: permissionsData.class_routine ?? true,
           messaging: permissionsData.messaging ?? true,
+          about_institution: permissionsData.about_institution ?? true,
         };
       }
     }
@@ -180,6 +181,7 @@ serve(async (req) => {
         messaging: permissionsData?.messaging ?? true,
         class_routine: permissionsData?.class_routine ?? true,
         calendar_events: permissionsData?.calendar_events ?? true,
+        about_institution: permissionsData?.about_institution ?? true,
       };
     }
 
