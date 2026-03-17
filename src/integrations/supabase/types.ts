@@ -90,6 +90,57 @@ export type Database = {
           },
         ]
       }
+      login_page_settings: {
+        Row: {
+          page_type: string
+          logo_url: string | null
+          background_url: string | null
+          background_color: string | null
+          title: string
+          subtitle: string | null
+          username_label: string | null
+          username_placeholder: string | null
+          password_label: string | null
+          password_placeholder: string | null
+          button_text: string | null
+          primary_color: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          page_type: string
+          logo_url?: string | null
+          background_url?: string | null
+          background_color?: string | null
+          title: string
+          subtitle?: string | null
+          username_label?: string | null
+          username_placeholder?: string | null
+          password_label?: string | null
+          password_placeholder?: string | null
+          button_text?: string | null
+          primary_color?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          page_type?: string
+          logo_url?: string | null
+          background_url?: string | null
+          background_color?: string | null
+          title?: string
+          subtitle?: string | null
+          username_label?: string | null
+          username_placeholder?: string | null
+          password_label?: string | null
+          password_placeholder?: string | null
+          button_text?: string | null
+          primary_color?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           center_id: string
