@@ -61,6 +61,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
           label: it.name,
           icon: getIcon(it.icon),
           role: it.role as any,
+          featureName: it.feature_name,
           category: cat?.name,
           unreadCount: it.route === "/parent-messages" ? unreadMessageCount : undefined,
           is_active: it.is_active
@@ -71,6 +72,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         label: item.name,
         icon: getIcon(item.icon),
         role: item.role as any,
+        featureName: item.feature_name,
         category: item.category as any,
         unreadCount: item.route === "/parent-messages" ? unreadMessageCount : undefined
       }));
