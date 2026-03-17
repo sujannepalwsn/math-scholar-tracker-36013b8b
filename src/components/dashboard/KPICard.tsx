@@ -89,6 +89,18 @@ export const KPICard = ({
                     <stop offset="95%" stopColor={color === 'indigo' ? 'var(--primary-hex, #6366f1)' : chartColors[color]} stopOpacity={0} />
                   </linearGradient>
                 </defs>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-background/80 backdrop-blur-md border shadow-soft px-2 py-1 rounded-lg text-[10px] font-bold">
+                          {payload[0].value}%
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
                 <Area
                   type="monotone"
                   dataKey="value"

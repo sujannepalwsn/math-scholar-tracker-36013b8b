@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CalendarIcon, ChevronDown, Lock, Users, ShieldAlert } from "lucide-react";
+import { CalendarIcon, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -16,6 +16,16 @@ import { toast } from "sonner"
 import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Student {
   id: string;
@@ -23,9 +33,11 @@ interface Student {
   grade: string;
 }
 
+type AttendanceStatus = "present" | "absent" | "late";
+
 interface AttendanceRecord {
   studentId: string;
-  present: boolean;
+  status: AttendanceStatus;
   timeIn: string;
   timeOut: string;
 }
@@ -37,6 +49,7 @@ export default function TakeAttendance() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [attendance, setAttendance] = useState<Record<string, AttendanceRecord>>({});
   const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [bulkAction, setBulkAction] = useState<{ type: 'present' | 'absent' | null, open: boolean }>({ type: null, open: false });
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
@@ -141,7 +154,7 @@ export default function TakeAttendance() {
       students.forEach((student) => {
         const record = existingAttendance?.find((a: any) => a.student_id === student.id);
         newAttendance[student.id] = {
-          present: record ? record.status === "present" : false,
+          status: (record?.status as AttendanceStatus) || "absent",
           timeIn: record?.time_in || "",
           timeOut: record?.time_out || "",
           studentId: student.id };
@@ -159,10 +172,23 @@ export default function TakeAttendance() {
     return gradeFilter === "all" || s.grade === gradeFilter;
   });
 
-  const handleToggle = (studentId: string) => {
-    setAttendance((prev) => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], present: !prev[studentId]?.present } }));
+  const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
+    setAttendance((prev) => {
+      const current = prev[studentId];
+      let timeIn = current?.timeIn || "";
+
+      // Auto-fill time if marking present/late and time is empty
+      if ((status === "present" || status === "late") && !timeIn) {
+        timeIn = format(new Date(), "HH:mm");
+      } else if (status === "absent") {
+        timeIn = "";
+      }
+
+      return {
+        ...prev,
+        [studentId]: { ...current, status, timeIn }
+      };
+    });
   };
 
   const handleTimeChange = (studentId: string, field: "timeIn" | "timeOut", value: string) => {
@@ -171,22 +197,21 @@ export default function TakeAttendance() {
       [studentId]: { ...prev[studentId], [field]: value } }));
   };
 
-  const markAllPresent = () => {
-    if (!filteredStudents) return;
+  const executeBulkAction = () => {
+    if (!filteredStudents || !bulkAction.type) return;
     const updated: Record<string, AttendanceRecord> = { ...attendance };
-    filteredStudents.forEach((student) => {
-      updated[student.id] = { ...updated[student.id], present: true };
-    });
-    setAttendance(updated);
-  };
+    const currentTime = format(new Date(), "HH:mm");
 
-  const markAllAbsent = () => {
-    if (!filteredStudents) return;
-    const updated: Record<string, AttendanceRecord> = { ...attendance };
     filteredStudents.forEach((student) => {
-      updated[student.id] = { ...updated[student.id], present: false, timeIn: "", timeOut: "" };
+      if (bulkAction.type === 'present') {
+        updated[student.id] = { ...updated[student.id], status: "present", timeIn: updated[student.id]?.timeIn || currentTime };
+      } else {
+        updated[student.id] = { ...updated[student.id], status: "absent", timeIn: "", timeOut: "" };
+      }
     });
     setAttendance(updated);
+    setBulkAction({ type: null, open: false });
+    toast.info(`Marked all as ${bulkAction.type}`);
   };
 
   const saveMutation = useMutation({
@@ -194,12 +219,12 @@ export default function TakeAttendance() {
       if (!filteredStudents || !user?.center_id) return;
       // Delete existing records for these students on this date
       await supabase.from("attendance").delete().eq("date", dateStr).in("student_id", filteredStudents.map((s) => s.id));
-      // Insert ALL filtered students - present AND absent
+      // Insert ALL filtered students
       const records = filteredStudents.map((student) => ({
         student_id: student.id,
         center_id: user.center_id!,
         date: dateStr,
-        status: attendance[student.id]?.present ? "present" : "absent",
+        status: attendance[student.id]?.status || "absent",
         time_in: attendance[student.id]?.timeIn || null,
         time_out: attendance[student.id]?.timeOut || null,
         marked_by: user.id,
@@ -209,7 +234,7 @@ export default function TakeAttendance() {
       if (error) throw error;
 
       // Notify Parents of Absentees
-      const absentees = filteredStudents.filter(s => !attendance[s.id]?.present);
+      const absentees = filteredStudents.filter(s => attendance[s.id]?.status === "absent");
       if (absentees.length > 0) {
         const absenteeIds = absentees.map(s => s.id);
         const { data: parentUsers } = await supabase.from('users').select('id, student_id').in('student_id', absenteeIds).eq('role', 'parent');
@@ -246,11 +271,27 @@ export default function TakeAttendance() {
     saveMutation.mutate();
   };
 
-  const presentCount = filteredStudents?.filter(s => attendance[s.id]?.present).length || 0;
-  const absentCount = (filteredStudents?.length || 0) - presentCount;
+  const presentCount = filteredStudents?.filter(s => attendance[s.id]?.status === "present").length || 0;
+  const lateCount = filteredStudents?.filter(s => attendance[s.id]?.status === "late").length || 0;
+  const absentCount = (filteredStudents?.length || 0) - presentCount - lateCount;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <AlertDialog open={bulkAction.open} onOpenChange={(open) => setBulkAction(prev => ({ ...prev, open }))}>
+        <AlertDialogContent className="rounded-[2rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black">Confirm Bulk Action</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              Are you sure you want to mark all filtered students as <span className="font-bold text-foreground underline decoration-primary decoration-2">{bulkAction.type?.toUpperCase()}</span>? This will overwrite individual selections.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="rounded-xl font-bold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeBulkAction} className="rounded-xl font-black bg-primary">Confirm Action</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
@@ -325,7 +366,7 @@ export default function TakeAttendance() {
         </Card>
       </div>
 
-      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+      <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
         <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
@@ -335,10 +376,14 @@ export default function TakeAttendance() {
                 </div>
                 Daily Attendance Roll
               </CardTitle>
-              <div className="flex gap-4 ml-11">
+              <div className="flex flex-wrap gap-4 ml-11">
                 <div className="flex items-center gap-1.5">
                   <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                   <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Present: {presentCount}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Late: {lateCount}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
@@ -347,10 +392,10 @@ export default function TakeAttendance() {
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" size="sm" onClick={markAllPresent} disabled={(isLocked && !canEdit) || !isOperationalDay} className="rounded-xl border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600 h-10 px-4">
+              <Button variant="outline" type="button" size="sm" onClick={() => setBulkAction({ type: 'present', open: true })} disabled={(isLocked && !canEdit) || !isOperationalDay} className="rounded-xl border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600 h-10 px-4 font-bold">
                 Mark All Present
               </Button>
-              <Button variant="outline" size="sm" onClick={markAllAbsent} disabled={(isLocked && !canEdit) || !isOperationalDay} className="rounded-xl border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 h-10 px-4">
+              <Button variant="outline" type="button" size="sm" onClick={() => setBulkAction({ type: 'absent', open: true })} disabled={(isLocked && !canEdit) || !isOperationalDay} className="rounded-xl border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 h-10 px-4 font-bold">
                 Mark All Absent
               </Button>
             </div>
@@ -358,33 +403,30 @@ export default function TakeAttendance() {
         </CardHeader>
         <CardContent>
           {filteredStudents && filteredStudents.length > 0 ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredStudents.map((student) => (
                   <div
                     key={student.id}
                     className={cn(
-                      "rounded-3xl border transition-all duration-500 p-6 flex flex-col gap-4",
-                      attendance[student.id]?.present
-                        ? "border-green-500/20 bg-green-500/5 shadow-medium"
-                        : "border-border/40 bg-white/30 backdrop-blur-sm shadow-soft grayscale-[0.5] opacity-80"
+                      "rounded-3xl border transition-all duration-500 p-6 flex flex-col gap-6",
+                      attendance[student.id]?.status === "present" ? "border-green-500/20 bg-green-500/5 shadow-medium" :
+                      attendance[student.id]?.status === "late" ? "border-yellow-500/20 bg-yellow-500/5 shadow-medium" :
+                      "border-border/40 bg-white/30 backdrop-blur-sm shadow-soft grayscale-[0.5] opacity-80"
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className={cn(
                           "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
-                          attendance[student.id]?.present ? "bg-green-500 text-white shadow-soft" : "bg-slate-200 text-slate-500"
+                          attendance[student.id]?.status === "present" ? "bg-green-500 text-white shadow-soft" :
+                          attendance[student.id]?.status === "late" ? "bg-yellow-500 text-white shadow-soft" :
+                          "bg-slate-200 text-slate-500"
                         )}>
                           <Users className="h-5 w-5" />
                         </div>
                         <div className="space-y-0.5">
-                          <Label
-                            htmlFor={student.id}
-                            className="text-lg font-black text-foreground/90 cursor-pointer"
-                          >
-                            {student.name}
-                          </Label>
+                          <p className="text-lg font-black text-foreground/90">{student.name}</p>
                           <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-bold">
                             Grade {student.grade}
                           </Badge>
@@ -395,43 +437,82 @@ export default function TakeAttendance() {
                           )}
                         </div>
                       </div>
-                      <Checkbox
-                        id={student.id}
-                        checked={attendance[student.id]?.present || false}
-                        onCheckedChange={() => handleToggle(student.id)}
-                        disabled={(isLocked && !canEdit) || !isOperationalDay}
-                        className="h-7 w-7 rounded-xl border-2 border-slate-300 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                      />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Arrival</Label>
-                        <Input
-                          type="time"
-                          value={attendance[student.id]?.timeIn || ""}
-                          onChange={(e) => handleTimeChange(student.id, "timeIn", e.target.value)}
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatusChange(student.id, "present")}
                           disabled={(isLocked && !canEdit) || !isOperationalDay}
-                          className="h-10 bg-card/40 rounded-xl text-xs font-bold"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Departure</Label>
-                        <Input
-                          type="time"
-                          value={attendance[student.id]?.timeOut || ""}
-                          onChange={(e) => handleTimeChange(student.id, "timeOut", e.target.value)}
+                          className={cn(
+                            "flex-1 h-10 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all gap-2",
+                            attendance[student.id]?.status === "present" ? "bg-green-500 border-green-500 text-white hover:bg-green-600 shadow-soft" : "hover:bg-green-50 text-muted-foreground"
+                          )}
+                        >
+                          <Check className="h-3 w-3" /> Present
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatusChange(student.id, "late")}
                           disabled={(isLocked && !canEdit) || !isOperationalDay}
-                          className="h-10 bg-card/40 rounded-xl text-xs font-bold"
-                        />
+                          className={cn(
+                            "flex-1 h-10 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all gap-2",
+                            attendance[student.id]?.status === "late" ? "bg-yellow-500 border-yellow-500 text-white hover:bg-yellow-600 shadow-soft" : "hover:bg-yellow-50 text-muted-foreground"
+                          )}
+                        >
+                          <Clock className="h-3 w-3" /> Late
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatusChange(student.id, "absent")}
+                          disabled={(isLocked && !canEdit) || !isOperationalDay}
+                          className={cn(
+                            "flex-1 h-10 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all gap-2",
+                            attendance[student.id]?.status === "absent" ? "bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-soft" : "hover:bg-red-50 text-muted-foreground"
+                          )}
+                        >
+                          <X className="h-3 w-3" /> Absent
+                        </Button>
                       </div>
+
+                      {attendance[student.id]?.status !== "absent" && (
+                        <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Arrival Time</Label>
+                            <Input
+                              type="time"
+                              value={attendance[student.id]?.timeIn || ""}
+                              onChange={(e) => handleTimeChange(student.id, "timeIn", e.target.value)}
+                              disabled={(isLocked && !canEdit) || !isOperationalDay}
+                              className="h-10 bg-card/40 rounded-xl text-xs font-bold border-none shadow-inner"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Departure Time</Label>
+                            <Input
+                              type="time"
+                              value={attendance[student.id]?.timeOut || ""}
+                              onChange={(e) => handleTimeChange(student.id, "timeOut", e.target.value)}
+                              disabled={(isLocked && !canEdit) || !isOperationalDay}
+                              className="h-10 bg-card/40 rounded-xl text-xs font-bold border-none shadow-inner"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
               <Button
                 type="submit"
-                className="w-full h-16 text-xl font-black shadow-strong rounded-[2rem] bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
+                className="w-full h-16 text-xl font-black shadow-strong rounded-[2rem] bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300 mt-8"
                 disabled={saveMutation.isPending || (isLocked && !canEdit) || !isOperationalDay}
               >
                 {saveMutation.isPending ? (
@@ -442,12 +523,12 @@ export default function TakeAttendance() {
                 ) : !isOperationalDay ? (
                   "ATTENDANCE DISABLED - NOT A SCHOOL DAY"
                 ) : (
-                  `COMMIT ROLL CALL (${presentCount} PRESENT / ${absentCount} ABSENT)`
+                  `COMMIT ROLL CALL (${presentCount} PRESENT / ${lateCount} LATE / ${absentCount} ABSENT)`
                 )}
               </Button>
             </form>
           ) : (
-            <p className="text-center text-muted-foreground">
+            <p className="text-center text-muted-foreground py-12 font-medium italic">
               {isTeacher && classTeacherGrades.length === 0 ? "You are not assigned as class teacher for any grade. Contact your center admin." : "No students found for this filter."}
             </p>
           )}

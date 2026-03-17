@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, User, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { endOfMonth, format, isPast, startOfMonth, subYears } from "date-fns" // Added subYears, isPast
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +20,7 @@ import { Tables } from "@/integrations/supabase/types"
 import { Invoice, Payment } from "@/integrations/supabase/finance-types"
 import { formatCurrency, safeFormatDate, getGradeFormal } from "@/lib/utils" // Import safeFormatDate, formatCurrency, getGradeFormal
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import RegulatoryReports from "@/components/center/RegulatoryReports"
 
 type LessonPlan = Tables<'lesson_plans'>;
@@ -1210,7 +1212,7 @@ export default function StudentReport() {
   const isLoading = isAttendanceLoading || isChaptersLoading || isTestsLoading || isHomeworkLoading || isActivitiesLoading || isDisciplineLoading || isAllActivitiesLoading;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <Tabs defaultValue="analytics" className="space-y-8">
         <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
           <TabsTrigger value="analytics" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Performance Analytics</TabsTrigger>
@@ -1259,7 +1261,7 @@ export default function StudentReport() {
       {/* Filters */}
       <div className={cn("relative group transition-all duration-700", isLoading ? "opacity-50 grayscale pointer-events-none" : "opacity-100")}>
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-        <Card className="relative border-none shadow-medium p-8 overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+        <Card className="relative border-none shadow-medium p-8 overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-[2.5rem]">
           <div className="flex flex-wrap gap-8 items-end">
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
@@ -1385,6 +1387,62 @@ export default function StudentReport() {
 
           {reportLevel === "student" && selectedStudent && (
             <div id="printable-report" className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">
+
+          {/* Consolidated Student Profile Header */}
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 text-white overflow-hidden relative group">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+            <CardContent className="p-10 relative z-10">
+              <div className="flex flex-col md:flex-row items-center gap-10">
+                <div className="relative">
+                  <div className="w-40 h-40 rounded-[2.5rem] border-4 border-white/20 overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-105">
+                    {selectedStudent.photo_url ? (
+                      <img
+                        src={selectedStudent.photo_url.startsWith('http') ? selectedStudent.photo_url : supabase.storage.from('activity-photos').getPublicUrl(selectedStudent.photo_url).data.publicUrl}
+                        alt={selectedStudent.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                        <User className="h-20 w-20 text-slate-600" />
+                      </div>
+                    )}
+                  </div>
+                  <Badge className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-primary text-white font-black px-4 py-1 rounded-full border-2 border-slate-900">
+                    GRADE {selectedStudent.grade}
+                  </Badge>
+                </div>
+
+                <div className="flex-1 text-center md:text-left space-y-4">
+                  <div className="space-y-1">
+                    <h2 className="text-4xl font-black tracking-tight">{selectedStudent.name}</h2>
+                    <p className="text-indigo-300 font-bold uppercase tracking-[0.2em] text-xs">Student ID: {selectedStudent.student_id_number || 'N/A'}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+                    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                      <p className="text-[9px] font-black text-indigo-300 uppercase tracking-widest mb-1">Attendance</p>
+                      <p className="text-2xl font-black">{attendancePercentage}%</p>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                      <p className="text-[9px] font-black text-indigo-300 uppercase tracking-widest mb-1">Avg. Grade</p>
+                      <p className="text-2xl font-black">{getGradeFormal(averagePercentage)}</p>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                      <p className="text-[9px] font-black text-indigo-300 uppercase tracking-widest mb-1">Fee Status</p>
+                      <p className={cn("text-xl font-black", outstandingDues > 0 ? "text-rose-400" : "text-emerald-400")}>
+                        {outstandingDues > 0 ? 'Dues Pending' : 'Clear'}
+                      </p>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                      <p className="text-[9px] font-black text-indigo-300 uppercase tracking-widest mb-1">Assessment</p>
+                      <p className="text-2xl font-black">{averagePercentage}%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="relative">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
               <div className="w-full border-t border-muted" />
@@ -1397,26 +1455,35 @@ export default function StudentReport() {
           </div>
 
           {/* Finance Summary */}
-          <Card id="finance-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
-            <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <DollarSign className="h-6 w-6 text-primary" />
+          <Card id="finance-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-primary/5 pb-6 border-b border-primary/10 p-8">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                  <DollarSign className="h-7 w-7" />
                 </div>
                 Financial Overview
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>Total Invoiced: {formatCurrency(totalInvoiced)}</div>
-                <div>Total Paid: {formatCurrency(totalPaid)}</div>
-                <div>Outstanding Dues: {formatCurrency(outstandingDues)}</div>
+            <CardContent className="p-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Invoiced</p>
+                  <p className="text-2xl font-black">{formatCurrency(totalInvoiced)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Total Paid</p>
+                  <p className="text-2xl font-black text-green-600">{formatCurrency(totalPaid)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Outstanding Dues</p>
+                  <p className="text-2xl font-black text-rose-600">{formatCurrency(outstandingDues)}</p>
+                </div>
               </div>
-              <h3 className="font-semibold mb-2">Payment History</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Payment History Matrix</h3>
               {payments.length === 0 ? (
-                <p className="text-muted-foreground">No payments recorded.</p>
+                <p className="text-muted-foreground italic text-sm">No recent payments discovered.</p>
               ) : (
-                <div className="overflow-x-auto max-h-48 border rounded">
+                <div className="overflow-hidden border border-border/40 rounded-3xl shadow-soft bg-white/20">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-100">
                       <tr>
@@ -1443,23 +1510,54 @@ export default function StudentReport() {
           </Card>
 
           {/* Attendance Overview */}
-          <Card id="attendance-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
-            <CardHeader className="bg-green-500/5 pb-4 border-b border-green-500/10">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <Clock className="h-6 w-6 text-green-600" />
+          <Card id="attendance-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-green-500/5 pb-6 border-b border-green-500/10 p-8">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-green-500/10 text-green-600">
+                  <Clock className="h-7 w-7" />
                 </div>
-                Attendance Analytics
+                Attendance Trajectory
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div>Total Days: {totalDays}</div>
-                <div>Present: {presentDays}</div>
-                <div>Absent: {totalDays - presentDays}</div>
-                <div>Attendance %: {attendancePercentage}%</div>
+            <CardContent className="p-8 space-y-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Sessions</p>
+                  <p className="text-3xl font-black">{totalDays}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Present</p>
+                  <p className="text-3xl font-black text-green-600">{presentDays}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Absent</p>
+                  <p className="text-3xl font-black text-rose-600">{totalDays - presentDays}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">Ratio %</p>
+                  <p className="text-3xl font-black text-primary">{attendancePercentage}%</p>
+                </div>
               </div>
-              <div className="overflow-x-auto max-h-80">
+
+              <div className="h-64 w-full bg-white/30 rounded-3xl p-6 border border-border/40 shadow-inner">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={attendanceData.map(d => ({ date: format(new Date(d.date), 'MMM d'), status: d.status === 'present' ? 1 : 0 }))}>
+                    <defs>
+                      <linearGradient id="colorAtt" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700}} />
+                    <YAxis hide domain={[0, 1.2]} />
+                    <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <Area type="step" dataKey="status" name="Presence" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorAtt)" animationDuration={1500} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="overflow-hidden border border-border/40 rounded-3xl shadow-soft bg-white/20">
                 <table className="w-full border text-sm">
                   <thead className="bg-gray-100">
                     <tr>
@@ -1494,11 +1592,11 @@ export default function StudentReport() {
           </Card>
 
           {/* Chapter-wise Performance */}
-          <Card id="milestones-section" className="border-none shadow-strong overflow-hidden rounded-2xl">
-            <CardHeader className="bg-blue-500/5 pb-4 border-b border-blue-500/10">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <BookOpen className="h-6 w-6 text-blue-600" />
+          <Card id="milestones-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-blue-500/5 pb-6 border-b border-blue-500/10 p-8">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-blue-500/10 text-blue-600">
+                  <BookOpen className="h-7 w-7" />
                 </div>
                 Curricular Milestones
               </CardTitle>
@@ -1578,12 +1676,12 @@ export default function StudentReport() {
           </Card>
 
           {/* Exam Schedules & Results Section */}
-          <Card id="published-results-section" className="border-none shadow-strong overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md">
-            <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
+          <Card id="published-results-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-primary/5 pb-6 border-b border-primary/10 p-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <GraduationCap className="h-6 w-6 text-primary" />
+                <CardTitle className="text-2xl font-black flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                    <GraduationCap className="h-7 w-7" />
                   </div>
                   Formal Assessment Records
                 </CardTitle>
@@ -1760,18 +1858,33 @@ export default function StudentReport() {
           </Card>
 
           {/* Test Report */}
-          <Card id="tests-section">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5" /> Test Report
+          <Card id="tests-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-purple-500/5 pb-6 border-b border-purple-500/10 p-8">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-600">
+                  <ClipboardCheck className="h-7 w-7" />
+                </div>
+                Academic Evolution
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-8 space-y-8">
               {testResults.length === 0 ? (
-                <p className="text-muted-foreground">No test results found for the selected filters.</p>
+                <p className="text-muted-foreground italic text-center py-12">No test results found for the selected filters.</p>
               ) : (
                 <>
-                  <div className="overflow-x-auto max-h-80 border rounded mb-4">
+                  <div className="h-72 w-full bg-white/30 rounded-3xl p-6 border border-border/40 shadow-inner">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={testResults.slice().reverse().map(r => ({ name: r.tests?.name?.substring(0, 10), score: Math.round((r.marks_obtained / (r.tests?.total_marks || 1)) * 100) }))}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700}} />
+                        <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700}} domain={[0, 100]} />
+                        <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                        <Bar dataKey="score" name="Performance %" fill="#8b5cf6" radius={[6, 6, 0, 0]} animationDuration={1500} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="overflow-hidden border border-border/40 rounded-3xl shadow-soft bg-white/20">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-100">
                         <tr>
@@ -1845,169 +1958,191 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          {/* NEW: Missed Chapters */}
-          <Card id="missed-chapters-section">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <XCircle className="h-5 w-5 text-red-600" /> Missed Chapters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {missedChapters.length === 0 ? (
-                <p className="text-muted-foreground">No missed chapters found for the selected period.</p>
-              ) : (
-                <div className="overflow-x-auto max-h-80 border rounded">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border px-2 py-1">Subject</th>
-                        <th className="border px-2 py-1">Chapter</th>
-                        <th className="border px-2 py-1">Topic</th>
-                        <th className="border px-2 py-1">Lesson Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {missedChapters.map((lp) => (
-                        <tr key={lp.id}>
-                          <td className="border px-2 py-1">{lp.subject}</td>
-                          <td className="border px-2 py-1">{lp.chapter}</td>
-                          <td className="border px-2 py-1">{lp.topic}</td>
-                          <td className="border px-2 py-1">{safeFormatDate(lp.lesson_date, "PPP")}</td>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* NEW: Missed Chapters */}
+            <Card id="missed-chapters-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+              <CardHeader className="bg-rose-500/5 pb-6 border-b border-rose-500/10 p-8">
+                <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600">
+                    <XCircle className="h-6 w-6" />
+                  </div>
+                  Pending Curriculum
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {missedChapters.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground font-medium italic">No pending chapters identified for this period.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted/30 border-b">
+                        <tr>
+                          <th className="px-6 py-4 font-bold uppercase tracking-wider text-[9px] text-muted-foreground">Subject</th>
+                          <th className="px-6 py-4 font-bold uppercase tracking-wider text-[9px] text-muted-foreground">Chapter</th>
+                          <th className="px-6 py-4 font-bold uppercase tracking-wider text-[9px] text-muted-foreground">Date</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      </thead>
+                      <tbody className="divide-y divide-border/10">
+                        {missedChapters.map((lp) => (
+                          <tr key={lp.id} className="hover:bg-rose-500/5 transition-colors">
+                            <td className="px-6 py-4 font-bold text-slate-700">{lp.subject}</td>
+                            <td className="px-6 py-4 text-slate-600">{lp.chapter}</td>
+                            <td className="px-6 py-4 text-[11px] font-medium text-slate-400">{safeFormatDate(lp.lesson_date, "PPP")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* NEW: Overdue Homework */}
-          <Card id="overdue-homework-section">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-600" /> Overdue Homework
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {overdueHomeworks.length === 0 ? (
-                <p className="text-muted-foreground">No overdue homework found for the selected period.</p>
-              ) : (
-                <div className="overflow-x-auto max-h-80 border rounded">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border px-2 py-1">Title</th>
-                        <th className="border px-2 py-1">Subject</th>
-                        <th className="border px-2 py-1">Status</th>
-                        <th className="border px-2 py-1">Due Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {overdueHomeworks.map((hw: any) => (
-                        <tr key={hw.id}>
-                          <td className="border px-2 py-1">{hw.homework?.title || '-'}</td>
-                          <td className="border px-2 py-1">{hw.homework?.subject || '-'}</td>
-                          <td className="border px-2 py-1">{hw.status}</td>
-                          <td className="border px-2 py-1">{safeFormatDate(hw.homework?.due_date, "PPP")}</td>
+            {/* NEW: Overdue Homework */}
+            <Card id="overdue-homework-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+              <CardHeader className="bg-amber-500/5 pb-6 border-b border-amber-500/10 p-8">
+                <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600">
+                    <AlertTriangle className="h-6 w-6" />
+                  </div>
+                  Overdue Assignments
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {overdueHomeworks.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground font-medium italic">All assignments are currently up to date.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted/30 border-b">
+                        <tr>
+                          <th className="px-6 py-4 font-bold uppercase tracking-wider text-[9px] text-muted-foreground">Title</th>
+                          <th className="px-6 py-4 font-bold uppercase tracking-wider text-[9px] text-muted-foreground">Subject</th>
+                          <th className="px-6 py-4 font-bold uppercase tracking-wider text-[9px] text-muted-foreground">Due</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      </thead>
+                      <tbody className="divide-y divide-border/10">
+                        {overdueHomeworks.map((hw: any) => (
+                          <tr key={hw.id} className="hover:bg-amber-500/5 transition-colors">
+                            <td className="px-6 py-4 font-bold text-slate-700">{hw.homework?.title || '-'}</td>
+                            <td className="px-6 py-4 font-medium text-slate-600">{hw.homework?.subject || '-'}</td>
+                            <td className="px-6 py-4 text-[11px] font-black text-rose-500">{safeFormatDate(hw.homework?.due_date, "PPP")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Preschool Activities */}
-          <Card id="activities-section">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Paintbrush className="h-5 w-5" /> Preschool Activities
+          <Card id="activities-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+            <CardHeader className="bg-sky-500/5 pb-6 border-b border-sky-500/10 p-8">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-sky-500/10 text-sky-600">
+                  <Paintbrush className="h-7 w-7" />
+                </div>
+                Co-Curricular Engagement
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-8">
               {preschoolActivities.length === 0 ? (
-                <p className="text-muted-foreground">No preschool activities found.</p>
+                <div className="py-12 text-center text-muted-foreground font-medium italic">No participation records discovered for activities.</div>
               ) : (
-                <div className="overflow-x-auto max-h-80 border rounded">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border px-2 py-1">Type</th>
-                        <th className="border px-2 py-1">Title</th>
-                        <th className="border px-2 py-1">Description</th>
-                        <th className="border px-2 py-1">Date</th>
-                        <th className="border px-2 py-1">Involvement</th>
-                        <th className="border px-2 py-1">Media</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {preschoolActivities.map((pa: any) => (
-                        <tr key={pa.id}>
-                          <td className="border px-2 py-1">{pa.activities?.activity_types?.name || 'N/A'}</td>
-                          <td className="border px-2 py-1">{pa.activities?.title || 'N/A'}</td>
-                          <td className="border px-2 py-1">{pa.activities?.description || 'N/A'}</td>
-                          <td className="border px-2 py-1">{pa.activities?.activity_date ? safeFormatDate(pa.activities.activity_date, "PPP") : 'N/A'}</td>
-                          <td className="border px-2 py-1">{pa.involvement_score || "N/A"}</td>
-                          <td className="border px-2 py-1">
-                            {pa.activities?.photo_url && (
-                              <a href={supabase.storage.from("activity-photos").getPublicUrl(pa.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline mr-2">Photo</a>
-                            )}
-                            {pa.activities?.video_url && (
-                              <a href={supabase.storage.from("activity-videos").getPublicUrl(pa.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Video</a>
-                            )}
-                            {!pa.activities?.photo_url && !pa.activities?.video_url && "-"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {preschoolActivities.map((pa: any) => (
+                    <Card key={pa.id} className="border-none shadow-soft overflow-hidden rounded-2xl bg-white/50 group hover:shadow-medium transition-all">
+                      <div className="aspect-video relative overflow-hidden bg-slate-100">
+                        {pa.activities?.photo_url ? (
+                          <img
+                            src={supabase.storage.from("activity-photos").getPublicUrl(pa.activities.photo_url).data.publicUrl}
+                            alt={pa.activities.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300">
+                            <Paintbrush className="h-12 w-12" />
+                          </div>
+                        )}
+                        <Badge className="absolute top-3 left-3 bg-white/90 text-slate-900 font-black text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-lg backdrop-blur-sm">
+                          {pa.activities?.activity_types?.name || 'Activity'}
+                        </Badge>
+                      </div>
+                      <CardContent className="p-5 space-y-3">
+                        <div>
+                          <h4 className="font-black text-slate-800 line-clamp-1 group-hover:text-primary transition-colors">{pa.activities?.title}</h4>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{safeFormatDate(pa.activities?.activity_date, "PPP")}</p>
+                        </div>
+                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{pa.activities?.description}</p>
+                        <div className="pt-2 flex justify-between items-center">
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase">Involvement: {pa.involvement_score || 5}/10</span>
+                          </div>
+                          <div className="flex gap-2">
+                             {pa.activities?.photo_url && (
+                               <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100" asChild>
+                                 <a href={supabase.storage.from("activity-photos").getPublicUrl(pa.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer"><Eye className="h-3.5 w-3.5" /></a>
+                               </Button>
+                             )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Discipline Issues */}
-          <Card id="discipline-section">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" /> Discipline Issues
+          <Card id="discipline-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20">
+            <CardHeader className="bg-rose-500/5 pb-6 border-b border-rose-500/10 p-8">
+              <CardTitle className="text-2xl font-black flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-600">
+                  <AlertTriangle className="h-7 w-7" />
+                </div>
+                Behavioral Log
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {disciplineIssues.length === 0 ? (
-                <p className="text-muted-foreground">No discipline issues found.</p>
+                <div className="p-12 text-center text-muted-foreground font-medium italic">No behavioral incidents reported. Clear record maintained.</div>
               ) : (
-                <div className="overflow-x-auto max-h-80 border rounded">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-muted/30 border-b">
                       <tr>
-                        <th className="border px-2 py-1">Category</th>
-                        <th className="border px-2 py-1">Description</th>
-                        <th className="border px-2 py-1">Severity</th>
-                        <th className="border px-2 py-1">Date</th>
+                        <th className="px-8 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Category</th>
+                        <th className="px-8 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Incident Context</th>
+                        <th className="px-8 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Severity</th>
+                        <th className="px-8 py-4 font-bold uppercase tracking-wider text-[10px] text-muted-foreground text-center">Action</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-border/10">
                       {disciplineIssues.map((di: any) => (
-                        <tr key={di.id}>
-                          <td className="border px-2 py-1">{di.discipline_categories?.name || 'N/A'}</td>
-                          <td className="border px-2 py-1">{di.description}</td>
-                          <td className="border px-2 py-1">
-                            <span className={`font-semibold ${getSeverityColor(di.severity)}`}>
-                              {di.severity.toUpperCase()}
-                            </span>
+                        <tr key={di.id} className="hover:bg-rose-500/5 transition-colors">
+                          <td className="px-8 py-5 font-black text-slate-700">{di.discipline_categories?.name || 'N/A'}</td>
+                          <td className="px-8 py-5">
+                            <p className="text-slate-600 line-clamp-1">{di.description}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{safeFormatDate(di.issue_date, "PPP")}</p>
                           </td>
-                          <td className="border px-2 py-1">{safeFormatDate(di.issue_date, "PPP")}</td>
-                          <td className="border px-2 py-1">
+                          <td className="px-8 py-5">
+                            <Badge className={cn("text-[9px] font-black uppercase px-2 py-0.5 rounded-lg",
+                              di.severity === "high" ? "bg-rose-500 text-white" :
+                              di.severity === "medium" ? "bg-amber-500 text-white" : "bg-emerald-500 text-white")}>
+                              {di.severity}
+                            </Badge>
+                          </td>
+                          <td className="px-8 py-5 text-center">
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-6 text-[10px] font-bold uppercase text-primary"
+                              size="icon"
+                              className="h-9 w-9 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl"
                               onClick={() => setSelectedDisciplineIssue(di)}
                             >
-                              Details
+                              <Eye className="h-4.5 w-4.5" />
                             </Button>
                           </td>
                         </tr>
@@ -2019,21 +2154,65 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-              {/* AI Summary */}
-              <Card id="ai-summary-section">
-                <CardHeader>
-                  <CardTitle>AI Performance Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {aiSummary ? (
-                    <Textarea value={aiSummary} onChange={e => setAiSummary(e.target.value)} rows={12} className="resize-none" />
-                  ) : (
-                    <Button onClick={() => generateSummaryMutation.mutate()} disabled={generateSummaryMutation.isPending}>
-                      {generateSummaryMutation.isPending ? "Generating..." : "Generate AI Summary"}
+          {/* AI Summary */}
+          <Card id="ai-summary-section" className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-indigo-950 text-white border border-white/10 relative">
+            <div className="absolute top-0 right-0 p-8 opacity-10">
+              <Star className="h-32 w-32 rotate-12" />
+            </div>
+            <CardHeader className="pb-6 border-b border-white/10 p-10 relative z-10">
+              <CardTitle className="text-3xl font-black flex items-center gap-4">
+                <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  <Star className="h-8 w-8 animate-pulse" />
+                </div>
+                AI Synthesis Report
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-10 relative z-10">
+              {aiSummary ? (
+                <div className="space-y-6">
+                  <div className="prose prose-invert max-w-none">
+                    <Textarea
+                      value={aiSummary}
+                      onChange={e => setAiSummary(e.target.value)}
+                      rows={12}
+                      className="resize-none bg-white/5 border-white/10 text-indigo-100 font-medium leading-relaxed rounded-3xl p-8 focus:ring-indigo-500/50 shadow-inner"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center pt-4">
+                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Neural Insight Generated</p>
+                    <Button
+                      variant="ghost"
+                      className="text-indigo-300 hover:text-white hover:bg-white/10 font-bold uppercase text-[10px] tracking-widest"
+                      onClick={() => generateSummaryMutation.mutate()}
+                    >
+                      Regenerate Insight
                     </Button>
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 flex flex-col items-center justify-center space-y-8 text-center">
+                   <div className="space-y-2">
+                     <p className="text-indigo-200 font-bold text-xl">Analyze Performance Trends with AI</p>
+                     <p className="text-indigo-400/80 max-w-md mx-auto">Generate a comprehensive summary of student performance, behavioral patterns, and academic trajectory using our advanced synthesis engine.</p>
+                   </div>
+                   <Button
+                    onClick={() => generateSummaryMutation.mutate()}
+                    disabled={generateSummaryMutation.isPending}
+                    className="h-16 px-12 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-500/40 border-b-4 border-indigo-700 active:border-b-0 active:translate-y-1 transition-all"
+                   >
+                    {generateSummaryMutation.isPending ? (
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Synthesizing...
+                      </div>
+                    ) : (
+                      "Initialize Synthesis"
+                    )}
+                   </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
             </div>
           )}
         </div>

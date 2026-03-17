@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X } from "lucide-react";
+import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -56,6 +56,10 @@ export default function RegisterStudent() {
     roll_number: ""
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Student | null>(null);
   const [isCreatingParent, setIsCreatingParent] = useState(false);
@@ -95,6 +99,43 @@ export default function RegisterStudent() {
 
   const uniqueGrades = Array.from(new Set(students?.map(s => s.grade) || [])).sort();
 
+  const handlePhotoChange = (file: File | null) => {
+    setPhotoFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(null);
+    }
+  };
+
+  const validateStep = (step: number) => {
+    const errors: Record<string, string> = {};
+    if (step === 1) {
+      if (!formData.name) errors.name = "Full name is required";
+      if (!formData.date_of_birth) errors.date_of_birth = "Date of birth is required";
+    } else if (step === 2) {
+      if (!formData.grade) errors.grade = "Grade is required";
+      if (!formData.school_name) errors.school_name = "Academy name is required";
+    } else if (step === 3) {
+      if (!formData.parent_name) errors.parent_name = "Guardian name is required";
+      if (!formData.contact_number) errors.contact_number = "Contact number is required";
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const prevStep = () => setCurrentStep(prev => prev - 1);
+
   // Single student create
   const createMutation = useMutation({
     mutationFn: async (student: typeof formData) => {
@@ -105,8 +146,6 @@ export default function RegisterStudent() {
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        console.log('Uploading photo:', fileName);
-
         const { error: uploadError } = await supabase.storage
           .from('activity-photos')
           .upload(fileName, photoFile, {
@@ -114,14 +153,10 @@ export default function RegisterStudent() {
             upsert: false
           });
 
-        if (uploadError) {
-          console.error('Upload Error:', uploadError);
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
         photo_url = fileName;
       }
 
-      // Get center short code and last student ID for safe sequence generation
       const { data: center } = await supabase.from('centers').select('short_code').eq('id', user.center_id).single();
       const { data: lastStudent } = await supabase
         .from('students')
@@ -169,6 +204,8 @@ export default function RegisterStudent() {
         roll_number: ""
       });
       setPhotoFile(null);
+      setPhotoPreview(null);
+      setCurrentStep(1);
       toast.success("Student registered successfully!");
     },
     onError: () => {
@@ -185,8 +222,6 @@ export default function RegisterStudent() {
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        console.log('Updating photo:', fileName);
-
         const { error: uploadError } = await supabase.storage
           .from('activity-photos')
           .upload(fileName, photoFile, {
@@ -194,10 +229,7 @@ export default function RegisterStudent() {
             upsert: false
           });
 
-        if (uploadError) {
-          console.error('Upload Error:', uploadError);
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
         photo_url = fileName;
       }
 
@@ -222,6 +254,7 @@ export default function RegisterStudent() {
       queryClient.invalidateQueries({ queryKey: ["students", user?.center_id] });
       setEditingId(null);
       setEditData(null);
+      setPhotoFile(null);
       toast.success("Student updated successfully!");
     },
     onError: () => {
@@ -334,13 +367,7 @@ export default function RegisterStudent() {
     const header = rows[0].map((h) => h.toLowerCase());
     let startIndex = 0;
     let hasHeader = false;
-    const expectedFields = [
-      "name",
-      "grade",
-      "school_name",
-      "parent_name",
-      "contact_number",
-    ];
+    const expectedFields = ["name", "grade", "school_name", "parent_name", "contact_number"];
     const matchesHeader = expectedFields.every((f) => header.includes(f));
     if (matchesHeader) {
       hasHeader = true;
@@ -452,7 +479,9 @@ export default function RegisterStudent() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (validateStep(3)) {
+      createMutation.mutate(formData);
+    }
   };
 
   const handleEdit = (student: any) => {
@@ -467,6 +496,7 @@ export default function RegisterStudent() {
   const handleCancel = () => {
     setEditingId(null);
     setEditData(null);
+    setPhotoFile(null);
   };
 
   const handleCreateParentAccount = (student: Student) => {
@@ -476,8 +506,45 @@ export default function RegisterStudent() {
     setIsCreatingParent(true);
   };
 
+  const renderStepIndicator = () => {
+    const steps = [
+      { id: 1, label: "Personal" },
+      { id: 2, label: "Academic" },
+      { id: 3, label: "Guardian" }
+    ];
+
+    return (
+      <div className="flex items-center justify-center mb-12">
+        {steps.map((step, idx) => (
+          <React.Fragment key={step.id}>
+            <div className="flex flex-col items-center relative">
+              <div className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center font-black text-sm transition-all duration-500 z-10",
+                currentStep >= step.id ? "bg-primary text-white shadow-lg shadow-primary/20 scale-110" : "bg-muted text-muted-foreground"
+              )}>
+                {currentStep > step.id ? <Check className="h-5 w-5" /> : step.id}
+              </div>
+              <span className={cn(
+                "absolute -bottom-7 text-[10px] font-black uppercase tracking-widest transition-colors duration-500 whitespace-nowrap",
+                currentStep >= step.id ? "text-primary" : "text-muted-foreground"
+              )}>
+                {step.label}
+              </span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className={cn(
+                "w-20 h-1 mx-2 rounded-full transition-colors duration-500",
+                currentStep > step.id ? "bg-primary" : "bg-muted"
+              )} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
@@ -518,8 +585,8 @@ export default function RegisterStudent() {
         </TabsList>
 
         <TabsContent value="enrolment" className="space-y-8 outline-none">
-      {/* Single Student Form */}
-      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 group hover:shadow-xl transition-all duration-500">
+      {/* Single Student Form Wizard */}
+      <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20 group hover:shadow-xl transition-all duration-500">
         <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
           <CardTitle className="text-xl font-black flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10 group-hover:scale-110 transition-transform">
@@ -529,159 +596,219 @@ export default function RegisterStudent() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Identity *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  placeholder="Enter full name"
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="roll_number" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Roll Number</Label>
-                <Input
-                  id="roll_number"
-                  value={formData.roll_number}
-                  onChange={(e) => setFormData({ ...formData, roll_number: e.target.value })}
-                  placeholder="e.g. 01"
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="grade" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Grade Level *</Label>
-                <Input
-                  id="grade"
-                  value={formData.grade}
-                  onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                  required
-                  placeholder="e.g. 5, 10, XII"
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="school_name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Academy Name *</Label>
-                <Input
-                  id="school_name"
-                  value={formData.school_name}
-                  onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
-                  required
-                  placeholder="School name"
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="parent_name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Guardian Name *</Label>
-                <Input
-                  id="parent_name"
-                  value={formData.parent_name}
-                  onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
-                  required
-                  placeholder="Parent/Guardian"
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact_number" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telecom Protocol *</Label>
-                <Input
-                  id="contact_number"
-                  value={formData.contact_number}
-                  onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                  required
-                  placeholder="Phone number"
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dob" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Date of Birth</Label>
-                <Input
-                  id="dob"
-                  type="date"
-                  value={formData.date_of_birth}
-                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gender" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Gender</Label>
-                <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
-                  <SelectTrigger className="h-12 rounded-2xl bg-card/50 border-none shadow-soft">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="blood_group" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Blood Group</Label>
-                <Input
-                  id="blood_group"
-                  value={formData.blood_group}
-                  onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
-                  placeholder="e.g. O+"
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="photo" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Student Photo</Label>
-                <Input
-                  id="photo"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20 p-2"
-                />
-              </div>
-            </div>
+          {renderStepIndicator()}
 
-            {/* Actions */}
-            <div className="flex flex-wrap gap-3 items-center pt-4 border-t border-slate-100">
-              <Button type="submit" className="h-12 rounded-2xl px-8 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">
-                ENROL STUDENT
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setShowLinkChildDialog(true)} className="h-12 rounded-2xl font-black uppercase text-xs tracking-widest border-2 shadow-soft hover:bg-card/60">
-                <Users className="h-4 w-4 mr-2" /> LINK GUARDIAN
-              </Button>
-              <div className="flex-1" />
+          <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto">
+            {currentStep === 1 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+                <div className="grid gap-8 md:grid-cols-2">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.name ? "text-destructive" : "text-slate-400")}>Full Identity *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        placeholder="Enter full name"
+                        className={cn("h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20", formErrors.name && "ring-2 ring-destructive/20")}
+                      />
+                      {formErrors.name && <p className="text-[10px] font-bold text-destructive ml-1">{formErrors.name}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dob" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.date_of_birth ? "text-destructive" : "text-slate-400")}>Date of Birth *</Label>
+                      <Input
+                        id="dob"
+                        type="date"
+                        value={formData.date_of_birth}
+                        onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                        className={cn("h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20", formErrors.date_of_birth && "ring-2 ring-destructive/20")}
+                      />
+                      {formErrors.date_of_birth && <p className="text-[10px] font-bold text-destructive ml-1">{formErrors.date_of_birth}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="gender" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Gender</Label>
+                        <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
+                          <SelectTrigger className="h-12 rounded-2xl bg-card/50 border-none shadow-soft">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="blood_group" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Blood Group</Label>
+                        <Input
+                          id="blood_group"
+                          value={formData.blood_group}
+                          onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
+                          placeholder="e.g. O+"
+                          className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="relative group/photo">
+                      <div className="w-40 h-40 rounded-3xl bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-200 overflow-hidden shadow-inner transition-all group-hover/photo:border-primary/40">
+                        {photoPreview ? (
+                          <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="h-16 w-16 text-slate-300" />
+                        )}
+                      </div>
+                      <Label
+                        htmlFor="photo"
+                        className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform"
+                      >
+                        <Upload className="h-5 w-5" />
+                        <Input
+                          id="photo"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
+                        />
+                      </Label>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Student Portrait</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="grade" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.grade ? "text-destructive" : "text-slate-400")}>Grade Level *</Label>
+                    <Input
+                      id="grade"
+                      value={formData.grade}
+                      onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                      required
+                      placeholder="e.g. 5, 10, XII"
+                      className={cn("h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20", formErrors.grade && "ring-2 ring-destructive/20")}
+                    />
+                    {formErrors.grade && <p className="text-[10px] font-bold text-destructive ml-1">{formErrors.grade}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="roll_number" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Roll Number</Label>
+                    <Input
+                      id="roll_number"
+                      value={formData.roll_number}
+                      onChange={(e) => setFormData({ ...formData, roll_number: e.target.value })}
+                      placeholder="e.g. 01"
+                      className="h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20"
+                    />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="school_name" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.school_name ? "text-destructive" : "text-slate-400")}>Academy Name *</Label>
+                    <Input
+                      id="school_name"
+                      value={formData.school_name}
+                      onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
+                      required
+                      placeholder="Enter the name of previous/current academy"
+                      className={cn("h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20", formErrors.school_name && "ring-2 ring-destructive/20")}
+                    />
+                    {formErrors.school_name && <p className="text-[10px] font-bold text-destructive ml-1">{formErrors.school_name}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_name" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.parent_name ? "text-destructive" : "text-slate-400")}>Guardian Name *</Label>
+                    <Input
+                      id="parent_name"
+                      value={formData.parent_name}
+                      onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
+                      required
+                      placeholder="Enter parent or guardian full name"
+                      className={cn("h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20", formErrors.parent_name && "ring-2 ring-destructive/20")}
+                    />
+                    {formErrors.parent_name && <p className="text-[10px] font-bold text-destructive ml-1">{formErrors.parent_name}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_number" className={cn("text-[10px] font-black uppercase tracking-widest ml-1", formErrors.contact_number ? "text-destructive" : "text-slate-400")}>Telecom Protocol *</Label>
+                    <Input
+                      id="contact_number"
+                      value={formData.contact_number}
+                      onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
+                      required
+                      placeholder="Phone number"
+                      className={cn("h-12 rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20", formErrors.contact_number && "ring-2 ring-destructive/20")}
+                    />
+                    {formErrors.contact_number && <p className="text-[10px] font-bold text-destructive ml-1">{formErrors.contact_number}</p>}
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Residential Coordinates</Label>
+                    <Textarea
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Enter permanent residential address"
+                      className="rounded-2xl bg-card/50 border-none shadow-soft focus-visible:ring-primary/20 resize-none min-h-[100px]"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Wizard Actions */}
+            <div className="flex justify-between items-center pt-8 border-t border-slate-100">
               <Button
-                variant="ghost"
                 type="button"
-                size="sm"
-                className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors"
-                onClick={() => {
-                  const el = document.getElementById("multiline-area");
-                  if (el) el.style.display = el.style.display === "none" ? "block" : "none";
-                }}
+                variant="ghost"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="h-12 px-8 rounded-2xl font-black uppercase text-xs tracking-widest"
               >
-                BULK SYNTAX PASTE
+                <ChevronLeft className="h-4 w-4 mr-2" /> Previous
               </Button>
+
+              {currentStep < 3 ? (
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  className="h-12 px-8 rounded-2xl font-black uppercase text-xs tracking-widest bg-slate-900 text-white hover:bg-slate-800 shadow-xl"
+                >
+                  Continue <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="h-12 rounded-2xl px-12 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                >
+                  {createMutation.isPending ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>PROCESSING...</span>
+                    </div>
+                  ) : (
+                    "FINALIZE ENROLMENT"
+                  )}
+                </Button>
+              )}
             </div>
 
-            {/* Multiline paste */}
-            <div id="multiline-area" style={{ display: "none" }} className="mt-8 space-y-4 animate-in slide-in-from-top-2 duration-300">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syntax Format: name, grade, school_name, parent_name, contact_number</Label>
-              <Textarea
-                value={multilineText}
-                onChange={(e) => setMultilineText(e.target.value)}
-                rows={5}
-                placeholder="John Doe,6,ABC School,Robert Doe,9812345678"
-                className="rounded-2xl border-2 border-dashed bg-slate-50/50 focus-visible:ring-primary/20"
-              />
-              <div className="flex gap-3">
-                <Button onClick={handleParseMultiline} disabled={parsing} variant="secondary" className="rounded-xl font-black uppercase text-[10px] tracking-widest">
-                   PARSING & PREVIEW
-                </Button>
-                <Button variant="ghost" onClick={() => setMultilineText("")} className="rounded-xl text-xs">
-                  Clear
-                </Button>
-              </div>
+            {/* Link Guardian (visible in all steps as secondary action) */}
+            <div className="flex justify-center pt-4">
+              <Button type="button" variant="outline" onClick={() => setShowLinkChildDialog(true)} className="h-11 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 shadow-soft hover:bg-card/60 px-6">
+                <Users className="h-4 w-4 mr-2" /> LINK EXISTING GUARDIAN
+              </Button>
             </div>
           </form>
         </CardContent>
@@ -769,7 +896,7 @@ export default function RegisterStudent() {
                             type="file"
                             accept="image/*"
                             className="h-8 text-[8px]"
-                            onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                            onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
                           />
                           <Input
                             type="date"
