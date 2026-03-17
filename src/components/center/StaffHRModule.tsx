@@ -12,10 +12,11 @@ import { FileText, Plus, Trash2, Upload, ExternalLink, ShieldCheck, UserCheck, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 
 export default function StaffHRModule({ teacherId, teacherName }: { teacherId: string, teacherName: string }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const authCenterId = user?.center_id;
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [showAddContract, setShowAddContract] = useState(false);
   const [showAddEvaluation, setShowAddEvaluation] = useState(false);
@@ -23,30 +24,36 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
 
   const [docForm, setDocForm] = useState({ name: "", type: "Contract", url: "" });
   const [isUploading, setIsUploading] = useState(false);
-  const [contractForm, setContractForm] = useState({ type: "Permanent", start: "", end: "", salary: "" });
+  const [contractForm, setContractForm] = useState({ type: "Permanent", start: "", end: "" , salary: "" });
   const [evaluationForm, setEvaluationForm] = useState({ date: new Date().toISOString().split('T')[0], rating: "5", comments: "" });
-  const [payrollForm, setPayrollForm] = useState({ month: format(new Date(), "MMMM"), year: new Date().getFullYear().toString(), basic: "", allowance: "0", deduction: "0" });
+  const [payrollForm, setPayrollForm] = useState(() => ({
+    month: new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date()),
+    year: new Date().getFullYear().toString(),
+    basic: "",
+    allowance: "0",
+    deduction: "0"
+  }));
 
   const { data: centerSettings } = useQuery({
-    queryKey: ["center-settings-payroll", centerId],
+    queryKey: ["center-settings-payroll", authCenterId],
     queryFn: async () => {
-      if (!centerId) return null;
-      const { data, error } = await supabase.from("centers").select("late_penalty_per_day").eq("id", centerId).single();
+      if (!authCenterId) return null;
+      const { data, error } = await supabase.from("centers").select("late_penalty_per_day").eq("id", authCenterId).single();
       if (error) throw error;
       return data;
     },
-    enabled: !!centerId,
+    enabled: !!authCenterId,
   });
 
   const { data: taxSlabs = [] } = useQuery({
-    queryKey: ["tax-slabs", centerId],
+    queryKey: ["tax-slabs", authCenterId],
     queryFn: async () => {
-      if (!centerId) return [];
-      const { data, error } = await supabase.from("tax_slabs").select("*").eq("center_id", centerId).order("min_income");
+      if (!authCenterId) return [];
+      const { data, error } = await supabase.from("tax_slabs").select("*").eq("center_id", authCenterId).order("min_income");
       if (error) throw error;
       return data;
     },
-    enabled: !!centerId,
+    enabled: !!authCenterId,
   });
 
   const { data: contracts } = useQuery({
@@ -85,13 +92,10 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
     },
   });
 
-  const { user } = useAuth();
-  const centerId = user?.center_id;
-
   const addDocMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("staff_documents").insert({
-        center_id: centerId,
+        center_id: authCenterId,
         teacher_id: teacherId,
         document_name: docForm.name,
         document_type: docForm.type,
@@ -109,13 +113,13 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !centerId) return;
+    if (!file || !authCenterId) return;
 
     try {
       setIsUploading(true);
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${centerId}/${teacherId}/${fileName}`;
+      const filePath = `${authCenterId}/${teacherId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('staff-documents')
@@ -135,7 +139,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
   const addContractMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("staff_contracts").insert({
-        center_id: centerId,
+        center_id: authCenterId,
         teacher_id: teacherId,
         contract_type: contractForm.type,
         start_date: contractForm.start,
@@ -155,7 +159,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
   const addEvaluationMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("performance_evaluations").insert({
-        center_id: centerId,
+        center_id: authCenterId,
         teacher_id: teacherId,
         evaluation_date: evaluationForm.date,
         rating: parseInt(evaluationForm.rating),
@@ -220,7 +224,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
       const netPayable = grossSalary - tax;
 
       const { error } = await supabase.from("payroll_logs").insert({
-        center_id: centerId,
+        center_id: authCenterId,
         teacher_id: teacherId,
         month: payrollForm.month,
         year: payrollForm.year,
