@@ -2,6 +2,7 @@ import { Bell, Cpu, Database, Globe, Palette, Settings2, Shield } from "lucide-r
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import ThemeSelector from "@/components/ThemeSelector";
+import LoginSettingsManager from "@/components/admin/LoginSettingsManager";
 
 const Settings = () => (
   <div className="space-y-8 animate-in fade-in duration-1000">
@@ -32,6 +33,10 @@ const Settings = () => (
             <ThemeSelector />
           </CardContent>
        </Card>
+
+       <div className="md:col-span-2">
+          <LoginSettingsManager />
+       </div>
 
        <Card className="md:col-span-2 border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
