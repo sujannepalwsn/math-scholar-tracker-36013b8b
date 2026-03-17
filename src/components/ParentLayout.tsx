@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, DollarSign, GraduationCap, Home, KeyRound, LogOut, Menu, MessageSquare, Paintbrush, Plane, Settings, Star, User, Video } from "lucide-react";
+import { AlertTriangle, Archive, Award, BarChart3, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, Star, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -10,36 +10,10 @@ import CenterLogo from "./CenterLogo";
 import NotificationBell from "./NotificationBell";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
+import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 
-const navItems: Array<{
-  to: string;
-  label: string;
-  icon: React.ElementType;
-  role?: 'admin' | 'center' | 'parent' | 'teacher';
-  unreadCount?: number;
-  category?: 'Academics' | 'Administration' | 'Reports and Communications';
-}> = [
-  { to: "/parent-dashboard", label: "Dashboard", icon: Home, role: 'parent' as const },
-
-  // Academics
-  { to: "/parent-lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'parent' as const, category: 'Academics' },
-  { to: "/parent-results", label: "Exam Results", icon: GraduationCap, role: 'parent' as const, category: 'Academics' },
-  { to: "/parent-homework", label: "Homework", icon: Book, role: 'parent' as const, category: 'Academics' },
-  { to: "/parent-activities", label: "Activities", icon: Paintbrush, role: 'parent' as const, category: 'Academics' },
-  { to: "/parent-discipline", label: "Discipline", icon: AlertTriangle, role: 'parent' as const, category: 'Academics' },
-
-  // Administration
-  { to: "/parent-settings", label: "Settings", icon: Settings, role: 'parent' as const, category: 'Administration' },
-
-  // Reports and Communication
-  { to: "/parent-messages", label: "Messages", icon: MessageSquare, role: 'parent' as const, category: 'Reports and Communication' },
-  { to: "/parent-meetings", label: "Meetings", icon: Video, role: 'parent' as const, category: 'Reports and Communication' },
-  { to: "/parent-student-report", label: "Student Report", icon: BarChart3, role: 'parent' as const, category: 'Reports and Communication' },
-  { to: "/parent-calendar", label: "Calendar", icon: Calendar, role: 'parent' as const, category: 'Reports and Communication' },
-  { to: "/parent-finance", label: "Finance", icon: DollarSign, role: 'parent' as const, category: 'Reports and Communication' },
-  { to: "/parent-leave", label: "Leave Applications", icon: Plane, role: 'parent' as const, category: 'Reports and Communication' },
-  { to: "/parent-chapter-rating", label: "Chapter Rating", icon: Star, role: 'parent' as const, category: 'Reports and Communication' },
-];
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'parent');
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -53,14 +27,17 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     navigate('/login-parent');
   };
 
+  const { dynamicCategories, dynamicItems, getIcon } = useDynamicNavigation();
+
   const { data: unreadMessageCount = 0 } = useQuery({
-    queryKey: ["unread-messages-parent", user?.id],
+    queryKey: ["unread-messages-parent", user?.id, user?.center_id],
     queryFn: async () => {
-      if (!user?.id) return 0;
+      if (!user?.id || !user?.center_id) return 0;
       const { data: conversation, error: convError } = await supabase
         .from('chat_conversations')
         .select('id')
         .eq('parent_user_id', user.id)
+        .eq('center_id', user.center_id)
         .maybeSingle();
       if (convError || !conversation) return 0;
 
@@ -73,12 +50,30 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       if (error) return 0;
       return count || 0;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const updatedNavItems = navItems.map(item =>
-    item.to === "/parent-messages" ? { ...item, unreadCount: unreadMessageCount } : item
-  );
+  const updatedNavItems = dynamicItems.filter(it => it.role === 'parent').length > 0
+    ? dynamicItems.filter(it => it.role === 'parent').map(it => {
+        const cat = dynamicCategories.find(c => c.id === it.category_id);
+        return {
+          to: it.route,
+          label: it.name,
+          icon: getIcon(it.icon),
+          role: it.role as any,
+          category: cat?.name,
+          unreadCount: it.route === "/parent-messages" ? unreadMessageCount : undefined,
+          is_active: it.is_active
+        };
+      })
+    : staticNavItems.map(item => ({
+        to: item.route,
+        label: item.name,
+        icon: getIcon(item.icon),
+        role: item.role as any,
+        category: item.category as any,
+        unreadCount: item.route === "/parent-messages" ? unreadMessageCount : undefined
+      }));
 
   const headerContent = (
     <CenterLogo size="md" showName={true} />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Award, BarChart3, Book, BookOpen, Brain, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, TrendingUp, User, Video } from "lucide-react";
+import { AlertTriangle, Archive, Award, BarChart3, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, Star, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -11,48 +11,9 @@ import NotificationBell from "./NotificationBell";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
+import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 
-const navItems: Array<{
-  to: string;
-  label: string;
-  icon: React.ElementType;
-  role?: 'admin' | 'center' | 'parent' | 'teacher';
-  featureName?: string;
-  unreadCount?: number;
-  category?: 'Academics' | 'Administration' | 'Reports and Communications';
-}> = [
-  { to: "/teacher-dashboard", label: "Dashboard", icon: Home, role: 'teacher' as const, featureName: 'dashboard_access' },
-
-  // Academics
-  { to: "/teacher/take-attendance", label: "Take Attendance", icon: CheckSquare, role: 'teacher' as const, featureName: 'take_attendance', category: 'Academics' },
-  { to: "/teacher/lesson-plans", label: "Lesson Plans", icon: LayoutList, role: 'teacher' as const, featureName: 'lesson_plans', category: 'Academics' },
-  { to: "/teacher/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'teacher' as const, featureName: 'lesson_tracking', category: 'Academics' },
-  { to: "/teacher/homework-management", label: "Homework", icon: Book, role: 'teacher' as const, featureName: 'homework_management', category: 'Academics' },
-  { to: "/teacher/test-management", label: "Tests", icon: ClipboardCheck, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
-  { to: "/teacher/exams", label: "Exams & Results", icon: GraduationCap, role: 'teacher' as const, featureName: 'exams_results', category: 'Academics' },
-  { to: "/teacher/published-results", label: "Published Results", icon: Award, role: 'teacher' as const, featureName: 'published_results', category: 'Academics' },
-  { to: "/teacher/marks-entry", label: "Marks Entry", icon: PenTool, role: 'teacher' as const, featureName: 'test_management', category: 'Academics' },
-  { to: "/teacher/my-attendance", label: "My Attendance", icon: Clock, role: 'teacher' as const, category: 'Academics' },
-  { to: "/teacher/activities", label: "Activities", icon: Paintbrush, role: 'teacher' as const, featureName: 'preschool_activities', category: 'Academics' },
-  { to: "/teacher/discipline-issues", label: "Discipline", icon: AlertTriangle, role: 'teacher' as const, featureName: 'discipline_issues', category: 'Academics' },
-  { to: "/teacher/class-routine", label: "Class Routine", icon: Clock, role: 'teacher' as const, featureName: 'class_routine', category: 'Academics' },
-
-  // Administration
-  { to: "/teacher/chapter-performance", label: "Chapter Performance", icon: TrendingUp, role: 'teacher' as const, featureName: 'chapter_performance', category: 'Administration' },
-  { to: "/teacher/settings", label: "Settings", icon: Settings, role: 'teacher' as const, category: 'Administration' },
-
-  // Reports and Communication
-  { to: "/teacher-messages", label: "Messages", icon: MessageSquare, role: 'teacher' as const, featureName: 'messaging', category: 'Reports and Communication' },
-  { to: "/teacher-meetings", label: "Meetings", icon: Video, role: 'teacher' as const, featureName: 'meetings_management', category: 'Reports and Communication' },
-  { to: "/teacher/calendar", label: "Calendar", icon: Calendar, role: 'teacher' as const, featureName: 'calendar_events', category: 'Reports and Communication' },
-  { to: "/teacher/student-report", label: "Student Report", icon: User, role: 'teacher' as const, featureName: 'student_report', category: 'Reports and Communication' },
-  { to: "/teacher/attendance-summary", label: "Attendance Summary", icon: CalendarDays, role: 'teacher' as const, featureName: 'attendance_summary', category: 'Reports and Communication' },
-  { to: "/teacher/summary", label: "Summary", icon: BarChart3, role: 'teacher' as const, featureName: 'summary', category: 'Reports and Communication' },
-  { to: "/teacher/view-records", label: "View Records", icon: FileText, role: 'teacher' as const, featureName: 'view_records', category: 'Reports and Communication' },
-  { to: "/teacher/finance", label: "Finance", icon: DollarSign, role: 'teacher' as const, featureName: 'finance', category: 'Reports and Communication' },
-  { to: "/teacher/leave", label: "Leave Applications", icon: Plane, role: 'teacher' as const, featureName: 'leave_management', category: 'Reports and Communication' },
-  { to: "/teacher/ai-insights", label: "AI Insights", icon: Brain, role: 'teacher' as const, featureName: 'ai_insights', category: 'Reports and Communication' },
-];
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher');
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -105,10 +66,16 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           unreadCount: it.route === "/teacher-messages" ? unreadMessageCount : undefined,
           is_active: it.is_active
         };
-      }).filter(it => it.is_active !== false)
-    : navItems.map(item =>
-        item.to === "/teacher-messages" ? { ...item, unreadCount: unreadMessageCount } : item
-      );
+      })
+    : staticNavItems.map(item => ({
+        to: item.route,
+        label: item.name,
+        icon: getIcon(item.icon),
+        role: item.role as any,
+        featureName: item.feature_name,
+        category: item.category as any,
+        unreadCount: item.route === "/teacher-messages" ? unreadMessageCount : undefined
+      }));
 
   const headerContent = (
     <CenterLogo size="md" showName={true} />

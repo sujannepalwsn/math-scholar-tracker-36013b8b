@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Archive, Award, BarChart3, Bell, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, CreditCard, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
+import { AlertTriangle, Archive, Award, BarChart3, Bell, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, CreditCard, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, Star, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -11,54 +11,9 @@ import NotificationBell from "./NotificationBell";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
+import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 
-const navItems: Array<{
-  to: string;
-  label: string;
-  icon: React.ElementType;
-  role?: 'admin' | 'center' | 'parent' | 'teacher';
-  featureName?: string;
-  unreadCount?: number;
-  category?: 'Academics' | 'Administration' | 'Reports and Communications';
-}> = [
-  { to: "/", label: "Dashboard", icon: Home, role: 'center' as const, featureName: 'dashboard_access' },
-
-  // Academics Group
-  { to: "/attendance", label: "Take Attendance", icon: CheckSquare, role: 'center' as const, featureName: 'take_attendance', category: 'Academics' },
-  { to: "/class-routine", label: "Class Routine", icon: Clock, role: 'center' as const, featureName: 'class_routine', category: 'Academics' },
-  { to: "/lesson-plan-management", label: "Lesson Plan Management", icon: LayoutList, role: 'center' as const, featureName: 'lesson_plans', category: 'Academics' },
-  { to: "/lesson-tracking", label: "Lesson Tracking", icon: BookOpen, role: 'center' as const, featureName: 'lesson_tracking', category: 'Academics' },
-  { to: "/homework", label: "Homework", icon: Book, role: 'center' as const, featureName: 'homework_management', category: 'Academics' },
-  { to: "/tests", label: "Tests", icon: ClipboardCheck, role: 'center' as const, featureName: 'test_management', category: 'Academics' },
-  { to: "/exams", label: "Exams & Results", icon: GraduationCap, role: 'center' as const, featureName: 'exams_results', category: 'Academics' },
-  { to: "/published-results", label: "Published Results", icon: Award, role: 'center' as const, featureName: 'published_results', category: 'Academics' },
-  { to: "/activities", label: "Activities", icon: Paintbrush, role: 'center' as const, featureName: 'preschool_activities', category: 'Academics' },
-  { to: "/discipline", label: "Discipline", icon: AlertTriangle, role: 'center' as const, featureName: 'discipline_issues', category: 'Academics' },
-
-  // Administration Group
-  { to: "/register", label: "Students Registration", icon: UserPlus, role: 'center' as const, featureName: 'students_registration', category: 'Administration' },
-  { to: "/teachers", label: "Teachers Registration", icon: Users, role: 'center' as const, featureName: 'teacher_management', category: 'Administration' },
-  { to: "/teacher-attendance", label: "Teachers' Attendance", icon: UserCheck, role: 'center' as const, featureName: 'teachers_attendance', category: 'Administration' },
-  { to: "/hr-management", label: "HR Management", icon: Award, role: 'center' as const, featureName: 'hr_management', category: 'Administration' },
-  { to: "/leave-management", label: "Leave Management", icon: Plane, role: 'center' as const, featureName: 'leave_management', category: 'Administration' },
-  { to: "/student-id-cards", label: "Student ID Cards", icon: IdCard, role: 'center' as const, featureName: 'student_id_cards', category: 'Administration' },
-  { to: "/inventory", label: "Inventory & Assets", icon: Archive, role: 'center' as const, featureName: 'inventory_assets', category: 'Administration' },
-  { to: "/transport", label: "Transport & Tracking", icon: Bus, role: 'center' as const, featureName: 'transport_tracking', category: 'Administration' },
-  { to: "/school-days", label: "School Days", icon: CalendarDays, role: 'center' as const, featureName: 'school_days', category: 'Administration' },
-  { to: "/settings", label: "Settings", icon: Settings, role: 'center' as const, featureName: 'settings_access', category: 'Administration' },
-
-  // Reports and Communication Group
-  { to: "/messages", label: "Messages", icon: MessageSquare, role: 'center' as const, featureName: 'messaging', category: 'Reports and Communication' },
-  { to: "/meetings", label: "Meetings", icon: Video, role: 'center' as const, featureName: 'meetings_management', category: 'Reports and Communication' },
-  { to: "/calendar", label: "Calendar & Events", icon: CalendarDays, role: 'center' as const, featureName: 'calendar_events', category: 'Reports and Communication' },
-  { to: "/student-report", label: "Student Report", icon: User, role: 'center' as const, featureName: 'student_report', category: 'Reports and Communication' },
-  { to: "/attendance-summary", label: "Attendance Summary", icon: Calendar, role: 'center' as const, featureName: 'attendance_summary', category: 'Reports and Communication' },
-  { to: "/summary", label: "Summary", icon: BarChart3, role: 'center' as const, featureName: 'summary', category: 'Reports and Communication' },
-  { to: "/teacher-performance", label: "Teacher Reports", icon: BarChart3, role: 'center' as const, featureName: 'teacher_reports', category: 'Reports and Communication' },
-  { to: "/chapter-performance-overview", label: "Chapter Performance", icon: TrendingUp, role: 'center' as const, featureName: 'chapter_performance', category: 'Reports and Communication' },
-  { to: "/records", label: "View Records", icon: FileText, role: 'center' as const, featureName: 'view_records', category: 'Reports and Communication' },
-  { to: "/finance", label: "Finance", icon: DollarSign, role: 'center' as const, featureName: 'finance', category: 'Reports and Communication' },
-];
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'center');
 
 export default function CenterLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -98,8 +53,8 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const updatedNavItems = dynamicItems.length > 0
-    ? dynamicItems.map(it => {
+  const updatedNavItems = dynamicItems.filter(it => it.role === 'center').length > 0
+    ? dynamicItems.filter(it => it.role === 'center').map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
         return {
           to: it.route,
@@ -111,10 +66,16 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
           unreadCount: it.route === "/messages" ? unreadMessageCount : undefined,
           is_active: it.is_active
         };
-      }).filter(it => it.is_active !== false)
-    : navItems.map(item =>
-        item.to === "/messages" ? { ...item, unreadCount: unreadMessageCount } : item
-      );
+      })
+    : staticNavItems.map(item => ({
+        to: item.route,
+        label: item.name,
+        icon: getIcon(item.icon),
+        role: item.role as any,
+        featureName: item.feature_name,
+        category: item.category as any,
+        unreadCount: item.route === "/messages" ? unreadMessageCount : undefined
+      }));
 
   const headerContent = (
     <CenterLogo size="md" showName={true} />
