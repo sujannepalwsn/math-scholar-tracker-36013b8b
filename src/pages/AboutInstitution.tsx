@@ -53,7 +53,8 @@ export default function AboutInstitution() {
     address: "",
     principal_name: "",
     website_url: "",
-    short_code: ""
+    short_code: "",
+    header_bg_url: ""
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -112,7 +113,8 @@ export default function AboutInstitution() {
         address: center.address || "",
         principal_name: center.principal_name || "",
         website_url: center.website_url || "",
-        short_code: center.short_code || ""
+        short_code: center.short_code || "",
+        header_bg_url: center.header_bg_url || ""
       });
     }
   }, [center]);
@@ -136,7 +138,8 @@ export default function AboutInstitution() {
           address: formData.address,
           principal_name: formData.principal_name,
           website_url: formData.website_url,
-          short_code: formData.short_code
+          short_code: formData.short_code,
+          header_bg_url: formData.header_bg_url
         })
         .eq("id", user.center_id);
       if (error) throw error;

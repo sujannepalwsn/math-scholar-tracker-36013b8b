@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
-  User, Hash, Calendar, Loader2, Camera
+  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +28,8 @@ export default function DashboardHeader() {
     principal_name: "",
     short_code: "",
     website_url: "",
-    logo_url: ""
+    logo_url: "",
+    header_bg_url: ""
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -79,10 +80,11 @@ export default function DashboardHeader() {
         address: center.address || "",
         phone: center.phone || "",
         email: center.email || "",
-        principal_name: (center as any).principal_name || "",
-        short_code: (center as any).short_code || "",
-        website_url: (center as any).website_url || "",
-        logo_url: center.logo_url || ""
+        principal_name: center.principal_name || "",
+        short_code: center.short_code || "",
+        website_url: center.website_url || "",
+        logo_url: center.logo_url || "",
+        header_bg_url: center.header_bg_url || ""
       });
     }
   }, [center]);
@@ -100,7 +102,8 @@ export default function DashboardHeader() {
           principal_name: formData.principal_name,
           short_code: formData.short_code,
           website_url: formData.website_url,
-          logo_url: formData.logo_url
+          logo_url: formData.logo_url,
+          header_bg_url: formData.header_bg_url
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -121,28 +124,30 @@ export default function DashboardHeader() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'bg') => {
     const file = e.target.files?.[0];
     if (!file || !user?.center_id) return;
 
     try {
       const fileExt = file.name.split('.').pop();
-      const filePath = `${user.center_id}/logo-${Math.random()}.${fileExt}`;
+      const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
+      const filePath = `${user.center_id}/${type}-${Math.random()}.${fileExt}`;
 
+      // Check if bucket exists, if not we might need to handle it or assume it exists
       const { error: uploadError } = await supabase.storage
-        .from('center-logos')
+        .from(bucket)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('center-logos')
+        .from(bucket)
         .getPublicUrl(filePath);
 
-      setFormData(prev => ({ ...prev, logo_url: publicUrl }));
-      toast.success("Logo uploaded! Remember to save changes.");
+      setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
+      toast.success(`${type === 'logo' ? 'Logo' : 'Background'} uploaded! Remember to save changes.`);
     } catch (error: any) {
-      toast.error("Error uploading logo: " + error.message);
+      toast.error(`Error uploading ${type}: ` + error.message);
     }
   };
 
@@ -157,61 +162,82 @@ export default function DashboardHeader() {
   const canEdit = user?.role === 'center';
 
   return (
-    <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20 mb-8">
-      <CardContent className="p-0">
-        <div className="flex flex-col lg:flex-row items-stretch">
+    <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20 mb-8 relative">
+      {/* Background Image Overlay */}
+      {formData.header_bg_url && (
+        <div
+          className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-cover bg-center"
+          style={{ backgroundImage: `url(${formData.header_bg_url})` }}
+        />
+      )}
+
+      <CardContent className="p-0 relative z-10">
+        {isEditMode && (
+          <div className="absolute top-4 left-4 z-20">
+            <label className="p-2 rounded-xl bg-white/80 backdrop-blur-sm shadow-soft border border-border/50 cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
+              <ImageIcon className="h-4 w-4" />
+              Change Background
+              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
+            </label>
+          </div>
+        )}
+
+        <div className="flex flex-row items-center lg:items-stretch">
           {/* Logo Section */}
-          <div className="relative group lg:w-48 bg-primary/5 flex items-center justify-center p-8 border-b lg:border-b-0 lg:border-r border-border/10">
-            <div className="relative h-24 w-24 md:h-32 md:w-32 rounded-3xl overflow-hidden bg-white shadow-soft flex items-center justify-center border-4 border-white">
+          <div className="relative group w-24 md:w-32 lg:w-48 bg-primary/5 flex items-center justify-center p-4 md:p-6 lg:p-8 border-r border-border/10">
+            <div className="relative h-16 w-16 md:h-24 md:w-24 lg:h-32 lg:w-32 rounded-2xl md:rounded-3xl overflow-hidden bg-white shadow-soft flex items-center justify-center border-2 md:border-4 border-white">
               {formData.logo_url ? (
                 <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain" />
               ) : (
-                <Building className="h-12 w-12 text-primary/20" />
+                <div className="flex flex-col items-center gap-1 opacity-20">
+                  <Building className="h-8 w-8 text-primary" />
+                  {isEditMode && <span className="text-[8px] font-black uppercase">Upload Logo</span>}
+                </div>
               )}
               {isEditMode && (
                 <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-8 w-8 text-white" />
-                  <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                  <Camera className="h-6 w-6 md:h-8 md:w-8 text-white" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo')} />
                 </label>
               )}
             </div>
           </div>
 
           {/* Details Section */}
-          <div className="flex-1 p-6 md:p-8 space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-              <div className="space-y-2 flex-1 w-full">
+          <div className="flex-1 p-4 md:p-6 lg:p-8 space-y-4 md:space-y-6 overflow-hidden">
+            <div className="flex flex-row justify-between items-center md:items-start gap-4">
+              <div className="space-y-1 md:space-y-2 flex-1 min-w-0">
                 {isEditMode ? (
                   <Input
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="text-2xl md:text-3xl font-black h-auto py-1 px-2 -ml-2 bg-white/50 border-primary/20"
+                    className="text-lg md:text-2xl lg:text-3xl font-black h-auto py-1 px-2 -ml-2 bg-white/50 border-primary/20"
                     placeholder="School Name"
                   />
                 ) : (
-                  <h1 className="text-2xl md:text-4xl font-black tracking-tight text-foreground/90">
+                  <h1 className="text-lg md:text-2xl lg:text-4xl font-black tracking-tight text-foreground/90 truncate">
                     {formData.name || "School Name"}
                   </h1>
                 )}
 
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                  <MapPin className="h-3 w-3 md:h-4 md:w-4 shrink-0 text-primary" />
                   {isEditMode ? (
                     <Input
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
-                      className="h-8 text-sm bg-white/50 border-primary/20"
+                      className="h-7 md:h-8 text-[10px] md:text-sm bg-white/50 border-primary/20"
                       placeholder="Address"
                     />
                   ) : (
-                    <span className="text-sm font-medium">{formData.address || "Address not specified"}</span>
+                    <span className="text-[10px] md:text-sm font-medium truncate">{formData.address || "Address not specified"}</span>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 self-end md:self-start">
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className="hidden md:flex flex-col items-end mr-2">
                   <p className="text-xs font-black text-foreground/90 leading-none">{user?.username?.split('@')[0]}</p>
                   <Badge variant="outline" className="mt-1 text-[9px] font-black uppercase tracking-widest border-primary/20 text-primary bg-primary/5">
@@ -236,7 +262,7 @@ export default function DashboardHeader() {
             </div>
 
             {/* Grid of details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8 pt-4 border-t border-border/10">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4 md:gap-x-8 pt-3 md:pt-4 border-t border-border/10">
               <DetailItem
                 icon={User}
                 label="Principal"
