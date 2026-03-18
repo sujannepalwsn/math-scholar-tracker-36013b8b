@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
-  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon
+  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon, Trash2
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,7 +141,7 @@ export default function DashboardHeader() {
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
       // Delete old file if it exists
-      if (oldUrl) {
+      if (oldUrl && typeof oldUrl === 'string' && oldUrl.includes(bucket)) {
         try {
           const oldPath = oldUrl.split(`${bucket}/`)[1];
           if (oldPath) {
@@ -166,9 +166,12 @@ export default function DashboardHeader() {
     const toastId = toast.loading("Removing background...");
     try {
       const bucket = 'center-backgrounds';
-      const oldPath = formData.header_bg_url.split(`${bucket}/`)[1];
-      if (oldPath) {
-        await supabase.storage.from(bucket).remove([oldPath]);
+      const oldUrl = formData.header_bg_url;
+      if (oldUrl && typeof oldUrl === 'string' && oldUrl.includes(bucket)) {
+        const oldPath = oldUrl.split(`${bucket}/`)[1];
+        if (oldPath) {
+          await supabase.storage.from(bucket).remove([oldPath]);
+        }
       }
       setFormData(prev => ({ ...prev, header_bg_url: "" }));
       toast.dismiss(toastId);
@@ -317,12 +320,12 @@ export default function DashboardHeader() {
                     <div className="flex gap-1.5 items-center">
                       <input
                         type="color"
-                        value={formData.header_overlay_color.startsWith('rgba') ? '#ffffff' : formData.header_overlay_color}
+                        value={(formData.header_overlay_color || "").startsWith('rgba') ? '#ffffff' : (formData.header_overlay_color || "#ffffff")}
                         onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
                         className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
                       />
                       <Input
-                        value={formData.header_overlay_color}
+                        value={formData.header_overlay_color || ""}
                         onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
                         className="h-5 text-[8px] px-1 font-bold bg-transparent border-none focus-visible:ring-0"
                       />
@@ -349,7 +352,7 @@ export default function DashboardHeader() {
 
           {/* Details Grid - Ensuring full visibility with 2-column horizontal layout on mobile */}
           <div className="flex-1 min-w-0 mt-2">
-            <div className="grid grid-cols-2 gap-y-4 md:gap-y-6 gap-x-2 md:gap-x-10">
+            <div className="grid grid-cols-2 gap-y-2 md:gap-y-3 gap-x-2 md:gap-x-10">
               <DetailItem
                 icon={User}
                 label="Principal"

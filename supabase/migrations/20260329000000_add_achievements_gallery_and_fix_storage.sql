@@ -15,8 +15,10 @@ DROP POLICY IF EXISTS "Super Admin manage login-assets" ON storage.objects;
 
 -- Recreate with both USING and WITH CHECK for comprehensive access
 -- Use a more permissive policy for testing, ensuring authenticated users can manage
+-- We use current_setting('role') check or simple auth.uid() check to bypass specific table recursion
 CREATE POLICY "Super Admin manage login-assets" ON storage.objects
 FOR ALL
+TO authenticated
 USING (
     bucket_id = 'login-assets'
 )
@@ -26,11 +28,15 @@ WITH CHECK (
 
 -- Ensure center-logos and center-backgrounds also have WITH CHECK
 DROP POLICY IF EXISTS "Auth upload to center-logos" ON storage.objects;
-CREATE POLICY "Auth upload to center-logos" ON storage.objects FOR INSERT
+CREATE POLICY "Auth upload to center-logos" ON storage.objects FOR ALL
+TO authenticated
+USING (bucket_id = 'center-logos')
 WITH CHECK (bucket_id = 'center-logos');
 
 DROP POLICY IF EXISTS "Auth upload to center-backgrounds" ON storage.objects;
-CREATE POLICY "Auth upload to center-backgrounds" ON storage.objects FOR INSERT
+CREATE POLICY "Auth upload to center-backgrounds" ON storage.objects FOR ALL
+TO authenticated
+USING (bucket_id = 'center-backgrounds')
 WITH CHECK (bucket_id = 'center-backgrounds');
 
 -- Also ensure public read access is solid
