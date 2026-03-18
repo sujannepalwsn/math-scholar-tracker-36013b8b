@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Package, Search, TrendingUp, Users, Wallet } from "lucide-react";
+import React, { useMemo, useState, useEffect } from "react";
+import { AlertTriangle, ArrowRight, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Package, Search, TrendingUp, Users, Wallet, GripVertical, Settings2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,85 @@ export default function Dashboard() {
 
   const [attendanceRange, setAttendanceRange] = useState<AttendanceRange>("weekly");
   const [selectedVacantClass, setSelectedVacantClass] = useState<any>(null);
+  const [isCustomizeMode, setIsCustomizeMode] = useState(false);
+
+  const [kpiOrder, setKpiOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem(`dashboard-kpi-order-${user?.id}`);
+    return saved ? JSON.parse(saved) : [
+      "students", "teachers", "student-attendance", "teacher-attendance",
+      "lesson-plans", "approvals", "leave-requests", "messages"
+    ];
+  });
+
+  const [visibleWidgets, setVisibleWidgets] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem(`dashboard-visible-widgets-${user?.id}`);
+    return saved ? JSON.parse(saved) : {
+      "students": true, "teachers": true, "student-attendance": true, "teacher-attendance": true,
+      "lesson-plans": true, "approvals": true, "leave-requests": true, "messages": true,
+      "attendance-overview": true, "performers": true, "teacher-status": true, "financial-health": true,
+      "leave-applications": true, "activities-discipline": true, "notice-board": true, "alerts": true, "class-schedule": true
+    };
+  });
+
+  const [mainWidgetsOrder, setMainWidgetsOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem(`dashboard-main-order-${user?.id}`);
+    return saved ? JSON.parse(saved) : [
+      "attendance-overview", "performers", "teacher-status", "leave-applications", "activities-discipline"
+    ];
+  });
+
+  useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`dashboard-kpi-order-${user.id}`, JSON.stringify(kpiOrder));
+      localStorage.setItem(`dashboard-visible-widgets-${user.id}`, JSON.stringify(visibleWidgets));
+      localStorage.setItem(`dashboard-main-order-${user.id}`, JSON.stringify(mainWidgetsOrder));
+    }
+  }, [kpiOrder, visibleWidgets, mainWidgetsOrder, user?.id]);
+
+  const handleDragStart = (e: React.DragEvent, type: 'kpi' | 'main', id: string) => {
+    if (!isCustomizeMode) return;
+    e.dataTransfer.setData('widgetType', type);
+    e.dataTransfer.setData('widgetId', id);
+    e.currentTarget.classList.add('opacity-50');
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('opacity-50');
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!isCustomizeMode) return;
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetType: 'kpi' | 'main', targetId: string) => {
+    if (!isCustomizeMode) return;
+    e.preventDefault();
+    const sourceType = e.dataTransfer.getData('widgetType');
+    const sourceId = e.dataTransfer.getData('widgetId');
+
+    if (sourceType !== targetType) return;
+
+    if (sourceType === 'kpi') {
+      const newOrder = [...kpiOrder];
+      const sourceIdx = newOrder.indexOf(sourceId);
+      const targetIdx = newOrder.indexOf(targetId);
+      newOrder.splice(sourceIdx, 1);
+      newOrder.splice(targetIdx, 0, sourceId);
+      setKpiOrder(newOrder);
+    } else {
+      const newOrder = [...mainWidgetsOrder];
+      const sourceIdx = newOrder.indexOf(sourceId);
+      const targetIdx = newOrder.indexOf(targetId);
+      newOrder.splice(sourceIdx, 1);
+      newOrder.splice(targetIdx, 0, sourceId);
+      setMainWidgetsOrder(newOrder);
+    }
+  };
+
+  const toggleWidgetVisibility = (id: string) => {
+    setVisibleWidgets(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Compute date range based on attendance selector
   const dateRange = useMemo(() => {
@@ -387,7 +466,7 @@ export default function Dashboard() {
     return range.map((day) => {
       const dayStr = format(day, "yyyy-MM-dd");
       const dayRecords = historicalAttendance.filter((a) => a.date === dayStr);
-      const present = dayRecords.filter((a) => a.status === "present").length;
+      const present = dayRecords.filter((a) => a.status === "present" || a.status === "late").length;
       const total = dayRecords.length;
       return { date: format(day, "MMM d"), value: total > 0 ? Math.round((present / total) * 100) : 0, fullDate: dayStr };
     });
@@ -433,9 +512,9 @@ export default function Dashboard() {
         const dayStr = format(day, "yyyy-MM-dd");
         const sRecs = historicalAttendance.filter((a) => a.date === dayStr);
         const tRecs = historicalTeacherAttendance.filter((a) => a.date === dayStr);
-        sPres += sRecs.filter((a) => a.status === "present").length;
+        sPres += sRecs.filter((a) => a.status === "present" || a.status === "late").length;
         sTotal += sRecs.length;
-        tPres += tRecs.filter((a) => a.status === "present").length;
+        tPres += tRecs.filter((a) => a.status === "present" || a.status === "late").length;
         tTotal += tRecs.length;
       });
       points.push({
@@ -448,8 +527,8 @@ export default function Dashboard() {
   }, [historicalAttendance, historicalTeacherAttendance, dateRange, attendanceRange]);
 
   const totalStudents = students.length;
-  const presentCount = allAttendance.filter((a) => a.status === "present").length;
-  const teacherPresentCount = teacherAttendance.filter((a) => a.status === "present").length;
+  const presentCount = allAttendance.filter((a) => a.status === "present" || a.status === "late").length;
+  const teacherPresentCount = teacherAttendance.filter((a) => a.status === "present" || a.status === "late").length;
   const studentAttendanceRate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
   const teacherAttendanceRate = teachers.length > 0 ? Math.round((teacherPresentCount / teachers.length) * 100) : 0;
   const completedHomework = homeworkStats.filter((h) => ["completed", "checked"].includes(h.status || "")).length;
@@ -682,6 +761,53 @@ export default function Dashboard() {
 
   const isLoading = isStudentsLoading || isTeachersLoading;
 
+  const renderKPICard = (id: string) => {
+    if (!visibleWidgets[id] && !isCustomizeMode) return null;
+
+    const cards: Record<string, React.ReactNode> = {
+      "students": <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" onClick={() => navigate("/register")} />,
+      "teachers": <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" onClick={() => navigate("/teachers")} />,
+      "student-attendance": <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} onClick={() => navigate("/attendance")} />,
+      "teacher-attendance": <KPICard title="Teacher Attendance" value={`${teacherAttendanceRate}%`} description="Daily Logging" icon={Clock} color="orange" trendData={teacherAttendanceTrend} onClick={() => navigate("/teacher-attendance")} />,
+      "lesson-plans": <KPICard title="Lesson Plans" value={upcomingLessons.length} description="Pedagogical Assets" icon={FileText} color="purple" onClick={() => navigate("/lesson-plans")} />,
+      "approvals": <KPICard title="Approvals" value={pendingLessonPlansCount} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/lesson-plans")} />,
+      "leave-requests": <KPICard title="Leave Requests" value={pendingLeavesCount} description="Pending Applications" icon={Calendar} color="rose" onClick={() => navigate("/leave-management")} />,
+      "messages": <KPICard title="Messages" value="View" description="Communication Hub" icon={Bell} color="pink" onClick={() => navigate("/messages")} />,
+    };
+
+    return (
+      <div
+        key={id}
+        draggable={isCustomizeMode}
+        onDragStart={(e) => handleDragStart(e, 'kpi', id)}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        onDrop={(e) => handleDrop(e, 'kpi', id)}
+        className={cn(
+          "relative group/kpi animate-in fade-in zoom-in-95 duration-500",
+          !visibleWidgets[id] && "opacity-40 grayscale"
+        )}
+      >
+        {isCustomizeMode && (
+          <div className="absolute top-2 right-2 z-10 flex gap-1">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-6 w-6 rounded-full opacity-0 group-hover/kpi:opacity-100 transition-opacity"
+              onClick={() => toggleWidgetVisibility(id)}
+            >
+              {visibleWidgets[id] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+            </Button>
+            <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/kpi:opacity-100 transition-opacity">
+              <GripVertical className="h-3 w-3 text-muted-foreground" />
+            </div>
+          </div>
+        )}
+        {cards[id]}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6 p-4 md:p-8">
@@ -701,7 +827,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 pb-24 md:pb-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 pb-24 md:pb-8 animate-in fade-in duration-1000">
       {/* Substitution Dialog */}
       <Dialog open={!!selectedVacantClass} onOpenChange={(open) => !open && setSelectedVacantClass(null)}>
         <DialogContent className="max-w-2xl">
@@ -754,324 +880,523 @@ export default function Dashboard() {
       {/* Top Header - School Details */}
       <DashboardHeader />
 
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsCustomizeMode(!isCustomizeMode)}
+          className={cn(
+            "gap-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all",
+            isCustomizeMode ? "bg-primary text-primary-foreground shadow-medium" : "text-muted-foreground"
+          )}
+        >
+          <Settings2 className={cn("h-4 w-4", isCustomizeMode && "animate-spin-slow")} />
+          {isCustomizeMode ? "Exit Customization" : "Customize Dashboard"}
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left/Main Column */}
         <div className="lg:col-span-8 space-y-8">
           {/* KPI Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
-            <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" onClick={() => navigate("/register")} />
-            <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" onClick={() => navigate("/teachers")} />
-            <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} onClick={() => navigate("/attendance")} />
-            <KPICard title="Teacher Attendance" value={`${teacherAttendanceRate}%`} description="Daily Logging" icon={Clock} color="orange" trendData={teacherAttendanceTrend} onClick={() => navigate("/teacher-attendance")} />
-            <KPICard title="Lesson Plans" value={upcomingLessons.length} description="Pedagogical Assets" icon={FileText} color="purple" onClick={() => navigate("/lesson-plans")} />
-            <KPICard title="Approvals" value={pendingLessonPlansCount} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/lesson-plans")} />
-            <KPICard title="Leave Requests" value={pendingLeavesCount} description="Pending Applications" icon={Calendar} color="rose" onClick={() => navigate("/leave-management")} />
-            <KPICard title="Messages" value="View" description="Communication Hub" icon={Bell} color="pink" onClick={() => navigate("/messages")} />
+            {kpiOrder.map(id => renderKPICard(id))}
           </div>
 
-          {/* Attendance Overview Chart with functional selectors */}
-          <Card className="border shadow-soft bg-card rounded-2xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-bold">Attendance Overview</CardTitle>
-              <div className="flex gap-1">
-                {(["weekly", "monthly", "yearly", "overall"] as AttendanceRange[]).map((range) => (
-                  <Button
-                    key={range}
-                    variant={attendanceRange === range ? "default" : "ghost"}
-                    size="sm"
-                    className={cn("text-xs h-7 rounded-lg capitalize", attendanceRange === range && "shadow-soft")}
-                    onClick={() => setAttendanceRange(range)}
-                  >
-                    {range}
-                  </Button>
-                ))}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={overviewTrend}>
-                    <defs>
-                      <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorTeachers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600, fill: "hsl(var(--muted-foreground))" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} />
-                    <Area type="monotone" dataKey="Students" stroke="hsl(var(--success))" strokeWidth={3} fillOpacity={1} fill="url(#colorStudents)" />
-                    <Area type="monotone" dataKey="Teachers" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorTeachers)" />
-                    <Legend verticalAlign="top" align="left" iconType="circle" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Main Widgets Area */}
+          <div className="space-y-8">
+            {mainWidgetsOrder.map(id => {
+              if (!visibleWidgets[id] && !isCustomizeMode) return null;
 
-          {/* Performers */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden">
-              <CardHeader className="bg-success/5 border-b border-success/10">
-                <CardTitle className="text-sm font-bold uppercase tracking-widest text-success flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" /> Top Performers
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y max-h-[400px] overflow-y-auto custom-scrollbar">
-                  {highestPerformers.length === 0 ? (
-                    <p className="p-8 text-center text-xs italic text-muted-foreground">No data available</p>
-                  ) : (
-                    highestPerformers.slice(0, 10).map((r: any) => (
-                      <div key={r.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?student_id=${r.student_id}`)}>
-                        <div>
-                          <p className="text-sm font-bold">{r.students?.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{r.tests?.name}</p>
+              let content: React.ReactNode = null;
+              switch (id) {
+                case "attendance-overview":
+                  content = (
+                    <Card className="border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] relative group/widget overflow-hidden border border-white/20">
+                      {isCustomizeMode && (
+                        <div className="absolute top-2 right-2 z-10 flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => toggleWidgetVisibility(id)}
+                          >
+                            {visibleWidgets[id] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          </Button>
+                          <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
+                          </div>
                         </div>
-                        <Badge className="bg-success text-success-foreground font-bold text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden">
-              <CardHeader className="bg-destructive/5 border-b border-destructive/10">
-                <CardTitle className="text-sm font-bold uppercase tracking-widest text-destructive flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" /> Critical Attention
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y max-h-[400px] overflow-y-auto custom-scrollbar">
-                  {lowestPerformers.length === 0 ? (
-                    <p className="p-8 text-center text-xs italic text-muted-foreground">No critical alerts</p>
-                  ) : (
-                    lowestPerformers.slice(0, 10).map((r: any) => (
-                      <div key={r.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?student_id=${r.student_id}`)}>
-                        <div>
-                          <p className="text-sm font-bold">{r.students?.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{r.tests?.name}</p>
+                      )}
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-lg font-bold">Attendance Overview</CardTitle>
+                        <div className="flex gap-1 pr-12">
+                          {(["weekly", "monthly", "yearly", "overall"] as AttendanceRange[]).map((range) => (
+                            <Button
+                              key={range}
+                              variant={attendanceRange === range ? "default" : "ghost"}
+                              size="sm"
+                              className={cn("text-xs h-7 rounded-lg capitalize", attendanceRange === range && "shadow-soft")}
+                              onClick={() => setAttendanceRange(range)}
+                            >
+                              {range}
+                            </Button>
+                          ))}
                         </div>
-                        <Badge className="bg-destructive text-destructive-foreground font-bold text-[10px]">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                      </CardHeader>
+                      <CardContent className={cn(!visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <div className="h-[300px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={overviewTrend}>
+                              <defs>
+                                <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.1} />
+                                  <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="colorTeachers" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600, fill: "hsl(var(--muted-foreground))" }} dy={10} />
+                              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600, fill: "hsl(var(--muted-foreground))" }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                              <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} />
+                              <Area type="monotone" dataKey="Students" stroke="hsl(var(--success))" strokeWidth={3} fillOpacity={1} fill="url(#colorStudents)" animationDuration={1500} />
+                              <Area type="monotone" dataKey="Teachers" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorTeachers)" animationDuration={1500} />
+                              <Legend verticalAlign="top" align="left" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                  break;
+                case "performers":
+                  content = (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative group/widget">
+                      {isCustomizeMode && (
+                        <div className="absolute top-2 right-2 z-10 flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => toggleWidgetVisibility(id)}
+                          >
+                            {visibleWidgets[id] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          </Button>
+                          <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        </div>
+                      )}
+                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <CardHeader className="bg-success/5 border-b border-success/10 p-6">
+                          <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-success flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5" /> Top Performers
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <div className="divide-y divide-border/10 max-h-[400px] overflow-y-auto custom-scrollbar">
+                            {highestPerformers.length === 0 ? (
+                              <p className="p-8 text-center text-xs italic text-muted-foreground">No data available</p>
+                            ) : (
+                              highestPerformers.slice(0, 10).map((r: any) => (
+                                <div key={r.id} className="p-5 flex justify-between items-center hover:bg-success/5 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?student_id=${r.student_id}`)}>
+                                  <div>
+                                    <p className="text-sm font-black text-slate-800">{r.students?.name}</p>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{r.tests?.name}</p>
+                                  </div>
+                                  <Badge className="bg-success text-success-foreground font-black text-[10px] px-2 rounded-lg">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
 
-          {/* Teacher & Finance */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" /> Teacher Attendance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y max-h-[400px] overflow-y-auto custom-scrollbar">
-                  {teachers.length === 0 ? (
-                    <p className="p-8 text-center text-xs italic text-muted-foreground">No teachers found</p>
-                  ) : (
-                    teachers.map((t) => {
-                      const attendance = teacherAttendance.find((ta) => ta.teacher_id === t.id);
-                      const leave = todayApprovedLeaves.find((l: any) => l.teacher_id === t.id);
-                      const status = leave ? "leave" : (attendance?.status || "pending");
-
-                      return (
-                        <div key={t.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate("/teachers")}>
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "h-8 w-8 rounded-full flex items-center justify-center",
-                              status === "present" ? "bg-success/10" : (status === "absent" || status === "leave") ? "bg-destructive/10" : "bg-warning/10"
-                            )}>
-                              <Users className={cn(
-                                "h-4 w-4",
-                                status === "present" ? "text-success" : (status === "absent" || status === "leave") ? "text-destructive" : "text-warning"
-                              )} />
+                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <CardHeader className="bg-destructive/5 border-b border-destructive/10 p-6">
+                          <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-destructive flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5" /> Critical Attention
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <div className="divide-y divide-border/10 max-h-[400px] overflow-y-auto custom-scrollbar">
+                            {lowestPerformers.length === 0 ? (
+                              <p className="p-8 text-center text-xs italic text-muted-foreground">No critical alerts</p>
+                            ) : (
+                              lowestPerformers.slice(0, 10).map((r: any) => (
+                                <div key={r.id} className="p-5 flex justify-between items-center hover:bg-destructive/5 transition-colors cursor-pointer" onClick={() => navigate(`/student-report?student_id=${r.student_id}`)}>
+                                  <div>
+                                    <p className="text-sm font-black text-slate-800">{r.students?.name}</p>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{r.tests?.name}</p>
+                                  </div>
+                                  <Badge className="bg-destructive text-destructive-foreground font-black text-[10px] px-2 rounded-lg">{Math.round((r.marks_obtained / (r.tests?.total_marks || 100)) * 100)}%</Badge>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                  break;
+                case "teacher-status":
+                  content = (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative group/widget">
+                      {isCustomizeMode && (
+                        <div className="absolute top-2 right-2 z-10 flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => toggleWidgetVisibility(id)}
+                          >
+                            {visibleWidgets[id] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          </Button>
+                          <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        </div>
+                      )}
+                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <CardHeader className="p-6">
+                          <CardTitle className="text-lg font-black flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                              <Users className="h-5 w-5" />
                             </div>
+                            Teacher Attendance
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <div className="divide-y divide-border/10 max-h-[400px] overflow-y-auto custom-scrollbar">
+                            {teachers.length === 0 ? (
+                              <p className="p-8 text-center text-xs italic text-muted-foreground">No teachers found</p>
+                            ) : (
+                              teachers.map((t) => {
+                                const attendance = teacherAttendance.find((ta) => ta.teacher_id === t.id);
+                                const leave = todayApprovedLeaves.find((l: any) => l.teacher_id === t.id);
+                                const status = leave ? "leave" : (attendance?.status || "pending");
+
+                                return (
+                                  <div key={t.id} className="p-5 flex justify-between items-center hover:bg-primary/5 transition-colors cursor-pointer" onClick={() => navigate("/teachers")}>
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn(
+                                        "h-10 w-10 rounded-2xl flex items-center justify-center border-2",
+                                        status === "present" ? "bg-success/5 border-success/20" : (status === "absent" || status === "leave") ? "bg-destructive/5 border-destructive/20" : "bg-warning/5 border-warning/20"
+                                      )}>
+                                        <Users className={cn(
+                                          "h-5 w-5",
+                                          status === "present" ? "text-success" : (status === "absent" || status === "leave") ? "text-destructive" : "text-warning"
+                                        )} />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-black text-slate-800">{t.name}</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t.subject}</p>
+                                      </div>
+                                    </div>
+                                    <Badge
+                                      variant={status === "present" ? "success" : (status === "absent" || status === "leave") ? "destructive" : "warning"}
+                                      className="font-black text-[9px] uppercase px-2 py-0.5 rounded-lg"
+                                    >
+                                      {status === "present" ? "Present" : status === "leave" ? "On Leave" : status === "absent" ? "Absent" : "Not Marked"}
+                                    </Badge>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] cursor-pointer hover:shadow-elevated transition-all duration-500 border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")} onClick={() => navigate("/finance")}>
+                        <CardHeader className="p-8">
+                          <CardTitle className="text-lg font-black flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-success/10 text-success">
+                              <Wallet className="h-5 w-5" />
+                            </div>
+                            Financial Health
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-8 p-8 pt-0">
+                          <div className="flex justify-between items-end">
                             <div>
-                              <p className="text-sm font-bold">{t.name}</p>
-                              <p className="text-[10px] text-muted-foreground">{t.subject}</p>
+                              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Collection Ratio</p>
+                              <p className="text-5xl font-black tracking-tighter text-slate-900">{collectionRate}%</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Total Invoiced</p>
+                              <p className="text-xl font-black text-slate-700">{formatCurrency(totalInvoiced)}</p>
                             </div>
                           </div>
-                          <Badge
-                            variant={status === "present" ? "success" : (status === "absent" || status === "leave") ? "destructive" : "warning"}
-                            className="font-bold text-[9px] uppercase"
-                          >
-                            {status === "present" ? "Present" : status === "leave" ? "On Leave" : status === "absent" ? "Absent" : "Not Marked"}
-                          </Badge>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border shadow-soft bg-card rounded-2xl cursor-pointer hover:shadow-medium transition-shadow" onClick={() => navigate("/finance")}>
-              <CardHeader>
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <Wallet className="h-5 w-5 text-success" /> Financial Health
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Collection Ratio</p>
-                    <p className="text-4xl font-black tracking-tight">{collectionRate}%</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Invoiced</p>
-                    <p className="text-xl font-bold">{formatCurrency(totalInvoiced)}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="text-muted-foreground">Collected</span>
-                    <span className="text-success">{formatCurrency(feeCollection)}</span>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-success" style={{ width: `${collectionRate}%` }} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Leave Applications Table */}
-          <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-warning" /> Leave Applications
-              </CardTitle>
-              <Button variant="ghost" size="sm" className="text-xs text-primary h-7" onClick={() => navigate("/leave-management")}>
-                Manage <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/5">
-                      <TableHead className="font-bold text-[10px] uppercase">Applicant</TableHead>
-                      <TableHead className="font-bold text-[10px] uppercase">Type</TableHead>
-                      <TableHead className="font-bold text-[10px] uppercase">Period</TableHead>
-                      <TableHead className="font-bold text-[10px] uppercase">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leaveApplications.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground italic text-xs">No recent leave applications.</TableCell>
-                      </TableRow>
-                    ) : (
-                      leaveApplications.slice(0, 5).map((leave) => (
-                        <TableRow key={leave.id} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/leave-management")}>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-sm">{leave.teachers?.name || leave.students?.name}</span>
-                              <span className="text-[10px] text-muted-foreground uppercase">{leave.teacher_id ? 'Teacher' : `Grade ${leave.students?.grade}`}</span>
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
+                              <span className="text-muted-foreground">Collected</span>
+                              <span className="text-success">{formatCurrency(feeCollection)}</span>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-xs font-medium">{leave.leave_categories?.name}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {format(new Date(leave.start_date), "MMM d")} - {format(new Date(leave.end_date), "MMM d")}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={leave.status === 'approved' ? 'success' : leave.status === 'pending' ? 'warning' : 'destructive'} className="text-[9px] font-black uppercase">
-                              {leave.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                            <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner p-0.5 border">
+                              <div className="h-full bg-gradient-to-r from-emerald-400 to-success rounded-full transition-all duration-1000 shadow-sm" style={{ width: `${collectionRate}%` }} />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                  break;
 
-          {/* Activities & Discipline Preview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Activities Preview */}
-            <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" /> Activities
-                </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs text-primary h-7" onClick={() => navigate("/activities")}>
-                  View All <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </CardHeader>
-              <CardContent className="p-0">
-                {recentActivities.length === 0 ? (
-                  <p className="p-8 text-center text-sm text-muted-foreground italic">No upcoming activities</p>
-                ) : (
-                  <div className="divide-y">
-                    {recentActivities.map((a: any) => (
-                      <div key={a.id} className="p-4 hover:bg-muted/50 transition-colors">
-                        <p className="text-sm font-semibold">{a.title || a.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Grade {a.grade || "All"} · {a.activity_date ? format(new Date(a.activity_date), "MMM d") : "No date"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                case "leave-applications":
+                  content = (
+                    <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden relative group/widget">
+                      {isCustomizeMode && (
+                        <div className="absolute top-2 right-2 z-10 flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => toggleWidgetVisibility(id)}
+                          >
+                            {visibleWidgets[id] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          </Button>
+                          <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        </div>
+                      )}
+                      <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+                        <CardTitle className="text-lg font-black flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-warning/10 text-warning">
+                            <Calendar className="h-5 w-5" />
+                          </div>
+                          Leave Applications
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-primary h-7 pr-12" onClick={() => navigate("/leave-management")}>
+                          Manage <ArrowRight className="h-3 w-3 ml-1" />
+                        </Button>
+                      </CardHeader>
+                      <CardContent className={cn("p-0", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-muted/5 border-none">
+                                <TableHead className="px-6 font-black text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Applicant</TableHead>
+                                <TableHead className="font-black text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Type</TableHead>
+                                <TableHead className="font-black text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Period</TableHead>
+                                <TableHead className="font-black text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {leaveApplications.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={4} className="text-center py-12 text-muted-foreground font-medium italic text-xs">No pending leave requests found.</TableCell>
+                                </TableRow>
+                              ) : (
+                                leaveApplications.slice(0, 5).map((leave) => (
+                                  <TableRow key={leave.id} className="border-border/10 cursor-pointer hover:bg-primary/5 transition-colors" onClick={() => navigate("/leave-management")}>
+                                    <TableCell className="px-6 py-4">
+                                      <div className="flex flex-col">
+                                        <span className="font-black text-sm text-slate-800">{leave.teachers?.name || leave.students?.name}</span>
+                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{leave.teacher_id ? 'Faculty' : `Grade ${leave.students?.grade}`}</span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-xs font-black text-slate-600">{leave.leave_categories?.name}</TableCell>
+                                    <TableCell className="text-[11px] font-bold text-muted-foreground uppercase tracking-tighter">
+                                      {format(new Date(leave.start_date), "MMM d")} – {format(new Date(leave.end_date), "MMM d")}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant={leave.status === 'approved' ? 'success' : leave.status === 'pending' ? 'warning' : 'destructive'} className="text-[9px] font-black uppercase rounded-lg">
+                                        {leave.status}
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                  break;
+                case "activities-discipline":
+                  content = (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative group/widget">
+                      {isCustomizeMode && (
+                        <div className="absolute top-2 right-2 z-10 flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => toggleWidgetVisibility(id)}
+                          >
+                            {visibleWidgets[id] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          </Button>
+                          <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        </div>
+                      )}
+                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+                          <CardTitle className="text-lg font-black flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                              <BookOpen className="h-5 w-5" />
+                            </div>
+                            Activities
+                          </CardTitle>
+                          <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-primary h-7" onClick={() => navigate("/activities")}>
+                            View All <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          {recentActivities.length === 0 ? (
+                            <p className="p-8 text-center text-sm text-muted-foreground font-medium italic">No upcoming activities</p>
+                          ) : (
+                            <div className="divide-y divide-border/10">
+                              {recentActivities.map((a: any) => (
+                                <div key={a.id} className="p-5 hover:bg-primary/5 transition-colors">
+                                  <p className="text-sm font-black text-slate-800">{a.title || a.name}</p>
+                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                                    Grade {a.grade || "All"} · {a.activity_date ? format(new Date(a.activity_date), "MMM d") : "No date"}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
 
-            {/* Discipline Preview */}
-            <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" /> Discipline Issues
-                </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs text-primary h-7" onClick={() => navigate("/discipline")}>
-                  View All <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </CardHeader>
-              <CardContent className="p-0">
-                {recentDiscipline.length === 0 ? (
-                  <p className="p-8 text-center text-sm text-muted-foreground italic">No discipline issues reported</p>
-                ) : (
-                  <div className="divide-y">
-                    {recentDiscipline.map((d: any) => (
-                      <div key={d.id} className="p-4 hover:bg-muted/50 transition-colors">
-                        <p className="text-sm font-semibold">{d.description?.substring(0, 60)}{d.description?.length > 60 ? "..." : ""}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {d.students?.name} · Grade {d.students?.grade} · {format(new Date(d.issue_date), "MMM d")}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+                          <CardTitle className="text-lg font-black flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-destructive/10 text-destructive">
+                              <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            Discipline
+                          </CardTitle>
+                          <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-primary h-7" onClick={() => navigate("/discipline")}>
+                            View All <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          {recentDiscipline.length === 0 ? (
+                            <p className="p-8 text-center text-sm text-muted-foreground font-medium italic">No discipline issues reported</p>
+                          ) : (
+                            <div className="divide-y divide-border/10">
+                              {recentDiscipline.map((d: any) => (
+                                <div key={d.id} className="p-5 hover:bg-destructive/5 transition-colors">
+                                  <p className="text-sm font-black text-slate-800 line-clamp-1">{d.description}</p>
+                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                                    {d.students?.name} · Grade {d.students?.grade} · {format(new Date(d.issue_date), "MMM d")}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                  break;
+              }
+
+              return (
+                <div
+                  key={id}
+                  draggable={isCustomizeMode}
+                  onDragStart={(e) => handleDragStart(e, 'main', id)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, 'main', id)}
+                  className={cn(
+                    "transition-all duration-300",
+                    isCustomizeMode && "outline-dashed outline-2 outline-primary/30 outline-offset-4 rounded-2xl"
+                  )}
+                >
+                  {content}
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Right Column */}
         <div className="lg:col-span-4 space-y-8">
-          <DigitalNoticeBoard centerId={centerId || ""} />
-          <AlertList alerts={recentAlerts} onViewAll={() => navigate("/messages")} onItemClick={(a) => {
-            if (a.id.startsWith('vacant-')) {
-              const classId = a.id.replace('vacant-', '');
-              const cls = todayClasses.find(c => c.id === classId);
-              if (cls) setSelectedVacantClass(cls);
-            }
-          }} />
-          <ClassSchedule classes={todayClasses} title="Today's Classes" onViewRoutine={() => navigate("/class-routine")} onItemClick={(item) => {
-            if (item.isVacant) setSelectedVacantClass(item);
-          }} />
+          <div className={cn("space-y-8 animate-in slide-in-from-right-8 duration-1000", isCustomizeMode && "outline-dashed outline-2 outline-primary/30 outline-offset-4 rounded-[2.5rem] p-4")}>
+            <div className="relative group/side-widget">
+              {isCustomizeMode && (
+                <div className="absolute top-2 right-2 z-20">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-6 w-6 rounded-full"
+                    onClick={() => toggleWidgetVisibility("notice-board")}
+                  >
+                    {visibleWidgets["notice-board"] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </Button>
+                </div>
+              )}
+              {(visibleWidgets["notice-board"] || isCustomizeMode) && (
+                <div className={cn("transition-all duration-500", !visibleWidgets["notice-board"] && "opacity-40 grayscale blur-[1px]")}>
+                  <div className="rounded-[2.5rem] overflow-hidden shadow-strong border border-white/20">
+                    <DigitalNoticeBoard centerId={centerId || ""} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="relative group/side-widget">
+              {isCustomizeMode && (
+                <div className="absolute top-2 right-2 z-20">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-6 w-6 rounded-full"
+                    onClick={() => toggleWidgetVisibility("alerts")}
+                  >
+                    {visibleWidgets["alerts"] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </Button>
+                </div>
+              )}
+              {(visibleWidgets["alerts"] || isCustomizeMode) && (
+                <div className={cn("transition-all duration-500", !visibleWidgets["alerts"] && "opacity-40 grayscale blur-[1px]")}>
+                  <div className="rounded-[2.5rem] overflow-hidden shadow-strong border border-white/20">
+                    <AlertList alerts={recentAlerts} onViewAll={() => navigate("/messages")} onItemClick={(a) => {
+                      if (a.id.startsWith('vacant-')) {
+                        const classId = a.id.replace('vacant-', '');
+                        const cls = todayClasses.find(c => c.id === classId);
+                        if (cls) setSelectedVacantClass(cls);
+                      }
+                    }} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="relative group/side-widget">
+              {isCustomizeMode && (
+                <div className="absolute top-2 right-2 z-20">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-6 w-6 rounded-full"
+                    onClick={() => toggleWidgetVisibility("class-schedule")}
+                  >
+                    {visibleWidgets["class-schedule"] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </Button>
+                </div>
+              )}
+              {(visibleWidgets["class-schedule"] || isCustomizeMode) && (
+                <div className={cn("transition-all duration-500", !visibleWidgets["class-schedule"] && "opacity-40 grayscale blur-[1px]")}>
+                  <div className="rounded-[2.5rem] overflow-hidden shadow-strong border border-white/20">
+                    <ClassSchedule classes={todayClasses} title="Today's Classes" onViewRoutine={() => navigate("/class-routine")} onItemClick={(item) => {
+                      if (item.isVacant) setSelectedVacantClass(item);
+                    }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
