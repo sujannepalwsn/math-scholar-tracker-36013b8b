@@ -541,12 +541,19 @@ export type Database = {
           facilities: Json | null
           gallery: Json | null
           header_bg_url: string | null
+          header_details_color: string | null
           header_overlay_color: string | null
           header_overlay_opacity: number | null
+<<<<<<< HEAD
+          header_title_color: string | null
+          header_visible_sections: Json | null
+=======
+>>>>>>> main
           header_font_family: string | null
           header_font_color: string | null
           header_font_size: string | null
           id: string
+          institution_type: string | null
           latitude: number | null
           logo_url: string | null
           longitude: number | null
@@ -575,12 +582,19 @@ export type Database = {
           facilities?: Json | null
           gallery?: Json | null
           header_bg_url?: string | null
+          header_details_color?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
+<<<<<<< HEAD
+          header_title_color?: string | null
+          header_visible_sections?: Json | null
+=======
+>>>>>>> main
           header_font_family?: string | null
           header_font_color?: string | null
           header_font_size?: string | null
           id?: string
+          institution_type?: string | null
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
@@ -609,12 +623,19 @@ export type Database = {
           facilities?: Json | null
           gallery?: Json | null
           header_bg_url?: string | null
+          header_details_color?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
+<<<<<<< HEAD
+          header_title_color?: string | null
+          header_visible_sections?: Json | null
+=======
+>>>>>>> main
           header_font_family?: string | null
           header_font_color?: string | null
           header_font_size?: string | null
           id?: string
+          institution_type?: string | null
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
@@ -840,7 +861,6 @@ export type Database = {
         Update: {
           center_id?: string
           created_at?: string
-          default_severity?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
