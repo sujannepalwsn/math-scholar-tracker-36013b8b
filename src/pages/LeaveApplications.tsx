@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays, isBefore, startOfDay, parseISO } from "date-fns";
 import {
   Calendar as CalendarIcon,
+  Calendar,
   FileText,
   Plus,
   Clock,

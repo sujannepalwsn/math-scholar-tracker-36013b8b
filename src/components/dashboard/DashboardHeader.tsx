@@ -28,7 +28,10 @@ export default function DashboardHeader() {
     logo_url: "",
     header_bg_url: "",
     header_overlay_color: "rgba(255, 255, 255, 0.9)",
-    header_overlay_opacity: 90
+    header_overlay_opacity: 90,
+    header_font_family: "Inter",
+    header_font_color: "#1e293b",
+    header_font_size: "normal"
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -75,7 +78,10 @@ export default function DashboardHeader() {
         logo_url: center.logo_url || "",
         header_bg_url: center.header_bg_url || "",
         header_overlay_color: (center as any).header_overlay_color || "rgba(255, 255, 255, 0.9)",
-        header_overlay_opacity: (center as any).header_overlay_opacity || 90
+        header_overlay_opacity: (center as any).header_overlay_opacity || 90,
+        header_font_family: (center as any).header_font_family || "Inter",
+        header_font_color: (center as any).header_font_color || "#1e293b",
+        header_font_size: (center as any).header_font_size || "normal"
       });
     }
   }, [center]);
@@ -96,7 +102,10 @@ export default function DashboardHeader() {
           logo_url: formData.logo_url,
           header_bg_url: formData.header_bg_url,
           header_overlay_color: formData.header_overlay_color,
-          header_overlay_opacity: formData.header_overlay_opacity
+          header_overlay_opacity: formData.header_overlay_opacity,
+          header_font_family: formData.header_font_family,
+          header_font_color: formData.header_font_color,
+          header_font_size: formData.header_font_size
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -172,7 +181,13 @@ export default function DashboardHeader() {
         }}
       />
 
-      <CardContent className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8">
+      <CardContent
+        className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8"
+        style={{
+          fontFamily: formData.header_font_family || 'inherit',
+          color: formData.header_font_color || 'inherit'
+        }}
+      >
         {/* Centered Name and Address */}
         <div className="flex flex-col items-center text-center space-y-2 relative">
           <div className="w-full">
@@ -182,16 +197,26 @@ export default function DashboardHeader() {
                 value={formData.name}
                 onChange={handleInputChange}
                 className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-2xl mx-auto"
+                style={{
+                  fontSize: formData.header_font_size === 'large' ? '2rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.5rem',
+                  color: formData.header_font_color || 'inherit'
+                }}
                 placeholder="School Name"
               />
             ) : (
-              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-800 break-words max-w-4xl mx-auto">
+              <h1
+                className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
+                style={{
+                  fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
+                  color: formData.header_font_color || '#1e293b'
+                }}
+              >
                 {formData.name || "School Name"}
               </h1>
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-1 text-[#4285f4] w-full">
+          <div className="flex flex-col items-center gap-1 w-full" style={{ color: formData.header_font_color || '#4285f4' }}>
             {isEditMode ? (
               <div className="flex items-center gap-2 max-w-xl mx-auto w-full">
                 <MapPin className="h-4 w-4 shrink-0" />
@@ -200,6 +225,7 @@ export default function DashboardHeader() {
                   value={formData.address}
                   onChange={handleInputChange}
                   className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center"
+                  style={{ color: formData.header_font_color || 'inherit' }}
                   placeholder="Address"
                 />
               </div>
@@ -264,7 +290,7 @@ export default function DashboardHeader() {
                   <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
                 </label>
 
-                <div className="flex flex-col gap-2 p-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-w-[200px]">
+                <div className="flex flex-col gap-2 p-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-w-[200px] max-h-[300px] overflow-y-auto custom-scrollbar">
                   <div className="space-y-1">
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Overlay Color</Label>
                     <div className="flex gap-1.5 items-center">
@@ -294,6 +320,57 @@ export default function DashboardHeader() {
                       onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_opacity: parseInt(e.target.value) }))}
                       className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
                     />
+                  </div>
+
+                  <div className="space-y-1 pt-1 border-t border-slate-100">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Family</Label>
+                    <select
+                      value={formData.header_font_family}
+                      onChange={(e) => setFormData(prev => ({ ...prev, header_font_family: e.target.value }))}
+                      className="w-full h-6 text-[8px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
+                    >
+                      <option value="Inter">Inter</option>
+                      <option value="Roboto">Roboto</option>
+                      <option value="Poppins">Poppins</option>
+                      <option value="Montserrat">Montserrat</option>
+                      <option value="Open Sans">Open Sans</option>
+                      <option value="Playfair Display">Playfair Display</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Color</Label>
+                    <div className="flex gap-1.5 items-center">
+                      <input
+                        type="color"
+                        value={formData.header_font_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, header_font_color: e.target.value }))}
+                        className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
+                      />
+                      <Input
+                        value={formData.header_font_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, header_font_color: e.target.value }))}
+                        className="h-5 text-[8px] px-1 font-bold bg-transparent border-none focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Size</Label>
+                    <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
+                      {['small', 'normal', 'large'].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setFormData(prev => ({ ...prev, header_font_size: size }))}
+                          className={cn(
+                            "flex-1 h-5 text-[7px] font-black uppercase rounded-sm transition-all",
+                            formData.header_font_size === size ? "bg-white shadow-sm text-primary" : "text-slate-400"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

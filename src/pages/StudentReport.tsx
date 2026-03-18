@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, User, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, User, Users, XCircle, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -33,7 +33,7 @@ type TestResult = Tables<'test_results'>;
 
 interface ChapterPerformance {
   lessonPlan: LessonPlan;
-  studentChapters: (StudentChapter & { recorded_by_teacher?: Tables<'teachers'> })[];
+  studentChapters: (StudentChapter & { recorded_by_teacher?: { name: string } })[];
   testResults: (Tables<'test_results'> & { tests: Pick<Test, 'id' | 'name' | 'subject' | 'total_marks' | 'lesson_plan_id' | 'questions'> })[];
   homeworkRecords: (Tables<'student_homework_records'> & { homework: Pick<Homework, 'id' | 'title' | 'subject' | 'due_date'> })[];
 }
