@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, Users, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, Users, XCircle, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { endOfMonth, format, isPast, startOfMonth, subYears } from "date-fns" // Added subYears, isPast
 import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
 import { Invoice, Payment } from "@/integrations/supabase/finance-types"
@@ -29,7 +30,7 @@ type TestResult = Tables<'test_results'>;
 
 interface ChapterPerformance {
   lessonPlan: LessonPlan;
-  studentChapters: (StudentChapter & { recorded_by_teacher?: Tables<'teachers'> })[];
+  studentChapters: (StudentChapter & { recorded_by_teacher?: { name: string } })[];
   testResults: (Tables<'test_results'> & { tests: Pick<Test, 'id' | 'name' | 'subject' | 'total_marks' | 'lesson_plan_id' | 'questions'> })[];
   homeworkRecords: (Tables<'student_homework_records'> & { homework: Pick<Homework, 'id' | 'title' | 'subject' | 'due_date'> })[];
 }

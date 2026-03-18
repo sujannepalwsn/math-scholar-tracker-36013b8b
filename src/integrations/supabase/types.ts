@@ -543,6 +543,9 @@ export type Database = {
           header_bg_url: string | null
           header_overlay_color: string | null
           header_overlay_opacity: number | null
+          header_font_family: string | null
+          header_font_color: string | null
+          header_font_size: string | null
           id: string
           latitude: number | null
           logo_url: string | null
@@ -574,6 +577,9 @@ export type Database = {
           header_bg_url?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
+          header_font_family?: string | null
+          header_font_color?: string | null
+          header_font_size?: string | null
           id?: string
           latitude?: number | null
           logo_url?: string | null
@@ -605,6 +611,9 @@ export type Database = {
           header_bg_url?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
+          header_font_family?: string | null
+          header_font_color?: string | null
+          header_font_size?: string | null
           id?: string
           latitude?: number | null
           logo_url?: string | null

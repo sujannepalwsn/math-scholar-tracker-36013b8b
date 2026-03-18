@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { CalendarIcon, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, Calendar, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -351,7 +351,7 @@ export default function TakeAttendance() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 rounded-2xl border-none shadow-strong" align="start">
-                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} />
+                  <CalendarComponent mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} />
                 </PopoverContent>
               </Popover>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Download, Users } from "lucide-react";
+import { Download, Users, TrendingUp } from "lucide-react";
 import { cn, safeFormatDate } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
