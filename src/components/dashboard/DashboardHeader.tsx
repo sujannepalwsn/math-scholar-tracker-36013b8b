@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -233,10 +232,10 @@ export default function DashboardHeader() {
         </div>
 
         {/* Content Row: Logo (shifted left) and Details Grid (fully visible text) */}
-        <div className="flex flex-row gap-4 md:gap-10 items-start">
+        <div className="flex flex-row gap-3 md:gap-10 items-start">
           {/* Logo Section - Shifted Slightly Left */}
-          <div className="relative group shrink-0 -ml-2 md:-ml-4">
-            <div className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-52 md:w-52 rounded-2xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-2 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm bg-white/10">
+          <div className="relative group shrink-0 -ml-1 md:-ml-4">
+            <div className="relative h-16 w-16 sm:h-32 sm:w-32 md:h-52 md:w-52 rounded-xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-1.5 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm bg-white/10">
               {formData.logo_url ? (
                 <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-md" />
               ) : (
@@ -301,9 +300,9 @@ export default function DashboardHeader() {
             )}
           </div>
 
-          {/* Details Grid - Ensuring full visibility */}
+          {/* Details Grid - Ensuring full visibility with 2-column horizontal layout on mobile */}
           <div className="flex-1 min-w-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 md:gap-y-10 gap-x-4 md:gap-x-14">
+            <div className="grid grid-cols-2 gap-y-3 md:gap-y-10 gap-x-2 md:gap-x-14">
               <DetailItem
                 icon={User}
                 label="Principal"
@@ -387,21 +386,21 @@ interface DetailItemProps {
 
 function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
   return (
-    <div className="flex items-center gap-3 md:gap-5 group">
-      <div className="p-2.5 md:p-3.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
-        <Icon className="h-4 w-4 md:h-5 md:w-5" />
+    <div className="flex items-center gap-1.5 md:gap-5 group">
+      <div className="p-1.5 md:p-3.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
+        <Icon className="h-3 w-3 md:h-5 md:w-5" />
       </div>
       <div className="space-y-0.5 flex-1 min-w-0">
-        <p className="text-[8px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
+        <p className="text-[7px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
         {isEdit ? (
           <Input
             name={name}
             value={value}
             onChange={onChange}
-            className="h-8 md:h-11 text-[10px] md:text-sm px-2 mt-1 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
+            className="h-6 md:h-11 text-[9px] md:text-sm px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
           />
         ) : (
-          <p className="text-[11px] md:text-lg font-black text-slate-700 break-words tracking-tight mt-1 leading-tight">{value || "---"}</p>
+          <p className="text-[9px] md:text-lg font-black text-slate-700 break-words tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
         )}
       </div>
     </div>
