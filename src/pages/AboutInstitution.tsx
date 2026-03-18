@@ -70,8 +70,7 @@ export default function AboutInstitution() {
     principal_name: "",
     website_url: "",
     short_code: "",
-    header_bg_url: "",
-    institution_type: ""
+    header_bg_url: ""
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -122,22 +121,21 @@ export default function AboutInstitution() {
         vision: center.vision || "",
         principal_message: center.principal_message || "",
         established_date: center.established_date || "",
-        academic_info: center.academic_info || "",
-        facilities: Array.isArray(center.facilities) ? (center.facilities as any) : [],
-        achievements: Array.isArray(center.achievements) ? (center.achievements as any) : [],
-        gallery: Array.isArray(center.gallery) ? (center.gallery as any) : [],
-        social_links: (center.social_links as any) || {},
+        academic_info: (center as any).academic_info || "",
+        facilities: (center as any).facilities || [],
+        achievements: (center as any).achievements || [],
+        gallery: (center as any).gallery || [],
+        social_links: (center as any).social_links || {},
         phone: center.phone || "",
         email: center.email || "",
         address: center.address || "",
         principal_name: center.principal_name || "",
         website_url: center.website_url || "",
         short_code: center.short_code || "",
-        header_bg_url: center.header_bg_url || "",
-        institution_type: (center as any).institution_type || "Co-Educational"
+        header_bg_url: center.header_bg_url || ""
       });
     }
-  }, [center, isEditing]); // Re-fetch on isEditing change to ensure fresh data
+  }, [center]);
 
   const updateAboutMutation = useMutation({
     mutationFn: async () => {
@@ -145,7 +143,6 @@ export default function AboutInstitution() {
       const { error } = await supabase
         .from("centers")
         .update({
-          name: formData.name,
           about_description: formData.about_description,
           mission: formData.mission,
           vision: formData.vision,
@@ -162,8 +159,7 @@ export default function AboutInstitution() {
           principal_name: formData.principal_name,
           website_url: formData.website_url,
           short_code: formData.short_code,
-          header_bg_url: formData.header_bg_url,
-          institution_type: (formData as any).institution_type
+          header_bg_url: formData.header_bg_url
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -251,19 +247,7 @@ export default function AboutInstitution() {
     }
   };
 
-  const removeGalleryItem = async (id: string) => {
-    const itemToRemove = formData.gallery.find(item => item.id === id);
-    if (itemToRemove) {
-      try {
-        const bucket = 'center-backgrounds';
-        const path = itemToRemove.url.split(`${bucket}/`)[1];
-        if (path) {
-          await supabase.storage.from(bucket).remove([path]);
-        }
-      } catch (err) {
-        console.error("Error deleting gallery image from storage:", err);
-      }
-    }
+  const removeGalleryItem = (id: string) => {
     setFormData(prev => ({ ...prev, gallery: (prev.gallery || []).filter(item => item.id !== id) }));
   };
 
@@ -292,19 +276,19 @@ export default function AboutInstitution() {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600 uppercase">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
             About Institution
           </h1>
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest opacity-70">Pedagogical Philosophy & Profile</p>
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm font-medium">Institutional profile and pedagogical philosophy.</p>
           </div>
         </div>
 
         {canEdit && (
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <Button
               onClick={() => setIsEditing(!isEditing)}
               variant={isEditing ? "outline" : "default"}
@@ -395,16 +379,6 @@ export default function AboutInstitution() {
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   {isEditing ? (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Institution Name</Label>
-                        <Input
-                          id="name"
-                          className="rounded-2xl bg-card/50 font-bold"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        />
-                      </div>
                     <div className="space-y-2">
                       <Label htmlFor="about_description">Introduction & History</Label>
                       <Textarea
@@ -414,7 +388,6 @@ export default function AboutInstitution() {
                         value={formData.about_description}
                         onChange={(e) => setFormData({ ...formData, about_description: e.target.value })}
                       />
-                    </div>
                     </div>
                   ) : (
                     <div className="prose prose-slate max-w-none">
@@ -534,15 +507,7 @@ export default function AboutInstitution() {
                     </div>
                     <div className="flex justify-between items-center border-b border-white/10 pb-2">
                       <span className="text-[10px] font-bold uppercase opacity-70">Institution Type</span>
-                      {isEditing ? (
-                        <Input
-                          className="h-6 text-[10px] w-28 bg-white/20 border-none text-white p-1"
-                          value={formData.institution_type}
-                          onChange={(e) => setFormData({ ...formData, institution_type: e.target.value })}
-                        />
-                      ) : (
-                        <span className="text-sm font-black">{formData.institution_type || "Co-Educational"}</span>
-                      )}
+                      <span className="text-sm font-black">Co-Educational</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-bold uppercase opacity-70">Location</span>
@@ -610,7 +575,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(Array.isArray(formData.facilities) ? formData.facilities : []).map((facility) => (
+                {(formData.facilities || []).map((facility) => (
                   <Card key={facility.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeFacility(facility.id)}
@@ -648,8 +613,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(Array.isArray(formData.facilities) ? formData.facilities : []).length > 0 ? (
-                  (Array.isArray(formData.facilities) ? formData.facilities : []).map((facility) => (
+                {(formData.facilities || []).length > 0 ? (
+                  (formData.facilities || []).map((facility) => (
                     <Card key={facility.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all hover:-translate-y-1">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-center gap-3">
@@ -693,41 +658,41 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(Array.isArray(formData.achievements) ? formData.achievements : []).map((achievement) => (
-                  <Card key={achievement.id} className="border-2 border-dashed border-border/50 rounded-3xl p-4 space-y-3 relative group">
+                {(formData.achievements || []).map((achievement) => (
+                  <Card key={achievement.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeAchievement(achievement.id)}
                       className="absolute top-4 right-4 p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 transition-colors hover:text-white"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <div className="grid grid-cols-4 gap-3">
-                      <div className="col-span-3 space-y-1.5">
-                        <Label className="text-[10px] font-bold uppercase tracking-wider opacity-60">Achievement Title</Label>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="col-span-3 space-y-2">
+                        <Label>Achievement Title</Label>
                         <Input
-                          value={achievement.title || ""}
+                          value={achievement.title}
                           onChange={(e) => updateAchievement(achievement.id, 'title', e.target.value)}
                           placeholder="e.g., National Excellence Award"
-                          className="rounded-xl h-9 text-xs"
+                          className="rounded-xl"
                         />
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-bold uppercase tracking-wider opacity-60">Year</Label>
+                      <div className="space-y-2">
+                        <Label>Year</Label>
                         <Input
-                          value={achievement.year || ""}
+                          value={achievement.year}
                           onChange={(e) => updateAchievement(achievement.id, 'year', e.target.value)}
                           placeholder="2024"
-                          className="rounded-xl h-9 text-xs"
+                          className="rounded-xl"
                         />
                       </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold uppercase tracking-wider opacity-60">Description</Label>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
                       <Textarea
-                        value={achievement.description || ""}
+                        value={achievement.description}
                         onChange={(e) => updateAchievement(achievement.id, 'description', e.target.value)}
                         placeholder="Provide some context..."
-                        className="rounded-xl min-h-[60px] text-xs"
+                        className="rounded-xl min-h-[80px]"
                       />
                     </div>
                   </Card>
@@ -742,8 +707,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(Array.isArray(formData.achievements) ? formData.achievements : []).length > 0 ? (
-                  (Array.isArray(formData.achievements) ? formData.achievements : []).map((achievement) => (
+                {(formData.achievements || []).length > 0 ? (
+                  (formData.achievements || []).map((achievement) => (
                     <Card key={achievement.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-start justify-between">
@@ -801,7 +766,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {(Array.isArray(formData.gallery) ? formData.gallery : []).map((item) => (
+                {(formData.gallery || []).map((item) => (
                   <div key={item.id} className="relative group rounded-3xl overflow-hidden aspect-square border shadow-soft">
                     <img src={item.url} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -832,8 +797,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {(Array.isArray(formData.gallery) ? formData.gallery : []).length > 0 ? (
-                  (Array.isArray(formData.gallery) ? formData.gallery : []).map((item) => (
+                {(formData.gallery || []).length > 0 ? (
+                  (formData.gallery || []).map((item) => (
                     <Card key={item.id} className="border-none shadow-soft rounded-3xl overflow-hidden group hover:shadow-strong transition-all hover:-translate-y-1">
                       <div className="aspect-square relative overflow-hidden">
                         <img src={item.url} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

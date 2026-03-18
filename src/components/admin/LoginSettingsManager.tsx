@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Upload, Trash2, Image as ImageIcon, Plus, Info, HelpCircle, Code, Save } from "lucide-react";
+import { Loader2, Upload, Trash2, Image as ImageIcon, Plus, Info, HelpCircle, Code } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 const PAGE_TYPES = [
@@ -88,42 +88,25 @@ const LoginSettingsManager = () => {
     updateMutation.mutate({ page_type: pageType, background_urls: currentUrls });
   };
 
-  const [localFeatures, setLocalFeatures] = useState<Record<string, any[]>>({});
-
   const addFeature = (pageType: string) => {
     const pageSettings = settings?.find(s => s.page_type === pageType);
-    const rawFeatures = localFeatures[pageType] || pageSettings?.features;
-    const existingFeatures = Array.isArray(rawFeatures) ? rawFeatures : [];
-    const features = [...existingFeatures];
+    const features = Array.isArray(pageSettings?.features) ? [...(pageSettings.features as any[])] : [];
     features.push({ icon: 'Shield', title: 'New Feature', description: 'Feature description' });
-    setLocalFeatures(prev => ({ ...prev, [pageType]: features }));
+    updateMutation.mutate({ page_type: pageType, features });
   };
 
-  const handleLocalFeatureUpdate = (pageType: string, index: number, field: string, value: string) => {
+  const updateFeature = (pageType: string, index: number, field: string, value: string) => {
     const pageSettings = settings?.find(s => s.page_type === pageType);
-    const rawFeatures = localFeatures[pageType] || pageSettings?.features;
-    const currentFeatures = Array.isArray(rawFeatures) ? rawFeatures : [];
-    const newFeatures = [...currentFeatures];
-    if (newFeatures[index]) {
-      newFeatures[index] = { ...newFeatures[index], [field]: value };
-      setLocalFeatures(prev => ({ ...prev, [pageType]: newFeatures }));
-    }
-  };
-
-  const saveFeatures = (pageType: string) => {
-    const features = localFeatures[pageType];
-    if (features) {
-      updateMutation.mutate({ page_type: pageType, features });
-    }
+    const features = [...(pageSettings?.features as any[])];
+    features[index] = { ...features[index], [field]: value };
+    updateMutation.mutate({ page_type: pageType, features });
   };
 
   const removeFeature = (pageType: string, index: number) => {
     const pageSettings = settings?.find(s => s.page_type === pageType);
-    const rawFeatures = localFeatures[pageType] || pageSettings?.features;
-    const currentFeatures = Array.isArray(rawFeatures) ? rawFeatures : [];
-    const features = [...currentFeatures];
+    const features = [...(pageSettings?.features as any[])];
     features.splice(index, 1);
-    setLocalFeatures(prev => ({ ...prev, [pageType]: features }));
+    updateMutation.mutate({ page_type: pageType, features });
   };
 
   const updateJsonField = (pageType: string, field: 'developer_info' | 'help_info', subField: string, value: string) => {
@@ -365,16 +348,15 @@ const LoginSettingsManager = () => {
                       </Button>
                     </div>
 
-                    <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {(Array.isArray(localFeatures[type.id] || features) ? (localFeatures[type.id] || features) : []).map((feature: any, idx: number) => (
-                        <Card key={`${type.id}-feature-${idx}`} className="bg-muted/10 border-muted-foreground/10 relative">
+                      {features.map((feature, idx) => (
+                        <Card key={idx} className="bg-muted/10 border-muted-foreground/10 relative">
                           <CardContent className="p-4 space-y-3">
                             <div className="flex items-center gap-2">
                               <Input
                                 placeholder="Icon name (e.g. Shield)"
                                 value={feature.icon}
-                                onChange={(e) => handleLocalFeatureUpdate(type.id, idx, 'icon', e.target.value)}
+                                onChange={(e) => updateFeature(type.id, idx, 'icon', e.target.value)}
                                 className="h-8 text-xs font-bold"
                               />
                               <button
@@ -386,32 +368,24 @@ const LoginSettingsManager = () => {
                             </div>
                             <Input
                               placeholder="Feature Title"
-                              value={feature.title || ''}
-                              onChange={(e) => handleLocalFeatureUpdate(type.id, idx, 'title', e.target.value)}
+                              value={feature.title}
+                              onChange={(e) => updateFeature(type.id, idx, 'title', e.target.value)}
                               className="h-9 font-bold"
                             />
                             <Textarea
                               placeholder="Description"
-                              value={feature.description || ''}
-                              onChange={(e) => handleLocalFeatureUpdate(type.id, idx, 'description', e.target.value)}
+                              value={feature.description}
+                              onChange={(e) => updateFeature(type.id, idx, 'description', e.target.value)}
                               className="text-xs resize-none"
                             />
                           </CardContent>
                         </Card>
                       ))}
-                      {(localFeatures[type.id] || features || []).length === 0 && (
+                      {features.length === 0 && (
                         <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-2xl">
                           No features added yet. Click "Add Feature" to start.
                         </div>
                       )}
-                    </div>
-                    {localFeatures[type.id] && (
-                      <div className="flex justify-end">
-                        <Button onClick={() => saveFeatures(type.id)} className="rounded-xl">
-                          <Save className="h-4 w-4 mr-2" /> Save Features
-                        </Button>
-                      </div>
-                    )}
                     </div>
                   </section>
 
