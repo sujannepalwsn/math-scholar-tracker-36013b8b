@@ -30,6 +30,7 @@ export default function DashboardHeader() {
     header_bg_url: "",
     header_overlay_color: "rgba(255, 255, 255, 0.9)",
     header_overlay_opacity: 90,
+<<<<<<< HEAD
     header_title_color: "#1e293b",
     header_details_color: "#64748b",
     header_font_family: "Inter",
@@ -43,6 +44,11 @@ export default function DashboardHeader() {
       email: true,
       website: true
     }
+=======
+    header_font_family: "Inter",
+    header_font_color: "#1e293b",
+    header_font_size: "normal"
+>>>>>>> main
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -90,6 +96,7 @@ export default function DashboardHeader() {
         header_bg_url: center.header_bg_url || "",
         header_overlay_color: (center as any).header_overlay_color || "rgba(255, 255, 255, 0.9)",
         header_overlay_opacity: (center as any).header_overlay_opacity || 90,
+<<<<<<< HEAD
         header_title_color: (center as any).header_title_color || "#1e293b",
         header_details_color: (center as any).header_details_color || "#64748b",
         header_font_family: (center as any).header_font_family || "Inter",
@@ -103,6 +110,11 @@ export default function DashboardHeader() {
           email: true,
           website: true
         }
+=======
+        header_font_family: (center as any).header_font_family || "Inter",
+        header_font_color: (center as any).header_font_color || "#1e293b",
+        header_font_size: (center as any).header_font_size || "normal"
+>>>>>>> main
       });
     }
   }, [center]);
@@ -124,12 +136,18 @@ export default function DashboardHeader() {
           header_bg_url: formData.header_bg_url,
           header_overlay_color: formData.header_overlay_color,
           header_overlay_opacity: formData.header_overlay_opacity,
+<<<<<<< HEAD
           header_title_color: formData.header_title_color,
           header_details_color: formData.header_details_color,
           header_font_family: formData.header_font_family,
           header_font_color: formData.header_font_color,
           header_font_size: formData.header_font_size,
           header_visible_sections: formData.header_visible_sections
+=======
+          header_font_family: formData.header_font_family,
+          header_font_color: formData.header_font_color,
+          header_font_size: formData.header_font_size
+>>>>>>> main
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -245,9 +263,16 @@ export default function DashboardHeader() {
       />
 
       <CardContent
+<<<<<<< HEAD
         className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-6"
         style={{
           fontFamily: formData.header_font_family || 'inherit'
+=======
+        className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8"
+        style={{
+          fontFamily: formData.header_font_family || 'inherit',
+          color: formData.header_font_color || 'inherit'
+>>>>>>> main
         }}
       >
         {/* Centered Name and Address */}
@@ -258,19 +283,33 @@ export default function DashboardHeader() {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
+<<<<<<< HEAD
                 className="text-lg md:text-2xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-xl mx-auto"
                 style={{
                   color: formData.header_title_color,
                   fontSize: formData.header_font_size === 'large' ? '1.75rem' : formData.header_font_size === 'small' ? '1rem' : '1.5rem',
+=======
+                className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-2xl mx-auto"
+                style={{
+                  fontSize: formData.header_font_size === 'large' ? '2rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.5rem',
+                  color: formData.header_font_color || 'inherit'
+>>>>>>> main
                 }}
                 placeholder="School Name"
               />
             ) : (
               <h1
+<<<<<<< HEAD
                 className="text-xl md:text-3xl font-black tracking-tight break-words max-w-3xl mx-auto"
                 style={{
                   color: formData.header_title_color,
                   fontSize: formData.header_font_size === 'large' ? '2.25rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.875rem',
+=======
+                className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
+                style={{
+                  fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
+                  color: formData.header_font_color || '#1e293b'
+>>>>>>> main
                 }}
               >
                 {formData.name || "School Name"}
@@ -286,7 +325,12 @@ export default function DashboardHeader() {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
+<<<<<<< HEAD
                   className="h-7 md:h-8 text-[10px] md:text-xs bg-slate-50 border-primary/20 rounded-xl text-center"
+=======
+                  className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center"
+                  style={{ color: formData.header_font_color || 'inherit' }}
+>>>>>>> main
                   placeholder="Address"
                 />
               </div>
@@ -362,7 +406,11 @@ export default function DashboardHeader() {
                   )}
                 </div>
 
+<<<<<<< HEAD
                 <div className="flex flex-col gap-1.5 p-2 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-h-[350px] overflow-y-auto">
+=======
+                <div className="flex flex-col gap-2 p-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-w-[200px] max-h-[300px] overflow-y-auto custom-scrollbar">
+>>>>>>> main
                   <div className="space-y-1">
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Overlay Color</Label>
                     <div className="flex gap-1.5 items-center">
@@ -394,6 +442,7 @@ export default function DashboardHeader() {
                     />
                   </div>
 
+<<<<<<< HEAD
                   <div className="pt-1 mt-1 border-t border-slate-100 space-y-2">
                      <div className="flex items-center justify-between gap-2">
                         <Label className="text-[7px] font-black uppercase text-slate-400">Title Color</Label>
@@ -421,6 +470,14 @@ export default function DashboardHeader() {
                       value={formData.header_font_family}
                       onChange={(e) => setFormData(prev => ({ ...prev, header_font_family: e.target.value }))}
                       className="w-full h-5 text-[7px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
+=======
+                  <div className="space-y-1 pt-1 border-t border-slate-100">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Family</Label>
+                    <select
+                      value={formData.header_font_family}
+                      onChange={(e) => setFormData(prev => ({ ...prev, header_font_family: e.target.value }))}
+                      className="w-full h-6 text-[8px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
+>>>>>>> main
                     >
                       <option value="Inter">Inter</option>
                       <option value="Roboto">Roboto</option>
@@ -432,14 +489,39 @@ export default function DashboardHeader() {
                   </div>
 
                   <div className="space-y-1">
+<<<<<<< HEAD
                     <Label className="text-[7px] font-black uppercase text-slate-400">Font Size</Label>
+=======
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Color</Label>
+                    <div className="flex gap-1.5 items-center">
+                      <input
+                        type="color"
+                        value={formData.header_font_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, header_font_color: e.target.value }))}
+                        className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
+                      />
+                      <Input
+                        value={formData.header_font_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, header_font_color: e.target.value }))}
+                        className="h-5 text-[8px] px-1 font-bold bg-transparent border-none focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Size</Label>
+>>>>>>> main
                     <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
                       {['small', 'normal', 'large'].map((size) => (
                         <button
                           key={size}
                           onClick={() => setFormData(prev => ({ ...prev, header_font_size: size }))}
                           className={cn(
+<<<<<<< HEAD
                             "flex-1 h-4 text-[6px] font-black uppercase rounded-sm transition-all",
+=======
+                            "flex-1 h-5 text-[7px] font-black uppercase rounded-sm transition-all",
+>>>>>>> main
                             formData.header_font_size === size ? "bg-white shadow-sm text-primary" : "text-slate-400"
                           )}
                         >
@@ -448,6 +530,7 @@ export default function DashboardHeader() {
                       ))}
                     </div>
                   </div>
+<<<<<<< HEAD
 
                   <div className="pt-1 mt-1 border-t border-slate-100 space-y-1.5">
                      <Label className="text-[7px] font-black uppercase text-slate-400">Visible Sections</Label>
@@ -475,6 +558,8 @@ export default function DashboardHeader() {
                         ))}
                      </div>
                   </div>
+=======
+>>>>>>> main
                 </div>
               </div>
             )}
