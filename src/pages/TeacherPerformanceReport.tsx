@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { BarChart3, BookOpen, CheckCircle, ClipboardCheck, Users } from "lucide-react";
+import { BarChart3, BookOpen, CheckCircle, ClipboardCheck, Users, TrendingUp } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"

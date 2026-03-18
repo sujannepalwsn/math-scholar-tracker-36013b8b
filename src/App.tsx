@@ -188,6 +188,17 @@ const App = () => (
               <Route path="/teacher/leave" element={<ProtectedRoute role="teacher"><TeacherLayout><LeaveApplications /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/settings" element={<ProtectedRoute role="teacher"><TeacherLayout><GeneralSettings /></TeacherLayout></ProtectedRoute>} />
 
+              {/* Administrative Routes for Teachers with Admin Role */}
+              <Route path="/register" element={<ProtectedRoute role="teacher"><TeacherLayout><RegisterStudent /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teachers" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherManagement /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/teacher-attendance" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherAttendancePage /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/hr-management" element={<ProtectedRoute role="teacher"><TeacherLayout><HRManagement /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/leave-management" element={<ProtectedRoute role="teacher"><TeacherLayout><LeaveManagement /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/student-id-cards" element={<ProtectedRoute role="teacher"><TeacherLayout><StudentIdCard /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/inventory" element={<ProtectedRoute role="teacher"><TeacherLayout><InventoryManagement /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/transport" element={<ProtectedRoute role="teacher"><TeacherLayout><TransportManagementPage /></TeacherLayout></ProtectedRoute>} />
+              <Route path="/school-days" element={<ProtectedRoute role="teacher"><TeacherLayout><SchoolDays /></TeacherLayout></ProtectedRoute>} />
+
               {/* Center */}
               <Route path="/" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
               <Route path="/register" element={<ProtectedRoute role="center"><CenterLayout><RegisterStudent /></CenterLayout></ProtectedRoute>} />

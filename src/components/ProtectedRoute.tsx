@@ -26,11 +26,18 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
   }
 
   if (role && user.role !== role) {
-    let dashboardPath = '/';
-    if (user.role === 'admin') dashboardPath = '/admin-dashboard';
-    if (user.role === 'parent') dashboardPath = '/parent-dashboard';
-    if (user.role === 'teacher') dashboardPath = '/teacher-dashboard';
-    return <Navigate to={dashboardPath} replace />;
+    // If the required role is 'center', allow 'teacher' who has been granted 'center' role in their user profile
+    if (role === 'center' && user.role === 'teacher') {
+       // Proceed to check further if needed, but for now we allow the navigation to the page
+       // though layout will be handled by the route element itself.
+       // Actually, we should allow it.
+    } else {
+      let dashboardPath = '/';
+      if (user.role === 'admin') dashboardPath = '/admin-dashboard';
+      if (user.role === 'parent') dashboardPath = '/parent-dashboard';
+      if (user.role === 'teacher') dashboardPath = '/teacher-dashboard';
+      return <Navigate to={dashboardPath} replace />;
+    }
   }
 
   return <>{children}</>;

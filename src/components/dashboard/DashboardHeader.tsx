@@ -126,20 +126,56 @@ export default function DashboardHeader() {
     }
     const toastId = toast.loading(`Uploading institutional ${type}...`);
     try {
+      const oldUrl = type === 'logo' ? formData.logo_url : formData.header_bg_url;
+
       const fileExt = file.name.split('.').pop();
       const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
       const filePath = `${user.center_id}/${type}-${Date.now()}.${fileExt}`;
+
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
       if (uploadError) throw uploadError;
+
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+
+      // Delete old file if it exists
+      if (oldUrl) {
+        try {
+          const oldPath = oldUrl.split(`${bucket}/`)[1];
+          if (oldPath) {
+            await supabase.storage.from(bucket).remove([oldPath]);
+          }
+        } catch (err) {
+          console.error("Error deleting old file:", err);
+        }
+      }
+
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
       toast.dismiss(toastId);
       toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready!`);
     } catch (error: any) {
       toast.dismiss(toastId);
       toast.error(`Upload failed: ${error.message}`);
+    }
+  };
+
+  const removeBackground = async () => {
+    if (!formData.header_bg_url) return;
+    const toastId = toast.loading("Removing background...");
+    try {
+      const bucket = 'center-backgrounds';
+      const oldPath = formData.header_bg_url.split(`${bucket}/`)[1];
+      if (oldPath) {
+        await supabase.storage.from(bucket).remove([oldPath]);
+      }
+      setFormData(prev => ({ ...prev, header_bg_url: "" }));
+      toast.dismiss(toastId);
+      toast.success("Background removed!");
+    } catch (error: any) {
+      toast.dismiss(toastId);
+      toast.error("Failed to remove background");
     }
   };
 
@@ -154,7 +190,7 @@ export default function DashboardHeader() {
   const canEdit = user?.role === 'center';
 
   return (
-    <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">
+    <Card className="border-none shadow-elevated overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-white mb-6 relative max-w-5xl mx-auto">
       {/* Background Image */}
       {formData.header_bg_url && (
         <div
@@ -172,20 +208,20 @@ export default function DashboardHeader() {
         }}
       />
 
-      <CardContent className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8">
+      <CardContent className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-6">
         {/* Centered Name and Address */}
-        <div className="flex flex-col items-center text-center space-y-2 relative">
+        <div className="flex flex-col items-center text-center space-y-1 relative">
           <div className="w-full">
             {isEditMode ? (
               <Input
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-2xl mx-auto"
+                className="text-lg md:text-2xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-xl mx-auto"
                 placeholder="School Name"
               />
             ) : (
-              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-800 break-words max-w-4xl mx-auto">
+              <h1 className="text-xl md:text-3xl font-black tracking-tight text-slate-800 break-words max-w-3xl mx-auto">
                 {formData.name || "School Name"}
               </h1>
             )}
@@ -193,20 +229,20 @@ export default function DashboardHeader() {
 
           <div className="flex flex-col items-center gap-1 text-[#4285f4] w-full">
             {isEditMode ? (
-              <div className="flex items-center gap-2 max-w-xl mx-auto w-full">
-                <MapPin className="h-4 w-4 shrink-0" />
+              <div className="flex items-center gap-2 max-w-lg mx-auto w-full">
+                <MapPin className="h-3 w-3 shrink-0" />
                 <Input
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center"
+                  className="h-7 md:h-8 text-[10px] md:text-xs bg-slate-50 border-primary/20 rounded-xl text-center"
                   placeholder="Address"
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-2 max-w-3xl mx-auto">
-                <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-                <span className="text-xs md:text-lg font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
+              <div className="flex items-center justify-center gap-1.5 max-w-2xl mx-auto">
+                <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
+                <span className="text-[10px] md:text-sm font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
               </div>
             )}
           </div>
@@ -232,10 +268,10 @@ export default function DashboardHeader() {
         </div>
 
         {/* Content Row: Logo (shifted left) and Details Grid (fully visible text) */}
-        <div className="flex flex-row gap-3 md:gap-10 items-start">
+        <div className="flex flex-row gap-3 md:gap-8 items-start">
           {/* Logo Section - Shifted Slightly Left */}
-          <div className="relative group shrink-0 -ml-1 md:-ml-4">
-            <div className="relative h-16 w-16 sm:h-32 sm:w-32 md:h-52 md:w-52 rounded-xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-1.5 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm bg-white/10">
+          <div className="relative group shrink-0 -ml-1 md:-ml-2">
+            <div className="relative h-14 w-14 sm:h-24 sm:w-24 md:h-32 md:w-32 rounded-full overflow-hidden flex items-center justify-center p-1 sm:p-3 border-2 md:border-4 border-white shadow-soft backdrop-blur-sm bg-white/10">
               {formData.logo_url ? (
                 <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-md" />
               ) : (
@@ -258,13 +294,24 @@ export default function DashboardHeader() {
             </div>
             {isEditMode && (
               <div className="mt-3 flex flex-col gap-2 items-center">
-                <label className="p-2 w-full rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
-                  <ImageIcon className="h-4 w-4" />
-                  Background
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
-                </label>
+                <div className="flex gap-1 w-full">
+                  <label className="flex-1 p-1.5 rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-tighter text-primary hover:bg-primary hover:text-white transition-all">
+                    <ImageIcon className="h-3 w-3" />
+                    BG
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
+                  </label>
+                  {formData.header_bg_url && (
+                    <Button
+                      variant="ghost"
+                      onClick={removeBackground}
+                      className="p-1.5 h-auto rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 shadow-soft"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
 
-                <div className="flex flex-col gap-2 p-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-w-[200px]">
+                <div className="flex flex-col gap-1.5 p-2 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full">
                   <div className="space-y-1">
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Overlay Color</Label>
                     <div className="flex gap-1.5 items-center">
@@ -301,8 +348,8 @@ export default function DashboardHeader() {
           </div>
 
           {/* Details Grid - Ensuring full visibility with 2-column horizontal layout on mobile */}
-          <div className="flex-1 min-w-0">
-            <div className="grid grid-cols-2 gap-y-3 md:gap-y-10 gap-x-2 md:gap-x-14">
+          <div className="flex-1 min-w-0 mt-2">
+            <div className="grid grid-cols-2 gap-y-4 md:gap-y-6 gap-x-2 md:gap-x-10">
               <DetailItem
                 icon={User}
                 label="Principal"
@@ -386,21 +433,21 @@ interface DetailItemProps {
 
 function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
   return (
-    <div className="flex items-center gap-1.5 md:gap-5 group">
-      <div className="p-1.5 md:p-3.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
-        <Icon className="h-3 w-3 md:h-5 md:w-5" />
+    <div className="flex items-center gap-1.5 md:gap-3 group">
+      <div className="p-1.5 md:p-2.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
+        <Icon className="h-3 w-3 md:h-4 md:w-4" />
       </div>
-      <div className="space-y-0.5 flex-1 min-w-0">
-        <p className="text-[7px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
+      <div className="space-y-0 flex-1 min-w-0">
+        <p className="text-[6px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
         {isEdit ? (
           <Input
             name={name}
             value={value}
             onChange={onChange}
-            className="h-6 md:h-11 text-[9px] md:text-sm px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
+            className="h-6 md:h-9 text-[9px] md:text-xs px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
           />
         ) : (
-          <p className="text-[9px] md:text-lg font-black text-slate-700 break-words tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
+          <p className="text-[9px] md:text-sm font-black text-slate-700 break-words tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
         )}
       </div>
     </div>
