@@ -541,9 +541,13 @@ export type Database = {
           facilities: Json | null
           gallery: Json | null
           header_bg_url: string | null
+          header_details_color: string | null
           header_overlay_color: string | null
           header_overlay_opacity: number | null
+          header_title_color: string | null
+          header_visible_sections: Json | null
           id: string
+          institution_type: string | null
           latitude: number | null
           logo_url: string | null
           longitude: number | null
@@ -572,9 +576,13 @@ export type Database = {
           facilities?: Json | null
           gallery?: Json | null
           header_bg_url?: string | null
+          header_details_color?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
+          header_title_color?: string | null
+          header_visible_sections?: Json | null
           id?: string
+          institution_type?: string | null
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
@@ -603,9 +611,13 @@ export type Database = {
           facilities?: Json | null
           gallery?: Json | null
           header_bg_url?: string | null
+          header_details_color?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
+          header_title_color?: string | null
+          header_visible_sections?: Json | null
           id?: string
+          institution_type?: string | null
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null

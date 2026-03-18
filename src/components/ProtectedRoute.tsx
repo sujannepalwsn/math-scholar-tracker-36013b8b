@@ -26,12 +26,11 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
   }
 
   if (role && user.role !== role) {
-    // If the required role is 'center', allow 'teacher' who has been granted 'center' role in their user profile
-    if (role === 'center' && user.role === 'teacher') {
-       // Proceed to check further if needed, but for now we allow the navigation to the page
-       // though layout will be handled by the route element itself.
-       // Actually, we should allow it.
-    } else {
+    // Basic symmetry for administrative access
+    const isTeacherActingAsAdmin = role === 'center' && user.role === 'teacher';
+    const isCenterActingAsTeacher = role === 'teacher' && user.role === 'center';
+
+    if (!isTeacherActingAsAdmin && !isCenterActingAsTeacher) {
       let dashboardPath = '/';
       if (user.role === 'admin') dashboardPath = '/admin-dashboard';
       if (user.role === 'parent') dashboardPath = '/parent-dashboard';

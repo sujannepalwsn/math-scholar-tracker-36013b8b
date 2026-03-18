@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
-  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon, Trash2
+  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon, Trash2,
+  Eye, EyeOff, Palette
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +29,17 @@ export default function DashboardHeader() {
     logo_url: "",
     header_bg_url: "",
     header_overlay_color: "rgba(255, 255, 255, 0.9)",
-    header_overlay_opacity: 90
+    header_overlay_opacity: 90,
+    header_title_color: "#1e293b",
+    header_details_color: "#64748b",
+    header_visible_sections: {
+      principal: true,
+      short_code: true,
+      academic_year: true,
+      phone: true,
+      email: true,
+      website: true
+    }
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -75,7 +86,17 @@ export default function DashboardHeader() {
         logo_url: center.logo_url || "",
         header_bg_url: center.header_bg_url || "",
         header_overlay_color: (center as any).header_overlay_color || "rgba(255, 255, 255, 0.9)",
-        header_overlay_opacity: (center as any).header_overlay_opacity || 90
+        header_overlay_opacity: (center as any).header_overlay_opacity || 90,
+        header_title_color: (center as any).header_title_color || "#1e293b",
+        header_details_color: (center as any).header_details_color || "#64748b",
+        header_visible_sections: (center as any).header_visible_sections || {
+          principal: true,
+          short_code: true,
+          academic_year: true,
+          phone: true,
+          email: true,
+          website: true
+        }
       });
     }
   }, [center]);
@@ -96,7 +117,10 @@ export default function DashboardHeader() {
           logo_url: formData.logo_url,
           header_bg_url: formData.header_bg_url,
           header_overlay_color: formData.header_overlay_color,
-          header_overlay_opacity: formData.header_overlay_opacity
+          header_overlay_opacity: formData.header_overlay_opacity,
+          header_title_color: formData.header_title_color,
+          header_details_color: formData.header_details_color,
+          header_visible_sections: formData.header_visible_sections
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -221,10 +245,14 @@ export default function DashboardHeader() {
                 value={formData.name}
                 onChange={handleInputChange}
                 className="text-lg md:text-2xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-xl mx-auto"
+                style={{ color: formData.header_title_color }}
                 placeholder="School Name"
               />
             ) : (
-              <h1 className="text-xl md:text-3xl font-black tracking-tight text-slate-800 break-words max-w-3xl mx-auto">
+              <h1
+                className="text-xl md:text-3xl font-black tracking-tight break-words max-w-3xl mx-auto"
+                style={{ color: formData.header_title_color }}
+              >
                 {formData.name || "School Name"}
               </h1>
             )}
@@ -345,6 +373,54 @@ export default function DashboardHeader() {
                       className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
                     />
                   </div>
+
+                  <div className="pt-1 mt-1 border-t border-slate-100 space-y-2">
+                     <div className="flex items-center justify-between gap-2">
+                        <Label className="text-[7px] font-black uppercase text-slate-400">Title Color</Label>
+                        <input
+                          type="color"
+                          value={formData.header_title_color}
+                          onChange={(e) => setFormData(prev => ({ ...prev, header_title_color: e.target.value }))}
+                          className="w-4 h-4 rounded-full border-none cursor-pointer overflow-hidden"
+                        />
+                     </div>
+                     <div className="flex items-center justify-between gap-2">
+                        <Label className="text-[7px] font-black uppercase text-slate-400">Detail Color</Label>
+                        <input
+                          type="color"
+                          value={formData.header_details_color}
+                          onChange={(e) => setFormData(prev => ({ ...prev, header_details_color: e.target.value }))}
+                          className="w-4 h-4 rounded-full border-none cursor-pointer overflow-hidden"
+                        />
+                     </div>
+                  </div>
+
+                  <div className="pt-1 mt-1 border-t border-slate-100 space-y-1.5">
+                     <Label className="text-[7px] font-black uppercase text-slate-400">Visible Sections</Label>
+                     <div className="grid grid-cols-2 gap-1">
+                        {Object.entries(formData.header_visible_sections).map(([key, val]) => (
+                          <Button
+                            key={key}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              header_visible_sections: {
+                                ...prev.header_visible_sections,
+                                [key]: !val
+                              }
+                            }))}
+                            className={cn(
+                              "h-5 px-1 text-[6px] font-black uppercase tracking-tighter rounded-md border",
+                              val ? "bg-primary/10 text-primary border-primary/20" : "bg-slate-50 text-slate-400 border-slate-200"
+                            )}
+                          >
+                            {val ? <Eye className="h-2 w-2 mr-1" /> : <EyeOff className="h-2 w-2 mr-1" />}
+                            {key.replace('_', ' ')}
+                          </Button>
+                        ))}
+                     </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -353,52 +429,70 @@ export default function DashboardHeader() {
           {/* Details Grid - Ensuring full visibility with 2-column horizontal layout on mobile */}
           <div className="flex-1 min-w-0 mt-2">
             <div className="grid grid-cols-2 gap-y-2 md:gap-y-3 gap-x-2 md:gap-x-10">
-              <DetailItem
-                icon={User}
-                label="Principal"
-                name="principal_name"
-                value={formData.principal_name}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Hash}
-                label="School Code"
-                name="short_code"
-                value={formData.short_code}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Calendar}
-                label="Academic Year"
-                value={currentYear?.name || "Not Set"}
-                isEdit={false}
-              />
-              <DetailItem
-                icon={Phone}
-                label="Contact"
-                name="phone"
-                value={formData.phone}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Mail}
-                label="Email"
-                name="email"
-                value={formData.email}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Globe}
-                label="Website"
-                name="website_url"
-                value={formData.website_url}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
+              {formData.header_visible_sections.principal && (
+                <DetailItem
+                  icon={User}
+                  label="Principal"
+                  name="principal_name"
+                  value={formData.principal_name}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  color={formData.header_details_color}
+                />
+              )}
+              {formData.header_visible_sections.short_code && (
+                <DetailItem
+                  icon={Hash}
+                  label="School Code"
+                  name="short_code"
+                  value={formData.short_code}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  color={formData.header_details_color}
+                />
+              )}
+              {formData.header_visible_sections.academic_year && (
+                <DetailItem
+                  icon={Calendar}
+                  label="Academic Year"
+                  value={currentYear?.name || "Not Set"}
+                  isEdit={false}
+                  color={formData.header_details_color}
+                />
+              )}
+              {formData.header_visible_sections.phone && (
+                <DetailItem
+                  icon={Phone}
+                  label="Contact"
+                  name="phone"
+                  value={formData.phone}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  color={formData.header_details_color}
+                />
+              )}
+              {formData.header_visible_sections.email && (
+                <DetailItem
+                  icon={Mail}
+                  label="Email"
+                  name="email"
+                  value={formData.email}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  color={formData.header_details_color}
+                />
+              )}
+              {formData.header_visible_sections.website && (
+                <DetailItem
+                  icon={Globe}
+                  label="Website"
+                  name="website_url"
+                  value={formData.website_url}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  color={formData.header_details_color}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -432,9 +526,10 @@ interface DetailItemProps {
   isEdit?: boolean;
   name?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  color?: string;
 }
 
-function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
+function DetailItem({ icon: Icon, label, value, isEdit, name, onChange, color }: DetailItemProps) {
   return (
     <div className="flex items-center gap-1.5 md:gap-3 group">
       <div className="p-1.5 md:p-2.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
@@ -448,9 +543,15 @@ function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: Detail
             value={value}
             onChange={onChange}
             className="h-6 md:h-9 text-[9px] md:text-xs px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
+            style={{ color: color }}
           />
         ) : (
-          <p className="text-[9px] md:text-sm font-black text-slate-700 break-words tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
+          <p
+            className="text-[9px] md:text-sm font-black break-words tracking-tight mt-0.5 leading-tight"
+            style={{ color: color }}
+          >
+            {value || "---"}
+          </p>
         )}
       </div>
     </div>

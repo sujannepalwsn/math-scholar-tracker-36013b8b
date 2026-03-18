@@ -14,6 +14,7 @@ import CenterLayout from "./components/CenterLayout";
 import AdminLayout from "./components/AdminLayout";
 import ParentLayout from "./components/ParentLayout";
 import TeacherLayout from "./components/TeacherLayout";
+import DynamicRoleLayout from "./components/DynamicRoleLayout";
 import BackButtonHandler from "./components/BackButtonHandler";
 
 import Dashboard from "./pages/Dashboard";
@@ -162,7 +163,7 @@ const App = () => (
               <Route path="/parent-leave" element={<ProtectedRoute role="parent"><ParentLayout><LeaveApplications /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-settings" element={<ProtectedRoute role="parent"><ParentLayout><GeneralSettings /></ParentLayout></ProtectedRoute>} />
 
-              {/* Teacher */}
+              {/* Teacher Dashboard & Specifics */}
               <Route path="/teacher-dashboard" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherDashboard /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/take-attendance" element={<ProtectedRoute role="teacher"><TeacherLayout><TakeAttendance /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/attendance-summary" element={<ProtectedRoute role="teacher"><TeacherLayout><AttendanceSummary /></TeacherLayout></ProtectedRoute>} />
@@ -188,55 +189,46 @@ const App = () => (
               <Route path="/teacher/leave" element={<ProtectedRoute role="teacher"><TeacherLayout><LeaveApplications /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/settings" element={<ProtectedRoute role="teacher"><TeacherLayout><GeneralSettings /></TeacherLayout></ProtectedRoute>} />
 
-              {/* Administrative Routes for Teachers with Admin Role */}
-              <Route path="/register" element={<ProtectedRoute role="teacher"><TeacherLayout><RegisterStudent /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/teachers" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherManagement /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/teacher-attendance" element={<ProtectedRoute role="teacher"><TeacherLayout><TeacherAttendancePage /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/hr-management" element={<ProtectedRoute role="teacher"><TeacherLayout><HRManagement /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/leave-management" element={<ProtectedRoute role="teacher"><TeacherLayout><LeaveManagement /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/student-id-cards" element={<ProtectedRoute role="teacher"><TeacherLayout><StudentIdCard /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/inventory" element={<ProtectedRoute role="teacher"><TeacherLayout><InventoryManagement /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/transport" element={<ProtectedRoute role="teacher"><TeacherLayout><TransportManagementPage /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/school-days" element={<ProtectedRoute role="teacher"><TeacherLayout><SchoolDays /></TeacherLayout></ProtectedRoute>} />
-
-              {/* Center */}
-              <Route path="/" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
-              <Route path="/register" element={<ProtectedRoute role="center"><CenterLayout><RegisterStudent /></CenterLayout></ProtectedRoute>} />
-              <Route path="/attendance" element={<ProtectedRoute role="center"><CenterLayout><TakeAttendance /></CenterLayout></ProtectedRoute>} />
-              <Route path="/attendance-summary" element={<ProtectedRoute role="center"><CenterLayout><AttendanceSummary /></CenterLayout></ProtectedRoute>} />
-              <Route path="/lesson-plans" element={<ProtectedRoute role="center"><CenterLayout><LessonPlans /></CenterLayout></ProtectedRoute>} />
-              <Route path="/lesson-plan-management" element={<ProtectedRoute role="center"><CenterLayout><LessonPlanManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/lesson-tracking" element={<ProtectedRoute role="center"><CenterLayout><LessonTracking /></CenterLayout></ProtectedRoute>} />
-              <Route path="/homework" element={<ProtectedRoute role="center"><CenterLayout><HomeworkManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/activities" element={<ProtectedRoute role="center"><CenterLayout><PreschoolActivities /></CenterLayout></ProtectedRoute>} />
-              <Route path="/discipline" element={<ProtectedRoute role="center"><CenterLayout><DisciplineIssues /></CenterLayout></ProtectedRoute>} />
-              <Route path="/teachers" element={<ProtectedRoute role="center"><CenterLayout><TeacherManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/teacher-attendance" element={<ProtectedRoute role="center"><CenterLayout><TeacherAttendancePage /></CenterLayout></ProtectedRoute>} />
-              <Route path="/tests" element={<ProtectedRoute role="center"><CenterLayout><Tests /></CenterLayout></ProtectedRoute>} />
-              <Route path="/student-report" element={<ProtectedRoute role="center"><CenterLayout><StudentReport /></CenterLayout></ProtectedRoute>} />
-              <Route path="/ai-insights" element={<ProtectedRoute role="center"><CenterLayout><AIInsights /></CenterLayout></ProtectedRoute>} />
-              <Route path="/records" element={<ProtectedRoute role="center"><CenterLayout><ViewRecords /></CenterLayout></ProtectedRoute>} />
-              <Route path="/summary" element={<ProtectedRoute role="center"><CenterLayout><Summary /></CenterLayout></ProtectedRoute>} />
-              <Route path="/finance" element={<ProtectedRoute role="center"><CenterLayout><AdminFinance /></CenterLayout></ProtectedRoute>} />
-              <Route path="/meetings" element={<ProtectedRoute role="center"><CenterLayout><MeetingManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/messages" element={<ProtectedRoute role="center"><CenterLayout><Messaging /></CenterLayout></ProtectedRoute>} />
-              <Route path="/class-routine" element={<ProtectedRoute role="center"><CenterLayout><ClassRoutine /></CenterLayout></ProtectedRoute>} />
-              <Route path="/calendar" element={<ProtectedRoute role="center"><CenterLayout><CalendarEvents /></CenterLayout></ProtectedRoute>} />
-              <Route path="/about-institution" element={<ProtectedRoute role="center"><CenterLayout><AboutInstitution /></CenterLayout></ProtectedRoute>} />
-              <Route path="/chapter-performance-overview" element={<ProtectedRoute role="center"><CenterLayout><ChapterPerformanceOverview /></CenterLayout></ProtectedRoute>} />
+              {/* Shared Administrative Modules (accessible by center and administrative teachers) */}
+              <Route path="/register" element={<ProtectedRoute><DynamicRoleLayout><RegisterStudent /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/teachers" element={<ProtectedRoute><DynamicRoleLayout><TeacherManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/teacher-attendance" element={<ProtectedRoute><DynamicRoleLayout><TeacherAttendancePage /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/hr-management" element={<ProtectedRoute><DynamicRoleLayout><HRManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/leave-management" element={<ProtectedRoute><DynamicRoleLayout><LeaveManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/student-id-cards" element={<ProtectedRoute><DynamicRoleLayout><StudentIdCard /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/inventory" element={<ProtectedRoute><DynamicRoleLayout><InventoryManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/transport" element={<ProtectedRoute><DynamicRoleLayout><TransportManagementPage /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/school-days" element={<ProtectedRoute><DynamicRoleLayout><SchoolDays /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/attendance" element={<ProtectedRoute><DynamicRoleLayout><TakeAttendance /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/attendance-summary" element={<ProtectedRoute><DynamicRoleLayout><AttendanceSummary /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/lesson-plans" element={<ProtectedRoute><DynamicRoleLayout><LessonPlans /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/lesson-plan-management" element={<ProtectedRoute><DynamicRoleLayout><LessonPlanManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/lesson-tracking" element={<ProtectedRoute><DynamicRoleLayout><LessonTracking /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/homework" element={<ProtectedRoute><DynamicRoleLayout><HomeworkManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/activities" element={<ProtectedRoute><DynamicRoleLayout><PreschoolActivities /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/discipline" element={<ProtectedRoute><DynamicRoleLayout><DisciplineIssues /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/tests" element={<ProtectedRoute><DynamicRoleLayout><Tests /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/student-report" element={<ProtectedRoute><DynamicRoleLayout><StudentReport /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/ai-insights" element={<ProtectedRoute><DynamicRoleLayout><AIInsights /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/records" element={<ProtectedRoute><DynamicRoleLayout><ViewRecords /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/summary" element={<ProtectedRoute><DynamicRoleLayout><Summary /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/finance" element={<ProtectedRoute><DynamicRoleLayout><AdminFinance /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/meetings" element={<ProtectedRoute><DynamicRoleLayout><MeetingManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute><DynamicRoleLayout><Messaging /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/class-routine" element={<ProtectedRoute><DynamicRoleLayout><ClassRoutine /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/calendar" element={<ProtectedRoute><DynamicRoleLayout><CalendarEvents /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/about-institution" element={<ProtectedRoute><DynamicRoleLayout><AboutInstitution /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/chapter-performance-overview" element={<ProtectedRoute><DynamicRoleLayout><ChapterPerformanceOverview /></DynamicRoleLayout></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute role="center"><CenterLayout><CenterSettings /></CenterLayout></ProtectedRoute>} />
               <Route path="/teacher-performance" element={<ProtectedRoute role="center"><CenterLayout><TeacherPerformanceReport /></CenterLayout></ProtectedRoute>} />
-              <Route path="/leave-management" element={<ProtectedRoute role="center"><CenterLayout><LeaveManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/exams" element={<ProtectedRoute role="center"><CenterLayout><ExamManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/published-results" element={<ProtectedRoute role="center"><CenterLayout><PublishedResults /></CenterLayout></ProtectedRoute>} />
-              <Route path="/marks-entry" element={<ProtectedRoute role="center"><CenterLayout><MarksEntry /></CenterLayout></ProtectedRoute>} />
-              <Route path="/results-dashboard" element={<ProtectedRoute role="center"><CenterLayout><ResultsDashboard /></CenterLayout></ProtectedRoute>} />
-              <Route path="/marksheet" element={<ProtectedRoute role="center"><CenterLayout><MarksheetView /></CenterLayout></ProtectedRoute>} />
-              <Route path="/student-id-cards" element={<ProtectedRoute role="center"><CenterLayout><StudentIdCard /></CenterLayout></ProtectedRoute>} />
-              <Route path="/school-days" element={<ProtectedRoute role="center"><CenterLayout><SchoolDays /></CenterLayout></ProtectedRoute>} />
-              <Route path="/inventory" element={<ProtectedRoute role="center"><CenterLayout><InventoryManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/hr-management" element={<ProtectedRoute role="center"><CenterLayout><HRManagement /></CenterLayout></ProtectedRoute>} />
-              <Route path="/transport" element={<ProtectedRoute role="center"><CenterLayout><TransportManagementPage /></CenterLayout></ProtectedRoute>} />
+              <Route path="/exams" element={<ProtectedRoute><DynamicRoleLayout><ExamManagement /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/published-results" element={<ProtectedRoute><DynamicRoleLayout><PublishedResults /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/marks-entry" element={<ProtectedRoute><DynamicRoleLayout><MarksEntry /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/results-dashboard" element={<ProtectedRoute><DynamicRoleLayout><ResultsDashboard /></DynamicRoleLayout></ProtectedRoute>} />
+              <Route path="/marksheet" element={<ProtectedRoute><DynamicRoleLayout><MarksheetView /></DynamicRoleLayout></ProtectedRoute>} />
+
+              {/* Center Specific */}
+              <Route path="/" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
 
               {/* Teacher Result Routes */}
               <Route path="/teacher/exams" element={<ProtectedRoute role="teacher"><TeacherLayout><ExamManagement /></TeacherLayout></ProtectedRoute>} />
