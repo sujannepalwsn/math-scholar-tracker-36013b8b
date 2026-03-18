@@ -32,6 +32,9 @@ export default function DashboardHeader() {
     header_overlay_opacity: 90,
     header_title_color: "#1e293b",
     header_details_color: "#64748b",
+    header_font_family: "Inter",
+    header_font_color: "#1e293b",
+    header_font_size: "normal",
     header_visible_sections: {
       principal: true,
       short_code: true,
@@ -89,6 +92,9 @@ export default function DashboardHeader() {
         header_overlay_opacity: (center as any).header_overlay_opacity || 90,
         header_title_color: (center as any).header_title_color || "#1e293b",
         header_details_color: (center as any).header_details_color || "#64748b",
+        header_font_family: (center as any).header_font_family || "Inter",
+        header_font_color: (center as any).header_font_color || "#1e293b",
+        header_font_size: (center as any).header_font_size || "normal",
         header_visible_sections: (center as any).header_visible_sections || {
           principal: true,
           short_code: true,
@@ -120,6 +126,9 @@ export default function DashboardHeader() {
           header_overlay_opacity: formData.header_overlay_opacity,
           header_title_color: formData.header_title_color,
           header_details_color: formData.header_details_color,
+          header_font_family: formData.header_font_family,
+          header_font_color: formData.header_font_color,
+          header_font_size: formData.header_font_size,
           header_visible_sections: formData.header_visible_sections
         })
         .eq("id", user.center_id);
@@ -235,7 +244,12 @@ export default function DashboardHeader() {
         }}
       />
 
-      <CardContent className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-6">
+      <CardContent
+        className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-6"
+        style={{
+          fontFamily: formData.header_font_family || 'inherit'
+        }}
+      >
         {/* Centered Name and Address */}
         <div className="flex flex-col items-center text-center space-y-1 relative">
           <div className="w-full">
@@ -245,20 +259,26 @@ export default function DashboardHeader() {
                 value={formData.name}
                 onChange={handleInputChange}
                 className="text-lg md:text-2xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-xl mx-auto"
-                style={{ color: formData.header_title_color }}
+                style={{
+                  color: formData.header_title_color,
+                  fontSize: formData.header_font_size === 'large' ? '1.75rem' : formData.header_font_size === 'small' ? '1rem' : '1.5rem',
+                }}
                 placeholder="School Name"
               />
             ) : (
               <h1
                 className="text-xl md:text-3xl font-black tracking-tight break-words max-w-3xl mx-auto"
-                style={{ color: formData.header_title_color }}
+                style={{
+                  color: formData.header_title_color,
+                  fontSize: formData.header_font_size === 'large' ? '2.25rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.875rem',
+                }}
               >
                 {formData.name || "School Name"}
               </h1>
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-1 text-[#4285f4] w-full">
+          <div className="flex flex-col items-center gap-1 w-full" style={{ color: formData.header_font_color || '#4285f4' }}>
             {isEditMode ? (
               <div className="flex items-center gap-2 max-w-lg mx-auto w-full">
                 <MapPin className="h-3 w-3 shrink-0" />
@@ -342,7 +362,7 @@ export default function DashboardHeader() {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-1.5 p-2 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full">
+                <div className="flex flex-col gap-1.5 p-2 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-h-[350px] overflow-y-auto">
                   <div className="space-y-1">
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Overlay Color</Label>
                     <div className="flex gap-1.5 items-center">
@@ -393,6 +413,40 @@ export default function DashboardHeader() {
                           className="w-4 h-4 rounded-full border-none cursor-pointer overflow-hidden"
                         />
                      </div>
+                  </div>
+
+                  <div className="pt-1 mt-1 border-t border-slate-100 space-y-1">
+                    <Label className="text-[7px] font-black uppercase text-slate-400">Font Family</Label>
+                    <select
+                      value={formData.header_font_family}
+                      onChange={(e) => setFormData(prev => ({ ...prev, header_font_family: e.target.value }))}
+                      className="w-full h-5 text-[7px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
+                    >
+                      <option value="Inter">Inter</option>
+                      <option value="Roboto">Roboto</option>
+                      <option value="Poppins">Poppins</option>
+                      <option value="Montserrat">Montserrat</option>
+                      <option value="Open Sans">Open Sans</option>
+                      <option value="Playfair Display">Playfair Display</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[7px] font-black uppercase text-slate-400">Font Size</Label>
+                    <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
+                      {['small', 'normal', 'large'].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setFormData(prev => ({ ...prev, header_font_size: size }))}
+                          className={cn(
+                            "flex-1 h-4 text-[6px] font-black uppercase rounded-sm transition-all",
+                            formData.header_font_size === size ? "bg-white shadow-sm text-primary" : "text-slate-400"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="pt-1 mt-1 border-t border-slate-100 space-y-1.5">

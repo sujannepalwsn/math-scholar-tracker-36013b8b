@@ -546,6 +546,9 @@ export type Database = {
           header_overlay_opacity: number | null
           header_title_color: string | null
           header_visible_sections: Json | null
+          header_font_family: string | null
+          header_font_color: string | null
+          header_font_size: string | null
           id: string
           institution_type: string | null
           latitude: number | null
@@ -581,6 +584,9 @@ export type Database = {
           header_overlay_opacity?: number | null
           header_title_color?: string | null
           header_visible_sections?: Json | null
+          header_font_family?: string | null
+          header_font_color?: string | null
+          header_font_size?: string | null
           id?: string
           institution_type?: string | null
           latitude?: number | null
@@ -616,6 +622,9 @@ export type Database = {
           header_overlay_opacity?: number | null
           header_title_color?: string | null
           header_visible_sections?: Json | null
+          header_font_family?: string | null
+          header_font_color?: string | null
+          header_font_size?: string | null
           id?: string
           institution_type?: string | null
           latitude?: number | null
@@ -843,7 +852,6 @@ export type Database = {
         Update: {
           center_id?: string
           created_at?: string
-          default_severity?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
