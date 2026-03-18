@@ -163,7 +163,8 @@ const ExpenseManagement = () => {
           ) : expenses.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No expenses recorded yet</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Description</TableHead>
@@ -189,6 +190,7 @@ const ExpenseManagement = () => {
                 ))}
               </TableBody>
             </Table>
+</div>
           )}
         </CardContent>
       </Card>

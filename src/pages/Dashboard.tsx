@@ -759,7 +759,7 @@ export default function Dashboard() {
       // Create notification for the substitute teacher
       const subTeacher = teachers.find(t => t.id === teacherId);
       if (subTeacher?.user_id) {
-        await supabase.from('notifications').insert({
+        const { error: notifError } = await supabase.from('notifications').insert({
           user_id: subTeacher.user_id,
           center_id: centerId,
           title: 'New Substitution Assigned',
@@ -767,6 +767,7 @@ export default function Dashboard() {
           type: 'info',
           link: '/teacher/class-routine'
         });
+        if (notifError) console.error("Error sending substitution notification:", notifError);
       }
     },
     onSuccess: () => {
@@ -861,7 +862,8 @@ export default function Dashboard() {
           <div className="py-4">
             <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Available Teachers (Present & Free)</h4>
             <div className="border rounded-2xl overflow-hidden shadow-soft">
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader className="bg-muted/5">
                   <TableRow>
                     <TableHead className="font-bold text-[10px] uppercase">Teacher</TableHead>
@@ -894,6 +896,7 @@ export default function Dashboard() {
                   )}
                 </TableBody>
               </Table>
+</div>
             </div>
           </div>
         </DialogContent>
@@ -1347,8 +1350,8 @@ export default function Dashboard() {
           <Card className="border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
             <CardContent className="p-6">
               <Tabs defaultValue="library" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-8 bg-muted/50 p-1 rounded-2xl">
-                  <TabsTrigger value="library" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
+                <TabsList className="flex flex-nowrap w-full overflow-x-auto mb-8 bg-muted/50 p-1 rounded-2xl custom-scrollbar">
+                  <TabsTrigger value="library" className="flex-1 min-w-[100px] rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
                     <Book className="h-4 w-4 mr-2" /> Library
                   </TabsTrigger>
                   <TabsTrigger value="transport" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">

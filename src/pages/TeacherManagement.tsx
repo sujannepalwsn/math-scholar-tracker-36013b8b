@@ -325,10 +325,10 @@ export default function TeacherManagement() {
             {editingTeacher ? (
               <div className="space-y-4 py-4">
                 <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                    <TabsTrigger value="hr">HR & Bank</TabsTrigger>
-                    <TabsTrigger value="timing">Timing</TabsTrigger>
+                  <TabsList className="flex flex-nowrap w-full overflow-x-auto h-10 p-1 custom-scrollbar">
+                    <TabsTrigger value="basic" className="flex-1 min-w-[100px]">Basic Info</TabsTrigger>
+                    <TabsTrigger value="hr" className="flex-1 min-w-[100px]">HR & Bank</TabsTrigger>
+                    <TabsTrigger value="timing" className="flex-1 min-w-[100px]">Timing</TabsTrigger>
                   </TabsList>
                   <TabsContent value="basic" className="space-y-4 pt-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -391,10 +391,10 @@ export default function TeacherManagement() {
                 <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="individual">Individual</TabsTrigger><TabsTrigger value="bulk">Bulk</TabsTrigger></TabsList>
                 <TabsContent value="individual" className="space-y-4 pt-4">
                   <Tabs defaultValue="basic" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                      <TabsTrigger value="hr">HR & Bank</TabsTrigger>
-                      <TabsTrigger value="timing">Timing</TabsTrigger>
+                    <TabsList className="flex flex-nowrap w-full overflow-x-auto h-10 p-1 custom-scrollbar">
+                      <TabsTrigger value="basic" className="flex-1 min-w-[100px]">Basic Info</TabsTrigger>
+                      <TabsTrigger value="hr" className="flex-1 min-w-[100px]">HR & Bank</TabsTrigger>
+                      <TabsTrigger value="timing" className="flex-1 min-w-[100px]">Timing</TabsTrigger>
                     </TabsList>
                     <TabsContent value="basic" className="space-y-4 pt-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

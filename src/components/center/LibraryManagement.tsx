@@ -70,9 +70,11 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
       if (loanError) throw loanError;
 
       // Decrement available copies
-      const { data: book } = await supabase.from('books').select('available_copies').eq('id', issueForm.bookId).single();
+      const { data: book, error: fetchError } = await supabase.from('books').select('available_copies').eq('id', issueForm.bookId).single();
+      if (fetchError) throw fetchError;
       if (book) {
-        await supabase.from('books').update({ available_copies: Math.max(0, book.available_copies - 1) }).eq('id', issueForm.bookId);
+        const { error: updateError } = await supabase.from('books').update({ available_copies: Math.max(0, book.available_copies - 1) }).eq('id', issueForm.bookId);
+        if (updateError) throw updateError;
       }
     },
     onSuccess: () => {
@@ -184,7 +186,8 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
           )}
 
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest">Title</TableHead>
@@ -212,6 +215,7 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
                 ))}
               </TableBody>
             </Table>
+</div>
           </div>
         </TabsContent>
 
@@ -265,7 +269,8 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
           )}
 
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest">Book</TableHead>
@@ -299,6 +304,7 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
                 ))}
               </TableBody>
             </Table>
+</div>
           </div>
         </TabsContent>
       </Tabs>

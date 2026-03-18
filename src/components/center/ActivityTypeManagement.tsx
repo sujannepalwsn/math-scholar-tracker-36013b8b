@@ -170,7 +170,8 @@ export default function ActivityTypeManagement() {
         ) : activityTypes.length === 0 ? (
           <p className="text-muted-foreground text-center py-4">No activity types created yet</p>
         ) : (
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -207,6 +208,7 @@ export default function ActivityTypeManagement() {
               ))}
             </TableBody>
           </Table>
+</div>
         )}
       </CardContent>
     </Card>

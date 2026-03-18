@@ -49,7 +49,8 @@ export default function AlumniManagement({ centerId }: { centerId: string }) {
       if (error) throw error;
 
       // Also update student status to Transferred if they aren't already alumni
-      await supabase.from("students").update({ status: 'Transferred', is_active: false }).eq("id", selectedStudentForTC.id);
+      const { error: studentError } = await supabase.from("students").update({ status: 'Transferred', is_active: false }).eq("id", selectedStudentForTC.id);
+      if (studentError) throw studentError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alumni-students"] });
@@ -88,7 +89,8 @@ export default function AlumniManagement({ centerId }: { centerId: string }) {
       </div>
 
       <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-        <Table>
+        <div className="overflow-x-auto">
+  <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
               <TableHead className="font-black text-[10px] uppercase tracking-widest">Student</TableHead>
@@ -123,6 +125,7 @@ export default function AlumniManagement({ centerId }: { centerId: string }) {
             )}
           </TableBody>
         </Table>
+</div>
       </div>
 
       <Dialog open={!!selectedStudentForTC} onOpenChange={() => setSelectedStudentForTC(null)}>

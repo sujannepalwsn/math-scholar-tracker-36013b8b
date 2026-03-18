@@ -110,19 +110,22 @@ export function useDynamicNavigation() {
       for (const cat of categoriesToSync) {
         const existing = dynamicCategories.find(c => c.name === cat.name);
         if (!existing) {
-          await supabase.from("nav_categories").insert({
+          const { error: catError } = await supabase.from("nav_categories").insert({
             center_id: user.center_id,
             name: cat.name,
             order: cat.order
           });
+          if (catError) throw catError;
         }
       }
 
       // Re-fetch to get IDs
-      const { data: latestCats } = await supabase
+      const { data: latestCats, error: fetchCatsError } = await supabase
         .from("nav_categories")
         .select("*")
         .eq("center_id", user.center_id);
+
+      if (fetchCatsError) throw fetchCatsError;
 
       // 2. Items
       const itemsToInsert = [];

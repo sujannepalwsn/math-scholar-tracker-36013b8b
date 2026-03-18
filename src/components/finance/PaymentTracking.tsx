@@ -172,7 +172,8 @@ const PaymentTracking = () => {
           ) : payments.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No payments recorded yet</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice</TableHead>
@@ -196,6 +197,7 @@ const PaymentTracking = () => {
                 ))}
               </TableBody>
             </Table>
+</div>
           )}
         </CardContent>
       </Card>

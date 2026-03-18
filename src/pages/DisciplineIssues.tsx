@@ -147,7 +147,8 @@ export default function DisciplineIssues() {
           type: "info",
           link: "/parent-discipline"
         }));
-        await supabase.from('notifications').insert(notifications);
+        const { error: notifError } = await supabase.from('notifications').insert(notifications);
+        if (notifError) console.error("Notification error:", notifError);
       }
     },
     onSuccess: () => {

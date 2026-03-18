@@ -128,11 +128,13 @@ export default function Messaging() {
       if (!selectedConversation?.id || !user?.id) return;
       const unread = messages.filter((m: any) => !m.is_read && m.sender_user_id !== user.id);
       if (unread.length > 0) {
-        await supabase
+        const { error } = await supabase
           .from("chat_messages")
           .update({ is_read: true, read_at: new Date().toISOString() })
           .in("id", unread.map((m: any) => m.id));
-        queryClient.invalidateQueries({ queryKey: ["unread-counts"] });
+        if (!error) {
+          queryClient.invalidateQueries({ queryKey: ["unread-counts"] });
+        }
       }
     };
     markAsRead();
@@ -148,14 +150,15 @@ export default function Messaging() {
         message_text: newMessage.trim(),
       });
       if (error) throw error;
-      await supabase.from("chat_conversations").update({ updated_at: new Date().toISOString() }).eq("id", selectedConversation.id);
+      const { error: convUpdateError } = await supabase.from("chat_conversations").update({ updated_at: new Date().toISOString() }).eq("id", selectedConversation.id);
+      if (convUpdateError) throw convUpdateError;
 
       // Notify recipient
       const recipientId = user.role === 'parent' ? null : selectedConversation.parent_user_id;
       const title = user.role === 'parent' ? `New message from parent` : `New message from center`;
       const link = user.role === 'parent' ? '/messages' : '/parent-messages';
 
-      await supabase.from('notifications').insert({
+      const { error: notifError } = await supabase.from('notifications').insert({
         center_id: user.center_id,
         user_id: recipientId,
         title: title,
@@ -163,6 +166,7 @@ export default function Messaging() {
         type: 'info',
         link: link
       });
+      if (notifError) throw notifError;
 
       // Realtime channel broadcast for immediate UI update in other clients
       const channel = supabase.channel(`notifications-${recipientId || user.center_id}`);
@@ -436,8 +440,8 @@ export default function Messaging() {
       </div>
 
       <Tabs defaultValue="direct" className="w-full space-y-8">
-        <TabsList className="grid w-full grid-cols-3 h-14 bg-white/50 border border-slate-100 p-1 rounded-2xl shadow-soft backdrop-blur-md">
-          <TabsTrigger value="direct" className="rounded-xl data-[state=active]:shadow-soft font-black uppercase text-[10px] tracking-widest gap-2">
+        <TabsList className="flex flex-nowrap w-full overflow-x-auto h-14 bg-white/50 border border-slate-100 p-1 rounded-2xl shadow-soft backdrop-blur-md custom-scrollbar">
+          <TabsTrigger value="direct" className="rounded-xl flex-1 min-w-[120px] data-[state=active]:shadow-soft font-black uppercase text-[10px] tracking-widest gap-2">
             <MessageSquare className="h-4 w-4" /> Direct Messages
           </TabsTrigger>
           <TabsTrigger value="broadcast" className="rounded-xl data-[state=active]:shadow-soft font-black uppercase text-[10px] tracking-widest gap-2">

@@ -43,7 +43,8 @@ export default function Notifications() {
 
   const markReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["all-notifications"] }),
   });
@@ -60,14 +61,16 @@ export default function Notifications() {
   const markAllReadMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) return;
-      await supabase.from("notifications").update({ is_read: true }).eq("center_id", user.center_id).eq("is_read", false);
+      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("center_id", user.center_id).eq("is_read", false);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["all-notifications"] }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("notifications").delete().eq("id", id);
+      const { error } = await supabase.from("notifications").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["all-notifications"] }),
   });

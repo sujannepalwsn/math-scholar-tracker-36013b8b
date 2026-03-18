@@ -105,7 +105,8 @@ export default function SuperAdminBilling() {
 
       <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader className="bg-slate-50 border-b">
               <TableRow>
                 <TableHead className="font-black text-[10px] uppercase tracking-widest px-8 py-4">Invoice Details</TableHead>
@@ -146,6 +147,7 @@ export default function SuperAdminBilling() {
               )}
             </TableBody>
           </Table>
+</div>
         </CardContent>
       </Card>
     </div>

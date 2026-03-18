@@ -44,10 +44,11 @@ export default function SubscriptionPlans() {
 
       // Deactivate old subscriptions if any
       if (currentSub) {
-        await supabase
+        const { error: deactivateError } = await supabase
           .from("center_subscriptions")
           .update({ status: "Inactive" })
           .eq("center_id", user?.center_id);
+        if (deactivateError) throw deactivateError;
       }
 
       const { error } = await supabase.from("center_subscriptions").insert({

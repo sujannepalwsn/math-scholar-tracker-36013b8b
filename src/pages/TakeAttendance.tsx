@@ -218,7 +218,9 @@ export default function TakeAttendance() {
     mutationFn: async () => {
       if (!filteredStudents || !user?.center_id) return;
       // Delete existing records for these students on this date
-      await supabase.from("attendance").delete().eq("date", dateStr).in("student_id", filteredStudents.map((s) => s.id));
+      const { error: deleteError } = await supabase.from("attendance").delete().eq("date", dateStr).in("student_id", filteredStudents.map((s) => s.id));
+      if (deleteError) throw deleteError;
+
       // Insert ALL filtered students
       const records = filteredStudents.map((student) => ({
         student_id: student.id,
@@ -248,7 +250,8 @@ export default function TakeAttendance() {
             type: "attendance",
             link: "/parent-dashboard"
           }));
-          await supabase.from('notifications').insert(notifications);
+          const { error: notifError } = await supabase.from('notifications').insert(notifications);
+          if (notifError) console.error("Error sending notifications:", notifError);
         }
       }
     },

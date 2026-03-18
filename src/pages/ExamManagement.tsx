@@ -200,7 +200,8 @@ export default function ExamManagement() {
             type: "marks",
             link: "/parent-results"
           }));
-          await supabase.from("notifications").insert(notifications);
+          const { error: notifError } = await supabase.from("notifications").insert(notifications);
+          if (notifError) console.error("Notification error:", notifError);
         }
       }
     },
@@ -431,7 +432,8 @@ export default function ExamManagement() {
               <Plus className="h-4 w-4 mr-1" /> Add Subject
             </Button>
             {subjects.length > 0 && (
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Subject</TableHead>
@@ -455,6 +457,7 @@ export default function ExamManagement() {
                   ))}
                 </TableBody>
               </Table>
+</div>
             )}
           </div>
         </DialogContent>

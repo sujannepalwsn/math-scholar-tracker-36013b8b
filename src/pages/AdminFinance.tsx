@@ -281,13 +281,13 @@ const AdminFinance = () => {
         )}
 
         <Tabs defaultValue="invoices" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-6 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft">
-            <TabsTrigger value="invoices" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Invoices</TabsTrigger>
-            <TabsTrigger value="fees" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Fees</TabsTrigger>
-            <TabsTrigger value="payments" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Payments</TabsTrigger>
-            <TabsTrigger value="expenses" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Expenses</TabsTrigger>
-            <TabsTrigger value="reports" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Analytics</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Settings</TabsTrigger>
+          <TabsList className="flex flex-nowrap w-full overflow-x-auto h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft custom-scrollbar">
+            <TabsTrigger value="invoices" className="rounded-[1.5rem] flex-1 min-w-[100px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Invoices</TabsTrigger>
+            <TabsTrigger value="fees" className="rounded-[1.5rem] flex-1 min-w-[100px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Fees</TabsTrigger>
+            <TabsTrigger value="payments" className="rounded-[1.5rem] flex-1 min-w-[100px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Payments</TabsTrigger>
+            <TabsTrigger value="expenses" className="rounded-[1.5rem] flex-1 min-w-[100px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Expenses</TabsTrigger>
+            <TabsTrigger value="reports" className="rounded-[1.5rem] flex-1 min-w-[100px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Analytics</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-[1.5rem] flex-1 min-w-[100px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="invoices"><InvoiceManagement /></TabsContent>

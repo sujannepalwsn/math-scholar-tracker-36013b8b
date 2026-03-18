@@ -20,7 +20,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Discipline", route: "/discipline", icon: "AlertTriangle", role: "center", feature_name: "discipline_issues", category: 'Academics', order: 10 },
 
   // Administration Group
-  { name: "Students Registration", route: "/register", icon: "UserPlus", role: "center", feature_name: "students_registration", category: 'Administration', order: 11 },
+  { name: "Students Registration", route: "/register", icon: "UserPlus", role: "center", feature_name: "register_student", category: 'Administration', order: 11 },
   { name: "Teachers Registration", route: "/teachers", icon: "Users", role: "center", feature_name: "teacher_management", category: 'Administration', order: 12 },
   { name: "Teachers' Attendance", route: "/teacher-attendance", icon: "UserCheck", role: "center", feature_name: "teachers_attendance", category: 'Administration', order: 13 },
   { name: "HR Management", route: "/hr-management", icon: "Award", role: "center", feature_name: "hr_management", category: 'Administration', order: 14 },
@@ -72,7 +72,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Messages", route: "/teacher-messages", icon: "MessageSquare", role: "teacher", feature_name: "messaging", category: 'Reports and Communication', order: 15 },
   { name: "Meetings", route: "/teacher-meetings", icon: "Video", role: "teacher", feature_name: "meetings_management", category: 'Reports and Communication', order: 16 },
   { name: "Calendar", route: "/teacher/calendar", icon: "Calendar", role: "teacher", feature_name: "calendar_events", category: 'Reports and Communication', order: 17 },
-  { name: "Student Report", route: "/teacher/student-report", icon: "User", role: "teacher", feature_name: "student_report", category: 'Reports and Communication', order: 18 },
+  { name: "Student Report", route: "/teacher/student-report", icon: "User", role: "teacher", feature_name: "student_report_access", category: 'Reports and Communication', order: 18 },
   { name: "Attendance Summary", route: "/teacher/attendance-summary", icon: "CalendarDays", role: "teacher", feature_name: "attendance_summary", category: 'Reports and Communication', order: 19 },
   { name: "Summary", route: "/teacher/summary", icon: "BarChart3", role: "teacher", feature_name: "summary", category: 'Reports and Communication', order: 20 },
   { name: "View Records", route: "/teacher/view-records", icon: "FileText", role: "teacher", feature_name: "view_records", category: 'Reports and Communication', order: 21 },

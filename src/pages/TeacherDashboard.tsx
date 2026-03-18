@@ -628,11 +628,11 @@ export default function TeacherDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="text-sm font-semibold">Days Tracked: {dailyAttendanceSummary.length}</div>
-                <div className="text-sm font-semibold text-green-600">Total Present: {dailyAttendanceSummary.reduce((acc, curr) => acc + curr.present, 0)}</div>
-                <div className="text-sm font-semibold text-rose-600">Total Absent: {dailyAttendanceSummary.reduce((acc, curr) => acc + curr.absent, 0)}</div>
-                <div className="text-sm font-bold">Avg Presence: {attendanceRate}%</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-[10px] md:text-sm font-semibold">Days Tracked: {dailyAttendanceSummary.length}</div>
+                <div className="text-[10px] md:text-sm font-semibold text-green-600">Total Present: {dailyAttendanceSummary.reduce((acc, curr) => acc + curr.present, 0)}</div>
+                <div className="text-[10px] md:text-sm font-semibold text-rose-600">Total Absent: {dailyAttendanceSummary.reduce((acc, curr) => acc + curr.absent, 0)}</div>
+                <div className="text-[10px] md:text-sm font-bold">Avg Presence: {attendanceRate}%</div>
               </div>
               <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
                 <table className="w-full border-collapse text-sm min-w-[700px]">

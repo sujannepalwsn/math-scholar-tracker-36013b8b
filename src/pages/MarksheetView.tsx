@@ -313,7 +313,8 @@ export default function MarksheetView() {
               </div>
 
               {/* Marks Table */}
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Subject</TableHead>
@@ -339,6 +340,7 @@ export default function MarksheetView() {
                   ))}
                 </TableBody>
               </Table>
+</div>
 
               {/* Summary */}
               <div className="mt-12 grid grid-cols-2 sm:grid-cols-5 gap-6 text-center">

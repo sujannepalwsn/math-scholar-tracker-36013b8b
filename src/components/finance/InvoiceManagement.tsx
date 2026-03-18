@@ -288,7 +288,8 @@ const InvoiceManagement = () => {
           ) : invoices.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No invoices created yet</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice #</TableHead>
@@ -322,6 +323,7 @@ const InvoiceManagement = () => {
                 ))}
               </TableBody>
             </Table>
+</div>
           )}
         </CardContent>
       </Card>

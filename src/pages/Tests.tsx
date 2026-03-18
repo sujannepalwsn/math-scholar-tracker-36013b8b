@@ -243,7 +243,7 @@ export default function Tests() {
       // Notify Parent/Student
       const student = students.find(s => s.id === selectedStudentId);
       if (student?.user_id) {
-        await supabase.from('notifications').insert({
+        const { error: notifError } = await supabase.from('notifications').insert({
           user_id: student.user_id,
           center_id: user?.center_id,
           title: `Test Marks Recorded: ${selectedTestData?.name}`,
@@ -251,6 +251,7 @@ export default function Tests() {
           type: 'marks',
           link: '/parent-results'
         });
+        if (notifError) console.error("Notification error:", notifError);
       }
 
       console.log("Test result saved successfully:", data);
@@ -322,7 +323,8 @@ export default function Tests() {
             link: '/parent-results'
           };
         });
-        await supabase.from('notifications').insert(notifications);
+        const { error: notifError } = await supabase.from('notifications').insert(notifications);
+        if (notifError) console.error("Notification error:", notifError);
       }
 
       console.log("Bulk marks saved successfully.");
@@ -458,7 +460,8 @@ export default function Tests() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-muted/10">
                   <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Test Name</TableHead>
@@ -489,6 +492,7 @@ export default function Tests() {
                 ))}
               </TableBody>
             </Table>
+</div>
           </CardContent>
         </Card>
       )}
@@ -711,7 +715,8 @@ export default function Tests() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-muted/10">
                   <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Assessment Name</TableHead>
@@ -776,6 +781,7 @@ export default function Tests() {
                 ))}
               </TableBody>
             </Table>
+</div>
             {tests.length === 0 && (
               <p className="text-muted-foreground text-center py-12 font-medium">
                 No assessments in catalog
@@ -1053,7 +1059,8 @@ export default function Tests() {
 
               <div className="space-y-3">
                 <Label className="text-sm font-bold">Entered Results</Label>
-                <Table>
+                <div className="overflow-x-auto">
+  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Student</TableHead>
@@ -1079,6 +1086,7 @@ export default function Tests() {
                     )}
                   </TableBody>
                 </Table>
+</div>
               </div>
             </div>
           )}

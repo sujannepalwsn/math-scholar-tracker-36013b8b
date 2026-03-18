@@ -248,7 +248,8 @@ export default function LeaveManagement() {
 
       <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-border/20">
         <CardContent className="p-0">
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader className="bg-primary/5">
               <TableRow className="border-muted/10 hover:bg-transparent">
                 <TableHead className="font-black text-[10px] uppercase tracking-widest pl-6">Applicant</TableHead>
@@ -329,6 +330,7 @@ export default function LeaveManagement() {
               )}
             </TableBody>
           </Table>
+</div>
         </CardContent>
       </Card>
 
