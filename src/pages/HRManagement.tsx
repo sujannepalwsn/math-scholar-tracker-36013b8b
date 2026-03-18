@@ -15,6 +15,7 @@ export default function HRManagement() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: teachers = [], isLoading } = useQuery({
     queryKey: ["teachers-hr", centerId],
@@ -28,43 +29,72 @@ export default function HRManagement() {
 
   const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
 
+  const filteredTeachers = teachers.filter(t =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-blue-600">
-            Human Resources
-          </h1>
-          <p className="text-slate-500 text-sm font-medium">Manage faculty contracts, payroll, documents, and performance.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Users className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Talent Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Faculty Lifecycle & Payroll</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="w-full md:w-72">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Users className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search faculty..."
+              className="w-full h-11 pl-10 pr-4 bg-white/50 backdrop-blur-sm border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all shadow-soft"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <Card className="lg:col-span-4 rounded-[2.5rem] border border-slate-200 shadow-strong bg-white/80 backdrop-blur-md overflow-hidden h-fit">
-          <CardHeader className="bg-blue-500/5 border-b border-border/20 px-8 py-6">
+        <Card className="lg:col-span-4 rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden h-fit border border-white/20">
+          <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
             <CardTitle className="flex items-center gap-3 text-lg font-black uppercase tracking-tight">
-              <Users className="h-5 w-5 text-blue-600" /> Faculty Roster
+              <Users className="h-5 w-5 text-primary" /> Faculty Roster
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y max-h-[600px] overflow-y-auto">
+            <div className="divide-y divide-border/10 max-h-[600px] overflow-y-auto">
               {isLoading ? (
                 <div className="p-12 text-center flex flex-col items-center gap-3">
                    <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Synchronizing Roster...</p>
                 </div>
-              ) : teachers.length === 0 ? (
+              ) : filteredTeachers.length === 0 ? (
                 <div className="p-12 text-center space-y-4">
-                   <Users className="h-12 w-12 text-slate-200 mx-auto" />
-                   <p className="text-sm font-medium text-slate-400 italic px-6">No faculty members identified in the current center directory.</p>
+                   <Users className="h-12 w-12 text-slate-200 mx-auto opacity-20" />
+                   <p className="text-sm font-medium text-slate-400 italic px-6">No faculty members found matching your criteria.</p>
                 </div>
               ) : (
-                teachers.map((teacher) => (
+                filteredTeachers.map((teacher) => (
                   <div
                     key={teacher.id}
                     className={cn(
-                      "p-4 hover:bg-blue-50/50 cursor-pointer transition-colors border-l-4",
-                      selectedTeacherId === teacher.id ? "border-blue-600 bg-blue-50/30" : "border-transparent"
+                      "p-5 hover:bg-primary/5 cursor-pointer transition-all border-l-4 group",
+                      selectedTeacherId === teacher.id ? "border-primary bg-primary/10" : "border-transparent"
                     )}
                     onClick={() => setSelectedTeacherId(teacher.id)}
                   >
@@ -87,8 +117,8 @@ export default function HRManagement() {
         <div className="lg:col-span-8">
           {selectedTeacherId ? (
             <div className="space-y-6">
-              <Card className="rounded-[2.5rem] border border-slate-200 shadow-strong bg-white/80 backdrop-blur-md overflow-hidden">
-                <CardHeader className="bg-primary/5 border-b border-border/20 px-8 py-6">
+              <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+                <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -110,13 +140,15 @@ export default function HRManagement() {
               </Card>
             </div>
           ) : (
-            <Card className="rounded-[2.5rem] border border-slate-200 shadow-strong bg-white/80 backdrop-blur-md overflow-hidden h-[500px] flex items-center justify-center">
-              <div className="text-center space-y-4 px-12">
-                <div className="mx-auto w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center">
-                  <ShieldCheck className="h-8 w-8 text-blue-400" />
+            <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden h-[500px] flex items-center justify-center border border-white/20">
+              <div className="text-center space-y-6 px-12">
+                <div className="mx-auto w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center animate-bounce">
+                  <ShieldCheck className="h-10 w-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-black uppercase tracking-tight text-slate-700">Select a faculty member</h3>
-                <p className="text-muted-foreground font-medium italic">Choose a profile from the roster to manage their human resource records, payroll, and contracts.</p>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-foreground">Faculty Selection Required</h3>
+                  <p className="text-muted-foreground font-medium italic max-w-sm mx-auto">Choose a profile from the roster to manage their human resource records, payroll, and contracts.</p>
+                </div>
               </div>
             </Card>
           )}

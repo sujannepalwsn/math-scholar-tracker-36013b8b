@@ -136,28 +136,29 @@ export default function AttendanceSummary() {
   const [selectedDayDetail, setSelectedDayDetail] = useState<{date: string, remarks: string | null} | null>(null);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Attendance Analytics
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Statistical breakdown of student participation.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 text-primary">
-            <TrendingUp className="h-4 w-4" />
-            {format(selectedMonth, 'MMMM yyyy')}
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <TrendingUp className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Attendance Analytics
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Statistical Participation Matrix</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
-        <Card className="relative border-none shadow-medium p-8 overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+        <Card className="relative border-none shadow-medium p-6 overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Month</Label>
@@ -204,13 +205,13 @@ export default function AttendanceSummary() {
       </div>
 
       {selectedStudent !== 'all' && (
-        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+        <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+          <CardHeader className="border-b border-border/10 bg-primary/5 py-6">
             <CardTitle className="text-xl font-black flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/10">
                 <Calendar className="h-6 w-6 text-primary" />
               </div>
-              Monthly Calendar — {format(selectedMonth, 'MMMM yyyy')}
+              Attendance Heatmap — {format(selectedMonth, 'MMMM yyyy')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -283,13 +284,13 @@ export default function AttendanceSummary() {
       </Dialog>
 
       {stats.length > 0 && (
-        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+        <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+          <CardHeader className="border-b border-border/10 bg-primary/5 py-6">
             <CardTitle className="text-xl font-black flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/10">
                 <TrendingUp className="h-6 w-6 text-primary" />
               </div>
-              Attendance Metrics Matrix
+              Scholar Participation Matrix
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">

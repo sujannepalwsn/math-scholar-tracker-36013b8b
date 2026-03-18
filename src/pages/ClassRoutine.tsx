@@ -653,15 +653,22 @@ export default function ClassRoutine() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000 print:space-y-0 print:p-0">
+    <div className="space-y-8 animate-in fade-in duration-1000 print:space-y-0 print:p-0 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Scheduling Matrix
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Define and manage institutional class routines.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Clock className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Scheduling Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Institutional Routine Matrix</p>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -708,8 +715,8 @@ export default function ClassRoutine() {
         </TabsList>
 
         <TabsContent value="summary" className="space-y-4">
-          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6 flex flex-row items-center justify-between">
               <CardTitle className="text-xl font-black uppercase tracking-widest">Timetable Matrix</CardTitle>
               <div className="flex items-center gap-2 print:hidden">
                 <Select value={summaryDay.toString()} onValueChange={(v) => setSummaryDay(parseInt(v))}>
@@ -908,11 +915,17 @@ export default function ClassRoutine() {
 
         <TabsContent value="subjects" className="space-y-4">
           <div className="flex justify-end print:hidden">
-            <Button size="sm" onClick={() => setShowSubjectDialog(true)}><Plus className="h-4 w-4 mr-1" /> Add Subject</Button>
+            <Button onClick={() => setShowSubjectDialog(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-10 px-6">
+              <Plus className="h-4 w-4 mr-2" /> Add Subject
+            </Button>
           </div>
 
-          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><BookOpen className="h-4 w-4" /> Subjects</CardTitle></CardHeader>
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
+              <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                <BookOpen className="h-6 w-6 text-primary" /> Curricular Subjects
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               {subjectsLoading ? <p>Loading...</p> : registeredSubjects.length === 0 ? <p className="text-muted-foreground text-center py-4">No subjects defined.</p> : (
                 <div className="overflow-x-auto">
@@ -943,11 +956,17 @@ export default function ClassRoutine() {
 
         <TabsContent value="periods" className="space-y-4">
           <div className="flex justify-end print:hidden">
-            <Button size="sm" onClick={() => setShowPeriodDialog(true)}><Plus className="h-4 w-4 mr-1" /> Add Slot</Button>
+            <Button onClick={() => setShowPeriodDialog(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-10 px-6">
+              <Plus className="h-4 w-4 mr-2" /> Add Slot
+            </Button>
           </div>
 
-          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/95 backdrop-blur-xl">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-4 w-4" /> Class Periods</CardTitle></CardHeader>
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
+              <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                <Clock className="h-6 w-6 text-primary" /> Time Slots
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               {periodsLoading ? <p>Loading...</p> : periods.length === 0 ? <p className="text-muted-foreground text-center py-4">No periods defined.</p> : (
                 <div className="overflow-x-auto">

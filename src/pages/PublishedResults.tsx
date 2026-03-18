@@ -223,39 +223,53 @@ export default function PublishedResults() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={user?.role === 'parent' ? "Exam Results" : "Exam Schedules & Results"}
-        description={user?.role === 'parent' ? "View your child's formal examination outcomes" : "View and manage formal examination schedules and outcomes"}
-      />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <GraduationCap className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                {user?.role === 'parent' ? "Scholar Records" : "Exam Analytics"}
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Formal Assessment & Outcome Registry</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Card className="border-none shadow-soft bg-card/60 backdrop-blur-md">
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
         <CardContent className="p-6">
-          <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex flex-wrap gap-6 items-end">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">From</label>
-              <Input
-                type="date"
-                className="w-[150px] bg-white/50"
-                value={safeFormatDate(dateRange.from, "yyyy-MM-dd")}
-                onChange={(e) => setDateRange(prev => ({ ...prev, from: new Date(e.target.value) }))}
-              />
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Reporting Period</label>
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  className="w-[150px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold"
+                  value={safeFormatDate(dateRange.from, "yyyy-MM-dd")}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, from: new Date(e.target.value) }))}
+                />
+                <Input
+                  type="date"
+                  className="w-[150px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold"
+                  value={safeFormatDate(dateRange.to, "yyyy-MM-dd")}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, to: new Date(e.target.value) }))}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">To</label>
-              <Input
-                type="date"
-                className="w-[150px] bg-white/50"
-                value={safeFormatDate(dateRange.to, "yyyy-MM-dd")}
-                onChange={(e) => setDateRange(prev => ({ ...prev, to: new Date(e.target.value) }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Exam</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Examination Context</label>
               <Select value={selectedExamId} onValueChange={setSelectedExamId}>
-                <SelectTrigger className="w-[250px] bg-white/50">
+                <SelectTrigger className="w-[250px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold">
                   <SelectValue placeholder="Select an exam" />
                 </SelectTrigger>
                 <SelectContent>
@@ -272,9 +286,9 @@ export default function PublishedResults() {
 
             {user?.role !== 'parent' && (
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Grade</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Cohort</label>
                 <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                  <SelectTrigger className="w-[150px] bg-white/50">
+                  <SelectTrigger className="w-[150px] h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold">
                     <SelectValue placeholder="All Grades" />
                   </SelectTrigger>
                   <SelectContent>
@@ -288,12 +302,12 @@ export default function PublishedResults() {
             )}
 
             <div className="flex-1 min-w-[200px] space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Search Student</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Scholar Search</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Name or Roll Number..."
-                  className="pl-9 bg-white/50"
+                  className="pl-9 h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl font-bold"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -303,73 +317,77 @@ export default function PublishedResults() {
             {selectedExamId && (
               <Button
                 variant="outline"
-                className="h-11 rounded-xl bg-primary/5 border-primary/20 text-primary font-bold"
+                className="h-11 rounded-xl border-2 font-bold px-6 shadow-soft bg-white/50"
                 onClick={() => setSelectedExamSchedule({
                   ...selectedExam,
                   results: subjects // Mocking result structure for schedule modal
                 })}
               >
-                <Calendar className="mr-2 h-4 w-4" /> View Schedule
+                <Calendar className="mr-2 h-4 w-4" /> Schedule
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {selectedExamId ? (
-        <Card className="border-none shadow-strong overflow-hidden">
-          <CardHeader className="bg-primary/5 border-b">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              Student List: {selectedExam?.name}
+        <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+          <CardHeader className="bg-primary/5 border-b border-border/10 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <GraduationCap className="h-6 w-6 text-primary" />
+              </div>
+              Scholar Performance Directory
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {studentResults.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground italic">No results found for the current filters.</div>
+              <div className="p-12 text-center text-muted-foreground italic font-medium">No scholarship outcomes identified for the current filters.</div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead>Student Name</TableHead>
-                    <TableHead>Roll Number</TableHead>
-                    <TableHead className="text-center">Total Marks</TableHead>
-                    <TableHead className="text-center">Percentage</TableHead>
-                    <TableHead className="text-center">Grade</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-right px-6">Action</TableHead>
+                  <TableRow className="hover:bg-transparent border-muted/10 bg-muted/5">
+                    <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Scholar Identity</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Roll</TableHead>
+                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Marks</TableHead>
+                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Efficiency</TableHead>
+                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Grade</TableHead>
+                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Outcome</TableHead>
+                    <TableHead className="text-right pr-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Analysis</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {studentResults.map((result) => (
-                    <TableRow key={result.student.id} className="hover:bg-muted/20 transition-colors">
-                      <TableCell className="font-medium">{result.student.name}</TableCell>
-                      <TableCell>{result.student.roll_number || "-"}</TableCell>
-                      <TableCell className="text-center">
+                    <TableRow key={result.student.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                      <TableCell className="pl-6 py-4 font-black text-slate-700 group-hover:text-primary transition-colors">{result.student.name}</TableCell>
+                      <TableCell className="font-bold text-slate-500">{result.student.roll_number || "-"}</TableCell>
+                      <TableCell className="text-center font-black text-slate-600">
                         {result.hasAnyMarks ? `${result.totalObtained}/${result.totalFull}` : "-"}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center font-bold text-primary text-xs">
                         {result.hasAnyMarks ? `${result.percentage.toFixed(1)}%` : "-"}
                       </TableCell>
                       <TableCell className="text-center">
                         {result.hasAnyMarks ? (
-                          <Badge variant="outline" className="font-bold">{getGradeFormal(result.percentage)}</Badge>
+                          <Badge className="bg-primary/10 text-primary border-none rounded-lg px-2 py-0.5 text-[10px] font-black">{getGradeFormal(result.percentage)}</Badge>
                         ) : "-"}
                       </TableCell>
                       <TableCell className="text-center">
                         {result.hasAnyMarks ? (
-                          <Badge variant={result.allPassed ? "success" : "destructive"} className="font-black uppercase text-[10px]">
+                          <Badge variant={result.allPassed ? "success" : "destructive"} className="font-black uppercase text-[10px] border-none shadow-soft">
                             {result.allPassed ? "Pass" : "Fail"}
                           </Badge>
                         ) : (
-                          <Badge variant="secondary" className="text-[10px] uppercase font-bold">Scheduled</Badge>
+                          <Badge variant="secondary" className="text-[10px] uppercase font-black bg-slate-100 text-slate-500">Scheduled</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right px-6">
+                      <TableCell className="text-right pr-6">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full"
+                          className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10 group-hover:scale-110 transition-all"
                           disabled={!result.hasAnyMarks}
                           onClick={() => setSelectedStudentResult(result)}
                         >
@@ -380,6 +398,7 @@ export default function PublishedResults() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

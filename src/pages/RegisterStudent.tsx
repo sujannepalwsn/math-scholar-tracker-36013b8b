@@ -12,6 +12,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge"
 import LinkChildToParent from "@/components/center/LinkChildToParent";
 import { cn } from "@/lib/utils"
@@ -61,7 +71,8 @@ export default function RegisterStudent() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Student | null>(null);
+  const [editData, setEditData] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreatingParent, setIsCreatingParent] = useState(false);
   const [selectedStudentForParent, setSelectedStudentForParent] = useState<Student | null>(null);
   const [parentUsername, setParentUsername] = useState("");
@@ -74,6 +85,7 @@ export default function RegisterStudent() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [showLinkChildDialog, setShowLinkChildDialog] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   // Fetch students
   const { data: students, isLoading } = useQuery({
@@ -245,6 +257,7 @@ export default function RegisterStudent() {
           gender: student.gender,
           blood_group: student.blood_group,
           address: student.address,
+          roll_number: student.roll_number,
           photo_url
         })
         .eq("id", student.id);
@@ -255,6 +268,8 @@ export default function RegisterStudent() {
       setEditingId(null);
       setEditData(null);
       setPhotoFile(null);
+      setPhotoPreview(null);
+      setIsEditDialogOpen(false);
       toast.success("Student updated successfully!");
     },
     onError: () => {
@@ -487,6 +502,8 @@ export default function RegisterStudent() {
   const handleEdit = (student: any) => {
     setEditingId(student.id);
     setEditData({ ...student });
+    setPhotoPreview(student.photo_url ? (student.photo_url.startsWith('http') ? student.photo_url : supabase.storage.from('activity-photos').getPublicUrl(student.photo_url).data.publicUrl) : null);
+    setIsEditDialogOpen(true);
   };
 
   const handleSave = () => {
@@ -497,6 +514,8 @@ export default function RegisterStudent() {
     setEditingId(null);
     setEditData(null);
     setPhotoFile(null);
+    setPhotoPreview(null);
+    setIsEditDialogOpen(false);
   };
 
   const handleCreateParentAccount = (student: Student) => {
@@ -881,162 +900,52 @@ export default function RegisterStudent() {
                   filteredStudents.map((student) => (
                     <TableRow key={student.id} className="group transition-all duration-300 hover:bg-card/60">
                       <TableCell className="px-8 py-5">
-                        {editingId === student.id ? (
-                          <div className="space-y-2 min-w-[150px]">
-                          <Input
-                            value={editData?.name}
-                            className="h-9 rounded-xl text-xs font-bold"
-                            onChange={(e) =>
-                              setEditData((prev: any) =>
-                                prev ? { ...prev, name: e.target.value } : null
-                              )
-                            }
-                          />
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            className="h-8 text-[8px]"
-                            onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
-                          />
-                          <Input
-                            type="date"
-                            value={(editData as any)?.date_of_birth}
-                            className="h-8 text-[8px]"
-                            onChange={(e) => setEditData((prev: any) => prev ? { ...prev, date_of_birth: e.target.value } : null)}
-                          />
-                          <Select value={(editData as any)?.gender} onValueChange={(v) => setEditData((prev: any) => prev ? { ...prev, gender: v } : null)}>
-                            <SelectTrigger className="h-8 text-[8px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Male">Male</SelectItem>
-                              <SelectItem value="Female">Female</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-3">
-                             <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 transition-colors overflow-hidden">
-                                {(student as any).photo_url ? (
-                                  <img src={(student as any).photo_url.startsWith('http') ? (student as any).photo_url : supabase.storage.from('activity-photos').getPublicUrl((student as any).photo_url).data.publicUrl} alt="" className="h-8 w-8 object-cover" />
-                                ) : (
-                                  <UserIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
-                                )}
-                             </div>
-                             <p className="font-black text-slate-700 text-sm group-hover:text-primary transition-colors leading-none">{student.name}</p>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-3">
+                           <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 transition-colors overflow-hidden">
+                              {(student as any).photo_url ? (
+                                <img src={(student as any).photo_url.startsWith('http') ? (student as any).photo_url : supabase.storage.from('activity-photos').getPublicUrl((student as any).photo_url).data.publicUrl} alt="" className="h-8 w-8 object-cover" />
+                              ) : (
+                                <UserIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+                              )}
+                           </div>
+                           <p className="font-black text-slate-700 text-sm group-hover:text-primary transition-colors leading-none">{student.name}</p>
+                        </div>
                       </TableCell>
                       <TableCell className="px-8 py-5">
-                        {editingId === student.id ? (
-                          <div className="space-y-2 min-w-[80px]">
-                          <Input
-                            value={editData?.grade}
-                            className="h-9 rounded-xl text-xs font-bold"
-                            onChange={(e) =>
-                              setEditData((prev: any) =>
-                                prev ? { ...prev, grade: e.target.value } : null
-                              )
-                            }
-                          />
-                          <Input
-                            placeholder="Blood"
-                            value={(editData as any)?.blood_group}
-                            className="h-8 text-[8px]"
-                            onChange={(e) => setEditData((prev: any) => prev ? { ...prev, blood_group: e.target.value } : null)}
-                          />
-                          </div>
-                        ) : (
-                          <div className="space-y-1">
-                             <Badge variant="secondary" className="bg-primary/5 text-primary/70 border-none rounded-lg text-[10px] font-black uppercase tracking-tighter">Grade {student.grade}</Badge>
-                             {(student as any).blood_group && <p className="text-[9px] font-bold text-rose-500">{(student as any).blood_group}</p>}
-                          </div>
-                        )}
+                        <div className="space-y-1">
+                           <Badge variant="secondary" className="bg-primary/5 text-primary/70 border-none rounded-lg text-[10px] font-black uppercase tracking-tighter">Grade {student.grade}</Badge>
+                           {(student as any).roll_number && <span className="ml-2 text-[10px] font-bold text-slate-400">Roll: {(student as any).roll_number}</span>}
+                           {(student as any).blood_group && <p className="text-[9px] font-bold text-rose-500">{(student as any).blood_group}</p>}
+                        </div>
                       </TableCell>
                       <TableCell className="px-8 py-5">
-                        {editingId === student.id ? (
-                          <div className="space-y-2 min-w-[120px]">
-                          <Input
-                            value={editData?.school_name}
-                            className="h-9 rounded-xl text-xs font-bold"
-                            onChange={(e) =>
-                              setEditData((prev: any) =>
-                                prev ? { ...prev, school_name: e.target.value } : null
-                              )
-                            }
-                          />
-                          <Textarea
-                            placeholder="Address"
-                            value={(editData as any)?.address}
-                            className="h-16 text-[8px]"
-                            onChange={(e) => setEditData((prev: any) => prev ? { ...prev, address: e.target.value } : null)}
-                          />
-                          </div>
-                        ) : (
-                          <div className="space-y-1">
-                            <p className="text-xs font-bold text-slate-500">{student.school_name}</p>
-                            {(student as any).address && <p className="text-[10px] text-slate-400 truncate max-w-[100px]">{(student as any).address}</p>}
-                          </div>
-                        )}
+                        <div className="space-y-1">
+                          <p className="text-xs font-bold text-slate-500">{student.school_name}</p>
+                          {(student as any).address && <p className="text-[10px] text-slate-400 truncate max-w-[100px]">{(student as any).address}</p>}
+                        </div>
                       </TableCell>
                       <TableCell className="px-8 py-5">
-                        {editingId === student.id ? (
-                          <Input
-                            value={editData?.parent_name}
-                            className="h-9 rounded-xl text-xs font-bold"
-                            onChange={(e) =>
-                              setEditData((prev: any) =>
-                                prev ? { ...prev, parent_name: e.target.value } : null
-                              )
-                            }
-                          />
-                        ) : (
-                          <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{student.parent_name}</p>
-                        )}
+                        <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{student.parent_name}</p>
                       </TableCell>
                       <TableCell className="px-8 py-5">
-                        {editingId === student.id ? (
-                          <Input
-                            value={editData?.contact_number}
-                            className="h-9 rounded-xl text-xs font-bold"
-                            onChange={(e) =>
-                              setEditData((prev: any) =>
-                                prev ? { ...prev, contact_number: e.target.value } : null
-                              )
-                            }
-                          />
-                        ) : (
-                          <p className="text-xs font-black text-primary">{student.contact_number}</p>
-                        )}
+                        <p className="text-xs font-black text-primary">{student.contact_number}</p>
                       </TableCell>
                       <TableCell className="px-8 py-5 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {editingId === student.id ? (
-                            <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-green-50 text-green-600 hover:bg-green-100" onClick={handleSave} disabled={updateMutation.isPending}>
-                                {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100" onClick={handleCancel} disabled={updateMutation.isPending}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleEdit(student)}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleCreateParentAccount(student)}>
-                                <UserPlus className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-xl bg-white shadow-soft text-rose-500 hover:bg-rose-50"
-                                onClick={() => deleteMutation.mutate(student.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </>
-                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleEdit(student)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleCreateParentAccount(student)}>
+                            <UserPlus className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-xl bg-white shadow-soft text-rose-500 hover:bg-rose-50"
+                            onClick={() => setStudentToDelete(student)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1146,6 +1055,202 @@ export default function RegisterStudent() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Student Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black flex items-center gap-3">
+               <div className="p-2 rounded-xl bg-primary/10">
+                 <Pencil className="h-6 w-6 text-primary" />
+               </div>
+               Update Student Profile
+            </DialogTitle>
+            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-primary/60">
+              Modifying official records for {editData?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {editData && (
+            <div className="grid gap-8 py-6">
+              <div className="grid md:grid-cols-12 gap-8">
+                {/* Photo Section */}
+                <div className="md:col-span-4 flex flex-col items-center gap-4">
+                   <div className="relative group/photo">
+                      <div className="w-48 h-48 rounded-[2rem] bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-200 overflow-hidden shadow-inner transition-all group-hover/photo:border-primary/40">
+                        {photoPreview ? (
+                          <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="h-20 w-20 text-slate-300" />
+                        )}
+                      </div>
+                      <Label
+                        htmlFor="edit-photo"
+                        className="absolute -bottom-2 -right-2 w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform"
+                      >
+                        <Camera className="h-6 w-6" />
+                        <Input
+                          id="edit-photo"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
+                        />
+                      </Label>
+                    </div>
+                    <div className="text-center">
+                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Student Identity Portrait</p>
+                       <p className="text-[9px] font-medium text-slate-300 mt-1 italic">Click the camera to upload a new photo</p>
+                    </div>
+                </div>
+
+                {/* Form Fields */}
+                <div className="md:col-span-8 space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Full Name</Label>
+                      <Input
+                        value={editData.name}
+                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                        className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Roll Number</Label>
+                      <Input
+                        value={editData.roll_number || ""}
+                        onChange={(e) => setEditData({ ...editData, roll_number: e.target.value })}
+                        className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                        placeholder="e.g. 01"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Grade Level</Label>
+                      <Input
+                        value={editData.grade}
+                        onChange={(e) => setEditData({ ...editData, grade: e.target.value })}
+                        className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Date of Birth</Label>
+                      <Input
+                        type="date"
+                        value={editData.date_of_birth || ""}
+                        onChange={(e) => setEditData({ ...editData, date_of_birth: e.target.value })}
+                        className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Gender</Label>
+                      <Select value={editData.gender} onValueChange={(v) => setEditData({ ...editData, gender: v })}>
+                        <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Blood Group</Label>
+                      <Input
+                        value={editData.blood_group || ""}
+                        onChange={(e) => setEditData({ ...editData, blood_group: e.target.value })}
+                        className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                        placeholder="e.g. O+"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Academy Name</Label>
+                    <Input
+                      value={editData.school_name}
+                      onChange={(e) => setEditData({ ...editData, school_name: e.target.value })}
+                      className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Guardian Name</Label>
+                      <Input
+                        value={editData.parent_name}
+                        onChange={(e) => setEditData({ ...editData, parent_name: e.target.value })}
+                        className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Contact Number</Label>
+                      <Input
+                        value={editData.contact_number}
+                        onChange={(e) => setEditData({ ...editData, contact_number: e.target.value })}
+                        className="h-11 rounded-xl bg-slate-50 border-none shadow-inner font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-slate-400">Residential Coordinates</Label>
+                    <Textarea
+                      value={editData.address || ""}
+                      onChange={(e) => setEditData({ ...editData, address: e.target.value })}
+                      className="rounded-xl bg-slate-50 border-none shadow-inner font-bold resize-none min-h-[80px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                <Button
+                  variant="ghost"
+                  onClick={handleCancel}
+                  className="rounded-xl font-black uppercase text-[10px] tracking-widest"
+                >
+                  ABORT CHANGES
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending}
+                  className="rounded-xl px-10 font-black uppercase text-[10px] tracking-widest bg-slate-900 text-white shadow-lg"
+                >
+                  {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  SYNCHRONIZE PROFILE
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Deletion Confirmation */}
+      <AlertDialog open={!!studentToDelete} onOpenChange={(open) => !open && setStudentToDelete(null)}>
+        <AlertDialogContent className="rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black tracking-tight">Security Protocol: Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 font-medium">
+              You are about to permanently purge the record for <span className="font-black text-rose-600 underline decoration-2 underline-offset-4">{studentToDelete?.name}</span>. This action is irreversible and will remove all associated academic data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3 mt-6">
+            <AlertDialogCancel className="rounded-xl font-bold uppercase text-[10px] tracking-widest h-12 border-2">ABORT MISSION</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (studentToDelete) {
+                  deleteMutation.mutate(studentToDelete.id);
+                  setStudentToDelete(null);
+                }
+              }}
+              className="rounded-xl font-black uppercase text-[10px] tracking-widest h-12 bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20"
+            >
+              EXECUTE PURGE
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Link Child to Parent Dialog */}
       <LinkChildToParent 

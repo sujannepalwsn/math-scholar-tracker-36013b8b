@@ -13,10 +13,10 @@ import PaymentTracking from '@/components/finance/PaymentTracking';
 import ExpenseManagement from '@/components/finance/ExpenseManagement';
 import FinanceReports from '@/components/finance/FinanceReports';
 import FinanceSettings from '@/components/finance/FinanceSettings';
-import { formatCurrency } from "@/integrations/supabase/finance-types"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid, Bar, BarChart, Legend, Cell, Pie, PieChart } from "recharts";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 const AdminFinance = () => {
   const { user } = useAuth();
@@ -136,13 +136,20 @@ const AdminFinance = () => {
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-              Treasury Matrix
-            </h1>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <p className="text-muted-foreground text-sm font-medium">Fiscal management and revenue optimization.</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+                <Wallet className="h-8 w-8 text-primary animate-pulse" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                  Treasury Hub
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                   <div className="h-2 w-2 rounded-full bg-primary" />
+                   <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Fiscal Management Matrix</p>
+                </div>
+              </div>
             </div>
           </div>
           <Button variant="outline" onClick={() => navigate(user?.role === 'admin' ? '/admin-dashboard' : '/')} className="rounded-xl h-11 border-2">

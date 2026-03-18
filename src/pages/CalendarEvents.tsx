@@ -173,15 +173,22 @@ export default function CalendarEvents() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Institutional Calendar
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Manage academic events, holidays, and activities.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <CalendarDays className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Institutional Calendar
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Academic Events & Operational Cycles</p>
+              </div>
+            </div>
           </div>
         </div>
         {!isParent && (
@@ -363,11 +370,16 @@ export default function CalendarEvents() {
       </div>
 
       {/* All Upcoming Events */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Events & Holidays</CardTitle>
+      <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="bg-primary/5 border-b border-border/10 py-6">
+          <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+             <div className="p-2 rounded-xl bg-primary/10">
+                <Users className="h-5 w-5 text-primary" />
+             </div>
+             Master Schedule Archive
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-8">
           {isLoading ? (
             <p>Loading events...</p>
           ) : events.length === 0 ? (

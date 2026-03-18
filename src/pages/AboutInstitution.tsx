@@ -3,7 +3,8 @@ import {
   Building, Edit2, Save, X, Target, Eye, User, Loader2,
   Info, MapPin, Phone, Mail, Globe, Facebook, Twitter,
   Instagram, Linkedin, GraduationCap, Users, BookOpen,
-  School, Plus, Trash2, CheckCircle2, ChevronRight, Hash
+  School, Plus, Trash2, CheckCircle2, ChevronRight, Hash,
+  Trophy, Image as ImageIcon, Camera, Upload
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,19 @@ interface Facility {
   id: string;
   name: string;
   description?: string;
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  year: string;
+  description?: string;
+}
+
+interface GalleryItem {
+  id: string;
+  url: string;
+  caption?: string;
 }
 
 interface SocialLinks {
@@ -47,6 +61,8 @@ export default function AboutInstitution() {
     established_date: "",
     academic_info: "",
     facilities: [] as Facility[],
+    achievements: [] as Achievement[],
+    gallery: [] as GalleryItem[],
     social_links: {} as SocialLinks,
     phone: "",
     email: "",
@@ -107,6 +123,8 @@ export default function AboutInstitution() {
         established_date: center.established_date || "",
         academic_info: (center as any).academic_info || "",
         facilities: (center as any).facilities || [],
+        achievements: (center as any).achievements || [],
+        gallery: (center as any).gallery || [],
         social_links: (center as any).social_links || {},
         phone: center.phone || "",
         email: center.email || "",
@@ -132,6 +150,8 @@ export default function AboutInstitution() {
           established_date: formData.established_date || null,
           academic_info: formData.academic_info,
           facilities: formData.facilities as any,
+          achievements: formData.achievements as any,
+          gallery: formData.gallery as any,
           social_links: formData.social_links as any,
           phone: formData.phone,
           email: formData.email,
@@ -170,6 +190,70 @@ export default function AboutInstitution() {
 
   const removeFacility = (id: string) => {
     setFormData(prev => ({ ...prev, facilities: (prev.facilities || []).filter(f => f.id !== id) }));
+  };
+
+  const addAchievement = () => {
+    const newAchievement: Achievement = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: "",
+      year: new Date().getFullYear().toString(),
+      description: ""
+    };
+    setFormData(prev => ({ ...prev, achievements: [...(prev.achievements || []), newAchievement] }));
+  };
+
+  const updateAchievement = (id: string, field: keyof Achievement, value: string) => {
+    const updated = (formData.achievements || []).map(a => a.id === id ? { ...a, [field]: value } : a);
+    setFormData(prev => ({ ...prev, achievements: updated }));
+  };
+
+  const removeAchievement = (id: string) => {
+    setFormData(prev => ({ ...prev, achievements: (prev.achievements || []).filter(a => a.id !== id) }));
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    const toastId = toast.loading("Uploading image to gallery...");
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.center_id}/gallery-${Date.now()}.${fileExt}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('center-backgrounds')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('center-backgrounds')
+        .getPublicUrl(fileName);
+
+      const newItem: GalleryItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        url: publicUrl,
+        caption: ""
+      };
+
+      setFormData(prev => ({ ...prev, gallery: [...(prev.gallery || []), newItem] }));
+      toast.dismiss(toastId);
+      toast.success("Image added to gallery!");
+    } catch (error: any) {
+      toast.dismiss(toastId);
+      toast.error("Upload failed: " + error.message);
+    }
+  };
+
+  const removeGalleryItem = (id: string) => {
+    setFormData(prev => ({ ...prev, gallery: (prev.gallery || []).filter(item => item.id !== id) }));
+  };
+
+  const updateGalleryCaption = (id: string, caption: string) => {
+    const updated = (formData.gallery || []).map(item => item.id === id ? { ...item, caption } : item);
+    setFormData(prev => ({ ...prev, gallery: updated }));
   };
 
   const updateSocialLink = (platform: keyof SocialLinks, value: string) => {
@@ -276,6 +360,8 @@ export default function AboutInstitution() {
           <TabsTrigger value="overview" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Overview</TabsTrigger>
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Info</TabsTrigger>
           <TabsTrigger value="facilities" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Facilities</TabsTrigger>
+          <TabsTrigger value="achievements" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Achievements</TabsTrigger>
+          <TabsTrigger value="gallery" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Gallery</TabsTrigger>
           <TabsTrigger value="contact" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Contact Details</TabsTrigger>
         </TabsList>
 
@@ -549,6 +635,187 @@ export default function AboutInstitution() {
                       <Building className="h-12 w-12 text-muted-foreground/30" />
                     </div>
                     <p className="text-muted-foreground font-medium italic">Facilities information is currently being updated.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="achievements" className="space-y-8 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid gap-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-xl font-black uppercase tracking-widest text-foreground/80">Institutional Achievements</h3>
+                <p className="text-sm text-muted-foreground">Milestones and accolades earned by our students and faculty.</p>
+              </div>
+              {isEditing && (
+                <Button onClick={addAchievement} className="rounded-xl font-black uppercase text-[10px] tracking-widest">
+                  <Plus className="h-4 w-4 mr-2" /> ADD ACHIEVEMENT
+                </Button>
+              )}
+            </div>
+
+            {isEditing ? (
+              <div className="grid md:grid-cols-2 gap-6">
+                {(formData.achievements || []).map((achievement) => (
+                  <Card key={achievement.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
+                    <button
+                      onClick={() => removeAchievement(achievement.id)}
+                      className="absolute top-4 right-4 p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 transition-colors hover:text-white"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="col-span-3 space-y-2">
+                        <Label>Achievement Title</Label>
+                        <Input
+                          value={achievement.title}
+                          onChange={(e) => updateAchievement(achievement.id, 'title', e.target.value)}
+                          placeholder="e.g., National Excellence Award"
+                          className="rounded-xl"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Year</Label>
+                        <Input
+                          value={achievement.year}
+                          onChange={(e) => updateAchievement(achievement.id, 'year', e.target.value)}
+                          placeholder="2024"
+                          className="rounded-xl"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea
+                        value={achievement.description}
+                        onChange={(e) => updateAchievement(achievement.id, 'description', e.target.value)}
+                        placeholder="Provide some context..."
+                        className="rounded-xl min-h-[80px]"
+                      />
+                    </div>
+                  </Card>
+                ))}
+                {formData.achievements.length === 0 && (
+                  <div className="md:col-span-2 py-20 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-muted-foreground gap-4">
+                    <Trophy className="h-12 w-12 opacity-20" />
+                    <p className="font-bold uppercase tracking-widest text-xs">No achievements listed</p>
+                    <Button variant="outline" onClick={addAchievement} className="rounded-xl">Add institutional milestone</Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-6">
+                {(formData.achievements || []).length > 0 ? (
+                  (formData.achievements || []).map((achievement) => (
+                    <Card key={achievement.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all">
+                      <CardContent className="p-6 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+                            <Trophy className="h-5 w-5" />
+                          </div>
+                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 font-black">{achievement.year}</Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="font-black uppercase tracking-widest text-sm text-foreground/80">{achievement.title}</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {achievement.description}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="md:col-span-3 py-20 text-center space-y-4">
+                    <div className="p-4 rounded-full bg-muted/20 inline-block">
+                      <Trophy className="h-12 w-12 text-muted-foreground/30" />
+                    </div>
+                    <p className="text-muted-foreground font-medium italic">Achievement records are currently being compiled.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="gallery" className="space-y-8 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid gap-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-xl font-black uppercase tracking-widest text-foreground/80">Campus Gallery</h3>
+                <p className="text-sm text-muted-foreground">A visual journey through our campus and activities.</p>
+              </div>
+              {isEditing && (
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="gallery-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleGalleryUpload}
+                  />
+                  <Label htmlFor="gallery-upload">
+                    <Button asChild className="rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer">
+                      <span><Upload className="h-4 w-4 mr-2" /> UPLOAD PHOTO</span>
+                    </Button>
+                  </Label>
+                </div>
+              )}
+            </div>
+
+            {isEditing ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {(formData.gallery || []).map((item) => (
+                  <div key={item.id} className="relative group rounded-3xl overflow-hidden aspect-square border shadow-soft">
+                    <img src={item.url} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Input
+                        value={item.caption}
+                        onChange={(e) => updateGalleryCaption(item.id, e.target.value)}
+                        placeholder="Add caption..."
+                        className="h-8 text-[10px] bg-white/20 border-none text-white mb-2"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeGalleryItem(item.id)}
+                        className="h-8 text-[10px] font-black uppercase tracking-widest rounded-xl"
+                      >
+                        <Trash2 className="h-3 w-3 mr-2" /> Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {formData.gallery.length === 0 && (
+                  <div className="col-span-full py-20 border-2 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center text-muted-foreground gap-4">
+                    <ImageIcon className="h-12 w-12 opacity-20" />
+                    <p className="font-bold uppercase tracking-widest text-xs">Gallery is empty</p>
+                    <p className="text-[10px] max-w-xs text-center opacity-60">Upload photos of your campus, classrooms, labs, and special events.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {(formData.gallery || []).length > 0 ? (
+                  (formData.gallery || []).map((item) => (
+                    <Card key={item.id} className="border-none shadow-soft rounded-3xl overflow-hidden group hover:shadow-strong transition-all hover:-translate-y-1">
+                      <div className="aspect-square relative overflow-hidden">
+                        <img src={item.url} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        {item.caption && (
+                          <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                            <p className="text-white text-xs font-medium line-clamp-2">{item.caption}</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full py-20 text-center space-y-4">
+                    <div className="p-4 rounded-full bg-muted/20 inline-block">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                    </div>
+                    <p className="text-muted-foreground font-medium italic">No visual assets have been uploaded to the gallery yet.</p>
                   </div>
                 )}
               </div>

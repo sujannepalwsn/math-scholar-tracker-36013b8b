@@ -16,26 +16,36 @@ export default function InventoryManagement() {
   const centerId = user?.center_id || "";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-indigo-600">
-            Institutional Inventory
-          </h1>
-          <p className="text-slate-500 text-sm font-medium">Manage school assets, library resources, and stock levels.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Package className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Resource Nexus
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Assets, Library & Stock</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <Tabs defaultValue="assets" className="space-y-6">
-        <TabsList className="bg-white border border-slate-200 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
-          <TabsTrigger value="assets" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest">Fixed Assets</TabsTrigger>
-          <TabsTrigger value="library" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest">Library Catalog</TabsTrigger>
-          <TabsTrigger value="stock" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest">Consumables</TabsTrigger>
+      <Tabs defaultValue="assets" className="space-y-8">
+        <TabsList className="bg-white/50 border border-slate-100 p-1 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+          <TabsTrigger value="assets" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Fixed Assets</TabsTrigger>
+          <TabsTrigger value="library" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Library Catalog</TabsTrigger>
+          <TabsTrigger value="stock" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Consumables</TabsTrigger>
         </TabsList>
 
         <TabsContent value="assets" className="outline-none">
-          <Card className="rounded-[2.5rem] border border-slate-200 shadow-strong bg-white/80 backdrop-blur-md overflow-hidden">
-            <CardHeader className="bg-primary/5 border-b border-border/20 px-8 py-6">
+          <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
               <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
                 <Archive className="h-6 w-6 text-primary" /> Fixed Assets Registry
               </CardTitle>
@@ -47,10 +57,10 @@ export default function InventoryManagement() {
         </TabsContent>
 
         <TabsContent value="library" className="outline-none">
-          <Card className="rounded-[2.5rem] border border-slate-200 shadow-strong bg-white/80 backdrop-blur-md overflow-hidden">
-            <CardHeader className="bg-indigo-500/5 border-b border-border/20 px-8 py-6">
+          <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
               <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
-                <Book className="h-6 w-6 text-indigo-600" /> Library Management
+                <Book className="h-6 w-6 text-primary" /> Library Management
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
@@ -60,10 +70,10 @@ export default function InventoryManagement() {
         </TabsContent>
 
         <TabsContent value="stock" className="outline-none">
-          <Card className="rounded-[2.5rem] border border-slate-200 shadow-strong bg-white/80 backdrop-blur-md overflow-hidden">
-            <CardHeader className="bg-slate-50 border-b border-border/20 px-8 py-6">
+          <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
               <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
-                <Package className="h-6 w-6 text-slate-600" /> Consumables & Stock
+                <Package className="h-6 w-6 text-primary" /> Consumables & Stock
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-8">

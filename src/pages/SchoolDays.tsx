@@ -34,7 +34,6 @@ export default function SchoolDays() {
   const centerId = user?.center_id;
 
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
-  const [isBulkMode, setIsBulkMode] = useState(false);
 
   // For individual entry
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -110,42 +109,55 @@ export default function SchoolDays() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
-      <PageHeader
-        title="Academic Calendar & Cycles"
-        description="Control institutional operations, academic years, and attendance availability."
-      />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <CalendarIcon className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Institutional Calendar
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Academic Cycles & Operations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <Tabs defaultValue="days" className="space-y-8">
-        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+        <TabsList className="bg-white/50 border border-slate-100 p-1 rounded-2xl h-14 shadow-soft backdrop-blur-md">
           <TabsTrigger value="days" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Operational Days</TabsTrigger>
           <TabsTrigger value="years" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Years</TabsTrigger>
         </TabsList>
 
         <TabsContent value="days" className="outline-none">
       <div className="grid gap-8 lg:grid-cols-3">
-        <Card className="lg:col-span-1 border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md h-fit">
-          <CardHeader>
+        <Card className="lg:col-span-1 border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md h-fit border border-white/20">
+          <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
             <CardTitle className="text-xl font-black uppercase tracking-widest">Configuration</CardTitle>
-            <CardDescription>Mark a specific date as non-operational.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-8 space-y-6">
             <div className="space-y-2">
-              <Label>Target Date</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Target Date</label>
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 bg-white/50 border-none shadow-soft rounded-xl font-bold" />
             </div>
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/5 border border-primary/10">
               <div className="space-y-0.5">
-                <Label className="text-xs font-black uppercase tracking-wider">Operational Day</Label>
-                <p className="text-[10px] text-muted-foreground font-medium italic">Toggle off to disable attendance</p>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-700">Operational Day</label>
+                <p className="text-[9px] text-muted-foreground font-bold italic uppercase tracking-tight">Toggle off for closure</p>
               </div>
               <Switch checked={isSchoolDay} onCheckedChange={setIsSchoolDay} />
             </div>
             {!isSchoolDay && (
               <div className="space-y-2">
-                <Label>Reason for Closure</Label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Reason for Closure</label>
                 <Select value={reason} onValueChange={setReason}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 bg-white/50 border-none shadow-soft rounded-xl font-bold">
                     <SelectValue placeholder="Select reason" />
                   </SelectTrigger>
                   <SelectContent>
@@ -155,29 +167,26 @@ export default function SchoolDays() {
               </div>
             )}
             <Button
-              className="w-full rounded-xl font-black tracking-widest uppercase text-[10px]"
+              className="w-full h-14 text-sm font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
               onClick={() => upsertMutation.mutate({ date, is_school_day: isSchoolDay, reason: isSchoolDay ? null : reason })}
               disabled={upsertMutation.isPending}
             >
-              {upsertMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Configuration"}
+              {upsertMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "COMMIT CONFIGURATION"}
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xl font-black uppercase tracking-widest">Calendar Registry</CardTitle>
-              <CardDescription>Override list for operational days.</CardDescription>
-            </div>
+        <Card className="lg:col-span-2 border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+          <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6 flex flex-row items-center justify-between">
+            <CardTitle className="text-xl font-black uppercase tracking-widest">Calendar Registry</CardTitle>
             <Input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-40 h-10 rounded-xl"
+              className="w-44 h-11 rounded-xl bg-white/50 border-none shadow-soft font-bold"
             />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
             ) : schoolDays.length === 0 ? (

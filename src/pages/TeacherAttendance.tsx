@@ -631,22 +631,29 @@ export default function TeacherAttendancePage() {
 
   // Admin view (Rest of the original file)
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Faculty Attendance
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Monitor staff presence and punctuality trends.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <CheckCircle2 className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Staff Nexus
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Faculty Presence & Performance Matrix</p>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="bg-card/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/40 shadow-soft flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <Clock className="h-5 w-5 text-primary" />
-          </div>
-          <span className="font-bold text-slate-700 text-sm">{format(selectedDate, 'MMMM d, yyyy')}</span>
+        <div className="flex items-center gap-3 bg-white/50 backdrop-blur-md p-1.5 rounded-2xl shadow-soft border border-slate-100 group transition-all hover:shadow-medium">
+           <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-primary/5 transition-colors">
+              <Clock className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+           </div>
+           <span className="font-black text-xs uppercase tracking-widest text-slate-700 pr-4">{format(selectedDate, 'EEEE, MMM do')}</span>
         </div>
       </div>
 

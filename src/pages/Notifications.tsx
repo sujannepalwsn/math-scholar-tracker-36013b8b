@@ -90,69 +90,91 @@ export default function Notifications() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <PageHeader title="Notifications" description={`${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`} />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Bell className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Alert Nexus
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">{unreadCount} Pending Transmissions</p>
+              </div>
+            </div>
+          </div>
+        </div>
         {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={() => markAllReadMutation.mutate()}>
-            <CheckCheck className="h-4 w-4 mr-1" /> Mark All Read
+          <Button onClick={() => markAllReadMutation.mutate()} className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+            <CheckCheck className="h-5 w-5 mr-2" />
+            ACKNOWLEDGE ALL
           </Button>
         )}
       </div>
 
       {isLoading ? (
-        <Card><CardContent className="p-8 text-center text-muted-foreground">Loading...</CardContent></Card>
+        <Card className="border-none shadow-strong bg-card/40 backdrop-blur-md rounded-3xl"><CardContent className="p-12 text-center text-muted-foreground font-medium italic">Synchronizing alert registry...</CardContent></Card>
       ) : notifications.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="text-muted-foreground">No notifications yet</p>
+        <Card className="border-none shadow-strong bg-card/40 backdrop-blur-md rounded-3xl overflow-hidden border border-white/20">
+          <CardContent className="p-16 text-center space-y-6">
+            <div className="mx-auto w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center">
+               <Bell className="h-10 w-10 text-primary opacity-40" />
+            </div>
+            <div className="space-y-2">
+               <h3 className="text-2xl font-black uppercase tracking-tight text-foreground">All Clear</h3>
+               <p className="text-muted-foreground font-medium italic max-w-sm mx-auto">Your institutional alert feed is currently empty. We'll notify you when new events occur.</p>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {notifications.map((n: any) => (
             <Card
               key={n.id}
               className={cn(
-                "transition-all duration-200 cursor-pointer hover:shadow-md",
-                !n.is_read ? "border-primary/30 bg-primary/5" : "hover:bg-muted/50"
+                "transition-all duration-300 cursor-pointer border-none shadow-medium bg-card/40 backdrop-blur-md rounded-[1.5rem] overflow-hidden group hover:shadow-strong border border-white/20",
+                !n.is_read && "bg-primary/5 border-primary/10 shadow-soft"
               )}
               onClick={() => handleNotificationClick(n)}
             >
-              <CardContent className="p-4 flex items-start gap-3">
-                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", getTypeColor(n.type))}>
+              <CardContent className="p-6 flex items-start gap-5">
+                <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500", getTypeColor(n.type))}>
                   <Bell className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className={cn("text-sm text-foreground", !n.is_read && "font-bold")}>{n.title}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">{n.message}</p>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <p className={cn("text-lg font-black text-slate-700 leading-tight", !n.is_read && "text-primary")}>{n.title}</p>
+                      <p className="text-sm font-medium text-slate-500 leading-relaxed">{n.message}</p>
                     </div>
-                    <Badge variant="secondary" className="text-[10px] shrink-0">
+                    <Badge variant="secondary" className="bg-white/50 text-slate-500 border-none font-black text-[9px] uppercase tracking-widest px-2 py-0.5 shadow-soft shrink-0">
                       {n.type}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-[11px] text-muted-foreground">
-                      {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                    </span>
+                  <div className="flex items-center gap-5 mt-4">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                       <div className="h-1 w-1 rounded-full bg-slate-300" />
+                       {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                    </div>
                     {n.link && (
-                      <div className="flex items-center text-[11px] font-bold text-primary uppercase tracking-tighter">
-                        <ExternalLink className="h-3 w-3 mr-1" /> View Detail
+                      <div className="flex items-center text-[10px] font-black text-primary uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                        <ExternalLink className="h-3 w-3 mr-1.5" /> ACCESS PROTOCOL
                       </div>
                     )}
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs text-destructive ml-auto"
+                      size="icon"
+                      className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10 ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteMutation.mutate(n.id);
                       }}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

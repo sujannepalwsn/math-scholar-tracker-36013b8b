@@ -530,59 +530,95 @@ export type Database = {
       }
       centers: {
         Row: {
+          about_description: string | null
+          academic_info: string | null
+          achievements: Json | null
           address: string | null
           contact_person: string | null
           created_at: string
           email: string | null
+          established_date: string | null
+          facilities: Json | null
+          gallery: Json | null
           header_bg_url: string | null
+          header_overlay_color: string | null
+          header_overlay_opacity: number | null
           id: string
           latitude: number | null
           logo_url: string | null
           longitude: number | null
+          mission: string | null
           name: string
           phone: string | null
+          principal_message: string | null
           principal_name: string | null
           radius_meters: number | null
           short_code: string | null
+          social_links: Json | null
           theme: Json | null
+          vision: string | null
           website_url: string | null
           updated_at: string
         }
         Insert: {
+          about_description?: string | null
+          academic_info?: string | null
+          achievements?: Json | null
           address?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
+          established_date?: string | null
+          facilities?: Json | null
+          gallery?: Json | null
           header_bg_url?: string | null
+          header_overlay_color?: string | null
+          header_overlay_opacity?: number | null
           id?: string
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
+          mission?: string | null
           name: string
           phone?: string | null
+          principal_message?: string | null
           principal_name?: string | null
           radius_meters?: number | null
           short_code?: string | null
+          social_links?: Json | null
           theme?: Json | null
+          vision?: string | null
           website_url?: string | null
           updated_at?: string
         }
         Update: {
+          about_description?: string | null
+          academic_info?: string | null
+          achievements?: Json | null
           address?: string | null
           contact_person?: string | null
           created_at?: string
           email?: string | null
+          established_date?: string | null
+          facilities?: Json | null
+          gallery?: Json | null
           header_bg_url?: string | null
+          header_overlay_color?: string | null
+          header_overlay_opacity?: number | null
           id?: string
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
+          mission?: string | null
           name?: string
           phone?: string | null
+          principal_message?: string | null
           principal_name?: string | null
           radius_meters?: number | null
           short_code?: string | null
+          social_links?: Json | null
           theme?: Json | null
+          vision?: string | null
           website_url?: string | null
           updated_at?: string
         }

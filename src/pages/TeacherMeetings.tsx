@@ -87,26 +87,33 @@ export default function TeacherMeetings() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Faculty assemblies
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Keep track of faculty meetings and collaborative sessions.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Users className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Staff Assemblies
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Collaborative Consultation & Meeting Log</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+      <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-border/10 bg-primary/5 py-6">
           <CardTitle className="text-xl font-black flex items-center gap-3 text-foreground/90">
             <div className="p-2 rounded-xl bg-primary/10">
               <CalendarDays className="h-6 w-6 text-primary" />
             </div>
-            Personalized Schedule
+            Personalized Agenda
           </CardTitle>
         </CardHeader>
         <CardContent>

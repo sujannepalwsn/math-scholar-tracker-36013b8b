@@ -148,18 +148,25 @@ const AdminDashboard = () => {
 
         <TabsContent value="centers" className="space-y-12 outline-none">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-              System Administration
-            </h1>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <p className="text-muted-foreground text-sm font-medium">Global management and institutional oversight.</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+                <Users className="h-8 w-8 text-primary animate-pulse" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                  System Administration
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                   <div className="h-2 w-2 rounded-full bg-primary" />
+                   <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Global Governance Portal</p>
+                </div>
+              </div>
             </div>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+              <Button size="lg" className="rounded-[1.5rem] shadow-strong h-14 px-8 text-xs font-black tracking-widest uppercase bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.05] transition-all duration-500 border-none">
                 <Plus className="h-5 w-5 mr-2" />
                 REGISTER NEW CENTER
               </Button>
@@ -220,10 +227,10 @@ const AdminDashboard = () => {
           </DialogContent>
         </Dialog>
 
-        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+        <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20 group hover:shadow-xl transition-all duration-500">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-8 px-8">
             <CardTitle className="text-xl font-black flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
+              <div className="p-2.5 rounded-2xl bg-primary/10 group-hover:scale-110 transition-transform duration-500">
                 <Users className="h-6 w-6 text-primary" />
               </div>
               Registered Tuition Centers
