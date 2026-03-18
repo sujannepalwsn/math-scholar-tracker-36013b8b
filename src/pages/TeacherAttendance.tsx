@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  CalendarIcon, Calendar, CheckCircle2, Clock, Download, Eye,
+  CalendarIcon, Calendar as CalendarIconLucide, CheckCircle2, Clock, Download, Eye,
   MinusCircle, Printer, TrendingUp, User, X, XCircle,
   MapPin, Locate, Loader2, ShieldCheck, AlertCircle
 } from "lucide-react";
@@ -699,7 +699,7 @@ export default function TeacherAttendancePage() {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full h-11 justify-start text-left font-normal bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl", !selectedDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIconLucide className="mr-2 h-4 w-4" />
                     {selectedDate ? safeFormatDate(selectedDate, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>

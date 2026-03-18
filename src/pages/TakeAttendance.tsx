@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CalendarIcon, Calendar, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, Calendar as CalendarIconLucide, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
@@ -311,7 +311,7 @@ export default function TakeAttendance() {
         </div>
         <div className="flex items-center gap-3 bg-card/60 backdrop-blur-md p-1.5 rounded-2xl shadow-soft border border-border/40 group transition-all hover:shadow-medium">
            <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-primary/5 transition-colors">
-              <CalendarIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+              <CalendarIconLucide className="h-4 w-4 text-slate-400 group-hover:text-primary" />
            </div>
            <span className="font-black text-xs uppercase tracking-widest text-slate-700 pr-4">{format(selectedDate, 'EEEE, MMM do')}</span>
         </div>
@@ -346,7 +346,7 @@ export default function TakeAttendance() {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full h-11 justify-start text-left font-normal bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl", !selectedDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIconLucide className="mr-2 h-4 w-4" />
                     {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>

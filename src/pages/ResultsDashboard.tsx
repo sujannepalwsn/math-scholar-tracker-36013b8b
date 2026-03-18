@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Award, BarChart3, Percent, TrendingUp, Users, XCircle, PieChart } from "lucide-react";
+import { Award, BarChart3, Percent, TrendingUp, Users, XCircle, PieChart as PieChartIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -230,7 +230,7 @@ export default function ResultsDashboard() {
             <Card className="border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
               <CardHeader className="bg-primary/5 border-b border-border/10 py-6">
                 <CardTitle className="text-base font-black uppercase tracking-widest flex items-center gap-2">
-                  <PieChart className="h-4 w-4 text-primary" />
+                  <PieChartIcon className="h-4 w-4 text-primary" />
                   Outcome Distribution
                 </CardTitle>
               </CardHeader>
