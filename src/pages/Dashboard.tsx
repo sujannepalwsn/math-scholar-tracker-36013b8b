@@ -43,38 +43,44 @@ export default function Dashboard() {
   const [selectedVacantClass, setSelectedVacantClass] = useState<any>(null);
   const [isCustomizeMode, setIsCustomizeMode] = useState(false);
 
-  const [kpiOrder, setKpiOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem(`dashboard-kpi-order-${user?.id}`);
-    return saved ? JSON.parse(saved) : [
-      "students", "teachers", "student-attendance", "teacher-attendance",
-      "lesson-plans", "approvals", "leave-requests", "messages"
-    ];
-  });
-
-  const [visibleWidgets, setVisibleWidgets] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem(`dashboard-visible-widgets-${user?.id}`);
-    return saved ? JSON.parse(saved) : {
-      "students": true, "teachers": true, "student-attendance": true, "teacher-attendance": true,
-      "lesson-plans": true, "approvals": true, "leave-requests": true, "messages": true,
-      "attendance-overview": true, "performers": true, "teacher-status": true, "financial-health": true,
-      "leave-applications": true, "activities-discipline": true, "notice-board": true, "alerts": true, "class-schedule": true
-    };
-  });
-
-  const [mainWidgetsOrder, setMainWidgetsOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem(`dashboard-main-order-${user?.id}`);
-    return saved ? JSON.parse(saved) : [
-      "attendance-overview", "performers", "teacher-status", "leave-applications", "activities-discipline"
-    ];
-  });
+  const [kpiOrder, setKpiOrder] = useState<string[]>([]);
+  const [visibleWidgets, setVisibleWidgets] = useState<Record<string, boolean>>({});
+  const [mainWidgetsOrder, setMainWidgetsOrder] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !isInitialized) {
+      const savedKpi = localStorage.getItem(`dashboard-kpi-order-${user.id}`);
+      const savedVisible = localStorage.getItem(`dashboard-visible-widgets-${user.id}`);
+      const savedMain = localStorage.getItem(`dashboard-main-order-${user.id}`);
+
+      setKpiOrder(savedKpi ? JSON.parse(savedKpi) : [
+        "students", "teachers", "student-attendance", "teacher-attendance",
+        "lesson-plans", "approvals", "leave-requests", "messages"
+      ]);
+
+      setVisibleWidgets(savedVisible ? JSON.parse(savedVisible) : {
+        "students": true, "teachers": true, "student-attendance": true, "teacher-attendance": true,
+        "lesson-plans": true, "approvals": true, "leave-requests": true, "messages": true,
+        "attendance-overview": true, "performers": true, "teacher-status": true, "financial-health": true,
+        "leave-applications": true, "activities-discipline": true, "notice-board": true, "alerts": true, "class-schedule": true
+      });
+
+      setMainWidgetsOrder(savedMain ? JSON.parse(savedMain) : [
+        "attendance-overview", "performers", "teacher-status", "leave-applications", "activities-discipline"
+      ]);
+
+      setIsInitialized(true);
+    }
+  }, [user?.id, isInitialized]);
+
+  useEffect(() => {
+    if (user?.id && isInitialized) {
       localStorage.setItem(`dashboard-kpi-order-${user.id}`, JSON.stringify(kpiOrder));
       localStorage.setItem(`dashboard-visible-widgets-${user.id}`, JSON.stringify(visibleWidgets));
       localStorage.setItem(`dashboard-main-order-${user.id}`, JSON.stringify(mainWidgetsOrder));
     }
-  }, [kpiOrder, visibleWidgets, mainWidgetsOrder, user?.id]);
+  }, [kpiOrder, visibleWidgets, mainWidgetsOrder, user?.id, isInitialized]);
 
   const handleDragStart = (e: React.DragEvent, type: 'kpi' | 'main', id: string) => {
     if (!isCustomizeMode) return;
@@ -1333,6 +1339,34 @@ export default function Dashboard() {
               );
             })}
           </div>
+
+          {/* Management Tabs */}
+          <Card className="border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
+            <CardContent className="p-6">
+              <Tabs defaultValue="library" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-8 bg-muted/50 p-1 rounded-2xl">
+                  <TabsTrigger value="library" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
+                    <Book className="h-4 w-4 mr-2" /> Library
+                  </TabsTrigger>
+                  <TabsTrigger value="transport" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
+                    <Bus className="h-4 w-4 mr-2" /> Transport
+                  </TabsTrigger>
+                  <TabsTrigger value="assets" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
+                    <Package className="h-4 w-4 mr-2" /> Assets
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="library" className="mt-0 focus-visible:outline-none">
+                  <LibraryManagement centerId={centerId || ""} />
+                </TabsContent>
+                <TabsContent value="transport" className="mt-0 focus-visible:outline-none">
+                  <TransportManagement centerId={centerId || ""} />
+                </TabsContent>
+                <TabsContent value="assets" className="mt-0 focus-visible:outline-none">
+                  <AssetTracking centerId={centerId || ""} />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column */}
