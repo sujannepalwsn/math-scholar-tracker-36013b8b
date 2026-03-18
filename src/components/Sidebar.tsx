@@ -157,7 +157,11 @@ export default function Sidebar({
 
   const filteredNavItems = navItems.filter(item => {
     if ((item as any).is_active === false && !isEditMode) return false;
-    if (item.role && user?.role !== item.role) return false;
+
+    // Allow teachers to see center-role items if they have the feature permission
+    const isTeacherAccessingCenterItem = user?.role === 'teacher' && item.role === 'center';
+    if (item.role && user?.role !== item.role && !isTeacherAccessingCenterItem) return false;
+
     if (item.featureName) {
       if (user?.role === 'center' && user.centerPermissions) {
         return user.centerPermissions[item.featureName] !== false;

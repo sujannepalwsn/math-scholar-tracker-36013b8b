@@ -66,6 +66,7 @@ export default function TeacherManagement() {
   const [selectedTeacherForLogin, setSelectedTeacherForLogin] = useState<Teacher | null>(null);
   const [teacherUsername, setTeacherUsername] = useState("");
   const [teacherPassword, setTeacherPassword] = useState("");
+  const [teacherRole, setTeacherRole] = useState<'teacher' | 'center'>('teacher');
 
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [selectedTeacherForPermissions, setSelectedTeacherForPermissions] = useState<Teacher | null>(null);
@@ -229,10 +230,17 @@ export default function TeacherManagement() {
       if (existingUserError && existingUserError.code !== 'PGRST116') throw existingUserError;
       if (existingUser) throw new Error('Username already exists.');
       const hashedPassword = await bcrypt.hash(teacherPassword, 12);
-      const { error } = await supabase.from("users").insert({ username: teacherUsername, password_hash: hashedPassword, role: 'teacher', center_id: user.center_id, teacher_id: selectedTeacherForLogin.id, is_active: true });
+      const { error } = await supabase.from("users").insert({
+        username: teacherUsername,
+        password_hash: hashedPassword,
+        role: teacherRole,
+        center_id: user.center_id,
+        teacher_id: selectedTeacherForLogin.id,
+        is_active: true
+      });
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Login created!"); setIsCreatingTeacherLogin(false); setSelectedTeacherForLogin(null); setTeacherUsername(""); setTeacherPassword(""); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Login created!"); setIsCreatingTeacherLogin(false); setSelectedTeacherForLogin(null); setTeacherUsername(""); setTeacherPassword(""); setTeacherRole('teacher'); },
     onError: (error: any) => toast.error(error.message) });
 
   // Class teacher assignment mutation
@@ -274,7 +282,13 @@ export default function TeacherManagement() {
   };
 
   const handleSubmit = () => { editingTeacher ? updateTeacherMutation.mutate() : createTeacherMutation.mutate(); };
-  const handleCreateLoginClick = (teacher: Teacher) => { setSelectedTeacherForLogin(teacher); setTeacherUsername(teacher.email || ''); setTeacherPassword(''); setIsCreatingTeacherLogin(true); };
+  const handleCreateLoginClick = (teacher: Teacher) => {
+    setSelectedTeacherForLogin(teacher);
+    setTeacherUsername(teacher.email || '');
+    setTeacherPassword('');
+    setTeacherRole('teacher');
+    setIsCreatingTeacherLogin(true);
+  };
   const handleManagePermissionsClick = (teacher: Teacher) => { setSelectedTeacherForPermissions(teacher); setShowPermissionsDialog(true); };
   const handleClassTeacherClick = (teacher: Teacher) => { setSelectedTeacherForClassAssign(teacher); setClassTeacherGrade("select-grade"); setShowClassTeacherDialog(true); };
   const handleHRClick = (teacher: Teacher) => { setSelectedTeacherForHR(teacher); setShowHRDialog(true); };
@@ -618,9 +632,21 @@ export default function TeacherManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Login for {selectedTeacherForLogin?.name}</DialogTitle>
-            <DialogDescription>Set username and password.</DialogDescription>
+            <DialogDescription>Set username, password and role.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label>System Role</Label>
+              <Select value={teacherRole} onValueChange={(v: any) => setTeacherRole(v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="teacher">Teacher (Classroom Access)</SelectItem>
+                  <SelectItem value="center">Admin (Full Center Access)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2"><Label>Username</Label><Input value={teacherUsername} onChange={(e) => setTeacherUsername(e.target.value)} /></div>
             <div className="space-y-2"><Label>Password</Label><Input type="password" value={teacherPassword} onChange={(e) => setTeacherPassword(e.target.value)} /></div>
             <div className="flex justify-end gap-2 mt-4">

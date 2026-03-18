@@ -26,11 +26,17 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
   }
 
   if (role && user.role !== role) {
-    let dashboardPath = '/';
-    if (user.role === 'admin') dashboardPath = '/admin-dashboard';
-    if (user.role === 'parent') dashboardPath = '/parent-dashboard';
-    if (user.role === 'teacher') dashboardPath = '/teacher-dashboard';
-    return <Navigate to={dashboardPath} replace />;
+    // Basic symmetry for administrative access
+    const isTeacherActingAsAdmin = role === 'center' && user.role === 'teacher';
+    const isCenterActingAsTeacher = role === 'teacher' && user.role === 'center';
+
+    if (!isTeacherActingAsAdmin && !isCenterActingAsTeacher) {
+      let dashboardPath = '/';
+      if (user.role === 'admin') dashboardPath = '/admin-dashboard';
+      if (user.role === 'parent') dashboardPath = '/parent-dashboard';
+      if (user.role === 'teacher') dashboardPath = '/teacher-dashboard';
+      return <Navigate to={dashboardPath} replace />;
+    }
   }
 
   return <>{children}</>;
