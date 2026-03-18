@@ -12,8 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import NotificationBell from "@/components/NotificationBell";
 import { Badge } from "@/components/ui/badge";
 
 export default function DashboardHeader() {
@@ -53,20 +51,13 @@ export default function DashboardHeader() {
     queryKey: ["current-academic-year", user?.center_id],
     queryFn: async () => {
       if (!user?.center_id) return null;
-
-      // We only use center_id as the primary filter to avoid 400 errors if columns don't exist
       const { data, error } = await supabase
         .from("academic_years")
         .select("name")
         .eq("center_id", user.center_id)
         .eq("is_current", true)
         .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching academic year with center_id:", error);
-        // Fallback or retry logic if needed, but avoid sending invalid column names
-      }
-
+      if (error) console.error("Error fetching academic year:", error);
       return data;
     },
     enabled: !!user?.center_id
@@ -130,46 +121,26 @@ export default function DashboardHeader() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'bg') => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!user?.center_id) {
-      toast.error("Center ID not found. Please log in again.");
+      toast.error("Center ID not found.");
       return;
     }
-
     const toastId = toast.loading(`Uploading institutional ${type}...`);
-
     try {
-      console.log(`Starting upload for ${type}:`, { name: file.name, size: file.size, type: file.type });
-
       const fileExt = file.name.split('.').pop();
       const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
       const filePath = `${user.center_id}/${type}-${Date.now()}.${fileExt}`;
-
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.error("Supabase Storage Error:", uploadError);
-        throw new Error(uploadError.message || "Upload to storage failed");
-      }
-
-      console.log("Upload successful, fetching public URL...", data);
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
-
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
       toast.dismiss(toastId);
-      toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready! Click "Save Changes" to apply.`);
+      toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready!`);
     } catch (error: any) {
-      console.error("Institutional File Upload Detail:", error);
       toast.dismiss(toastId);
-      toast.error(`Upload failed: ${error.message || "Unknown error"}. Please check file permissions.`);
+      toast.error(`Upload failed: ${error.message}`);
     }
   };
 
@@ -184,9 +155,7 @@ export default function DashboardHeader() {
   const canEdit = user?.role === 'center';
 
   return (
-    <Card
-      className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative"
-    >
+    <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">
       {/* Background Image */}
       {formData.header_bg_url && (
         <div
@@ -205,69 +174,69 @@ export default function DashboardHeader() {
       />
 
       <CardContent className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8">
-        {/* Top Navigation Row: Name, Bell, Edit */}
-        <div className="flex flex-row justify-between items-start gap-4">
-          <div className="space-y-1.5 flex-1 min-w-0">
+        {/* Centered Name and Address */}
+        <div className="flex flex-col items-center text-center space-y-2 relative">
+          <div className="w-full">
             {isEditMode ? (
               <Input
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="text-xl md:text-3xl font-black h-auto py-1 px-3 -ml-3 bg-slate-50 border-primary/20 rounded-xl"
+                className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-2xl mx-auto"
                 placeholder="School Name"
               />
             ) : (
-              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-800 truncate">
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-800 break-words max-w-4xl mx-auto">
                 {formData.name || "School Name"}
               </h1>
             )}
+          </div>
 
-            <div className="flex items-center gap-2 text-[#4285f4]">
-              <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-              {isEditMode ? (
+          <div className="flex flex-col items-center gap-1 text-[#4285f4] w-full">
+            {isEditMode ? (
+              <div className="flex items-center gap-2 max-w-xl mx-auto w-full">
+                <MapPin className="h-4 w-4 shrink-0" />
                 <Input
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl"
+                  className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center"
                   placeholder="Address"
                 />
-              ) : (
-                <span className="text-xs md:text-base font-bold truncate opacity-80">{formData.address || "Address not specified"}</span>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 max-w-3xl mx-auto">
+                <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+                <span className="text-xs md:text-lg font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <div className="p-1 rounded-full bg-white shadow-soft border border-slate-100">
-              <NotificationBell />
-            </div>
-            {canEdit && (
+          {/* Icon-only Edit/Cancel Button at top-right of the card content area */}
+          {canEdit && (
+            <div className="absolute top-0 right-0">
               <Button
                 onClick={() => isEditMode ? setIsEditMode(false) : setIsEditMode(true)}
                 variant="ghost"
                 className={cn(
-                  "rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-widest h-12 md:h-14 px-4 md:px-8 shadow-sm transition-all active:scale-95",
+                  "rounded-full p-2 h-10 w-10 md:h-12 md:w-12 shadow-sm transition-all active:scale-95",
                   isEditMode
                     ? "bg-rose-100 text-rose-600 hover:bg-rose-200"
                     : "bg-[#dbeafe] text-[#3b82f6] hover:bg-[#bfdbfe]"
                 )}
+                title={isEditMode ? "Cancel" : "Edit Info"}
               >
-                {isEditMode ? (
-                  <><X className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Cancel</span></>
-                ) : (
-                  <><Edit2 className="h-4 w-4 md:mr-2" /> <span>EDIT INFO</span></>
-                )}
+                {isEditMode ? <X className="h-5 w-5 md:h-6 md:w-6" /> : <Edit2 className="h-5 w-5 md:h-6 md:w-6" />}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Content Row: Logo and Details Grid */}
-        <div className="flex flex-row gap-3 md:gap-12 items-start">
-          {/* Logo Section */}
-          <div className="relative group shrink-0">
-            <div className="relative h-20 w-20 sm:h-32 sm:w-32 md:h-48 md:w-48 rounded-2xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-2 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm">
+        {/* Content Row: Logo (shifted left) and Details Grid (fully visible text) */}
+        <div className="flex flex-row gap-4 md:gap-10 items-start">
+          {/* Logo Section - Shifted Slightly Left */}
+          <div className="relative group shrink-0 -ml-2 md:-ml-4">
+            <div className="relative h-24 w-24 sm:h-32 sm:w-32 md:h-52 md:w-52 rounded-2xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-2 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm bg-white/10">
               {formData.logo_url ? (
                 <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-md" />
               ) : (
@@ -332,9 +301,9 @@ export default function DashboardHeader() {
             )}
           </div>
 
-          {/* Details Grid */}
+          {/* Details Grid - Ensuring full visibility */}
           <div className="flex-1 min-w-0">
-            <div className="grid grid-cols-2 gap-y-3 md:gap-y-8 gap-x-2 md:gap-x-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 md:gap-y-10 gap-x-4 md:gap-x-14">
               <DetailItem
                 icon={User}
                 label="Principal"
@@ -387,18 +356,18 @@ export default function DashboardHeader() {
 
         {/* Action Bar for Edit Mode */}
         {isEditMode && (
-          <div className="bg-primary/5 p-4 flex justify-end gap-4 border-t border-border/10">
+          <div className="bg-primary/5 p-4 flex justify-end gap-4 border-t border-border/10 rounded-b-[2rem]">
             <Button
               onClick={() => updateCenterMutation.mutate()}
               disabled={updateCenterMutation.isPending}
-              className="rounded-2xl h-12 px-8 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-soft"
+              className="rounded-full h-12 w-12 p-0 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-soft"
+              title="Save Changes"
             >
               {updateCenterMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-5 w-5" />
               )}
-              Save Changes
             </Button>
           </div>
         )}
@@ -418,21 +387,21 @@ interface DetailItemProps {
 
 function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
   return (
-    <div className="flex items-center gap-2 md:gap-4 group">
-      <div className="p-2 md:p-3 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
+    <div className="flex items-center gap-3 md:gap-5 group">
+      <div className="p-2.5 md:p-3.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
         <Icon className="h-4 w-4 md:h-5 md:w-5" />
       </div>
-      <div className="space-y-0 flex-1 min-w-0">
+      <div className="space-y-0.5 flex-1 min-w-0">
         <p className="text-[8px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
         {isEdit ? (
           <Input
             name={name}
             value={value}
             onChange={onChange}
-            className="h-7 md:h-10 text-[10px] md:text-sm px-2 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
+            className="h-8 md:h-11 text-[10px] md:text-sm px-2 mt-1 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
           />
         ) : (
-          <p className="text-[10px] md:text-lg font-black text-slate-700 truncate tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
+          <p className="text-[11px] md:text-lg font-black text-slate-700 break-words tracking-tight mt-1 leading-tight">{value || "---"}</p>
         )}
       </div>
     </div>

@@ -901,7 +901,10 @@ export default function Dashboard() {
       {/* Top Header - School Details */}
       <DashboardHeader />
 
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center gap-4">
+        <div className="p-2 rounded-full bg-white shadow-soft border border-slate-100 h-10 w-10 flex items-center justify-center">
+          <NotificationBell />
+        </div>
         <Button
           variant="outline"
           size="sm"
