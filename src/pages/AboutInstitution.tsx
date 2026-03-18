@@ -122,9 +122,9 @@ export default function AboutInstitution() {
         principal_message: center.principal_message || "",
         established_date: center.established_date || "",
         academic_info: (center as any).academic_info || "",
-        facilities: (center as any).facilities || [],
-        achievements: (center as any).achievements || [],
-        gallery: (center as any).gallery || [],
+        facilities: Array.isArray((center as any).facilities) ? (center as any).facilities : [],
+        achievements: Array.isArray((center as any).achievements) ? (center as any).achievements : [],
+        gallery: Array.isArray((center as any).gallery) ? (center as any).gallery : [],
         social_links: (center as any).social_links || {},
         phone: center.phone || "",
         email: center.email || "",
@@ -575,7 +575,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(formData.facilities || []).map((facility) => (
+                {(Array.isArray(formData.facilities) ? formData.facilities : []).map((facility) => (
                   <Card key={facility.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeFacility(facility.id)}
@@ -613,8 +613,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(formData.facilities || []).length > 0 ? (
-                  (formData.facilities || []).map((facility) => (
+                {(Array.isArray(formData.facilities) ? formData.facilities : []).length > 0 ? (
+                  (Array.isArray(formData.facilities) ? formData.facilities : []).map((facility) => (
                     <Card key={facility.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all hover:-translate-y-1">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-center gap-3">
@@ -658,7 +658,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(formData.achievements || []).map((achievement) => (
+                {(Array.isArray(formData.achievements) ? formData.achievements : []).map((achievement) => (
                   <Card key={achievement.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeAchievement(achievement.id)}
@@ -707,8 +707,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(formData.achievements || []).length > 0 ? (
-                  (formData.achievements || []).map((achievement) => (
+                {(Array.isArray(formData.achievements) ? formData.achievements : []).length > 0 ? (
+                  (Array.isArray(formData.achievements) ? formData.achievements : []).map((achievement) => (
                     <Card key={achievement.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-start justify-between">
@@ -766,7 +766,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {(formData.gallery || []).map((item) => (
+                {(Array.isArray(formData.gallery) ? formData.gallery : []).map((item) => (
                   <div key={item.id} className="relative group rounded-3xl overflow-hidden aspect-square border shadow-soft">
                     <img src={item.url} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -797,8 +797,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {(formData.gallery || []).length > 0 ? (
-                  (formData.gallery || []).map((item) => (
+                {(Array.isArray(formData.gallery) ? formData.gallery : []).length > 0 ? (
+                  (Array.isArray(formData.gallery) ? formData.gallery : []).map((item) => (
                     <Card key={item.id} className="border-none shadow-soft rounded-3xl overflow-hidden group hover:shadow-strong transition-all hover:-translate-y-1">
                       <div className="aspect-square relative overflow-hidden">
                         <img src={item.url} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
