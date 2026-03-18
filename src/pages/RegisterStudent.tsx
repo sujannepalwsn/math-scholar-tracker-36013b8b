@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X, ChevronRight, ChevronLeft, Check, Camera } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"

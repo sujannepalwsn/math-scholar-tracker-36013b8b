@@ -106,7 +106,8 @@ export function useDynamicNavigation() {
       if (!user?.center_id) return;
 
       // 1. Categories
-      for (const cat of DEFAULT_NAV_CATEGORIES) {
+      const categoriesToSync = DEFAULT_NAV_CATEGORIES;
+      for (const cat of categoriesToSync) {
         const existing = dynamicCategories.find(c => c.name === cat.name);
         if (!existing) {
           await supabase.from("nav_categories").insert({
@@ -117,12 +118,21 @@ export function useDynamicNavigation() {
         }
       }
 
-      const { data: latestCats } = await supabase.from("nav_categories").select("*").eq("center_id", user.center_id);
+      // Re-fetch to get IDs
+      const { data: latestCats } = await supabase
+        .from("nav_categories")
+        .select("*")
+        .eq("center_id", user.center_id);
 
       // 2. Items
       const itemsToInsert = [];
       for (const it of DEFAULT_NAV_ITEMS) {
-        const existing = dynamicItems.find(existingItem => existingItem.route === it.route);
+        // Filter by role for sync to avoid cross-role contamination if preferred,
+        // but here we sync all for the center's ecosystem.
+        const existing = dynamicItems.find(existingItem =>
+          existingItem.route === it.route && existingItem.role === it.role
+        );
+
         if (!existing) {
           const category = it.category ? latestCats?.find(c => c.name === it.category) : null;
           itemsToInsert.push({
@@ -140,7 +150,8 @@ export function useDynamicNavigation() {
       }
 
       if (itemsToInsert.length > 0) {
-        await supabase.from("nav_items").insert(itemsToInsert);
+        const { error } = await supabase.from("nav_items").insert(itemsToInsert);
+        if (error) throw error;
       }
     },
     onSuccess: () => {
