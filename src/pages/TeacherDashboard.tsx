@@ -445,26 +445,34 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8 page-enter animate-in fade-in duration-1000">
       {/* Top Header - School Details */}
       <DashboardHeader />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-2 bg-card/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-border/40">
-          <div className="p-2 bg-primary text-white rounded-lg">
-            <Home className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+            <Home className="h-8 w-8 text-primary" />
           </div>
-          <div className="flex items-center gap-2 px-3 border-l border-slate-200 ml-2">
-             <Calendar className="h-4 w-4 text-slate-400" />
-             <span className="text-xs font-bold text-slate-600">{format(new Date(), "eee, MMM d")}</span>
+          <div>
+            <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+              Faculty Nexus
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+               <div className="h-2 w-2 rounded-full bg-primary" />
+               <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">{format(new Date(), "EEEE, MMMM d")}</p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-card/60 backdrop-blur-md p-1.5 rounded-xl shadow-sm border border-border/40">
+        <div className="flex items-center gap-3 bg-card/60 backdrop-blur-md p-1.5 rounded-2xl shadow-soft border border-border/40 group transition-all hover:shadow-medium">
+           <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-primary/5 transition-colors">
+              <Calendar className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+           </div>
            <Input
              type="date"
              value={dateRange.to}
              onChange={(e) => setDateRange({...dateRange, to: e.target.value})}
-             className="h-9 w-40 border-none bg-transparent text-xs font-bold text-slate-700 focus-visible:ring-0"
+             className="h-9 w-40 border-none bg-transparent text-xs font-black uppercase tracking-widest text-slate-700 focus-visible:ring-0"
            />
         </div>
       </div>

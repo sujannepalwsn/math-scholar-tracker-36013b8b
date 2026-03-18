@@ -415,14 +415,28 @@ export default function Messaging() {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Messages</h1>
-        <p className="text-sm text-muted-foreground">Communicate with parents and teachers</p>
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <MessageSquare className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Communications Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Direct & Broadcast Messaging Nexus</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="direct" className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-3 h-14 bg-card/40 backdrop-blur-md rounded-2xl p-1.5 border border-border/40 shadow-soft">
+      <Tabs defaultValue="direct" className="w-full space-y-8">
+        <TabsList className="grid w-full grid-cols-3 h-14 bg-white/50 border border-slate-100 p-1 rounded-2xl shadow-soft backdrop-blur-md">
           <TabsTrigger value="direct" className="rounded-xl data-[state=active]:shadow-soft font-black uppercase text-[10px] tracking-widest gap-2">
             <MessageSquare className="h-4 w-4" /> Direct Messages
           </TabsTrigger>
@@ -435,7 +449,7 @@ export default function Messaging() {
         </TabsList>
 
         <TabsContent value="direct">
-          <Card className="border shadow-soft overflow-hidden rounded-xl h-[calc(100vh-280px)] min-h-[500px]">
+          <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] h-[calc(100vh-280px)] min-h-[500px] bg-card/40 backdrop-blur-md border border-white/20">
             {isMobile ? (
               showChatView ? <ChatView /> : <ConversationList />
             ) : (
@@ -452,32 +466,32 @@ export default function Messaging() {
         </TabsContent>
 
           <TabsContent value="broadcast">
-            <Card className="border shadow-soft rounded-[2.5rem] overflow-hidden">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MessageCircleMore className="h-5 w-5" /> Send Broadcast Message
+            <Card className="border-none shadow-strong rounded-[2.5rem] overflow-hidden bg-card/40 backdrop-blur-md border border-white/20">
+              <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
+                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                  <Radio className="h-6 w-6 text-primary" /> Unified Broadcast Portal
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">Send a message to multiple recipients at once.</p>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={(e) => { e.preventDefault(); if (broadcastMessageText.trim()) sendBroadcastMessageMutation.mutate(); }} className="space-y-4">
+              <CardContent className="p-8">
+                <form onSubmit={(e) => { e.preventDefault(); if (broadcastMessageText.trim()) sendBroadcastMessageMutation.mutate(); }} className="space-y-6 max-w-2xl mx-auto">
                   <div className="space-y-2">
-                    <Label>Message *</Label>
-                    <Textarea value={broadcastMessageText} onChange={(e) => setBroadcastMessageText(e.target.value)} rows={5} placeholder="Type your broadcast message..." required />
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Message Payload</label>
+                    <Textarea value={broadcastMessageText} onChange={(e) => setBroadcastMessageText(e.target.value)} rows={5} placeholder="Type your broadcast message..." required className="rounded-2xl border-none shadow-soft bg-white/50 backdrop-blur-sm focus:ring-primary/20 p-6 text-sm font-medium" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Target Audience *</Label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Target Audience</label>
                     <Select value={broadcastTargetAudience} onValueChange={setBroadcastTargetAudience}>
-                      <SelectTrigger><SelectValue placeholder="Select audience" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="h-12 bg-white/50 border-none shadow-soft rounded-2xl focus:ring-primary/20 font-bold"><SelectValue placeholder="Select audience" /></SelectTrigger>
+                      <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
                         <SelectItem value="all_parents">All Parents</SelectItem>
                         <SelectItem value="all_teachers">All Teachers</SelectItem>
                         {uniqueGrades.map((g) => (<SelectItem key={`grade_${g}`} value={`grade_${g}`}>Parents of Grade {g}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="submit" className="w-full" disabled={!broadcastMessageText.trim() || sendBroadcastMessageMutation.isPending}>
-                    {sendBroadcastMessageMutation.isPending ? "Sending..." : "Send Broadcast"}
+                  <Button type="submit" className="w-full h-14 text-lg font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300" disabled={!broadcastMessageText.trim() || sendBroadcastMessageMutation.isPending}>
+                    {sendBroadcastMessageMutation.isPending ? "TRANSMITTING..." : "INITIATE BROADCAST"}
                   </Button>
                 </form>
               </CardContent>

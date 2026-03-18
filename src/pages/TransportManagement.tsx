@@ -12,54 +12,64 @@ export default function TransportManagementPage() {
   const centerId = user?.center_id || "";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500">
-            Fleet & Logistics
-          </h1>
-          <p className="text-muted-foreground text-sm font-medium">Manage school transport routes, vehicle tracking, and driver compliance.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Bus className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Logistics Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Fleet & Route Optimization Nexus</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="rounded-3xl border-none shadow-soft bg-emerald-500/5 overflow-hidden">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-emerald-500/10">
-              <Bus className="h-6 w-6 text-emerald-600" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="rounded-[2rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+          <CardContent className="p-6 flex items-center gap-5">
+            <div className="p-4 rounded-[1.5rem] bg-emerald-500/10">
+              <Bus className="h-7 w-7 text-emerald-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600/60 leading-none mb-1">Total Fleet</p>
-              <p className="text-2xl font-black text-emerald-700">12 Vehicles</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground leading-none mb-2">Fleet Volume</p>
+              <p className="text-3xl font-black text-slate-700">12</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-3xl border-none shadow-soft bg-blue-500/5 overflow-hidden">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-blue-500/10">
-              <Route className="h-6 w-6 text-blue-600" />
+        <Card className="rounded-[2rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+          <CardContent className="p-6 flex items-center gap-5">
+            <div className="p-4 rounded-[1.5rem] bg-primary/10">
+              <Route className="h-7 w-7 text-primary" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-600/60 leading-none mb-1">Active Routes</p>
-              <p className="text-2xl font-black text-blue-700">8 Paths</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground leading-none mb-2">Active Routes</p>
+              <p className="text-3xl font-black text-slate-700">8</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-3xl border-none shadow-soft bg-amber-500/5 overflow-hidden">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-amber-500/10">
-              <Shield className="h-6 w-6 text-amber-600" />
+        <Card className="rounded-[2rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+          <CardContent className="p-6 flex items-center gap-5">
+            <div className="p-4 rounded-[1.5rem] bg-amber-500/10">
+              <Shield className="h-7 w-7 text-amber-600" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-600/60 leading-none mb-1">Safety Index</p>
-              <p className="text-2xl font-black text-amber-700">98% Secure</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground leading-none mb-2">Safety Rating</p>
+              <p className="text-3xl font-black text-slate-700">98%</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="tracking" className="space-y-6">
-        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+      <Tabs defaultValue="tracking" className="space-y-8">
+        <TabsList className="bg-white/50 border border-slate-100 p-1 rounded-2xl h-14 shadow-soft backdrop-blur-md">
           <TabsTrigger value="tracking" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest">Live Tracking</TabsTrigger>
           <TabsTrigger value="management" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest">Fleet & Routes</TabsTrigger>
           <TabsTrigger value="compliance" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest">Compliance</TabsTrigger>
@@ -117,10 +127,10 @@ export default function TransportManagementPage() {
         </TabsContent>
 
         <TabsContent value="management" className="outline-none">
-          <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
-            <CardHeader className="bg-emerald-500/5 border-b border-border/20 px-8 py-6">
+          <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
               <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
-                <Route className="h-6 w-6 text-emerald-600" /> Transport Network Control
+                <Route className="h-6 w-6 text-primary" /> Transport Network Control
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
@@ -130,8 +140,8 @@ export default function TransportManagementPage() {
         </TabsContent>
 
         <TabsContent value="compliance" className="outline-none">
-          <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden">
-             <CardContent className="p-12 text-center space-y-4">
+          <Card className="rounded-[2.5rem] border-none shadow-strong bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+             <CardContent className="p-12 text-center space-y-6">
                 <AlertCircle className="h-12 w-12 text-amber-500 mx-auto" />
                 <h3 className="text-xl font-black uppercase tracking-tight">Maintenance & Licensing</h3>
                 <p className="text-muted-foreground font-medium">Track vehicle insurance, fitness certificates, pollution checks, and driver licenses. (Coming in next release)</p>

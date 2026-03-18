@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { CalendarIcon, Clock, Download, Printer, TrendingUp, User, X } from "lucide-react";
+import { CalendarIcon, Clock, Download, Printer, TrendingUp, User, X, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { addMonths, differenceInMinutes, endOfMonth, format, isWithinInterval, parseISO, startOfMonth, subMonths } from "date-fns"
+import { addMonths, endOfMonth, format, startOfMonth, subMonths } from "date-fns"
 import { cn } from "@/lib/utils"
 
 interface StudentAttendanceRecord {
@@ -221,22 +221,29 @@ export default function ViewRecords() {
   }, [studentDetailAttendance]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Attendance Archive
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Historical audit of institutional presence and punctuality.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <FileText className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Attendance Archive
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Historical Compliance Audit</p>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="bg-card/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/40 shadow-soft flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <CalendarIcon className="h-5 w-5 text-primary" />
-          </div>
-          <span className="font-bold text-slate-700 text-sm">{format(selectedDate, 'MMMM d, yyyy')}</span>
+        <div className="flex items-center gap-3 bg-card/60 backdrop-blur-md p-1.5 rounded-2xl shadow-soft border border-border/40 group transition-all hover:shadow-medium">
+           <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-primary/5 transition-colors">
+              <CalendarIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+           </div>
+           <span className="font-black text-xs uppercase tracking-widest text-slate-700 pr-4">{format(selectedDate, 'EEEE, MMM do')}</span>
         </div>
       </div>
 
@@ -298,8 +305,8 @@ export default function ViewRecords() {
       </div>
 
       {/* Attendance Table */}
-      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-muted/10 bg-primary/5 py-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
               <CardTitle className="text-xl font-black flex items-center gap-3">

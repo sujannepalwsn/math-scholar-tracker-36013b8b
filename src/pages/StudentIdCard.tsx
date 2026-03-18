@@ -95,10 +95,27 @@ export default function StudentIdCard() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Student ID Cards" description="Generate and print student identification cards" />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <User className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Identity Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Scholar Credentials & ID Generation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Card className="rounded-2xl border-none shadow-soft p-4 bg-white/50 backdrop-blur-md">
+      <Card className="rounded-3xl border-none shadow-strong p-6 bg-card/40 backdrop-blur-md border border-white/20">
         <div className="flex flex-col md:flex-row gap-4 items-end">
           <div className="space-y-2 flex-1">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Card Theme Color</label>
@@ -122,26 +139,43 @@ export default function StudentIdCard() {
         </div>
       </Card>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search by name or ID..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-        </div>
-        <Select value={gradeFilter} onValueChange={setGradeFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Grade" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Grades</SelectItem>
-            {grades.map((g) => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <CardContent className="p-6 flex flex-col sm:flex-row gap-6">
+            <div className="relative flex-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Search Scholar</label>
+              <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Name or Student ID..." className="pl-9 h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              </div>
+            </div>
+            <div className="w-full sm:w-[200px]">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Cohort Filter</label>
+              <Select value={gradeFilter} onValueChange={setGradeFilter}>
+                <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl mt-2">
+                  <SelectValue placeholder="Grade" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
+                  <SelectItem value="all">All Grades</SelectItem>
+                  {grades.map((g) => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {!selectedStudentId && !isBulkMode ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((s: any) => (
-            <Card key={s.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setSelectedStudentId(s.id)}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+            <Card
+              key={s.id}
+              className="border-none shadow-medium bg-card/40 backdrop-blur-md rounded-3xl cursor-pointer hover:shadow-strong hover:scale-[1.02] transition-all duration-300 border border-white/20 group"
+              onClick={() => setSelectedStudentId(s.id)}
+            >
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden group-hover:scale-110 transition-transform duration-500">
                   {s.photo_url ? (
                     <img src={s.photo_url.startsWith('http') ? s.photo_url : supabase.storage.from('activity-photos').getPublicUrl(s.photo_url).data.publicUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
                   ) : (
@@ -149,8 +183,8 @@ export default function StudentIdCard() {
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">Grade {s.grade} • {s.student_id_number || "No ID"}</p>
+                  <p className="font-black text-slate-700 leading-none group-hover:text-primary transition-colors">{s.name}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1.5">Grade {s.grade} • {s.student_id_number || "PENDING ID"}</p>
                 </div>
               </CardContent>
             </Card>

@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { PageHeader } from "@/components/ui/page-header";
 import { cn, getGradeFormal } from "@/lib/utils";
 
 export default function MarksheetView() {
@@ -196,58 +195,106 @@ export default function MarksheetView() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Marksheet" description="View and print student marksheets" />
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Select value={selectedExamId} onValueChange={(v) => { setSelectedExamId(v); setSelectedStudentId(""); }}>
-          <SelectTrigger><SelectValue placeholder="Select exam" /></SelectTrigger>
-          <SelectContent>
-            {exams.map((e: any) => (
-              <SelectItem key={e.id} value={e.id}>
-                {e.name} - Grade {e.grade}
-                {e.status === 'draft' && " (Draft)"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {selectedExamId && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or roll number..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Printer className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Credentials Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Marksheet & Achievement Generation</p>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Examination Context</label>
+              <Select value={selectedExamId} onValueChange={(v) => { setSelectedExamId(v); setSelectedStudentId(""); }}>
+                <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Select an exam" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
+                  {exams.map((e: any) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name} - Grade {e.grade}
+                      {e.status === 'draft' && " (Draft)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedExamId && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Scholar Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or roll number..."
+                    className="pl-9 h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {selectedExamId && !selectedStudentId && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((s: any) => (
-            <Card key={s.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setSelectedStudentId(s.id)}>
-              <CardContent className="p-4">
-                <p className="font-medium text-foreground">{s.name}</p>
-                <p className="text-sm text-muted-foreground">Roll: {s.roll_number || "-"} • Grade {s.grade}</p>
+            <Card
+              key={s.id}
+              className="border-none shadow-medium bg-card/40 backdrop-blur-md rounded-3xl cursor-pointer hover:shadow-strong hover:scale-[1.02] transition-all duration-300 border border-white/20 group"
+              onClick={() => setSelectedStudentId(s.id)}
+            >
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                  <Search className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-black text-slate-700 leading-none">{s.name}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1.5">Roll: {s.roll_number || "-"} • Grade {s.grade}</p>
+                </div>
               </CardContent>
             </Card>
           ))}
+          {filteredStudents.length === 0 && (
+            <div className="col-span-full py-12 text-center text-muted-foreground font-medium italic">No scholars identified matching your criteria.</div>
+          )}
         </div>
       )}
 
       {marksheetData && (
         <>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Print</Button>
-            <Button variant="outline" onClick={handlePrint}><Download className="h-4 w-4 mr-2" /> Download</Button>
-            <Button variant="outline" onClick={() => setSelectedStudentId("")}>Back to List</Button>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={handlePrint} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-10 px-6 border-2">
+              <Printer className="h-4 w-4 mr-2" /> Print Official Copy
+            </Button>
+            <Button variant="outline" onClick={handlePrint} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-10 px-6 border-2">
+              <Download className="h-4 w-4 mr-2" /> Export PDF
+            </Button>
+            <Button variant="outline" onClick={() => setSelectedStudentId("")} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-10 px-6 border-2">
+              Return to Catalog
+            </Button>
           </div>
 
-          <Card>
-            <CardContent className="p-6" ref={printRef}>
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-white overflow-hidden border border-slate-200">
+            <CardContent className="p-12" ref={printRef}>
               {/* Header */}
               <div className="text-center mb-6">
                 <h1 className="text-xl font-bold text-foreground">{center?.name || "School Name"}</h1>
@@ -294,28 +341,28 @@ export default function MarksheetView() {
               </Table>
 
               {/* Summary */}
-              <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-foreground">{marksheetData.totalObtained}/{marksheetData.totalFull}</p>
-                  <p className="text-xs text-muted-foreground">Total Marks</p>
+              <div className="mt-12 grid grid-cols-2 sm:grid-cols-5 gap-6 text-center">
+                <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100 shadow-soft">
+                  <p className="text-2xl font-black text-slate-700">{marksheetData.totalObtained}/{marksheetData.totalFull}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Aggregate</p>
                 </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-foreground">{marksheetData.percentage.toFixed(1)}%</p>
-                  <p className="text-xs text-muted-foreground">Percentage</p>
+                <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100 shadow-soft">
+                  <p className="text-2xl font-black text-primary">{marksheetData.percentage.toFixed(1)}%</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Efficiency</p>
                 </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-foreground">{marksheetData.grade}</p>
-                  <p className="text-xs text-muted-foreground">Grade / GPA: {marksheetData.gpa}</p>
+                <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100 shadow-soft">
+                  <p className="text-2xl font-black text-slate-700">{marksheetData.grade}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Grade (GPA: {marksheetData.gpa})</p>
                 </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-foreground">{marksheetData.rank}</p>
-                  <p className="text-xs text-muted-foreground">Class Rank</p>
+                <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100 shadow-soft">
+                  <p className="text-2xl font-black text-slate-700">{marksheetData.rank}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Institutional Rank</p>
                 </div>
-                <div className={cn("p-3 rounded-lg", marksheetData.passed ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20")}>
-                  <p className={cn("text-2xl font-bold", marksheetData.passed ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")}>
+                <div className={cn("p-6 rounded-[1.5rem] border shadow-strong", marksheetData.passed ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100")}>
+                  <p className={cn("text-2xl font-black", marksheetData.passed ? "text-emerald-600" : "text-rose-600")}>
                     {marksheetData.passed ? "PASS" : "FAIL"}
                   </p>
-                  <p className="text-xs text-muted-foreground">Final Result</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">Outcome</p>
                 </div>
               </div>
 

@@ -124,88 +124,126 @@ export default function ResultsDashboard() {
   }, [marks, subjects]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Results Dashboard" description="Analytics and statistics for published exams" />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <BarChart3 className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Performance Analytics
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Exam Result Insights Hub</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4">
-          <Select value={selectedExamId} onValueChange={setSelectedExamId}>
-            <SelectTrigger><SelectValue placeholder="Select an exam" /></SelectTrigger>
-            <SelectContent>
-              {exams.map((e: any) => (
-                <SelectItem key={e.id} value={e.id}>
-                  {e.name} - Grade {e.grade}
-                  {e.status === 'draft' && " (Draft)"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <CardContent className="p-6">
+            <div className="space-y-2 max-w-md">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Examination Context</label>
+              <Select value={selectedExamId} onValueChange={setSelectedExamId}>
+                <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder="Select an exam" />
+                </SelectTrigger>
+                <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
+                  {exams.map((e: any) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name} - Grade {e.grade}
+                      {e.status === 'draft' && " (Draft)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {analytics && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <TrendingUp className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold text-foreground">{analytics.classAvg}%</p>
-                <p className="text-sm text-muted-foreground">Class Average</p>
+            <Card className="border-none shadow-medium rounded-3xl bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+              <CardContent className="p-6 text-center">
+                <TrendingUp className="h-8 w-8 mx-auto mb-2 text-primary opacity-50" />
+                <p className="text-3xl font-black text-slate-700 leading-none">{analytics.classAvg}%</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-3">Class Median</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Award className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="text-lg font-bold text-foreground">{analytics.topPerformer?.name}</p>
-                <p className="text-sm text-muted-foreground">Top: {analytics.topPerformer?.percentage.toFixed(1)}%</p>
+            <Card className="border-none shadow-medium rounded-3xl bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+              <CardContent className="p-6 text-center">
+                <Award className="h-8 w-8 mx-auto mb-2 text-amber-500 opacity-50" />
+                <p className="text-xl font-black text-slate-700 leading-tight line-clamp-1">{analytics.topPerformer?.name}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-3">Top: {analytics.topPerformer?.percentage.toFixed(1)}%</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Percent className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <p className="text-2xl font-bold text-foreground">{analytics.passPercentage}%</p>
-                <p className="text-sm text-muted-foreground">Pass Rate</p>
+            <Card className="border-none shadow-medium rounded-3xl bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+              <CardContent className="p-6 text-center">
+                <Percent className="h-8 w-8 mx-auto mb-2 text-emerald-500 opacity-50" />
+                <p className="text-3xl font-black text-emerald-600 leading-none">{analytics.passPercentage}%</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-3">Efficiency Rate</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <XCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
-                <p className="text-2xl font-bold text-foreground">{analytics.failCount}</p>
-                <p className="text-sm text-muted-foreground">Failed Students</p>
+            <Card className="border-none shadow-medium rounded-3xl bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+              <CardContent className="p-6 text-center">
+                <XCircle className="h-8 w-8 mx-auto mb-2 text-rose-500 opacity-50" />
+                <p className="text-3xl font-black text-rose-600 leading-none">{analytics.failCount}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-3">Attrition/Fail</p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid lg:grid-cols-2 gap-8">
             {/* Subject Performance Bar Chart */}
-            <Card>
-              <CardHeader><CardTitle className="text-base">Subject Performance</CardTitle></CardHeader>
-              <CardContent>
+            <Card className="border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+              <CardHeader className="bg-primary/5 border-b border-border/10 py-6">
+                <CardTitle className="text-base font-black uppercase tracking-widest flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  Cognitive Strength by Subject
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={analytics.subjectPerf}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" fontSize={12} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="average" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                    <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} tick={{fontWeight: 'bold', fill: '#64748b'}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontWeight: 'bold', fill: '#64748b', fontSize: 10}} />
+                    <Tooltip
+                      contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
+                      cursor={{fill: 'rgba(0,0,0,0.02)'}}
+                    />
+                    <Bar dataKey="average" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} barSize={40} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
             {/* Pass vs Fail Pie Chart */}
-            <Card>
-              <CardHeader><CardTitle className="text-base">Pass vs Fail</CardTitle></CardHeader>
-              <CardContent className="flex justify-center">
+            <Card className="border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md overflow-hidden border border-white/20">
+              <CardHeader className="bg-primary/5 border-b border-border/10 py-6">
+                <CardTitle className="text-base font-black uppercase tracking-widest flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Outcome Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 flex justify-center">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
-                    <Pie data={analytics.pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                    <Pie data={analytics.pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={90} label>
                       {analytics.pieData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                       ))}
                     </Pie>
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold'}} />
+                    <Legend iconType="circle" wrapperStyle={{fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase', tracking: '0.1em'}} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -215,7 +253,7 @@ export default function ResultsDashboard() {
       )}
 
       {selectedExamId && !analytics && (
-        <Card><CardContent className="p-8 text-center text-muted-foreground">No marks data found for this exam.</CardContent></Card>
+        <Card className="border-none shadow-strong bg-card/40 backdrop-blur-md rounded-3xl"><CardContent className="p-12 text-center text-muted-foreground font-medium italic">No performance data identified for the selected examination.</CardContent></Card>
       )}
     </div>
   );

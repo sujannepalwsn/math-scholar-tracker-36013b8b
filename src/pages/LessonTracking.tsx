@@ -383,13 +383,20 @@ export default function LessonTracking() {
     <div className="space-y-8 animate-in fade-in duration-1000">
       {/* HEADER + MODAL */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Instructional Pulse
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Monitor pedagogical execution and comprehension dynamics.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <BookOpen className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Instructional Pulse
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Pedagogical Execution Hub</p>
+              </div>
+            </div>
           </div>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -494,11 +501,14 @@ export default function LessonTracking() {
       </div>
 
       {/* LESSON RECORDS LIST */}
-      <Card className="border-none shadow-medium bg-card/60 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/30 p-8">
-        <div className="flex flex-wrap gap-6">
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <CardContent className="p-6">
+            <div className="flex flex-wrap gap-6">
             {/* Filters */}
             <div className="flex-1 min-w-[150px]">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Subject</Label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Subject</label>
               <Select value={filterSubject} onValueChange={setFilterSubject}>
                 <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
                   <SelectValue />
@@ -510,7 +520,7 @@ export default function LessonTracking() {
               </Select>
             </div>
             <div className="flex-1 min-w-[150px]">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Student</Label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Student</label>
               <Select value={filterStudent} onValueChange={setFilterStudent}>
                 <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
                   <SelectValue />
@@ -522,7 +532,7 @@ export default function LessonTracking() {
               </Select>
             </div>
             <div className="flex-1 min-w-[150px]">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</Label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
               <Select value={filterGrade} onValueChange={setFilterGrade}>
                 <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
                   <SelectValue />
@@ -534,7 +544,9 @@ export default function LessonTracking() {
               </Select>
             </div>
           </div>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
         <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">

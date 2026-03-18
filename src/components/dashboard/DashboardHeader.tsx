@@ -29,7 +29,9 @@ export default function DashboardHeader() {
     short_code: "",
     website_url: "",
     logo_url: "",
-    header_bg_url: ""
+    header_bg_url: "",
+    header_overlay_color: "rgba(255, 255, 255, 0.9)",
+    header_overlay_opacity: 90
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -81,7 +83,9 @@ export default function DashboardHeader() {
         short_code: center.short_code || "",
         website_url: center.website_url || "",
         logo_url: center.logo_url || "",
-        header_bg_url: center.header_bg_url || ""
+        header_bg_url: center.header_bg_url || "",
+        header_overlay_color: (center as any).header_overlay_color || "rgba(255, 255, 255, 0.9)",
+        header_overlay_opacity: (center as any).header_overlay_opacity || 90
       });
     }
   }, [center]);
@@ -100,7 +104,9 @@ export default function DashboardHeader() {
           short_code: formData.short_code,
           website_url: formData.website_url,
           logo_url: formData.logo_url,
-          header_bg_url: formData.header_bg_url
+          header_bg_url: formData.header_bg_url,
+          header_overlay_color: formData.header_overlay_color,
+          header_overlay_opacity: formData.header_overlay_opacity
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -178,14 +184,25 @@ export default function DashboardHeader() {
   const canEdit = user?.role === 'center';
 
   return (
-    <Card className="border-none shadow-elevated overflow-hidden rounded-[3.5rem] bg-white mb-8 relative">
-      {/* Background Image Overlay */}
+    <Card
+      className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative"
+    >
+      {/* Background Image */}
       {formData.header_bg_url && (
         <div
-          className="absolute inset-0 z-0 opacity-10 pointer-events-none bg-cover bg-center"
+          className="absolute inset-0 z-0 pointer-events-none bg-cover bg-center"
           style={{ backgroundImage: `url(${formData.header_bg_url})` }}
         />
       )}
+
+      {/* Dynamic Overlay */}
+      <div
+        className="absolute inset-0 z-[1] pointer-events-none"
+        style={{
+          backgroundColor: formData.header_overlay_color || "rgba(255, 255, 255, 0.9)",
+          opacity: (formData.header_overlay_opacity || 90) / 100
+        }}
+      />
 
       <CardContent className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8">
         {/* Top Navigation Row: Name, Bell, Edit */}
@@ -272,12 +289,45 @@ export default function DashboardHeader() {
               )}
             </div>
             {isEditMode && (
-              <div className="mt-3 flex justify-center">
-                <label className="p-2 rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
+              <div className="mt-3 flex flex-col gap-2 items-center">
+                <label className="p-2 w-full rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
                   <ImageIcon className="h-4 w-4" />
                   Background
                   <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
                 </label>
+
+                <div className="flex flex-col gap-2 p-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-w-[200px]">
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Overlay Color</Label>
+                    <div className="flex gap-1.5 items-center">
+                      <input
+                        type="color"
+                        value={formData.header_overlay_color.startsWith('rgba') ? '#ffffff' : formData.header_overlay_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
+                        className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
+                      />
+                      <Input
+                        value={formData.header_overlay_color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
+                        className="h-5 text-[8px] px-1 font-bold bg-transparent border-none focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Opacity</Label>
+                      <span className="text-[8px] font-black text-primary">{formData.header_overlay_opacity}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={formData.header_overlay_opacity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_opacity: parseInt(e.target.value) }))}
+                      className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -368,21 +418,21 @@ interface DetailItemProps {
 
 function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
   return (
-    <div className="flex items-center gap-1.5 md:gap-4 group">
-      <div className="p-1.5 md:p-3 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
-        <Icon className="h-3 w-3 md:h-5 md:w-5" />
+    <div className="flex items-center gap-2 md:gap-4 group">
+      <div className="p-2 md:p-3 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
+        <Icon className="h-4 w-4 md:h-5 md:w-5" />
       </div>
       <div className="space-y-0 flex-1 min-w-0">
-        <p className="text-[7px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
+        <p className="text-[8px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
         {isEdit ? (
           <Input
             name={name}
             value={value}
             onChange={onChange}
-            className="h-6 md:h-10 text-[9px] md:text-sm px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
+            className="h-7 md:h-10 text-[10px] md:text-sm px-2 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
           />
         ) : (
-          <p className="text-[9px] md:text-lg font-black text-slate-700 truncate tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
+          <p className="text-[10px] md:text-lg font-black text-slate-700 truncate tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
         )}
       </div>
     </div>

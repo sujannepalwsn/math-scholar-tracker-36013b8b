@@ -286,10 +286,27 @@ export default function ExamManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Exam Management" description="Create and manage exams, configure subjects" />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <GraduationCap className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Examination Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Formal Assessment Control</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Tabs defaultValue="exams" className="space-y-6">
+      <Tabs defaultValue="exams" className="space-y-8">
         <TabsList className="bg-white/50 border border-slate-100 p-1 rounded-2xl h-14 shadow-soft backdrop-blur-md">
           <TabsTrigger value="exams" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Exams</TabsTrigger>
           <TabsTrigger value="settings" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Settings & Scales</TabsTrigger>
@@ -297,7 +314,7 @@ export default function ExamManagement() {
 
         <TabsContent value="exams" className="space-y-6 outline-none">
           <div className="flex justify-end">
-            <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => setShowForm(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
               <Plus className="h-4 w-4 mr-2" /> Create Exam
             </Button>
           </div>
@@ -444,24 +461,30 @@ export default function ExamManagement() {
       </Dialog>
 
       {/* Exam List */}
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         {isLoading ? (
-          <Card><CardContent className="p-8 text-center text-muted-foreground">Loading...</CardContent></Card>
+          <Card className="border-none shadow-strong bg-card/40 backdrop-blur-md rounded-3xl"><CardContent className="p-12 text-center text-muted-foreground font-medium italic">Synchronizing exam registry...</CardContent></Card>
         ) : exams.length === 0 ? (
-          <Card><CardContent className="p-8 text-center text-muted-foreground">No exams created yet</CardContent></Card>
+          <Card className="border-none shadow-strong bg-card/40 backdrop-blur-md rounded-3xl"><CardContent className="p-12 text-center text-muted-foreground font-medium italic">No examinations identified in the current session.</CardContent></Card>
         ) : (
           exams.map((exam: any) => (
-            <Card key={exam.id}>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{exam.name}</h3>
+            <Card key={exam.id} className="border-none shadow-medium bg-card/40 backdrop-blur-md rounded-3xl overflow-hidden group hover:shadow-strong transition-all duration-300 border border-white/20">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="flex gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                      <GraduationCap className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl font-black text-slate-700">{exam.name}</h3>
                       <Badge
                         variant={exam.status === "results_published" ? "default" : exam.status === "published" ? "secondary" : "outline"}
                         className={cn(
-                          exam.status === "results_published" && "bg-blue-600 hover:bg-blue-700",
-                          exam.status === "published" && "bg-background border-muted-foreground/30 text-foreground"
+                          "rounded-lg px-2 py-0.5 font-black text-[10px] tracking-tight uppercase border-none shadow-soft",
+                          exam.status === "results_published" && "bg-emerald-500/10 text-emerald-600",
+                          exam.status === "published" && "bg-amber-500/10 text-amber-600",
+                          exam.status === "draft" && "bg-slate-500/10 text-slate-500"
                         )}
                       >
                         {exam.status === "results_published" ? "Results Published" : exam.status === "published" ? "Routine Published" : "Draft"}
@@ -483,21 +506,22 @@ export default function ExamManagement() {
                       </p>
                       {exam.description && <p className="italic">"{exam.description}"</p>}
                     </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button variant="outline" size="sm" onClick={() => { setSelectedExamId(exam.id); setShowSubjectDialog(true); }}>
-                      <BookOpen className="h-3 w-3 mr-1" /> Subjects
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <Button variant="outline" size="sm" onClick={() => { setSelectedExamId(exam.id); setShowSubjectDialog(true); }} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
+                      <BookOpen className="h-3 w-3 mr-2" /> Subjects
                     </Button>
 
                     {exam.status === "draft" && (
                       <>
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(exam)}>
-                          <Edit className="h-3 w-3 mr-1" /> Edit
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(exam)} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
+                          <Edit className="h-3 w-3 mr-2" /> Edit
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => publishExam.mutate(exam.id)}>
-                          <ListChecks className="h-3 w-3 mr-1" /> Publish Routine
+                        <Button variant="outline" size="sm" onClick={() => publishExam.mutate(exam.id)} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
+                          <ListChecks className="h-3 w-3 mr-2" /> Routine
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => deleteExam.mutate(exam.id)}>
+                        <Button variant="outline" size="sm" onClick={() => deleteExam.mutate(exam.id)} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200">
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </>
@@ -505,16 +529,17 @@ export default function ExamManagement() {
 
                     {exam.status === "published" && (
                       <>
-                        <Button variant="outline" size="sm" onClick={() => navigate(`/marks-entry?examId=${exam.id}`)}>
-                          <Edit className="h-3 w-3 mr-1" /> Enter Marks
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/marks-entry?examId=${exam.id}`)} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
+                          <Edit className="h-3 w-3 mr-2" /> Entry
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => publishResults.mutate(exam)}
                           disabled={publishResults.isPending}
+                          className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200"
                         >
-                          <GraduationCap className="h-3 w-3 mr-1" /> Publish Results
+                          <GraduationCap className="h-3 w-3 mr-2" /> Publish
                         </Button>
                       </>
                     )}

@@ -282,15 +282,22 @@ export default function TeacherManagement() {
   const totalMonthlySalary = teachers.reduce((sum, t: any) => sum + (t.monthly_salary || 0), 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-            Faculty Nexus
-          </h1>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm font-medium">Manage human capital and institutional faculty.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <Users className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Faculty Hub
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Institutional Personnel & Faculty Registry</p>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -469,8 +476,8 @@ export default function TeacherManagement() {
       </div>
       </div>
 
-      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-        <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+      <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+        <CardHeader className="border-b border-border/10 bg-primary/5 py-6">
           <CardTitle className="text-xl font-black flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
               <Users className="h-6 w-6 text-primary" />
@@ -531,12 +538,12 @@ export default function TeacherManagement() {
                         <TableCell className="px-6 py-4">
                           <div
                             className={cn(
-                              "inline-flex items-center gap-1.5 font-black uppercase text-[10px] tracking-tight cursor-pointer hover:opacity-70 transition-opacity",
-                              teacher.is_active ? "text-green-600" : "text-red-600"
+                              "inline-flex items-center gap-1.5 font-black uppercase text-[10px] tracking-tight cursor-pointer hover:opacity-70 transition-all px-2.5 py-1 rounded-lg",
+                              teacher.is_active ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"
                             )}
                             onClick={() => toggleTeacherStatusMutation.mutate(teacher)}
                           >
-                            <div className={cn("h-1.5 w-1.5 rounded-full", teacher.is_active ? "bg-green-600" : "bg-red-600")} />
+                            <div className={cn("h-1.5 w-1.5 rounded-full", teacher.is_active ? "bg-emerald-600" : "bg-rose-600")} />
                             {teacher.is_active ? 'Active' : 'Suspended'}
                           </div>
                         </TableCell>

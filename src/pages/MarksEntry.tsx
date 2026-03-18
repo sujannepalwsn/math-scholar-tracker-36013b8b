@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CheckCircle, Save, XCircle } from "lucide-react";
+import { CheckCircle, Save, XCircle, SquarePen } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -226,13 +226,32 @@ export default function MarksEntry() {
   }, [students, marksData, subjects]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Marks Entry" description="Enter student marks for exams" />
+    <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+              <SquarePen className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+                Score Entry
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                 <div className="h-2 w-2 rounded-full bg-primary" />
+                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Academic Achievement Registry</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>Select Exam</Label>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+        <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
+          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Examination Session</label>
             <Select value={selectedExamId} onValueChange={setSelectedExamId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select an exam" />
@@ -251,10 +270,10 @@ export default function MarksEntry() {
           </div>
 
           {selectedExam && examGrades.length > 1 && (
-            <div className="space-y-1.5">
-              <Label>Filter Grade</Label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade Filter</label>
               <Select value={filterGrade} onValueChange={setFilterGrade}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
                   <SelectValue placeholder="Filter by grade" />
                 </SelectTrigger>
                 <SelectContent>
@@ -266,40 +285,42 @@ export default function MarksEntry() {
               </Select>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {selectedExamId && subjects.length > 0 && students.length > 0 && (
         <>
           <div className="flex justify-end">
-            <Button onClick={() => saveMarks.mutate()} disabled={saveMarks.isPending}>
-              <Save className="h-4 w-4 mr-2" /> Save All Marks
+            <Button onClick={() => saveMarks.mutate()} disabled={saveMarks.isPending} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
+              {saveMarks.isPending ? "Commiting Marks..." : <><Save className="h-4 w-4 mr-2" /> Commit Score Registry</>}
             </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border bg-card">
+          <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 bg-card z-10 min-w-[150px]">Student</TableHead>
+                <TableRow className="hover:bg-transparent border-muted/10 bg-muted/5">
+                  <TableHead className="sticky left-0 bg-card/90 backdrop-blur-md z-10 min-w-[200px] pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Student Identity</TableHead>
                   {subjects.map((s: any) => (
-                    <TableHead key={s.id} className="min-w-[100px] text-center">
+                    <TableHead key={s.id} className="min-w-[100px] text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       {s.subject_name}
-                      <div className="text-[10px] text-muted-foreground">({s.full_marks})</div>
+                      <div className="opacity-60">({s.full_marks})</div>
                     </TableHead>
                   ))}
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">%</TableHead>
-                  <TableHead className="text-center">Grade</TableHead>
-                  <TableHead className="text-center">Result</TableHead>
+                  <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total</TableHead>
+                  <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">%</TableHead>
+                  <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Grade</TableHead>
+                  <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {studentResults.map(({ student, totalObtained, totalFull, percentage, grade, passed, hasMarks }) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="sticky left-0 bg-card z-10 font-medium">
-                      {student.name}
-                      <div className="text-[10px] text-muted-foreground">Grade {student.grade} • Roll: {student.roll_number || "-"}</div>
+                  <TableRow key={student.id} className="group border-muted/5 hover:bg-primary/5 transition-colors">
+                    <TableCell className="sticky left-0 bg-card/90 backdrop-blur-md z-10 pl-6 py-4">
+                      <p className="font-black text-slate-700 leading-none group-hover:text-primary transition-colors">{student.name}</p>
+                      <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1 tracking-tight">Grade {student.grade} • Roll: {student.roll_number || "-"}</div>
                     </TableCell>
                     {subjects.map((subj: any) => (
                       <TableCell key={subj.id} className="text-center">
@@ -307,18 +328,22 @@ export default function MarksEntry() {
                           type="number"
                           min="0"
                           max={subj.full_marks}
-                          className="w-20 mx-auto text-center h-8"
+                          className="w-20 mx-auto text-center h-9 font-bold bg-white/50 border-none shadow-soft rounded-xl focus:ring-primary/20"
                           value={marksData[student.id]?.[subj.id] || ""}
                           onChange={(e) => handleMarkChange(student.id, subj.id, e.target.value)}
                         />
                       </TableCell>
                     ))}
-                    <TableCell className="text-center font-medium">
+                    <TableCell className="text-center font-black text-slate-600">
                       {hasMarks ? `${totalObtained}/${totalFull}` : "-"}
                     </TableCell>
-                    <TableCell className="text-center">{hasMarks ? `${percentage.toFixed(1)}%` : "-"}</TableCell>
+                    <TableCell className="text-center font-bold text-primary text-xs">{hasMarks ? `${percentage.toFixed(1)}%` : "-"}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={grade === "F" ? "destructive" : "default"}>{grade}</Badge>
+                      {hasMarks && (
+                        <Badge variant={grade === "F" ? "destructive" : "secondary"} className={cn("rounded-lg font-black text-[10px]", grade !== "F" && "bg-primary/10 text-primary")}>
+                          {grade}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-center">
                       {passed === null ? "-" : passed ? (
@@ -332,6 +357,7 @@ export default function MarksEntry() {
               </TableBody>
             </Table>
           </div>
+          </Card>
         </>
       )}
 

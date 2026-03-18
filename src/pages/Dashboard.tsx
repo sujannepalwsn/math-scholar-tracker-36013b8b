@@ -78,42 +78,57 @@ export default function Dashboard() {
 
   const handleDragStart = (e: React.DragEvent, type: 'kpi' | 'main', id: string) => {
     if (!isCustomizeMode) return;
-    e.dataTransfer.setData('widgetType', type);
-    e.dataTransfer.setData('widgetId', id);
-    e.currentTarget.classList.add('opacity-50');
+    e.dataTransfer.setData('text/plain', JSON.stringify({ type, id }));
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.classList.add('opacity-40', 'scale-95', 'rotate-1');
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('opacity-50');
+    e.currentTarget.classList.remove('opacity-40', 'scale-95', 'rotate-1', 'opacity-50');
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     if (!isCustomizeMode) return;
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
   };
 
   const handleDrop = (e: React.DragEvent, targetType: 'kpi' | 'main', targetId: string) => {
     if (!isCustomizeMode) return;
     e.preventDefault();
-    const sourceType = e.dataTransfer.getData('widgetType');
-    const sourceId = e.dataTransfer.getData('widgetId');
 
-    if (sourceType !== targetType) return;
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const sourceType = data.type;
+      const sourceId = data.id;
 
-    if (sourceType === 'kpi') {
-      const newOrder = [...kpiOrder];
-      const sourceIdx = newOrder.indexOf(sourceId);
-      const targetIdx = newOrder.indexOf(targetId);
-      newOrder.splice(sourceIdx, 1);
-      newOrder.splice(targetIdx, 0, sourceId);
-      setKpiOrder(newOrder);
-    } else {
-      const newOrder = [...mainWidgetsOrder];
-      const sourceIdx = newOrder.indexOf(sourceId);
-      const targetIdx = newOrder.indexOf(targetId);
-      newOrder.splice(sourceIdx, 1);
-      newOrder.splice(targetIdx, 0, sourceId);
-      setMainWidgetsOrder(newOrder);
+      if (sourceType !== targetType || sourceId === targetId) return;
+
+      if (sourceType === 'kpi') {
+        const newOrder = [...kpiOrder];
+        const sourceIdx = newOrder.indexOf(sourceId);
+        const targetIdx = newOrder.indexOf(targetId);
+
+        if (sourceIdx === -1 || targetIdx === -1) return;
+
+        newOrder.splice(sourceIdx, 1);
+        newOrder.splice(targetIdx, 0, sourceId);
+        setKpiOrder(newOrder);
+        toast.success("KPI layout updated", { duration: 1000 });
+      } else {
+        const newOrder = [...mainWidgetsOrder];
+        const sourceIdx = newOrder.indexOf(sourceId);
+        const targetIdx = newOrder.indexOf(targetId);
+
+        if (sourceIdx === -1 || targetIdx === -1) return;
+
+        newOrder.splice(sourceIdx, 1);
+        newOrder.splice(targetIdx, 0, sourceId);
+        setMainWidgetsOrder(newOrder);
+        toast.success("Widget layout updated", { duration: 1000 });
+      }
+    } catch (err) {
+      console.error("Drop error:", err);
     }
   };
 
