@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
-  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon, Trash2,
-  Eye, EyeOff, Palette
+  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,25 +29,9 @@ export default function DashboardHeader() {
     header_bg_url: "",
     header_overlay_color: "rgba(255, 255, 255, 0.9)",
     header_overlay_opacity: 90,
-<<<<<<< HEAD
-    header_title_color: "#1e293b",
-    header_details_color: "#64748b",
-    header_font_family: "Inter",
-    header_font_color: "#1e293b",
-    header_font_size: "normal",
-    header_visible_sections: {
-      principal: true,
-      short_code: true,
-      academic_year: true,
-      phone: true,
-      email: true,
-      website: true
-    }
-=======
     header_font_family: "Inter",
     header_font_color: "#1e293b",
     header_font_size: "normal"
->>>>>>> main
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -96,25 +79,9 @@ export default function DashboardHeader() {
         header_bg_url: center.header_bg_url || "",
         header_overlay_color: (center as any).header_overlay_color || "rgba(255, 255, 255, 0.9)",
         header_overlay_opacity: (center as any).header_overlay_opacity || 90,
-<<<<<<< HEAD
-        header_title_color: (center as any).header_title_color || "#1e293b",
-        header_details_color: (center as any).header_details_color || "#64748b",
-        header_font_family: (center as any).header_font_family || "Inter",
-        header_font_color: (center as any).header_font_color || "#1e293b",
-        header_font_size: (center as any).header_font_size || "normal",
-        header_visible_sections: (center as any).header_visible_sections || {
-          principal: true,
-          short_code: true,
-          academic_year: true,
-          phone: true,
-          email: true,
-          website: true
-        }
-=======
         header_font_family: (center as any).header_font_family || "Inter",
         header_font_color: (center as any).header_font_color || "#1e293b",
         header_font_size: (center as any).header_font_size || "normal"
->>>>>>> main
       });
     }
   }, [center]);
@@ -136,18 +103,9 @@ export default function DashboardHeader() {
           header_bg_url: formData.header_bg_url,
           header_overlay_color: formData.header_overlay_color,
           header_overlay_opacity: formData.header_overlay_opacity,
-<<<<<<< HEAD
-          header_title_color: formData.header_title_color,
-          header_details_color: formData.header_details_color,
-          header_font_family: formData.header_font_family,
-          header_font_color: formData.header_font_color,
-          header_font_size: formData.header_font_size,
-          header_visible_sections: formData.header_visible_sections
-=======
           header_font_family: formData.header_font_family,
           header_font_color: formData.header_font_color,
           header_font_size: formData.header_font_size
->>>>>>> main
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -177,59 +135,20 @@ export default function DashboardHeader() {
     }
     const toastId = toast.loading(`Uploading institutional ${type}...`);
     try {
-      const oldUrl = type === 'logo' ? formData.logo_url : formData.header_bg_url;
-
       const fileExt = file.name.split('.').pop();
       const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
       const filePath = `${user.center_id}/${type}-${Date.now()}.${fileExt}`;
-
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, { cacheControl: '3600', upsert: true });
-
       if (uploadError) throw uploadError;
-
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
-
-      // Delete old file if it exists
-      if (oldUrl && typeof oldUrl === 'string' && oldUrl.includes(bucket)) {
-        try {
-          const oldPath = oldUrl.split(`${bucket}/`)[1];
-          if (oldPath) {
-            await supabase.storage.from(bucket).remove([oldPath]);
-          }
-        } catch (err) {
-          console.error("Error deleting old file:", err);
-        }
-      }
-
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
       toast.dismiss(toastId);
       toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready!`);
     } catch (error: any) {
       toast.dismiss(toastId);
       toast.error(`Upload failed: ${error.message}`);
-    }
-  };
-
-  const removeBackground = async () => {
-    if (!formData.header_bg_url) return;
-    const toastId = toast.loading("Removing background...");
-    try {
-      const bucket = 'center-backgrounds';
-      const oldUrl = formData.header_bg_url;
-      if (oldUrl && typeof oldUrl === 'string' && oldUrl.includes(bucket)) {
-        const oldPath = oldUrl.split(`${bucket}/`)[1];
-        if (oldPath) {
-          await supabase.storage.from(bucket).remove([oldPath]);
-        }
-      }
-      setFormData(prev => ({ ...prev, header_bg_url: "" }));
-      toast.dismiss(toastId);
-      toast.success("Background removed!");
-    } catch (error: any) {
-      toast.dismiss(toastId);
-      toast.error("Failed to remove background");
     }
   };
 
@@ -244,7 +163,7 @@ export default function DashboardHeader() {
   const canEdit = user?.role === 'center';
 
   return (
-    <Card className="border-none shadow-elevated overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-white mb-6 relative max-w-5xl mx-auto">
+    <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">
       {/* Background Image */}
       {formData.header_bg_url && (
         <div
@@ -263,53 +182,33 @@ export default function DashboardHeader() {
       />
 
       <CardContent
-<<<<<<< HEAD
-        className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-6"
-        style={{
-          fontFamily: formData.header_font_family || 'inherit'
-=======
         className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8"
         style={{
           fontFamily: formData.header_font_family || 'inherit',
           color: formData.header_font_color || 'inherit'
->>>>>>> main
         }}
       >
         {/* Centered Name and Address */}
-        <div className="flex flex-col items-center text-center space-y-1 relative">
+        <div className="flex flex-col items-center text-center space-y-2 relative">
           <div className="w-full">
             {isEditMode ? (
               <Input
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-<<<<<<< HEAD
-                className="text-lg md:text-2xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-xl mx-auto"
-                style={{
-                  color: formData.header_title_color,
-                  fontSize: formData.header_font_size === 'large' ? '1.75rem' : formData.header_font_size === 'small' ? '1rem' : '1.5rem',
-=======
                 className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-2xl mx-auto"
                 style={{
                   fontSize: formData.header_font_size === 'large' ? '2rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.5rem',
                   color: formData.header_font_color || 'inherit'
->>>>>>> main
                 }}
                 placeholder="School Name"
               />
             ) : (
               <h1
-<<<<<<< HEAD
-                className="text-xl md:text-3xl font-black tracking-tight break-words max-w-3xl mx-auto"
-                style={{
-                  color: formData.header_title_color,
-                  fontSize: formData.header_font_size === 'large' ? '2.25rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.875rem',
-=======
                 className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
                 style={{
                   fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
                   color: formData.header_font_color || '#1e293b'
->>>>>>> main
                 }}
               >
                 {formData.name || "School Name"}
@@ -319,25 +218,21 @@ export default function DashboardHeader() {
 
           <div className="flex flex-col items-center gap-1 w-full" style={{ color: formData.header_font_color || '#4285f4' }}>
             {isEditMode ? (
-              <div className="flex items-center gap-2 max-w-lg mx-auto w-full">
-                <MapPin className="h-3 w-3 shrink-0" />
+              <div className="flex items-center gap-2 max-w-xl mx-auto w-full">
+                <MapPin className="h-4 w-4 shrink-0" />
                 <Input
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-<<<<<<< HEAD
-                  className="h-7 md:h-8 text-[10px] md:text-xs bg-slate-50 border-primary/20 rounded-xl text-center"
-=======
                   className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center"
                   style={{ color: formData.header_font_color || 'inherit' }}
->>>>>>> main
                   placeholder="Address"
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-1.5 max-w-2xl mx-auto">
-                <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-                <span className="text-[10px] md:text-sm font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
+              <div className="flex items-center justify-center gap-2 max-w-3xl mx-auto">
+                <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+                <span className="text-xs md:text-lg font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
               </div>
             )}
           </div>
@@ -363,10 +258,10 @@ export default function DashboardHeader() {
         </div>
 
         {/* Content Row: Logo (shifted left) and Details Grid (fully visible text) */}
-        <div className="flex flex-row gap-3 md:gap-8 items-start">
+        <div className="flex flex-row gap-3 md:gap-10 items-start">
           {/* Logo Section - Shifted Slightly Left */}
-          <div className="relative group shrink-0 -ml-1 md:-ml-2">
-            <div className="relative h-14 w-14 sm:h-24 sm:w-24 md:h-32 md:w-32 rounded-full overflow-hidden flex items-center justify-center p-1 sm:p-3 border-2 md:border-4 border-white shadow-soft backdrop-blur-sm bg-white/10">
+          <div className="relative group shrink-0 -ml-1 md:-ml-4">
+            <div className="relative h-16 w-16 sm:h-32 sm:w-32 md:h-52 md:w-52 rounded-xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-1.5 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm bg-white/10">
               {formData.logo_url ? (
                 <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-md" />
               ) : (
@@ -389,39 +284,24 @@ export default function DashboardHeader() {
             </div>
             {isEditMode && (
               <div className="mt-3 flex flex-col gap-2 items-center">
-                <div className="flex gap-1 w-full">
-                  <label className="flex-1 p-1.5 rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-tighter text-primary hover:bg-primary hover:text-white transition-all">
-                    <ImageIcon className="h-3 w-3" />
-                    BG
-                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
-                  </label>
-                  {formData.header_bg_url && (
-                    <Button
-                      variant="ghost"
-                      onClick={removeBackground}
-                      className="p-1.5 h-auto rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100 shadow-soft"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
+                <label className="p-2 w-full rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
+                  <ImageIcon className="h-4 w-4" />
+                  Background
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
+                </label>
 
-<<<<<<< HEAD
-                <div className="flex flex-col gap-1.5 p-2 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-h-[350px] overflow-y-auto">
-=======
                 <div className="flex flex-col gap-2 p-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-w-[200px] max-h-[300px] overflow-y-auto custom-scrollbar">
->>>>>>> main
                   <div className="space-y-1">
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Overlay Color</Label>
                     <div className="flex gap-1.5 items-center">
                       <input
                         type="color"
-                        value={(formData.header_overlay_color || "").startsWith('rgba') ? '#ffffff' : (formData.header_overlay_color || "#ffffff")}
+                        value={formData.header_overlay_color.startsWith('rgba') ? '#ffffff' : formData.header_overlay_color}
                         onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
                         className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
                       />
                       <Input
-                        value={formData.header_overlay_color || ""}
+                        value={formData.header_overlay_color}
                         onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
                         className="h-5 text-[8px] px-1 font-bold bg-transparent border-none focus-visible:ring-0"
                       />
@@ -442,42 +322,12 @@ export default function DashboardHeader() {
                     />
                   </div>
 
-<<<<<<< HEAD
-                  <div className="pt-1 mt-1 border-t border-slate-100 space-y-2">
-                     <div className="flex items-center justify-between gap-2">
-                        <Label className="text-[7px] font-black uppercase text-slate-400">Title Color</Label>
-                        <input
-                          type="color"
-                          value={formData.header_title_color}
-                          onChange={(e) => setFormData(prev => ({ ...prev, header_title_color: e.target.value }))}
-                          className="w-4 h-4 rounded-full border-none cursor-pointer overflow-hidden"
-                        />
-                     </div>
-                     <div className="flex items-center justify-between gap-2">
-                        <Label className="text-[7px] font-black uppercase text-slate-400">Detail Color</Label>
-                        <input
-                          type="color"
-                          value={formData.header_details_color}
-                          onChange={(e) => setFormData(prev => ({ ...prev, header_details_color: e.target.value }))}
-                          className="w-4 h-4 rounded-full border-none cursor-pointer overflow-hidden"
-                        />
-                     </div>
-                  </div>
-
-                  <div className="pt-1 mt-1 border-t border-slate-100 space-y-1">
-                    <Label className="text-[7px] font-black uppercase text-slate-400">Font Family</Label>
-                    <select
-                      value={formData.header_font_family}
-                      onChange={(e) => setFormData(prev => ({ ...prev, header_font_family: e.target.value }))}
-                      className="w-full h-5 text-[7px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
-=======
                   <div className="space-y-1 pt-1 border-t border-slate-100">
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Family</Label>
                     <select
                       value={formData.header_font_family}
                       onChange={(e) => setFormData(prev => ({ ...prev, header_font_family: e.target.value }))}
                       className="w-full h-6 text-[8px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
->>>>>>> main
                     >
                       <option value="Inter">Inter</option>
                       <option value="Roboto">Roboto</option>
@@ -489,9 +339,6 @@ export default function DashboardHeader() {
                   </div>
 
                   <div className="space-y-1">
-<<<<<<< HEAD
-                    <Label className="text-[7px] font-black uppercase text-slate-400">Font Size</Label>
-=======
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Color</Label>
                     <div className="flex gap-1.5 items-center">
                       <input
@@ -510,18 +357,13 @@ export default function DashboardHeader() {
 
                   <div className="space-y-1">
                     <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Size</Label>
->>>>>>> main
                     <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
                       {['small', 'normal', 'large'].map((size) => (
                         <button
                           key={size}
                           onClick={() => setFormData(prev => ({ ...prev, header_font_size: size }))}
                           className={cn(
-<<<<<<< HEAD
-                            "flex-1 h-4 text-[6px] font-black uppercase rounded-sm transition-all",
-=======
                             "flex-1 h-5 text-[7px] font-black uppercase rounded-sm transition-all",
->>>>>>> main
                             formData.header_font_size === size ? "bg-white shadow-sm text-primary" : "text-slate-400"
                           )}
                         >
@@ -530,108 +372,60 @@ export default function DashboardHeader() {
                       ))}
                     </div>
                   </div>
-<<<<<<< HEAD
-
-                  <div className="pt-1 mt-1 border-t border-slate-100 space-y-1.5">
-                     <Label className="text-[7px] font-black uppercase text-slate-400">Visible Sections</Label>
-                     <div className="grid grid-cols-2 gap-1">
-                        {Object.entries(formData.header_visible_sections).map(([key, val]) => (
-                          <Button
-                            key={key}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setFormData(prev => ({
-                              ...prev,
-                              header_visible_sections: {
-                                ...prev.header_visible_sections,
-                                [key]: !val
-                              }
-                            }))}
-                            className={cn(
-                              "h-5 px-1 text-[6px] font-black uppercase tracking-tighter rounded-md border",
-                              val ? "bg-primary/10 text-primary border-primary/20" : "bg-slate-50 text-slate-400 border-slate-200"
-                            )}
-                          >
-                            {val ? <Eye className="h-2 w-2 mr-1" /> : <EyeOff className="h-2 w-2 mr-1" />}
-                            {key.replace('_', ' ')}
-                          </Button>
-                        ))}
-                     </div>
-                  </div>
-=======
->>>>>>> main
                 </div>
               </div>
             )}
           </div>
 
           {/* Details Grid - Ensuring full visibility with 2-column horizontal layout on mobile */}
-          <div className="flex-1 min-w-0 mt-2">
-            <div className="grid grid-cols-2 gap-y-2 md:gap-y-3 gap-x-2 md:gap-x-10">
-              {formData.header_visible_sections.principal && (
-                <DetailItem
-                  icon={User}
-                  label="Principal"
-                  name="principal_name"
-                  value={formData.principal_name}
-                  isEdit={isEditMode}
-                  onChange={handleInputChange}
-                  color={formData.header_details_color}
-                />
-              )}
-              {formData.header_visible_sections.short_code && (
-                <DetailItem
-                  icon={Hash}
-                  label="School Code"
-                  name="short_code"
-                  value={formData.short_code}
-                  isEdit={isEditMode}
-                  onChange={handleInputChange}
-                  color={formData.header_details_color}
-                />
-              )}
-              {formData.header_visible_sections.academic_year && (
-                <DetailItem
-                  icon={Calendar}
-                  label="Academic Year"
-                  value={currentYear?.name || "Not Set"}
-                  isEdit={false}
-                  color={formData.header_details_color}
-                />
-              )}
-              {formData.header_visible_sections.phone && (
-                <DetailItem
-                  icon={Phone}
-                  label="Contact"
-                  name="phone"
-                  value={formData.phone}
-                  isEdit={isEditMode}
-                  onChange={handleInputChange}
-                  color={formData.header_details_color}
-                />
-              )}
-              {formData.header_visible_sections.email && (
-                <DetailItem
-                  icon={Mail}
-                  label="Email"
-                  name="email"
-                  value={formData.email}
-                  isEdit={isEditMode}
-                  onChange={handleInputChange}
-                  color={formData.header_details_color}
-                />
-              )}
-              {formData.header_visible_sections.website && (
-                <DetailItem
-                  icon={Globe}
-                  label="Website"
-                  name="website_url"
-                  value={formData.website_url}
-                  isEdit={isEditMode}
-                  onChange={handleInputChange}
-                  color={formData.header_details_color}
-                />
-              )}
+          <div className="flex-1 min-w-0">
+            <div className="grid grid-cols-2 gap-y-3 md:gap-y-10 gap-x-2 md:gap-x-14">
+              <DetailItem
+                icon={User}
+                label="Principal"
+                name="principal_name"
+                value={formData.principal_name}
+                isEdit={isEditMode}
+                onChange={handleInputChange}
+              />
+              <DetailItem
+                icon={Hash}
+                label="School Code"
+                name="short_code"
+                value={formData.short_code}
+                isEdit={isEditMode}
+                onChange={handleInputChange}
+              />
+              <DetailItem
+                icon={Calendar}
+                label="Academic Year"
+                value={currentYear?.name || "Not Set"}
+                isEdit={false}
+              />
+              <DetailItem
+                icon={Phone}
+                label="Contact"
+                name="phone"
+                value={formData.phone}
+                isEdit={isEditMode}
+                onChange={handleInputChange}
+              />
+              <DetailItem
+                icon={Mail}
+                label="Email"
+                name="email"
+                value={formData.email}
+                isEdit={isEditMode}
+                onChange={handleInputChange}
+              />
+              <DetailItem
+                icon={Globe}
+                label="Website"
+                name="website_url"
+                value={formData.website_url}
+                isEdit={isEditMode}
+                onChange={handleInputChange}
+              />
             </div>
           </div>
         </div>
@@ -665,32 +459,25 @@ interface DetailItemProps {
   isEdit?: boolean;
   name?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  color?: string;
 }
 
-function DetailItem({ icon: Icon, label, value, isEdit, name, onChange, color }: DetailItemProps) {
+function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
   return (
-    <div className="flex items-center gap-1.5 md:gap-3 group">
-      <div className="p-1.5 md:p-2.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
-        <Icon className="h-3 w-3 md:h-4 md:w-4" />
+    <div className="flex items-center gap-1.5 md:gap-5 group">
+      <div className="p-1.5 md:p-3.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
+        <Icon className="h-3 w-3 md:h-5 md:w-5" />
       </div>
-      <div className="space-y-0 flex-1 min-w-0">
-        <p className="text-[6px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
+      <div className="space-y-0.5 flex-1 min-w-0">
+        <p className="text-[7px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
         {isEdit ? (
           <Input
             name={name}
             value={value}
             onChange={onChange}
-            className="h-6 md:h-9 text-[9px] md:text-xs px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
-            style={{ color: color }}
+            className="h-6 md:h-11 text-[9px] md:text-sm px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
           />
         ) : (
-          <p
-            className="text-[9px] md:text-sm font-black break-words tracking-tight mt-0.5 leading-tight"
-            style={{ color: color }}
-          >
-            {value || "---"}
-          </p>
+          <p className="text-[9px] md:text-lg font-black text-slate-700 break-words tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
         )}
       </div>
     </div>
