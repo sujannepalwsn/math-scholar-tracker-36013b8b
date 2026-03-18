@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-<<<<<<< HEAD
 import { CalendarIcon, Calendar as CalendarIconLucide, Clock, Download, Printer, TrendingUp, User, X, FileText } from "lucide-react";
-=======
-import { CalendarIcon, Calendar, Clock, Download, Printer, TrendingUp, User, X, FileText } from "lucide-react";
->>>>>>> main
+import { CalendarIcon, Calendar as CalendarIconLucide, Clock, Download, Printer, TrendingUp, User, X, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -245,7 +242,7 @@ export default function ViewRecords() {
         </div>
         <div className="flex items-center gap-3 bg-card/60 backdrop-blur-md p-1.5 rounded-2xl shadow-soft border border-border/40 group transition-all hover:shadow-medium">
            <div className="p-2 bg-slate-50 rounded-xl group-hover:bg-primary/5 transition-colors">
-              <CalendarIcon className="h-4 w-4 text-slate-400 group-hover:text-primary" />
+              <CalendarIconLucide className="h-4 w-4 text-slate-400 group-hover:text-primary" />
            </div>
            <span className="font-black text-xs uppercase tracking-widest text-slate-700 pr-4">{format(selectedDate, 'EEEE, MMM do')}</span>
         </div>
@@ -282,7 +279,7 @@ export default function ViewRecords() {
                       !selectedDate && "text-muted-foreground"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIconLucide className="mr-2 h-4 w-4" />
                     {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
