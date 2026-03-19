@@ -18,7 +18,7 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
       if (!user?.center_id) return null;
       const { data, error } = await supabase
         .from("centers")
-        .select("name, logo_url, address, header_font_family, header_font_color, header_text_transform")
+        .select("*")
         .eq("id", user.center_id)
         .single();
       if (error) return null;
@@ -30,10 +30,21 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
 
   if (!center && !user?.center_name) return null;
 
+  const header_title_visible = (center as any)?.header_title_visible !== false;
+  const header_address_visible = (center as any)?.header_address_visible !== false;
+
   return (
-    <div className={cn("flex flex-col items-center text-center px-2 py-1", className)}>
-      <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-full overflow-hidden bg-primary/5 flex items-center justify-center border border-primary/10 shrink-0 shadow-sm">
+    <div className={cn("flex flex-col items-center text-center px-2 py-1 rounded-xl relative overflow-hidden", className)}>
+      {/* Optional Header Background Mini-Overlay if needed */}
+      {(center as any)?.header_bg_url && (
+        <div
+          className="absolute inset-0 z-0 opacity-10 pointer-events-none bg-cover bg-center"
+          style={{ backgroundImage: `url(${(center as any).header_bg_url})` }}
+        />
+      )}
+
+      <div className="flex items-center gap-3 relative z-10">
+        <div className="h-10 w-10 rounded-full overflow-hidden bg-white/80 backdrop-blur-sm flex items-center justify-center border border-primary/10 shrink-0 shadow-sm">
           {center?.logo_url ? (
             <img
               src={center.logo_url}
@@ -41,24 +52,29 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
               className="h-full w-full object-contain"
             />
           ) : (
-            <Building className="h-4 w-4 text-primary" />
+            <Building className="h-5 w-5 text-primary" />
           )}
         </div>
         <div className="flex flex-col items-start min-w-0">
-          <h2
-            className="text-sm font-black truncate max-w-[200px] md:max-w-[300px] leading-tight"
-            style={{
-              fontFamily: center?.header_font_family || 'inherit',
-              color: center?.header_font_color || 'inherit',
-              textTransform: (center as any)?.header_text_transform as any || 'none'
-            }}
-          >
-            {center?.name || user?.center_name}
-          </h2>
-          {center?.address && (
+          {header_title_visible && (
+            <h2
+              className="text-sm md:text-base font-black truncate max-w-[200px] md:max-w-[300px] leading-tight"
+              style={{
+                fontFamily: center?.header_font_family || 'inherit',
+                color: center?.header_font_color || 'inherit',
+                textTransform: (center as any)?.header_text_transform as any || 'none'
+              }}
+            >
+              {center?.name || user?.center_name}
+            </h2>
+          )}
+          {header_address_visible && center?.address && (
             <div className="flex items-center gap-1 opacity-70">
               <MapPin className="h-2.5 w-2.5 shrink-0" />
-              <p className="text-[10px] font-bold truncate max-w-[180px] md:max-w-[250px]">
+              <p
+                className="text-[10px] font-bold truncate max-w-[180px] md:max-w-[250px]"
+                style={{ color: center?.header_font_color || 'inherit' }}
+              >
                 {center.address}
               </p>
             </div>

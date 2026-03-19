@@ -55,7 +55,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     refetchInterval: 10000 });
 
   const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher');
-  const updatedNavItems = teacherDynamicItems.length > 1
+  const updatedNavItems = teacherDynamicItems.length > 0
     ? teacherDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
         return {
