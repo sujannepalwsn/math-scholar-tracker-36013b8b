@@ -77,7 +77,7 @@ export default function DashboardHeader() {
   });
 
   useEffect(() => {
-    if (center) {
+    if (center && !isEditMode) {
       setFormData({
         name: center.name || "",
         address: center.address || "",
@@ -141,6 +141,7 @@ export default function DashboardHeader() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["center-details"] });
+      queryClient.invalidateQueries({ queryKey: ["center-branding"] });
       queryClient.invalidateQueries({ queryKey: ["center-logo"] });
       toast.success("School details updated successfully!");
       setIsEditMode(false);

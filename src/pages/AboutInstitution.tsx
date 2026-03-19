@@ -115,7 +115,7 @@ export default function AboutInstitution() {
   });
 
   useEffect(() => {
-    if (center) {
+    if (center && !isEditing) {
       setFormData({
         name: center.name || "",
         about_description: center.about_description || "",
@@ -184,19 +184,25 @@ export default function AboutInstitution() {
       name: "",
       description: ""
     };
-    const currentFacilities = Array.isArray(formData.facilities) ? formData.facilities : [];
-    setFormData(prev => ({ ...prev, facilities: [...currentFacilities, newFacility] }));
+    setFormData(prev => {
+      const currentFacilities = Array.isArray(prev.facilities) ? prev.facilities : [];
+      return { ...prev, facilities: [...currentFacilities, newFacility] };
+    });
   };
 
   const updateFacility = (id: string, field: keyof Facility, value: string) => {
-    const currentFacilities = Array.isArray(formData.facilities) ? formData.facilities : [];
-    const updated = currentFacilities.map(f => f.id === id ? { ...f, [field]: value } : f);
-    setFormData(prev => ({ ...prev, facilities: updated }));
+    setFormData(prev => {
+      const currentFacilities = Array.isArray(prev.facilities) ? prev.facilities : [];
+      const updated = currentFacilities.map(f => f.id === id ? { ...f, [field]: value } : f);
+      return { ...prev, facilities: updated };
+    });
   };
 
   const removeFacility = (id: string) => {
-    const currentFacilities = Array.isArray(formData.facilities) ? formData.facilities : [];
-    setFormData(prev => ({ ...prev, facilities: currentFacilities.filter(f => f.id !== id) }));
+    setFormData(prev => {
+      const currentFacilities = Array.isArray(prev.facilities) ? prev.facilities : [];
+      return { ...prev, facilities: currentFacilities.filter(f => f.id !== id) };
+    });
   };
 
   const addAchievement = () => {
@@ -206,19 +212,25 @@ export default function AboutInstitution() {
       year: new Date().getFullYear().toString(),
       description: ""
     };
-    const currentAchievements = Array.isArray(formData.achievements) ? formData.achievements : [];
-    setFormData(prev => ({ ...prev, achievements: [...currentAchievements, newAchievement] }));
+      setFormData(prev => {
+        const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+        return { ...prev, achievements: [...currentAchievements, newAchievement] };
+      });
   };
 
   const updateAchievement = (id: string, field: keyof Achievement, value: string) => {
-    const currentAchievements = Array.isArray(formData.achievements) ? formData.achievements : [];
-    const updated = currentAchievements.map(a => a.id === id ? { ...a, [field]: value } : a);
-    setFormData(prev => ({ ...prev, achievements: updated }));
+    setFormData(prev => {
+      const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+      const updated = currentAchievements.map(a => a.id === id ? { ...a, [field]: value } : a);
+      return { ...prev, achievements: updated };
+    });
   };
 
   const removeAchievement = (id: string) => {
-    const currentAchievements = Array.isArray(formData.achievements) ? formData.achievements : [];
-    setFormData(prev => ({ ...prev, achievements: currentAchievements.filter(a => a.id !== id) }));
+    setFormData(prev => {
+      const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+      return { ...prev, achievements: currentAchievements.filter(a => a.id !== id) };
+    });
   };
 
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -259,14 +271,18 @@ export default function AboutInstitution() {
   };
 
   const removeGalleryItem = (id: string) => {
-    const currentGallery = Array.isArray(formData.gallery) ? formData.gallery : [];
-    setFormData(prev => ({ ...prev, gallery: currentGallery.filter(item => item.id !== id) }));
+    setFormData(prev => {
+      const currentGallery = Array.isArray(prev.gallery) ? prev.gallery : [];
+      return { ...prev, gallery: currentGallery.filter(item => item.id !== id) };
+    });
   };
 
   const updateGalleryCaption = (id: string, caption: string) => {
-    const currentGallery = Array.isArray(formData.gallery) ? formData.gallery : [];
-    const updated = currentGallery.map(item => item.id === id ? { ...item, caption } : item);
-    setFormData(prev => ({ ...prev, gallery: updated }));
+    setFormData(prev => {
+      const currentGallery = Array.isArray(prev.gallery) ? prev.gallery : [];
+      const updated = currentGallery.map(item => item.id === id ? { ...item, caption } : item);
+      return { ...prev, gallery: updated };
+    });
   };
 
   const updateSocialLink = (platform: keyof SocialLinks, value: string) => {
