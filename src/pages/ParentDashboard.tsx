@@ -680,10 +680,10 @@ const ParentDashboardContent = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-sm font-semibold">Total Invoiced: {formatCurrency(totalInvoiced)}</div>
-                <div className="text-sm font-semibold">Total Paid: {formatCurrency(totalPaid)}</div>
-                <div className="text-sm font-bold text-rose-600">Outstanding Dues: {formatCurrency(outstandingDues)}</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="text-[10px] md:text-sm font-semibold">Total Invoiced: {formatCurrency(totalInvoiced)}</div>
+                <div className="text-[10px] md:text-sm font-semibold">Total Paid: {formatCurrency(totalPaid)}</div>
+                <div className="text-[10px] md:text-sm font-bold text-rose-600">Outstanding Dues: {formatCurrency(outstandingDues)}</div>
               </div>
               <h3 className="font-semibold mb-2">Payment History</h3>
               {payments.length === 0 ? (
@@ -726,11 +726,11 @@ const ParentDashboardContent = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="text-sm font-semibold">Total Days: {attendance.length}</div>
-                <div className="text-sm font-semibold text-green-600">Present: {attendance.filter(a => a.status === 'present').length}</div>
-                <div className="text-sm font-semibold text-rose-600">Absent: {attendance.filter(a => a.status === 'absent').length}</div>
-                <div className="text-sm font-bold">Attendance %: {attendanceRate}%</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-[10px] md:text-sm font-semibold">Total Days: {attendance.length}</div>
+                <div className="text-[10px] md:text-sm font-semibold text-green-600">Present: {attendance.filter(a => a.status === 'present').length}</div>
+                <div className="text-[10px] md:text-sm font-semibold text-rose-600">Absent: {attendance.filter(a => a.status === 'absent').length}</div>
+                <div className="text-[10px] md:text-sm font-bold">Attendance %: {attendanceRate}%</div>
               </div>
               <div className="overflow-auto max-h-[400px] border rounded-xl custom-scrollbar">
                 <table className="w-full border-collapse text-sm min-w-[600px]">

@@ -147,7 +147,8 @@ export default function StudentPromotion({ centerId }: { centerId: string }) {
 
           {fromGrade && (
             <div className="border rounded-2xl overflow-hidden shadow-soft bg-white">
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow>
                     <TableHead className="w-[50px]">
@@ -183,6 +184,7 @@ export default function StudentPromotion({ centerId }: { centerId: string }) {
                   )}
                 </TableBody>
               </Table>
+</div>
             </div>
           )}
 

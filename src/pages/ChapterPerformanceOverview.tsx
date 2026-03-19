@@ -309,7 +309,8 @@ export default function ChapterPerformanceOverview() {
             <p className="text-muted-foreground text-center py-8">No chapter evaluations or associated tests found for the selected filters.</p>
           ) : (
             <div className="overflow-x-auto max-h-[600px] border rounded">
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Subject</TableHead>
@@ -357,6 +358,7 @@ export default function ChapterPerformanceOverview() {
                   ))}
                 </TableBody>
               </Table>
+</div>
             </div>
           )}
         </CardContent>

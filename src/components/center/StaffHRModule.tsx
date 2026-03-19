@@ -467,7 +467,8 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
            )}
 
            <div className="border rounded-[2rem] overflow-hidden bg-white shadow-soft">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Month / Year</TableHead>
@@ -506,6 +507,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
                 )}
               </TableBody>
             </Table>
+</div>
           </div>
         </TabsContent>
 
@@ -541,7 +543,8 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
            )}
 
            <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest">Type</TableHead>
@@ -563,6 +566,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
                 ))}
               </TableBody>
             </Table>
+</div>
           </div>
         </TabsContent>
 

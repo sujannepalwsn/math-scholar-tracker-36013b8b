@@ -98,10 +98,11 @@ const ActivityTracker = () => {
     if (!user?.id) return;
 
     const updateActivity = async () => {
-      await supabase
+      const { error } = await supabase
         .from('users')
         .update({ last_active_at: new Date().toISOString() })
         .eq('id', user.id);
+      if (error) console.error("Error updating activity:", error);
     };
 
     updateActivity();

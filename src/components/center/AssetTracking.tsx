@@ -152,7 +152,8 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
       )}
 
       <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-        <Table>
+        <div className="overflow-x-auto">
+  <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
               <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Asset Details</TableHead>
@@ -236,6 +237,7 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
             )}
           </TableBody>
         </Table>
+</div>
       </div>
     </div>
   );

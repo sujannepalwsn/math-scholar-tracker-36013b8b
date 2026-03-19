@@ -493,7 +493,8 @@ export default function ViewRecords() {
                   <p className="text-muted-foreground text-center py-4">No attendance records for this month.</p>
                 ) : (
                   <div className="overflow-x-auto max-h-64 border rounded">
-                    <Table>
+                    <div className="overflow-x-auto">
+  <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Date</TableHead>
@@ -520,6 +521,7 @@ export default function ViewRecords() {
                         ))}
                       </TableBody>
                     </Table>
+</div>
                   </div>
                 )}
               </CardContent>

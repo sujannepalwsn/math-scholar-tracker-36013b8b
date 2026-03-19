@@ -154,7 +154,8 @@ const FeeManagement = () => {
           {headingsLoading ? <p>Loading...</p> : headings.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">No fee headings yet</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
@@ -176,6 +177,7 @@ const FeeManagement = () => {
                 ))}
               </TableBody>
             </Table>
+</div>
           )}
         </CardContent>
       </Card>
@@ -234,7 +236,8 @@ const FeeManagement = () => {
           {structuresLoading ? <p>Loading...</p> : structures.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">No fee structures yet</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Fee Heading</TableHead>
@@ -257,6 +260,7 @@ const FeeManagement = () => {
                 })}
               </TableBody>
             </Table>
+</div>
           )}
         </CardContent>
       </Card>

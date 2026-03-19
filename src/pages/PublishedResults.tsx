@@ -498,7 +498,8 @@ export default function PublishedResults() {
               </div>
 
               <div className="rounded-2xl border overflow-hidden">
-                <Table>
+                <div className="overflow-x-auto">
+  <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead className="font-bold py-4">Subject Name</TableHead>
@@ -533,6 +534,7 @@ export default function PublishedResults() {
                     })}
                   </TableBody>
                 </Table>
+</div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">

@@ -88,7 +88,8 @@ export default function ParentHomework() {
           <p className="text-muted-foreground font-medium italic">{emptyMessage}</p>
         </div>
       ) : (
-        <Table>
+        <div className="overflow-x-auto">
+  <Table>
           <TableHeader>
             <TableRow className="bg-muted/5">
               <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Title/Subject</TableHead>
@@ -159,6 +160,7 @@ export default function ParentHomework() {
             ))}
           </TableBody>
         </Table>
+</div>
       )}
     </div>
   );
@@ -185,11 +187,11 @@ export default function ParentHomework() {
       </div>
 
       <Tabs defaultValue="today" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto md:h-14 bg-card/40 backdrop-blur-md rounded-2xl md:rounded-[2rem] p-1.5 border border-border/40 shadow-soft gap-1">
-          <TabsTrigger value="today" className="rounded-xl md:rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Today</TabsTrigger>
-          <TabsTrigger value="upcoming" className="rounded-xl md:rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Upcoming</TabsTrigger>
-          <TabsTrigger value="completed" className="rounded-xl md:rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Settled</TabsTrigger>
-          <TabsTrigger value="overdue" className="rounded-xl md:rounded-[1.5rem] data-[state=active]:bg-rose-600 data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Breached</TabsTrigger>
+        <TabsList className="flex flex-nowrap w-full overflow-x-auto h-auto md:h-14 bg-card/40 backdrop-blur-md rounded-2xl md:rounded-[2rem] p-1.5 border border-border/40 shadow-soft gap-1 custom-scrollbar">
+          <TabsTrigger value="today" className="rounded-xl md:rounded-[1.5rem] flex-1 min-w-[80px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Today</TabsTrigger>
+          <TabsTrigger value="upcoming" className="rounded-xl md:rounded-[1.5rem] flex-1 min-w-[80px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Upcoming</TabsTrigger>
+          <TabsTrigger value="completed" className="rounded-xl md:rounded-[1.5rem] flex-1 min-w-[80px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Settled</TabsTrigger>
+          <TabsTrigger value="overdue" className="rounded-xl md:rounded-[1.5rem] flex-1 min-w-[80px] data-[state=active]:bg-rose-600 data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[9px] md:text-[10px] tracking-widest py-2 md:py-0">Breached</TabsTrigger>
         </TabsList>
 
         <TabsContent value="today" className="mt-8">

@@ -104,13 +104,16 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
           }).select().single();
 
           if (!invError && inv) {
-            await supabase.from('invoice_items').insert({
+            const { error: itemError } = await supabase.from('invoice_items').insert({
               invoice_id: inv.id,
               description: `${item?.name} x ${amount}`,
               quantity: amount,
               unit_amount: item?.unit_price || 0,
               total_amount: totalAmount
             });
+            if (itemError) throw itemError;
+          } else if (invError) {
+            throw invError;
           }
         }
       }
@@ -138,13 +141,14 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
 
       // Record disposition log
       if (type === 'dispose') {
-        await supabase.from('consumable_logs').insert({
+        const { error: logError } = await supabase.from('consumable_logs').insert({
           center_id: centerId,
           consumable_id: id,
           quantity: amount,
           action_type: 'disposed',
           notes: 'Routine inventory disposal'
         });
+        if (logError) throw logError;
       }
     },
     onSuccess: () => {
@@ -286,7 +290,8 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
       )}
 
       <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-        <Table>
+        <div className="overflow-x-auto">
+  <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
               <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Item</TableHead>
@@ -342,12 +347,14 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
             ))}
           </TableBody>
         </Table>
+</div>
       </div>
         </TabsContent>
 
         <TabsContent value="logs" className="pt-4">
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Date</TableHead>
@@ -389,6 +396,7 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
                 ))}
               </TableBody>
             </Table>
+</div>
           </div>
         </TabsContent>
       </Tabs>

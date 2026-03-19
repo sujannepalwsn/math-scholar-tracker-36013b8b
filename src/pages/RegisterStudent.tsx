@@ -981,7 +981,8 @@ export default function RegisterStudent() {
             </div>
           )}
           <div className="overflow-hidden border border-slate-100 rounded-3xl">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black uppercase text-[9px] tracking-widest">Name</TableHead>
@@ -1003,6 +1004,7 @@ export default function RegisterStudent() {
                 ))}
               </TableBody>
             </Table>
+</div>
           </div>
           <div className="flex justify-end gap-3 mt-8">
             <Button variant="ghost" onClick={() => setShowPreviewDialog(false)} className="rounded-xl font-black uppercase text-[10px] tracking-widest">

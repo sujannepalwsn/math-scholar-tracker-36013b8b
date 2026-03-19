@@ -120,7 +120,8 @@ export default function SubscriptionManagement() {
            <CardTitle className="text-lg font-black uppercase tracking-widest text-slate-700">Active Tenant Subscriptions</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50">
                 <TableHead className="font-black uppercase text-[10px] tracking-widest px-8">Center Entity</TableHead>
@@ -152,6 +153,7 @@ export default function SubscriptionManagement() {
               )}
             </TableBody>
           </Table>
+</div>
         </CardContent>
       </Card>
     </div>

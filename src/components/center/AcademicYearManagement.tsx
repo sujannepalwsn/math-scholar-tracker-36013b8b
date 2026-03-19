@@ -74,7 +74,8 @@ export default function AcademicYearManagement({ centerId }: { centerId: string 
               </CardTitle>
            </CardHeader>
            <CardContent className="p-0">
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableBody>
                    {years?.map((y: any) => (
                      <TableRow key={y.id}>
@@ -92,6 +93,7 @@ export default function AcademicYearManagement({ centerId }: { centerId: string 
                    ))}
                 </TableBody>
               </Table>
+</div>
            </CardContent>
         </Card>
 

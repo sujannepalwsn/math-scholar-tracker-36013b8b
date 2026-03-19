@@ -9,12 +9,14 @@ export default function UsageMonitoring() {
   const { data: usage = [], isLoading } = useQuery({
     queryKey: ["admin-usage-stats"],
     queryFn: async () => {
-      const { data: centers } = await supabase.from("centers").select("id, name");
+      const { data: centers, error: centersError } = await supabase.from("centers").select("id, name");
+      if (centersError) throw centersError;
 
       const stats = await Promise.all((centers || []).map(async (c) => {
         // Mocking some metrics as per requirement for demonstration,
         // in production these would come from real system metrics.
-        const { count: rows } = await supabase.from("attendance").select("*", { count: "exact", head: true }).eq("center_id", c.id);
+        const { count: rows, error: rowsError } = await supabase.from("attendance").select("*", { count: "exact", head: true }).eq("center_id", c.id);
+        if (rowsError) console.error(`Error fetching rows for center ${c.id}:`, rowsError);
 
         return {
           centerName: c.name,

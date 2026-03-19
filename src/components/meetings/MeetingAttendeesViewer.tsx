@@ -63,7 +63,8 @@ export default function MeetingAttendeesViewer({ meetingId }: MeetingAttendeesVi
         <p className="text-muted-foreground">No attendance records found.</p>
       ) : (
         <div className="border rounded-lg overflow-hidden">
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -87,6 +88,7 @@ export default function MeetingAttendeesViewer({ meetingId }: MeetingAttendeesVi
               ))}
             </TableBody>
           </Table>
+</div>
         </div>
       )}
     </div>

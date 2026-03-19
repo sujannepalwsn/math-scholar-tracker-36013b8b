@@ -80,7 +80,8 @@ export default function CenterAnalytics() {
 
       <Card className="rounded-[2.5rem] border shadow-strong overflow-hidden bg-card/40 backdrop-blur-md">
         <CardContent className="p-0">
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader className="bg-slate-50 border-b">
               <TableRow>
                 <TableHead className="px-8 py-4 font-black uppercase text-[10px] tracking-widest">Center Entity</TableHead>
@@ -110,6 +111,7 @@ export default function CenterAnalytics() {
               ))}
             </TableBody>
           </Table>
+</div>
         </CardContent>
       </Card>
     </div>

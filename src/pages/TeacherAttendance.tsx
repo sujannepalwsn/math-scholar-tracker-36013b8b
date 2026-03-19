@@ -891,7 +891,8 @@ export default function TeacherAttendancePage() {
             </div>
           ) : (
             <div id="teacher-attendance-report-printable" className="overflow-x-auto rounded-2xl border border-muted/10 bg-white/20">
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent border-muted/10 bg-muted/5">
                     <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Faculty Member</TableHead>
@@ -925,6 +926,7 @@ export default function TeacherAttendancePage() {
                   ))}
                 </TableBody>
               </Table>
+</div>
             </div>
           )}
         </CardContent>
@@ -1035,7 +1037,8 @@ export default function TeacherAttendancePage() {
                   <p className="text-muted-foreground text-center py-4">No attendance records for this month.</p>
                 ) : (
                   <div className="overflow-x-auto max-h-64 border rounded">
-                    <Table>
+                    <div className="overflow-x-auto">
+  <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Date</TableHead>
@@ -1062,6 +1065,7 @@ export default function TeacherAttendancePage() {
                         ))}
                       </TableBody>
                     </Table>
+</div>
                   </div>
                 )}
               </CardContent>

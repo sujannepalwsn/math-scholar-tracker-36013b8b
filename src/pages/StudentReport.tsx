@@ -1071,13 +1071,13 @@ export default function StudentReport() {
             <div className="h-1.5 w-1.5 rounded-full bg-primary" />
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Subject Performance</h3>
           </div>
-          <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {subjectPerformance.map((sp) => (
               <Card key={sp.name} className="border-none shadow-soft bg-card/40 backdrop-blur-sm overflow-hidden group hover:shadow-medium transition-all duration-300">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="space-y-1">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground truncate max-w-[80px] md:max-w-none">{sp.name}</p>
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground truncate max-w-[100px] md:max-w-none">{sp.name}</p>
                       <p className="text-xl font-black group-hover:text-primary transition-colors">{sp.percentage}%</p>
                     </div>
                     <div className={cn(
@@ -2299,7 +2299,8 @@ export default function StudentReport() {
               </div>
 
               <div className="rounded-2xl border overflow-hidden">
-                <Table>
+                <div className="overflow-x-auto">
+  <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead className="font-bold py-4">Subject Name</TableHead>
@@ -2331,6 +2332,7 @@ export default function StudentReport() {
                     ))}
                   </TableBody>
                 </Table>
+</div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">

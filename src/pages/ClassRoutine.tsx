@@ -353,7 +353,7 @@ export default function ClassRoutine() {
       // Notify substitute
       const subTeacher = teachers.find(t => t.id === teacherId);
       if (subTeacher?.user_id) {
-        await supabase.from('notifications').insert({
+        const { error: notifError } = await supabase.from('notifications').insert({
           user_id: subTeacher.user_id,
           center_id: user?.center_id,
           title: 'New Substitution Assigned',
@@ -361,6 +361,7 @@ export default function ClassRoutine() {
           type: 'info',
           link: '/teacher/class-routine'
         });
+        if (notifError) console.error("Notification error:", notifError);
       }
     },
     onSuccess: () => {
@@ -696,20 +697,20 @@ export default function ClassRoutine() {
       </div>
 
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden">
-          <TabsTrigger value="summary" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+        <TabsList className="flex flex-nowrap w-full overflow-x-auto h-14 bg-card/40 backdrop-blur-md rounded-[2rem] p-1.5 border border-border/40 shadow-soft print:hidden custom-scrollbar">
+          <TabsTrigger value="summary" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Summary Table
           </TabsTrigger>
-          <TabsTrigger value="schedule" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+          <TabsTrigger value="schedule" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Schedule
           </TabsTrigger>
-          <TabsTrigger value="automation" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+          <TabsTrigger value="automation" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Automation
           </TabsTrigger>
-          <TabsTrigger value="periods" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+          <TabsTrigger value="periods" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Slots
           </TabsTrigger>
-          <TabsTrigger value="subjects" className="rounded-[1.5rem] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+          <TabsTrigger value="subjects" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Subjects
           </TabsTrigger>
         </TabsList>
@@ -1050,7 +1051,8 @@ export default function ClassRoutine() {
               <div className="space-y-2">
                 <Label className="font-bold">Preview ({importPreview.length} records)</Label>
                 <div className="rounded-md border max-h-[300px] overflow-y-auto">
-                  <Table>
+                  <div className="overflow-x-auto">
+  <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Day</TableHead>
@@ -1072,6 +1074,7 @@ export default function ClassRoutine() {
                       ))}
                     </TableBody>
                   </Table>
+</div>
                 </div>
               </div>
             )}
@@ -1101,7 +1104,8 @@ export default function ClassRoutine() {
           <div className="py-4 space-y-4">
             <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Available Teachers (Present & Free)</h4>
             <div className="border rounded-2xl overflow-hidden">
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader className="bg-muted/5">
                   <TableRow>
                     <TableHead>Teacher</TableHead>
@@ -1127,6 +1131,7 @@ export default function ClassRoutine() {
                   )}
                 </TableBody>
               </Table>
+</div>
             </div>
           </div>
         </DialogContent>

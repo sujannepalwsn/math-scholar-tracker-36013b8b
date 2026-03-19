@@ -118,7 +118,8 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
             </div>
 
             <div className="border rounded-2xl overflow-hidden">
-              <Table>
+              <div className="overflow-x-auto">
+  <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow>
                     <TableHead className="text-[10px] font-black uppercase">Range</TableHead>
@@ -145,6 +146,7 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
                   )}
                 </TableBody>
               </Table>
+</div>
             </div>
           </CardContent>
         </Card>

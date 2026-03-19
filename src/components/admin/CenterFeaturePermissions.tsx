@@ -8,7 +8,6 @@ import { toast } from "sonner"
 
 const FEATURES = [
   { name: 'dashboard_access', label: 'Dashboard' },
-  { name: 'academics_access', label: 'Academics' },
   { name: 'take_attendance', label: 'Take Attendance' },
   { name: 'class_routine', label: 'Class Routine' },
   { name: 'lesson_plans', label: 'Lesson Plan Management' },
@@ -19,7 +18,7 @@ const FEATURES = [
   { name: 'published_results', label: 'Published Results' },
   { name: 'preschool_activities', label: 'Activities' },
   { name: 'discipline_issues', label: 'Discipline' },
-  { name: 'students_registration', label: 'Students Registration' },
+  { name: 'register_student', label: 'Students Registration' },
   { name: 'teacher_management', label: 'Teachers Registration' },
   { name: 'teachers_attendance', label: 'Teachers Attendance' },
   { name: 'hr_management', label: 'HR Management' },
@@ -29,7 +28,6 @@ const FEATURES = [
   { name: 'transport_tracking', label: 'Transport & Tracking' },
   { name: 'school_days', label: 'School Days' },
   { name: 'settings_access', label: 'Settings' },
-  { name: 'communications_access', label: 'Reports & Communication' },
   { name: 'messaging', label: 'Messages' },
   { name: 'meetings_management', label: 'Meetings' },
   { name: 'calendar_events', label: 'Calendar & Events' },
@@ -41,24 +39,27 @@ const FEATURES = [
   { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance' },
   { name: 'about_institution', label: 'About Institution' },
+  { name: 'ai_insights', label: 'AI Insights' },
 ];
 
 const TEACHER_FEATURES = [
-  { name: 'dashboard_access', label: 'Dashboard' },
-  { name: 'students_registration', label: 'Students Registration' },
-  { name: 'teacher_management', label: 'Teachers Registration' },
-  { name: 'teachers_attendance', label: 'Teachers Attendance' },
-  { name: 'hr_management', label: 'HR Management' },
-  { name: 'leave_management', label: 'Leave Management' },
-  { name: 'student_id_cards', label: 'Student ID Cards' },
-  { name: 'inventory_assets', label: 'Inventory & Assets' },
-  { name: 'transport_tracking', label: 'Transport & Tracking' },
-  { name: 'school_days', label: 'School Days' },
-  { name: 'settings_access', label: 'Settings' },
+  { name: 'take_attendance', label: 'Take Attendance' },
+  { name: 'lesson_plans', label: 'Lesson Plans' },
+  { name: 'lesson_tracking', label: 'Lesson Tracking' },
+  { name: 'homework_management', label: 'Homework' },
+  { name: 'test_management', label: 'Tests' },
+  { name: 'preschool_activities', label: 'Activities' },
+  { name: 'discipline_issues', label: 'Discipline' },
   { name: 'messaging', label: 'Messages' },
   { name: 'meetings_management', label: 'Meetings' },
+  { name: 'calendar_events', label: 'Calendar & Events' },
+  { name: 'student_report_access', label: 'Student Report' },
+  { name: 'attendance_summary', label: 'Attendance Summary' },
+  { name: 'summary', label: 'Summary' },
+  { name: 'chapter_performance', label: 'Chapter Performance' },
+  { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance' },
-  { name: 'about_institution', label: 'About Institution' },
+  { name: 'ai_insights', label: 'AI Insights' },
 ];
 
 export default function CenterFeaturePermissions() {
@@ -185,7 +186,8 @@ export default function CenterFeaturePermissions() {
       </CardHeader>
       <CardContent>
         <div className="overflow-auto max-h-[500px]">
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="sticky left-0 top-0 bg-background z-20">Center Name</TableHead>
@@ -215,6 +217,7 @@ export default function CenterFeaturePermissions() {
               ))}
             </TableBody>
           </Table>
+</div>
         </div>
       </CardContent>
     </Card>
@@ -225,7 +228,8 @@ export default function CenterFeaturePermissions() {
       </CardHeader>
       <CardContent>
         <div className="overflow-auto max-h-[500px]">
-          <Table>
+          <div className="overflow-x-auto">
+  <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="sticky left-0 top-0 bg-background z-20">Teacher Name (Center)</TableHead>
@@ -257,6 +261,7 @@ export default function CenterFeaturePermissions() {
               ))}
             </TableBody>
           </Table>
+</div>
         </div>
       </CardContent>
     </Card>

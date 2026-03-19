@@ -264,7 +264,8 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
           )}
 
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest">Vehicle No</TableHead>
@@ -288,6 +289,7 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
                 ))}
               </TableBody>
             </Table>
+</div>
           </div>
         </TabsContent>
 
@@ -391,7 +393,8 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
           )}
 
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-            <Table>
+            <div className="overflow-x-auto">
+  <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest">Student</TableHead>
@@ -420,6 +423,7 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
                 )}
               </TableBody>
             </Table>
+</div>
           </div>
         </TabsContent>
       </Tabs>

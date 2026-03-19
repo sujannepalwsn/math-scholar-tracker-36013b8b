@@ -185,7 +185,8 @@ export default function PreschoolActivities() {
           type: "info",
           link: "/parent-activities"
         }));
-        await supabase.from('notifications').insert(notifications);
+        const { error: notifError } = await supabase.from('notifications').insert(notifications);
+        if (notifError) throw notifError;
       }
     },
     onSuccess: () => {

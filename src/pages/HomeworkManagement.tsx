@@ -153,7 +153,8 @@ export default function HomeworkManagement() {
             type: "homework",
             link: "/parent-homework"
           }));
-          await supabase.from("notifications").insert(notifications);
+          const { error: notifError } = await supabase.from("notifications").insert(notifications);
+          if (notifError) console.error("Error sending notifications:", notifError);
         }
       }
     },
@@ -176,12 +177,16 @@ export default function HomeworkManagement() {
     onError: (error: any) => toast.error(error.message) });
 
   const deleteHomeworkMutation = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("homework").delete().eq("id", id); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("homework").delete().eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["homework"] }); toast.success("Deleted!"); } });
 
   const updateStudentHomeworkRecordMutation = useMutation({
     mutationFn: async ({ id, status, teacher_remarks }: { id: string; status: StudentHomeworkRecord['status']; teacher_remarks: string }) => {
-      await supabase.from("student_homework_records").update({ status, teacher_remarks, submission_date: status === 'completed' || status === 'checked' ? format(new Date(), "yyyy-MM-dd") : null }).eq("id", id);
+      const { error } = await supabase.from("student_homework_records").update({ status, teacher_remarks, submission_date: status === 'completed' || status === 'checked' ? format(new Date(), "yyyy-MM-dd") : null }).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => { refetchStudentStatuses(); toast.success("Status updated!"); } });
 
@@ -431,7 +436,8 @@ export default function HomeworkManagement() {
               <p className="text-center py-8 text-muted-foreground italic">No students assigned to this homework.</p>
             ) : (
               <div className="border border-muted/20 rounded-2xl overflow-hidden">
-                <Table>
+                <div className="overflow-x-auto">
+  <Table>
                   <TableHeader className="bg-muted/5">
                     <TableRow>
                       <TableHead className="w-[50px] text-center">
@@ -511,6 +517,7 @@ export default function HomeworkManagement() {
                     ))}
                   </TableBody>
                 </Table>
+</div>
               </div>
             )}
           </div>

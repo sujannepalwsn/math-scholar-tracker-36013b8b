@@ -10,32 +10,33 @@ import { toast } from "sonner"
 
 const TEACHER_FEATURES = [
   { name: 'dashboard_access', label: 'Dashboard' },
-  { name: 'academics_access', label: 'Academics' },
   { name: 'take_attendance', label: 'Take Attendance' },
   { name: 'class_routine', label: 'Class Routine' },
   { name: 'lesson_plans', label: 'Lesson Plan Management' },
   { name: 'lesson_tracking', label: 'Lesson Tracking' },
   { name: 'homework_management', label: 'Homework' },
   { name: 'test_management', label: 'Tests' },
-  { name: 'exams_results', label: 'Exams & Results' },
-  { name: 'published_results', label: 'Published Results' },
   { name: 'preschool_activities', label: 'Activities' },
   { name: 'discipline_issues', label: 'Discipline' },
-  { name: 'teachers_attendance', label: 'Teachers Attendance' },
-  { name: 'leave_management', label: 'Leave Management' },
-  { name: 'inventory_assets', label: 'Inventory & Assets' },
-  { name: 'school_days', label: 'School Days' },
-  { name: 'communications_access', label: 'Reports & Communication' },
   { name: 'messaging', label: 'Messages' },
   { name: 'meetings_management', label: 'Meetings' },
   { name: 'calendar_events', label: 'Calendar & Events' },
-  { name: 'student_report', label: 'Student Report' }, // Aligned with center permissions
+  { name: 'student_report_access', label: 'Student Report' },
   { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'summary', label: 'Summary' },
-  { name: 'teacher_reports', label: 'Teacher Reports' },
   { name: 'chapter_performance', label: 'Chapter Performance' },
   { name: 'view_records', label: 'View Records' },
-  { name: 'about_institution', label: 'About Institution' },
+  { name: 'finance', label: 'Finance Access' },
+  { name: 'ai_insights', label: 'AI Insights' },
+  { name: 'students_registration', label: 'Students Registration' },
+  { name: 'teacher_management', label: 'Teachers Registration' },
+  { name: 'teachers_attendance', label: 'Teachers Attendance' },
+  { name: 'hr_management', label: 'HR Management' },
+  { name: 'leave_management', label: 'Leave Management' },
+  { name: 'student_id_cards', label: 'Student ID Cards' },
+  { name: 'inventory_assets', label: 'Inventory & Assets' },
+  { name: 'transport_tracking', label: 'Transport & Tracking' },
+  { name: 'school_days', label: 'School Days' },
 ];
 
 export default function TeacherFeaturePermissions({ teacherId, teacherName }: { teacherId: string; teacherName: string }) {
@@ -107,7 +108,8 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
         </DialogDescription>
       </CardHeader>
       <CardContent className="overflow-y-auto flex-1">
-        <Table>
+        <div className="overflow-x-auto">
+  <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Feature</TableHead>
@@ -140,6 +142,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
             })}
           </TableBody>
         </Table>
+</div>
       </CardContent>
     </Card>
   );
