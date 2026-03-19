@@ -9,7 +9,7 @@ import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
 import NotificationBell from "./NotificationBell";
 import SchoolBranding from "./dashboard/SchoolBranding";
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
@@ -20,10 +20,11 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { dynamicCategories, dynamicItems, getIcon } = useDynamicNavigation();
+  const { dynamicCategories, dynamicItems, getIcon, syncDefaults } = useDynamicNavigation();
 
   const handleLogout = () => {
     logout();
@@ -55,6 +56,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     refetchInterval: 10000 });
 
   const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher');
+
+  // Auto-sync defaults if no teacher items exist for this center
+  React.useEffect(() => {
+    if (user?.center_id && dynamicItems.length > 0 && teacherDynamicItems.length === 0) {
+      console.log("TeacherLayout: No teacher nav items found, synchronizing defaults...");
+      syncDefaults.mutate();
+    }
+  }, [user?.center_id, dynamicItems.length, teacherDynamicItems.length]);
+
   const updatedNavItems = teacherDynamicItems.length > 0
     ? teacherDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
@@ -80,7 +90,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       }));
 
   const headerContent = (
-    <CenterLogo size="md" showName={true} />
+    <SchoolBranding />
   );
 
   const footerContent = (

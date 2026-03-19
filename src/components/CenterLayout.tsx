@@ -80,7 +80,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
       }));
 
   const headerContent = (
-    <CenterLogo size="md" showName={true} />
+    <SchoolBranding />
   );
 
   const footerContent = (

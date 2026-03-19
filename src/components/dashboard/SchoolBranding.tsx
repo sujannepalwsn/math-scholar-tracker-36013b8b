@@ -58,11 +58,12 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
         <div className="flex flex-col items-start min-w-0">
           {header_title_visible && (
             <h2
-              className="text-sm md:text-base font-black truncate max-w-[200px] md:max-w-[300px] leading-tight"
+              className="font-black truncate max-w-[200px] md:max-w-[300px] leading-tight"
               style={{
                 fontFamily: center?.header_font_family || 'inherit',
                 color: center?.header_font_color || 'inherit',
-                textTransform: (center as any)?.header_text_transform as any || 'none'
+                textTransform: (center as any)?.header_text_transform as any || 'none',
+                fontSize: (center as any)?.header_font_size === 'large' ? '1.1rem' : (center as any)?.header_font_size === 'small' ? '0.75rem' : '0.875rem'
               }}
             >
               {center?.name || user?.center_name}

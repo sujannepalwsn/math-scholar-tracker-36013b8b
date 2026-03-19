@@ -209,6 +209,10 @@ export default function Sidebar({
     let currentCategory: string | undefined = undefined;
     let currentCategoryItems: React.ReactNode[] = [];
 
+    // Separate items into categorized and uncategorized
+    const uncategorizedItems = items.filter(it => !it.category);
+    const categorizedItems = items.filter(it => it.category);
+
     const flushCategory = (category: string, children: React.ReactNode[]) => {
       const isExpanded = expandedCategories.includes(category);
       const catObj = dynamicCategories.find(c => c.name === category);
@@ -300,7 +304,8 @@ export default function Sidebar({
       }
     };
 
-    sortedItems.forEach((item, index) => {
+    // Handle Categorized Items First
+    categorizedItems.forEach((item, index) => {
       if (item.category !== currentCategory) {
         if (currentCategory) {
           renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
@@ -419,11 +424,117 @@ export default function Sidebar({
         renderedItems.push(link);
       }
 
-      if (index === sortedItems.length - 1) {
+      if (index === categorizedItems.length - 1) {
         if (currentCategory) {
           renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
         }
       }
+    });
+
+    // Handle Uncategorized Items Last
+    uncategorizedItems.forEach((item) => {
+      const Icon = item.icon;
+      const isActive = location.pathname === item.to;
+      const dItem = dynamicItems.find(it => it.route === item.to && it.role === (item.role || user?.role));
+      const isItemActive = (item as any).is_active !== false;
+
+      const link = isMobile ? (
+        <div
+          key={item.to}
+          className="flex items-center group/item"
+          draggable={isEditMode && !!dItem}
+          onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
+          onDragOver={handleDragOver}
+          onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
+        >
+          {isEditMode && dItem && (
+            <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
+              <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
+              <Switch
+                className="scale-50 h-3 w-6"
+                checked={isItemActive}
+                onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
+              />
+            </div>
+          )}
+          <Link
+            to={item.to}
+            onClick={handleMobileClose}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors flex-1",
+              isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              !isItemActive && "opacity-50 grayscale"
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="flex items-center justify-between flex-1 truncate">
+              {item.label}
+              {item.unreadCount && item.unreadCount > 0 && (
+                <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
+                  {item.unreadCount}
+                </Badge>
+              )}
+            </span>
+          </Link>
+        </div>
+      ) : (
+        <Tooltip key={item.to} delayDuration={0}>
+          <TooltipTrigger asChild>
+            <div
+              className="flex items-center group/item"
+              draggable={isEditMode && !!dItem}
+              onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
+            >
+              {isEditMode && dItem && !isCollapsed && (
+                <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
+                  <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
+                  <Switch
+                    className="scale-50 h-3 w-6"
+                    checked={isItemActive}
+                    onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
+                  />
+                </div>
+              )}
+              <Link
+                to={item.to}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex-1",
+                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  isCollapsed ? "justify-center px-0" : "",
+                  !isItemActive && "opacity-50 grayscale"
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {!isCollapsed && (
+                  <span className="flex items-center justify-between w-full truncate">
+                    {item.label}
+                    {item.unreadCount && item.unreadCount > 0 && (
+                      <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
+                        {item.unreadCount}
+                      </Badge>
+                    )}
+                  </span>
+                )}
+              </Link>
+            </div>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent side="right">
+              <span className="flex items-center gap-2">
+                {item.label}
+                {item.unreadCount && item.unreadCount > 0 && (
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                    {item.unreadCount}
+                  </Badge>
+                )}
+              </span>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      );
+      renderedItems.push(link);
     });
 
     return renderedItems;
