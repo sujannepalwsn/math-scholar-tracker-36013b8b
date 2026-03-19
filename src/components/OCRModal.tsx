@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import Tesseract from "tesseract.js";
+import { compressImage } from "@/lib/image-utils";
 import * as pdfjsLib from "pdfjs-dist";
 
 // Configure PDF.js worker
@@ -89,7 +90,11 @@ export default function OCRModal({ open, onOpenChange, onSave }: OCRModalProps) 
       if (fileType === "application/pdf") {
         text = await extractTextFromPDF(file);
       } else if (fileType.startsWith("image/")) {
-        text = await extractTextFromImage(file);
+        // Compress image before OCR for consistency
+        const compressedFile = await compressImage(file, 100);
+        // Tesseract accepts Blob, but we need to satisfy the extractTextFromImage signature
+        const finalFile = compressedFile instanceof File ? compressedFile : new File([compressedFile], file.name, { type: file.type });
+        text = await extractTextFromImage(finalFile);
       } else {
         toast.error("Unsupported file type");
         setIsExtracting(false);

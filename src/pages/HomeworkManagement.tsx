@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/lib/image-utils";
 
 type Homework = Tables<'homework'>;
 type Student = Tables<'students'>;
@@ -56,7 +57,10 @@ export default function HomeworkManagement() {
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
-      if (user?.role === 'teacher') {
+      // Full access for teachers if module is enabled
+      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.homework_management === true;
+
+      if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -72,7 +76,10 @@ export default function HomeworkManagement() {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
 
-      if (user?.role === 'teacher') {
+      // Full access for teachers if module is enabled
+      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.homework_management === true;
+
+      if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -116,9 +123,14 @@ export default function HomeworkManagement() {
   };
 
   const uploadFile = async (fileToUpload: File, bucket: string) => {
+    let finalFile: File | Blob = fileToUpload;
+    if (fileToUpload.type.startsWith('image/')) {
+      finalFile = await compressImage(fileToUpload, 100);
+    }
+
     const fileExt = fileToUpload.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, fileToUpload);
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, finalFile);
     if (uploadError) throw uploadError;
     return fileName;
   };

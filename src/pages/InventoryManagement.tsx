@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function InventoryManagement() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
+  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.inventory_assets === true);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">

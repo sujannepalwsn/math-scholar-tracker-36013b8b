@@ -24,6 +24,7 @@ const grades = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5", "6", "7", "8",
 
 export default function ExamManagement() {
   const { user } = useAuth();
+  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.exams_results === true);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
@@ -97,6 +98,7 @@ export default function ExamManagement() {
 
   const createExam = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to manage exams.");
       const payload = {
         ...data,
         center_id: centerId!,
@@ -122,6 +124,7 @@ export default function ExamManagement() {
 
   const deleteExam = useMutation({
     mutationFn: async (id: string) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to delete exams.");
       const { error } = await supabase.from("exams").delete().eq("id", id);
       if (error) throw error;
     },
@@ -133,6 +136,7 @@ export default function ExamManagement() {
 
   const publishExam = useMutation({
     mutationFn: async (id: string) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to publish exam routines.");
       const { error } = await supabase.from("exams").update({ status: "published" }).eq("id", id);
       if (error) throw error;
     },
@@ -144,6 +148,7 @@ export default function ExamManagement() {
 
   const publishResults = useMutation({
     mutationFn: async (exam: any) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to publish results.");
       // 1. Get subjects for this exam
       const { data: subjects, error: subjError } = await supabase
         .from("exam_subjects")
@@ -214,6 +219,7 @@ export default function ExamManagement() {
 
   const addSubject = useMutation({
     mutationFn: async () => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to manage exam subjects.");
       if (!selectedExamId || !centerId) return;
       const { error } = await supabase.from("exam_subjects").insert({
         exam_id: selectedExamId,
@@ -234,6 +240,7 @@ export default function ExamManagement() {
 
   const deleteSubject = useMutation({
     mutationFn: async (id: string) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to delete exam subjects.");
       const { error } = await supabase.from("exam_subjects").delete().eq("id", id);
       if (error) throw error;
     },
@@ -314,11 +321,13 @@ export default function ExamManagement() {
         </TabsList>
 
         <TabsContent value="exams" className="space-y-6 outline-none">
-          <div className="flex justify-end">
-        <Button onClick={() => setShowForm(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
-              <Plus className="h-4 w-4 mr-2" /> Create Exam
-            </Button>
-          </div>
+          {hasFullAccess && (
+            <div className="flex justify-end">
+              <Button onClick={() => setShowForm(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
+                <Plus className="h-4 w-4 mr-2" /> Create Exam
+              </Button>
+            </div>
+          )}
 
       {/* Exam Form Dialog */}
       <Dialog open={showForm} onOpenChange={(v) => { if (!v) resetForm(); }}>
@@ -512,11 +521,13 @@ export default function ExamManagement() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                    <Button variant="outline" size="sm" onClick={() => { setSelectedExamId(exam.id); setShowSubjectDialog(true); }} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
-                      <BookOpen className="h-3 w-3 mr-2" /> Subjects
-                    </Button>
+                    {hasFullAccess && (
+                      <Button variant="outline" size="sm" onClick={() => { setSelectedExamId(exam.id); setShowSubjectDialog(true); }} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
+                        <BookOpen className="h-3 w-3 mr-2" /> Subjects
+                      </Button>
+                    )}
 
-                    {exam.status === "draft" && (
+                    {exam.status === "draft" && hasFullAccess && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => handleEdit(exam)} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
                           <Edit className="h-3 w-3 mr-2" /> Edit
@@ -535,15 +546,17 @@ export default function ExamManagement() {
                         <Button variant="outline" size="sm" onClick={() => navigate(`/marks-entry?examId=${exam.id}`)} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
                           <Edit className="h-3 w-3 mr-2" /> Entry
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => publishResults.mutate(exam)}
-                          disabled={publishResults.isPending}
-                          className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200"
-                        >
-                          <GraduationCap className="h-3 w-3 mr-2" /> Publish
-                        </Button>
+                        {hasFullAccess && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => publishResults.mutate(exam)}
+                            disabled={publishResults.isPending}
+                            className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200"
+                          >
+                            <GraduationCap className="h-3 w-3 mr-2" /> Publish
+                          </Button>
+                        )}
                       </>
                     )}
                   </div>

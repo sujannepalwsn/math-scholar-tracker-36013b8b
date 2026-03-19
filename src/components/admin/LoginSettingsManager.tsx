@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Upload, Trash2, Image as ImageIcon, Plus, Info, HelpCircle, Code } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { compressImage } from "@/lib/image-utils";
 
 const PAGE_TYPES = [
   { id: 'center', label: 'Center Portal' },
@@ -55,12 +56,17 @@ const LoginSettingsManager = () => {
     if (!file) return;
 
     try {
+      let finalFile: File | Blob = file;
+      if (file.type.startsWith('image/')) {
+        finalFile = await compressImage(file, 100);
+      }
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${pageType}-${field}-${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('login-assets')
-        .upload(filePath, file);
+        .upload(filePath, finalFile);
 
       if (uploadError) throw uploadError;
 

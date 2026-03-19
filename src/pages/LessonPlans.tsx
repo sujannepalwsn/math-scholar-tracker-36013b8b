@@ -16,6 +16,7 @@ import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/lib/image-utils";
 
 type LessonPlan = Tables<'lesson_plans'>;
 
@@ -69,7 +70,10 @@ export default function LessonPlans() {
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
 
-      if (isTeacher) {
+      // Full access for teachers if module is enabled
+      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.lesson_plans === true;
+
+      if (isTeacher && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -100,9 +104,13 @@ export default function LessonPlans() {
   };
 
   const uploadFile = async (fileToUpload: File, bucket: string) => {
+    let finalFile: File | Blob = fileToUpload;
+    if (fileToUpload.type.startsWith('image/')) {
+      finalFile = await compressImage(fileToUpload, 100);
+    }
     const fileExt = fileToUpload.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const { error } = await supabase.storage.from(bucket).upload(fileName, fileToUpload);
+    const { error } = await supabase.storage.from(bucket).upload(fileName, finalFile);
     if (error) throw error;
     return fileName;
   };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
-  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon
+  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon,
+  Eye, EyeOff
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/image-utils";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -31,7 +33,16 @@ export default function DashboardHeader() {
     header_overlay_opacity: 90,
     header_font_family: "Inter",
     header_font_color: "#1e293b",
-    header_font_size: "normal"
+    header_font_size: "normal",
+    header_text_transform: "none",
+    header_title_visible: true,
+    header_address_visible: true,
+    header_principal_visible: true,
+    header_code_visible: true,
+    header_year_visible: true,
+    header_contact_visible: true,
+    header_email_visible: true,
+    header_website_visible: true
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -66,7 +77,7 @@ export default function DashboardHeader() {
   });
 
   useEffect(() => {
-    if (center) {
+    if (center && !isEditMode) {
       setFormData({
         name: center.name || "",
         address: center.address || "",
@@ -81,7 +92,16 @@ export default function DashboardHeader() {
         header_overlay_opacity: (center as any).header_overlay_opacity || 90,
         header_font_family: (center as any).header_font_family || "Inter",
         header_font_color: (center as any).header_font_color || "#1e293b",
-        header_font_size: (center as any).header_font_size || "normal"
+        header_font_size: (center as any).header_font_size || "normal",
+        header_text_transform: (center as any).header_text_transform || "none",
+        header_title_visible: (center as any).header_title_visible !== false,
+        header_address_visible: (center as any).header_address_visible !== false,
+        header_principal_visible: (center as any).header_principal_visible !== false,
+        header_code_visible: (center as any).header_code_visible !== false,
+        header_year_visible: (center as any).header_year_visible !== false,
+        header_contact_visible: (center as any).header_contact_visible !== false,
+        header_email_visible: (center as any).header_email_visible !== false,
+        header_website_visible: (center as any).header_website_visible !== false
       });
     }
   }, [center]);
@@ -105,13 +125,23 @@ export default function DashboardHeader() {
           header_overlay_opacity: formData.header_overlay_opacity,
           header_font_family: formData.header_font_family,
           header_font_color: formData.header_font_color,
-          header_font_size: formData.header_font_size
+          header_font_size: formData.header_font_size,
+          header_text_transform: formData.header_text_transform,
+          header_title_visible: formData.header_title_visible,
+          header_address_visible: formData.header_address_visible,
+          header_principal_visible: formData.header_principal_visible,
+          header_code_visible: formData.header_code_visible,
+          header_year_visible: formData.header_year_visible,
+          header_contact_visible: formData.header_contact_visible,
+          header_email_visible: formData.header_email_visible,
+          header_website_visible: formData.header_website_visible
         })
         .eq("id", user.center_id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["center-details"] });
+      queryClient.invalidateQueries({ queryKey: ["center-branding"] });
       queryClient.invalidateQueries({ queryKey: ["center-logo"] });
       toast.success("School details updated successfully!");
       setIsEditMode(false);
@@ -121,7 +151,7 @@ export default function DashboardHeader() {
     }
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -135,12 +165,15 @@ export default function DashboardHeader() {
     }
     const toastId = toast.loading(`Uploading institutional ${type}...`);
     try {
+      // Compress image before upload
+      const compressedFile = await compressImage(file, 100);
+
       const fileExt = file.name.split('.').pop();
       const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
       const filePath = `${user.center_id}/${type}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+        .upload(filePath, compressedFile, { cacheControl: '3600', upsert: true });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
@@ -160,7 +193,7 @@ export default function DashboardHeader() {
     );
   }
 
-  const canEdit = user?.role === 'center';
+  const canEdit = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.settings_access === true);
 
   return (
     <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">
@@ -190,52 +223,78 @@ export default function DashboardHeader() {
       >
         {/* Centered Name and Address */}
         <div className="flex flex-col items-center text-center space-y-2 relative">
-          <div className="w-full">
-            {isEditMode ? (
-              <Input
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-2xl mx-auto"
-                style={{
-                  fontSize: formData.header_font_size === 'large' ? '2rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.5rem',
-                  color: formData.header_font_color || 'inherit'
-                }}
-                placeholder="School Name"
-              />
-            ) : (
-              <h1
-                className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
-                style={{
-                  fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
-                  color: formData.header_font_color || '#1e293b'
-                }}
-              >
-                {formData.name || "School Name"}
-              </h1>
-            )}
-          </div>
+          {(isEditMode || formData.header_title_visible) && (
+            <div className="w-full relative group/item">
+              {isEditMode ? (
+                <div className="relative max-w-2xl mx-auto">
+                  <Input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center pr-10"
+                    style={{
+                      fontSize: formData.header_font_size === 'large' ? '2.5rem' : formData.header_font_size === 'small' ? '1.5rem' : '2rem',
+                      color: formData.header_font_color || 'inherit',
+                      fontFamily: formData.header_font_family || 'inherit',
+                      textTransform: formData.header_text_transform as any,
+                      opacity: formData.header_title_visible ? 1 : 0.5
+                    }}
+                    placeholder="School Name"
+                  />
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, header_title_visible: !prev.header_title_visible }))}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-200 transition-colors"
+                  >
+                    {formData.header_title_visible ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-slate-400" />}
+                  </button>
+                </div>
+              ) : (
+                <h1
+                  className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
+                  style={{
+                    fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
+                    color: formData.header_font_color || '#1e293b',
+                    fontFamily: formData.header_font_family || 'inherit',
+                    textTransform: formData.header_text_transform as any
+                  }}
+                >
+                  {formData.name || "School Name"}
+                </h1>
+              )}
+            </div>
+          )}
 
-          <div className="flex flex-col items-center gap-1 w-full" style={{ color: formData.header_font_color || '#4285f4' }}>
-            {isEditMode ? (
-              <div className="flex items-center gap-2 max-w-xl mx-auto w-full">
-                <MapPin className="h-4 w-4 shrink-0" />
-                <Input
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center"
-                  style={{ color: formData.header_font_color || 'inherit' }}
-                  placeholder="Address"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 max-w-3xl mx-auto">
-                <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-                <span className="text-xs md:text-lg font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
-              </div>
-            )}
-          </div>
+          {(isEditMode || formData.header_address_visible) && (
+            <div className="flex flex-col items-center gap-1 w-full" style={{ color: formData.header_font_color || '#4285f4' }}>
+              {isEditMode ? (
+                <div className="flex items-center gap-2 max-w-xl mx-auto w-full relative group/item">
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  <Input
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center pr-10"
+                    style={{
+                      color: formData.header_font_color || 'inherit',
+                      opacity: formData.header_address_visible ? 1 : 0.5
+                    }}
+                    placeholder="Address"
+                  />
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, header_address_visible: !prev.header_address_visible }))}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-200 transition-colors"
+                  >
+                    {formData.header_address_visible ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-slate-400" />}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 max-w-3xl mx-auto">
+                  <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+                  <span className="text-xs md:text-lg font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Icon-only Edit/Cancel Button at top-right of the card content area */}
           {canEdit && (
@@ -330,11 +389,15 @@ export default function DashboardHeader() {
                       className="w-full h-6 text-[8px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
                     >
                       <option value="Inter">Inter</option>
+                      <option value="Algerian">Algerian</option>
                       <option value="Roboto">Roboto</option>
                       <option value="Poppins">Poppins</option>
                       <option value="Montserrat">Montserrat</option>
                       <option value="Open Sans">Open Sans</option>
                       <option value="Playfair Display">Playfair Display</option>
+                      <option value="Georgia">Georgia</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Arial">Arial</option>
                     </select>
                   </div>
 
@@ -372,6 +435,29 @@ export default function DashboardHeader() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Text Case</Label>
+                    <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
+                      {[
+                        { id: 'none', label: 'Default' },
+                        { id: 'uppercase', label: 'UPPER' },
+                        { id: 'lowercase', label: 'lower' },
+                        { id: 'capitalize', label: 'Title' }
+                      ].map((transform) => (
+                        <button
+                          key={transform.id}
+                          onClick={() => setFormData(prev => ({ ...prev, header_text_transform: transform.id }))}
+                          className={cn(
+                            "flex-1 h-5 text-[6px] font-black uppercase rounded-sm transition-all",
+                            formData.header_text_transform === transform.id ? "bg-white shadow-sm text-primary" : "text-slate-400"
+                          )}
+                        >
+                          {transform.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -380,52 +466,76 @@ export default function DashboardHeader() {
           {/* Details Grid - Ensuring full visibility with 2-column horizontal layout on mobile */}
           <div className="flex-1 min-w-0">
             <div className="grid grid-cols-2 gap-y-3 md:gap-y-10 gap-x-2 md:gap-x-14">
-              <DetailItem
-                icon={User}
-                label="Principal"
-                name="principal_name"
-                value={formData.principal_name}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Hash}
-                label="School Code"
-                name="short_code"
-                value={formData.short_code}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Calendar}
-                label="Academic Year"
-                value={currentYear?.name || "Not Set"}
-                isEdit={false}
-              />
-              <DetailItem
-                icon={Phone}
-                label="Contact"
-                name="phone"
-                value={formData.phone}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Mail}
-                label="Email"
-                name="email"
-                value={formData.email}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
-              <DetailItem
-                icon={Globe}
-                label="Website"
-                name="website_url"
-                value={formData.website_url}
-                isEdit={isEditMode}
-                onChange={handleInputChange}
-              />
+              {(isEditMode || formData.header_principal_visible) && (
+                <DetailItem
+                  icon={User}
+                  label="Principal"
+                  name="principal_name"
+                  value={formData.principal_name}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  isVisible={formData.header_principal_visible}
+                  onToggleVisibility={() => setFormData(prev => ({ ...prev, header_principal_visible: !prev.header_principal_visible }))}
+                />
+              )}
+              {(isEditMode || formData.header_code_visible) && (
+                <DetailItem
+                  icon={Hash}
+                  label="School Code"
+                  name="short_code"
+                  value={formData.short_code}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  isVisible={formData.header_code_visible}
+                  onToggleVisibility={() => setFormData(prev => ({ ...prev, header_code_visible: !prev.header_code_visible }))}
+                />
+              )}
+              {(isEditMode || formData.header_year_visible) && (
+                <DetailItem
+                  icon={Calendar}
+                  label="Academic Year"
+                  value={currentYear?.name || "Not Set"}
+                  isEdit={false}
+                  isVisible={formData.header_year_visible}
+                  onToggleVisibility={() => setFormData(prev => ({ ...prev, header_year_visible: !prev.header_year_visible }))}
+                />
+              )}
+              {(isEditMode || formData.header_contact_visible) && (
+                <DetailItem
+                  icon={Phone}
+                  label="Contact"
+                  name="phone"
+                  value={formData.phone}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  isVisible={formData.header_contact_visible}
+                  onToggleVisibility={() => setFormData(prev => ({ ...prev, header_contact_visible: !prev.header_contact_visible }))}
+                />
+              )}
+              {(isEditMode || formData.header_email_visible) && (
+                <DetailItem
+                  icon={Mail}
+                  label="Email"
+                  name="email"
+                  value={formData.email}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  isVisible={formData.header_email_visible}
+                  onToggleVisibility={() => setFormData(prev => ({ ...prev, header_email_visible: !prev.header_email_visible }))}
+                />
+              )}
+              {(isEditMode || formData.header_website_visible) && (
+                <DetailItem
+                  icon={Globe}
+                  label="Website"
+                  name="website_url"
+                  value={formData.website_url}
+                  isEdit={isEditMode}
+                  onChange={handleInputChange}
+                  isVisible={formData.header_website_visible}
+                  onToggleVisibility={() => setFormData(prev => ({ ...prev, header_website_visible: !prev.header_website_visible }))}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -459,15 +569,20 @@ interface DetailItemProps {
   isEdit?: boolean;
   name?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isVisible?: boolean;
+  onToggleVisibility?: () => void;
 }
 
-function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: DetailItemProps) {
+function DetailItem({ icon: Icon, label, value, isEdit, name, onChange, isVisible, onToggleVisibility }: DetailItemProps) {
   return (
-    <div className="flex items-center gap-1.5 md:gap-5 group">
+    <div className={cn(
+      "flex items-center gap-1.5 md:gap-5 group relative",
+      isEdit && !isVisible && "opacity-50"
+    )}>
       <div className="p-1.5 md:p-3.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
         <Icon className="h-3 w-3 md:h-5 md:w-5" />
       </div>
-      <div className="space-y-0.5 flex-1 min-w-0">
+      <div className="space-y-0.5 flex-1 min-w-0 pr-6">
         <p className="text-[7px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
         {isEdit ? (
           <Input
@@ -480,6 +595,14 @@ function DetailItem({ icon: Icon, label, value, isEdit, name, onChange }: Detail
           <p className="text-[9px] md:text-lg font-black text-slate-700 break-words tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
         )}
       </div>
+      {isEdit && (
+        <button
+          onClick={onToggleVisibility}
+          className="absolute right-0 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-100 transition-colors"
+        >
+          {isVisible ? <Eye className="h-3 w-3 md:h-4 md:w-4 text-primary" /> : <EyeOff className="h-3 w-3 md:h-4 md:w-4 text-slate-400" />}
+        </button>
+      )}
     </div>
   );
 }

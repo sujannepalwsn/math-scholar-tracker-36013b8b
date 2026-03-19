@@ -26,6 +26,7 @@ function getGrade(percentage: number): string {
 
 export default function MarksEntry() {
   const { user } = useAuth();
+  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.exams_results === true);
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
@@ -142,6 +143,7 @@ export default function MarksEntry() {
 
   const saveMarks = useMutation({
     mutationFn: async () => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to enter marks.");
       if (!centerId || !selectedExamId) return;
       const records: any[] = [];
       Object.entries(marksData).forEach(([studentId, subjectMarks]) => {
@@ -291,11 +293,13 @@ export default function MarksEntry() {
 
       {selectedExamId && subjects.length > 0 && students.length > 0 && (
         <>
-          <div className="flex justify-end">
-            <Button onClick={() => saveMarks.mutate()} disabled={saveMarks.isPending} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
-              {saveMarks.isPending ? "Commiting Marks..." : <><Save className="h-4 w-4 mr-2" /> Commit Score Registry</>}
-            </Button>
-          </div>
+          {hasFullAccess && (
+            <div className="flex justify-end">
+              <Button onClick={() => saveMarks.mutate()} disabled={saveMarks.isPending} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
+                {saveMarks.isPending ? "Commiting Marks..." : <><Save className="h-4 w-4 mr-2" /> Commit Score Registry</>}
+              </Button>
+            </div>
+          )}
 
           <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
           <div className="overflow-x-auto">

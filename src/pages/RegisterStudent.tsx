@@ -25,6 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import LinkChildToParent from "@/components/center/LinkChildToParent";
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/lib/image-utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdmissionWorkflow from "@/components/center/AdmissionWorkflow"
 import StudentPromotion from "@/components/center/StudentPromotion"
@@ -52,6 +53,7 @@ type StudentInput = {
 export default function RegisterStudent() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.students_registration === true);
   const [formData, setFormData] = useState({
     name: "",
     grade: "",
@@ -152,15 +154,17 @@ export default function RegisterStudent() {
   const createMutation = useMutation({
     mutationFn: async (student: typeof formData) => {
       if (!user?.center_id) throw new Error("Security Context: Center ID not verified. Registration aborted.");
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to register students.");
       let photo_url = student.photo_url;
 
       if (photoFile) {
+        const compressedFile = await compressImage(photoFile, 100);
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('activity-photos')
-          .upload(fileName, photoFile, {
+          .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });
@@ -228,15 +232,17 @@ export default function RegisterStudent() {
   const updateMutation = useMutation({
     mutationFn: async (student: any) => {
       if (!user?.center_id) throw new Error("Security Context: Center ID not verified. Update aborted.");
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to update student records.");
       let photo_url = student.photo_url;
 
       if (photoFile) {
+        const compressedFile = await compressImage(photoFile, 100);
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('activity-photos')
-          .upload(fileName, photoFile, {
+          .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });
@@ -279,6 +285,7 @@ export default function RegisterStudent() {
   // Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to delete student records.");
       const { error } = await supabase.from("students").delete().eq("id", id);
       if (error) throw error;
     },
@@ -320,6 +327,7 @@ export default function RegisterStudent() {
   // Bulk insert
   const bulkInsertMutation = useMutation({
     mutationFn: async (rows: StudentInput[]) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to perform bulk imports.");
       if (!rows.length) return;
       const rowsWithCenter = rows.map((r) => ({
         ...r,
@@ -932,20 +940,24 @@ export default function RegisterStudent() {
                       </TableCell>
                       <TableCell className="px-8 py-5 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleEdit(student)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleCreateParentAccount(student)}>
-                            <UserPlus className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-xl bg-white shadow-soft text-rose-500 hover:bg-rose-50"
-                            onClick={() => setStudentToDelete(student)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {hasFullAccess && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleEdit(student)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleCreateParentAccount(student)}>
+                                <UserPlus className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-xl bg-white shadow-soft text-rose-500 hover:bg-rose-50"
+                                onClick={() => setStudentToDelete(student)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

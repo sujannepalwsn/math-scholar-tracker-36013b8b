@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 export default function HRManagement() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
+  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.hr_management === true);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 

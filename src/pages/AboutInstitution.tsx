@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/image-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -64,6 +65,7 @@ export default function AboutInstitution() {
     achievements: [] as Achievement[],
     gallery: [] as GalleryItem[],
     social_links: {} as SocialLinks,
+    institution_type: "Co-Educational",
     phone: "",
     email: "",
     address: "",
@@ -113,7 +115,7 @@ export default function AboutInstitution() {
   });
 
   useEffect(() => {
-    if (center) {
+    if (center && !isEditing) {
       setFormData({
         name: center.name || "",
         about_description: center.about_description || "",
@@ -122,10 +124,11 @@ export default function AboutInstitution() {
         principal_message: center.principal_message || "",
         established_date: center.established_date || "",
         academic_info: (center as any).academic_info || "",
-        facilities: (center as any).facilities || [],
-        achievements: (center as any).achievements || [],
-        gallery: (center as any).gallery || [],
+        facilities: Array.isArray((center as any).facilities) ? (center as any).facilities : [],
+        achievements: Array.isArray((center as any).achievements) ? (center as any).achievements : [],
+        gallery: Array.isArray((center as any).gallery) ? (center as any).gallery : [],
         social_links: (center as any).social_links || {},
+        institution_type: (center as any).institution_type || "Co-Educational",
         phone: center.phone || "",
         email: center.email || "",
         address: center.address || "",
@@ -153,6 +156,7 @@ export default function AboutInstitution() {
           achievements: formData.achievements as any,
           gallery: formData.gallery as any,
           social_links: formData.social_links as any,
+          institution_type: formData.institution_type,
           phone: formData.phone,
           email: formData.email,
           address: formData.address,
@@ -180,16 +184,25 @@ export default function AboutInstitution() {
       name: "",
       description: ""
     };
-    setFormData(prev => ({ ...prev, facilities: [...(prev.facilities || []), newFacility] }));
+    setFormData(prev => {
+      const currentFacilities = Array.isArray(prev.facilities) ? prev.facilities : [];
+      return { ...prev, facilities: [...currentFacilities, newFacility] };
+    });
   };
 
   const updateFacility = (id: string, field: keyof Facility, value: string) => {
-    const updated = (formData.facilities || []).map(f => f.id === id ? { ...f, [field]: value } : f);
-    setFormData(prev => ({ ...prev, facilities: updated }));
+    setFormData(prev => {
+      const currentFacilities = Array.isArray(prev.facilities) ? prev.facilities : [];
+      const updated = currentFacilities.map(f => f.id === id ? { ...f, [field]: value } : f);
+      return { ...prev, facilities: updated };
+    });
   };
 
   const removeFacility = (id: string) => {
-    setFormData(prev => ({ ...prev, facilities: (prev.facilities || []).filter(f => f.id !== id) }));
+    setFormData(prev => {
+      const currentFacilities = Array.isArray(prev.facilities) ? prev.facilities : [];
+      return { ...prev, facilities: currentFacilities.filter(f => f.id !== id) };
+    });
   };
 
   const addAchievement = () => {
@@ -199,16 +212,25 @@ export default function AboutInstitution() {
       year: new Date().getFullYear().toString(),
       description: ""
     };
-    setFormData(prev => ({ ...prev, achievements: [...(prev.achievements || []), newAchievement] }));
+      setFormData(prev => {
+        const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+        return { ...prev, achievements: [...currentAchievements, newAchievement] };
+      });
   };
 
   const updateAchievement = (id: string, field: keyof Achievement, value: string) => {
-    const updated = (formData.achievements || []).map(a => a.id === id ? { ...a, [field]: value } : a);
-    setFormData(prev => ({ ...prev, achievements: updated }));
+    setFormData(prev => {
+      const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+      const updated = currentAchievements.map(a => a.id === id ? { ...a, [field]: value } : a);
+      return { ...prev, achievements: updated };
+    });
   };
 
   const removeAchievement = (id: string) => {
-    setFormData(prev => ({ ...prev, achievements: (prev.achievements || []).filter(a => a.id !== id) }));
+    setFormData(prev => {
+      const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+      return { ...prev, achievements: currentAchievements.filter(a => a.id !== id) };
+    });
   };
 
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,12 +241,13 @@ export default function AboutInstitution() {
     const toastId = toast.loading("Uploading image to gallery...");
 
     try {
+      const compressedFile = await compressImage(file, 100);
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.center_id}/gallery-${Date.now()}.${fileExt}`;
 
       const { data, error: uploadError } = await supabase.storage
         .from('center-backgrounds')
-        .upload(fileName, file);
+        .upload(fileName, compressedFile);
 
       if (uploadError) throw uploadError;
 
@@ -248,12 +271,18 @@ export default function AboutInstitution() {
   };
 
   const removeGalleryItem = (id: string) => {
-    setFormData(prev => ({ ...prev, gallery: (prev.gallery || []).filter(item => item.id !== id) }));
+    setFormData(prev => {
+      const currentGallery = Array.isArray(prev.gallery) ? prev.gallery : [];
+      return { ...prev, gallery: currentGallery.filter(item => item.id !== id) };
+    });
   };
 
   const updateGalleryCaption = (id: string, caption: string) => {
-    const updated = (formData.gallery || []).map(item => item.id === id ? { ...item, caption } : item);
-    setFormData(prev => ({ ...prev, gallery: updated }));
+    setFormData(prev => {
+      const currentGallery = Array.isArray(prev.gallery) ? prev.gallery : [];
+      const updated = currentGallery.map(item => item.id === id ? { ...item, caption } : item);
+      return { ...prev, gallery: updated };
+    });
   };
 
   const updateSocialLink = (platform: keyof SocialLinks, value: string) => {
@@ -271,7 +300,7 @@ export default function AboutInstitution() {
     );
   }
 
-  const canEdit = user?.role === 'center';
+  const canEdit = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.about_institution === true);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -507,7 +536,15 @@ export default function AboutInstitution() {
                     </div>
                     <div className="flex justify-between items-center border-b border-white/10 pb-2">
                       <span className="text-[10px] font-bold uppercase opacity-70">Institution Type</span>
-                      <span className="text-sm font-black">Co-Educational</span>
+                      {isEditing ? (
+                        <Input
+                          className="h-6 text-[10px] w-28 bg-white/20 border-none text-white p-1 text-right"
+                          value={formData.institution_type}
+                          onChange={(e) => setFormData({ ...formData, institution_type: e.target.value })}
+                        />
+                      ) : (
+                        <span className="text-sm font-black">{formData.institution_type || "Co-Educational"}</span>
+                      )}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-bold uppercase opacity-70">Location</span>
@@ -575,7 +612,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(formData.facilities || []).map((facility) => (
+                {(Array.isArray(formData.facilities) ? formData.facilities : []).map((facility) => (
                   <Card key={facility.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeFacility(facility.id)}
@@ -586,7 +623,7 @@ export default function AboutInstitution() {
                     <div className="space-y-2">
                       <Label>Facility Name</Label>
                       <Input
-                        value={facility.name}
+                        value={facility.name || ""}
                         onChange={(e) => updateFacility(facility.id, 'name', e.target.value)}
                         placeholder="e.g., Computer Lab"
                         className="rounded-xl"
@@ -595,7 +632,7 @@ export default function AboutInstitution() {
                     <div className="space-y-2">
                       <Label>Description</Label>
                       <Textarea
-                        value={facility.description}
+                        value={facility.description || ""}
                         onChange={(e) => updateFacility(facility.id, 'description', e.target.value)}
                         placeholder="Describe the facility..."
                         className="rounded-xl min-h-[80px]"
@@ -603,7 +640,7 @@ export default function AboutInstitution() {
                     </div>
                   </Card>
                 ))}
-                {formData.facilities.length === 0 && (
+                {(!Array.isArray(formData.facilities) || formData.facilities.length === 0) && (
                   <div className="md:col-span-2 py-20 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-muted-foreground gap-4">
                     <Building className="h-12 w-12 opacity-20" />
                     <p className="font-bold uppercase tracking-widest text-xs">No facilities added yet</p>
@@ -613,8 +650,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(formData.facilities || []).length > 0 ? (
-                  (formData.facilities || []).map((facility) => (
+                {Array.isArray(formData.facilities) && formData.facilities.length > 0 ? (
+                  formData.facilities.map((facility) => (
                     <Card key={facility.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all hover:-translate-y-1">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-center gap-3">
@@ -658,7 +695,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(formData.achievements || []).map((achievement) => (
+                {(Array.isArray(formData.achievements) ? formData.achievements : []).map((achievement) => (
                   <Card key={achievement.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeAchievement(achievement.id)}
@@ -670,7 +707,7 @@ export default function AboutInstitution() {
                       <div className="col-span-3 space-y-2">
                         <Label>Achievement Title</Label>
                         <Input
-                          value={achievement.title}
+                          value={achievement.title || ""}
                           onChange={(e) => updateAchievement(achievement.id, 'title', e.target.value)}
                           placeholder="e.g., National Excellence Award"
                           className="rounded-xl"
@@ -679,7 +716,7 @@ export default function AboutInstitution() {
                       <div className="space-y-2">
                         <Label>Year</Label>
                         <Input
-                          value={achievement.year}
+                          value={achievement.year || ""}
                           onChange={(e) => updateAchievement(achievement.id, 'year', e.target.value)}
                           placeholder="2024"
                           className="rounded-xl"
@@ -689,7 +726,7 @@ export default function AboutInstitution() {
                     <div className="space-y-2">
                       <Label>Description</Label>
                       <Textarea
-                        value={achievement.description}
+                        value={achievement.description || ""}
                         onChange={(e) => updateAchievement(achievement.id, 'description', e.target.value)}
                         placeholder="Provide some context..."
                         className="rounded-xl min-h-[80px]"
@@ -697,7 +734,7 @@ export default function AboutInstitution() {
                     </div>
                   </Card>
                 ))}
-                {formData.achievements.length === 0 && (
+                {(!Array.isArray(formData.achievements) || formData.achievements.length === 0) && (
                   <div className="md:col-span-2 py-20 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-muted-foreground gap-4">
                     <Trophy className="h-12 w-12 opacity-20" />
                     <p className="font-bold uppercase tracking-widest text-xs">No achievements listed</p>
@@ -707,8 +744,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(formData.achievements || []).length > 0 ? (
-                  (formData.achievements || []).map((achievement) => (
+                {Array.isArray(formData.achievements) && formData.achievements.length > 0 ? (
+                  formData.achievements.map((achievement) => (
                     <Card key={achievement.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-start justify-between">
@@ -766,12 +803,12 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {(formData.gallery || []).map((item) => (
+                {(Array.isArray(formData.gallery) ? formData.gallery : []).map((item) => (
                   <div key={item.id} className="relative group rounded-3xl overflow-hidden aspect-square border shadow-soft">
                     <img src={item.url} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Input
-                        value={item.caption}
+                        value={item.caption || ""}
                         onChange={(e) => updateGalleryCaption(item.id, e.target.value)}
                         placeholder="Add caption..."
                         className="h-8 text-[10px] bg-white/20 border-none text-white mb-2"
@@ -787,7 +824,7 @@ export default function AboutInstitution() {
                     </div>
                   </div>
                 ))}
-                {formData.gallery.length === 0 && (
+                {(!Array.isArray(formData.gallery) || formData.gallery.length === 0) && (
                   <div className="col-span-full py-20 border-2 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center text-muted-foreground gap-4">
                     <ImageIcon className="h-12 w-12 opacity-20" />
                     <p className="font-bold uppercase tracking-widest text-xs">Gallery is empty</p>
@@ -797,8 +834,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {(formData.gallery || []).length > 0 ? (
-                  (formData.gallery || []).map((item) => (
+                {Array.isArray(formData.gallery) && formData.gallery.length > 0 ? (
+                  formData.gallery.map((item) => (
                     <Card key={item.id} className="border-none shadow-soft rounded-3xl overflow-hidden group hover:shadow-strong transition-all hover:-translate-y-1">
                       <div className="aspect-square relative overflow-hidden">
                         <img src={item.url} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
