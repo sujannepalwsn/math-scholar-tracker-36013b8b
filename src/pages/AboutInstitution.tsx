@@ -181,7 +181,8 @@ export default function AboutInstitution() {
       name: "",
       description: ""
     };
-    setFormData(prev => ({ ...prev, facilities: [...(prev.facilities || []), newFacility] }));
+    const currentFacilities = Array.isArray(formData.facilities) ? formData.facilities : [];
+    setFormData(prev => ({ ...prev, facilities: [...currentFacilities, newFacility] }));
   };
 
   const updateFacility = (id: string, field: keyof Facility, value: string) => {
@@ -202,7 +203,8 @@ export default function AboutInstitution() {
       year: new Date().getFullYear().toString(),
       description: ""
     };
-    setFormData(prev => ({ ...prev, achievements: [...(prev.achievements || []), newAchievement] }));
+    const currentAchievements = Array.isArray(formData.achievements) ? formData.achievements : [];
+    setFormData(prev => ({ ...prev, achievements: [...currentAchievements, newAchievement] }));
   };
 
   const updateAchievement = (id: string, field: keyof Achievement, value: string) => {
@@ -594,7 +596,7 @@ export default function AboutInstitution() {
                     <div className="space-y-2">
                       <Label>Facility Name</Label>
                       <Input
-                        value={facility.name}
+                        value={facility.name || ""}
                         onChange={(e) => updateFacility(facility.id, 'name', e.target.value)}
                         placeholder="e.g., Computer Lab"
                         className="rounded-xl"
@@ -603,7 +605,7 @@ export default function AboutInstitution() {
                     <div className="space-y-2">
                       <Label>Description</Label>
                       <Textarea
-                        value={facility.description}
+                        value={facility.description || ""}
                         onChange={(e) => updateFacility(facility.id, 'description', e.target.value)}
                         placeholder="Describe the facility..."
                         className="rounded-xl min-h-[80px]"
@@ -611,7 +613,7 @@ export default function AboutInstitution() {
                     </div>
                   </Card>
                 ))}
-                {formData.facilities.length === 0 && (
+                {(!Array.isArray(formData.facilities) || formData.facilities.length === 0) && (
                   <div className="md:col-span-2 py-20 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-muted-foreground gap-4">
                     <Building className="h-12 w-12 opacity-20" />
                     <p className="font-bold uppercase tracking-widest text-xs">No facilities added yet</p>
@@ -678,7 +680,7 @@ export default function AboutInstitution() {
                       <div className="col-span-3 space-y-2">
                         <Label>Achievement Title</Label>
                         <Input
-                          value={achievement.title}
+                          value={achievement.title || ""}
                           onChange={(e) => updateAchievement(achievement.id, 'title', e.target.value)}
                           placeholder="e.g., National Excellence Award"
                           className="rounded-xl"
@@ -687,7 +689,7 @@ export default function AboutInstitution() {
                       <div className="space-y-2">
                         <Label>Year</Label>
                         <Input
-                          value={achievement.year}
+                          value={achievement.year || ""}
                           onChange={(e) => updateAchievement(achievement.id, 'year', e.target.value)}
                           placeholder="2024"
                           className="rounded-xl"
@@ -697,7 +699,7 @@ export default function AboutInstitution() {
                     <div className="space-y-2">
                       <Label>Description</Label>
                       <Textarea
-                        value={achievement.description}
+                        value={achievement.description || ""}
                         onChange={(e) => updateAchievement(achievement.id, 'description', e.target.value)}
                         placeholder="Provide some context..."
                         className="rounded-xl min-h-[80px]"
@@ -705,7 +707,7 @@ export default function AboutInstitution() {
                     </div>
                   </Card>
                 ))}
-                {formData.achievements.length === 0 && (
+                {(!Array.isArray(formData.achievements) || formData.achievements.length === 0) && (
                   <div className="md:col-span-2 py-20 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-muted-foreground gap-4">
                     <Trophy className="h-12 w-12 opacity-20" />
                     <p className="font-bold uppercase tracking-widest text-xs">No achievements listed</p>
@@ -779,7 +781,7 @@ export default function AboutInstitution() {
                     <img src={item.url} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Input
-                        value={item.caption}
+                        value={item.caption || ""}
                         onChange={(e) => updateGalleryCaption(item.id, e.target.value)}
                         placeholder="Add caption..."
                         className="h-8 text-[10px] bg-white/20 border-none text-white mb-2"
@@ -795,7 +797,7 @@ export default function AboutInstitution() {
                     </div>
                   </div>
                 ))}
-                {formData.gallery.length === 0 && (
+                {(!Array.isArray(formData.gallery) || formData.gallery.length === 0) && (
                   <div className="col-span-full py-20 border-2 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center text-muted-foreground gap-4">
                     <ImageIcon className="h-12 w-12 opacity-20" />
                     <p className="font-bold uppercase tracking-widest text-xs">Gallery is empty</p>

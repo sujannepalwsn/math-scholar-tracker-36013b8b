@@ -194,8 +194,11 @@ export default function Sidebar({
   });
 
   const renderNavLinks = (items: NavItem[], isMobile: boolean) => {
-    // Sort items by category first to prevent duplication
+    // Ensure "Dashboard" is always first, then sort by category
     const sortedItems = [...items].sort((a, b) => {
+      if (a.to.endsWith('/dashboard') || a.to === '/dashboard') return -1;
+      if (b.to.endsWith('/dashboard') || b.to === '/dashboard') return 1;
+
       const catA = a.category || "Uncategorized";
       const catB = b.category || "Uncategorized";
       if (catA === catB) return 0;
@@ -484,7 +487,7 @@ export default function Sidebar({
   const mobileSidebar = (
     <div
       className={cn(
-        "fixed inset-0 z-[60] md:hidden transition-opacity duration-200",
+        "fixed inset-0 z-[100] md:hidden transition-opacity duration-200",
         isMobileOpen ? "bg-foreground/20 backdrop-blur-sm" : "pointer-events-none opacity-0"
       )}
       onClick={handleMobileClose}
@@ -492,7 +495,7 @@ export default function Sidebar({
       {isMobileOpen && <style>{`body { overflow: hidden; }`}</style>}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-72 bg-card text-card-foreground shadow-elevated flex flex-col transition-transform duration-200 ease-out z-[70]",
+          "fixed top-0 left-0 h-full w-72 bg-card text-card-foreground shadow-elevated flex flex-col transition-transform duration-200 ease-out z-[110]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
