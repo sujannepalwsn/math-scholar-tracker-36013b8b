@@ -194,6 +194,14 @@ export default function Sidebar({
   });
 
   const renderNavLinks = (items: NavItem[], isMobile: boolean) => {
+    // Sort items by category first to prevent duplication
+    const sortedItems = [...items].sort((a, b) => {
+      const catA = a.category || "Uncategorized";
+      const catB = b.category || "Uncategorized";
+      if (catA === catB) return 0;
+      return catA > catB ? 1 : -1;
+    });
+
     const renderedItems: React.ReactNode[] = [];
     let currentCategory: string | undefined = undefined;
     let currentCategoryItems: React.ReactNode[] = [];
@@ -289,7 +297,7 @@ export default function Sidebar({
       }
     };
 
-    items.forEach((item, index) => {
+    sortedItems.forEach((item, index) => {
       if (item.category !== currentCategory) {
         if (currentCategory) {
           renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
@@ -408,7 +416,7 @@ export default function Sidebar({
         renderedItems.push(link);
       }
 
-      if (index === items.length - 1) {
+      if (index === sortedItems.length - 1) {
         if (currentCategory) {
           renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
         }
@@ -476,7 +484,7 @@ export default function Sidebar({
   const mobileSidebar = (
     <div
       className={cn(
-        "fixed inset-0 z-40 md:hidden transition-opacity duration-200",
+        "fixed inset-0 z-[60] md:hidden transition-opacity duration-200",
         isMobileOpen ? "bg-foreground/20 backdrop-blur-sm" : "pointer-events-none opacity-0"
       )}
       onClick={handleMobileClose}
@@ -484,21 +492,21 @@ export default function Sidebar({
       {isMobileOpen && <style>{`body { overflow: hidden; }`}</style>}
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen w-72 bg-card text-card-foreground shadow-elevated flex flex-col transition-transform duration-200 ease-out z-50",
+          "fixed top-0 left-0 h-full w-72 bg-card text-card-foreground shadow-elevated flex flex-col transition-transform duration-200 ease-out z-[70]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b">
+        <div className="flex items-center justify-between h-16 px-4 border-b shrink-0">
           <div className="flex-1 min-w-0">{headerContent}</div>
           <Button variant="ghost" size="icon" onClick={handleMobileClose} className="h-9 w-9 shrink-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-3 space-y-0.5 min-h-0 touch-pan-y">
           {renderNavLinks(filteredNavItems, true)}
         </nav>
-        <div className="border-t p-4">
+        <div className="border-t p-4 shrink-0 bg-card">
           <div className="text-sm text-muted-foreground">{footerContent}</div>
         </div>
       </div>

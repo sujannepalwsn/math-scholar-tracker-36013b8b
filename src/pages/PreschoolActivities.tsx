@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tables } from "@/integrations/supabase/types"
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component
 import { Badge } from "@/components/ui/badge"
+import { compressImage } from "@/lib/image-utils";
 
 
 type Activity = Tables<'activities'>;
@@ -132,11 +133,18 @@ export default function PreschoolActivities() {
   };
 
   const uploadFile = async (fileToUpload: File, bucket: string) => {
+    let finalFile: File | Blob = fileToUpload;
+
+    // Compress if it's an image
+    if (fileToUpload.type.startsWith('image/')) {
+      finalFile = await compressImage(fileToUpload, 100);
+    }
+
     const fileExt = fileToUpload.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(fileName, fileToUpload);
+      .upload(fileName, finalFile);
     if (uploadError) throw uploadError;
     return fileName;
   };

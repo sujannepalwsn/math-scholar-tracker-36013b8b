@@ -26,6 +26,11 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
   }
 
   if (role && user.role !== role) {
+    // Special case: teachers can access center (admin) routes if they have the right permissions
+    if (role === 'center' && user.role === 'teacher') {
+      return <>{children}</>;
+    }
+
     let dashboardPath = '/';
     if (user.role === 'admin') dashboardPath = '/admin-dashboard';
     if (user.role === 'parent') dashboardPath = '/parent-dashboard';

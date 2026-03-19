@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/image-utils";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -31,7 +32,8 @@ export default function DashboardHeader() {
     header_overlay_opacity: 90,
     header_font_family: "Inter",
     header_font_color: "#1e293b",
-    header_font_size: "normal"
+    header_font_size: "normal",
+    header_text_transform: "none"
   });
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
@@ -81,7 +83,8 @@ export default function DashboardHeader() {
         header_overlay_opacity: (center as any).header_overlay_opacity || 90,
         header_font_family: (center as any).header_font_family || "Inter",
         header_font_color: (center as any).header_font_color || "#1e293b",
-        header_font_size: (center as any).header_font_size || "normal"
+        header_font_size: (center as any).header_font_size || "normal",
+        header_text_transform: (center as any).header_text_transform || "none"
       });
     }
   }, [center]);
@@ -105,7 +108,8 @@ export default function DashboardHeader() {
           header_overlay_opacity: formData.header_overlay_opacity,
           header_font_family: formData.header_font_family,
           header_font_color: formData.header_font_color,
-          header_font_size: formData.header_font_size
+          header_font_size: formData.header_font_size,
+          header_text_transform: formData.header_text_transform
         })
         .eq("id", user.center_id);
       if (error) throw error;
@@ -135,12 +139,15 @@ export default function DashboardHeader() {
     }
     const toastId = toast.loading(`Uploading institutional ${type}...`);
     try {
+      // Compress image before upload
+      const compressedFile = await compressImage(file, 100);
+
       const fileExt = file.name.split('.').pop();
       const bucket = type === 'logo' ? 'center-logos' : 'center-backgrounds';
       const filePath = `${user.center_id}/${type}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+        .upload(filePath, compressedFile, { cacheControl: '3600', upsert: true });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
@@ -198,8 +205,10 @@ export default function DashboardHeader() {
                 onChange={handleInputChange}
                 className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center max-w-2xl mx-auto"
                 style={{
-                  fontSize: formData.header_font_size === 'large' ? '2rem' : formData.header_font_size === 'small' ? '1.25rem' : '1.5rem',
-                  color: formData.header_font_color || 'inherit'
+                  fontSize: formData.header_font_size === 'large' ? '2.5rem' : formData.header_font_size === 'small' ? '1.5rem' : '2rem',
+                  color: formData.header_font_color || 'inherit',
+                  fontFamily: formData.header_font_family || 'inherit',
+                  textTransform: formData.header_text_transform as any
                 }}
                 placeholder="School Name"
               />
@@ -208,7 +217,9 @@ export default function DashboardHeader() {
                 className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
                 style={{
                   fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
-                  color: formData.header_font_color || '#1e293b'
+                  color: formData.header_font_color || '#1e293b',
+                  fontFamily: formData.header_font_family || 'inherit',
+                  textTransform: formData.header_text_transform as any
                 }}
               >
                 {formData.name || "School Name"}
@@ -330,11 +341,15 @@ export default function DashboardHeader() {
                       className="w-full h-6 text-[8px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
                     >
                       <option value="Inter">Inter</option>
+                      <option value="Algerian">Algerian</option>
                       <option value="Roboto">Roboto</option>
                       <option value="Poppins">Poppins</option>
                       <option value="Montserrat">Montserrat</option>
                       <option value="Open Sans">Open Sans</option>
                       <option value="Playfair Display">Playfair Display</option>
+                      <option value="Georgia">Georgia</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Arial">Arial</option>
                     </select>
                   </div>
 
@@ -368,6 +383,29 @@ export default function DashboardHeader() {
                           )}
                         >
                           {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Text Case</Label>
+                    <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
+                      {[
+                        { id: 'none', label: 'Default' },
+                        { id: 'uppercase', label: 'UPPER' },
+                        { id: 'lowercase', label: 'lower' },
+                        { id: 'capitalize', label: 'Title' }
+                      ].map((transform) => (
+                        <button
+                          key={transform.id}
+                          onClick={() => setFormData(prev => ({ ...prev, header_text_transform: transform.id }))}
+                          className={cn(
+                            "flex-1 h-5 text-[6px] font-black uppercase rounded-sm transition-all",
+                            formData.header_text_transform === transform.id ? "bg-white shadow-sm text-primary" : "text-slate-400"
+                          )}
+                        >
+                          {transform.label}
                         </button>
                       ))}
                     </div>

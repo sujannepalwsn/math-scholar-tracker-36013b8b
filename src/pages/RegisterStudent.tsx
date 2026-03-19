@@ -25,6 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import LinkChildToParent from "@/components/center/LinkChildToParent";
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/lib/image-utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdmissionWorkflow from "@/components/center/AdmissionWorkflow"
 import StudentPromotion from "@/components/center/StudentPromotion"
@@ -155,12 +156,13 @@ export default function RegisterStudent() {
       let photo_url = student.photo_url;
 
       if (photoFile) {
+        const compressedFile = await compressImage(photoFile, 100);
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('activity-photos')
-          .upload(fileName, photoFile, {
+          .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });
@@ -231,12 +233,13 @@ export default function RegisterStudent() {
       let photo_url = student.photo_url;
 
       if (photoFile) {
+        const compressedFile = await compressImage(photoFile, 100);
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `student-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('activity-photos')
-          .upload(fileName, photoFile, {
+          .upload(fileName, compressedFile, {
             cacheControl: '3600',
             upsert: false
           });

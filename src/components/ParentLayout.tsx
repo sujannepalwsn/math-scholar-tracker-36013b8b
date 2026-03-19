@@ -8,6 +8,7 @@ import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
 import NotificationBell from "./NotificationBell";
+import SchoolBranding from "./dashboard/SchoolBranding";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
@@ -105,14 +106,17 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         onMobileOpenChange={setMobileMenuOpen}
       />
 
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
+      {/* Mobile Header */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-40 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)} className="h-9 w-9">
             <Menu className="h-5 w-5" />
           </Button>
-          <CenterLogo size="sm" showName={true} />
         </div>
-        <div className="flex items-center gap-2">
+
+        <SchoolBranding className="flex-1" />
+
+        <div className="flex items-center gap-2 shrink-0">
           <NotificationBell />
           <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
             <LogOut className="h-4 w-4" />
@@ -128,6 +132,14 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-20" : "md:ml-64"
       )}>
+        {/* Desktop Header Overlay with Branding */}
+        <div className="hidden md:flex sticky top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md z-30 items-center justify-center px-8 border-b border-border/10 mb-6 rounded-b-[2rem] shadow-sm">
+          <SchoolBranding />
+          <div className="absolute right-8 flex items-center gap-4">
+            <NotificationBell />
+          </div>
+        </div>
+
         <div className="page-enter max-w-7xl mx-auto">
           {children}
         </div>

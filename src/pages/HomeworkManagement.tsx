@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/lib/image-utils";
 
 type Homework = Tables<'homework'>;
 type Student = Tables<'students'>;
@@ -116,9 +117,14 @@ export default function HomeworkManagement() {
   };
 
   const uploadFile = async (fileToUpload: File, bucket: string) => {
+    let finalFile: File | Blob = fileToUpload;
+    if (fileToUpload.type.startsWith('image/')) {
+      finalFile = await compressImage(fileToUpload, 100);
+    }
+
     const fileExt = fileToUpload.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, fileToUpload);
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, finalFile);
     if (uploadError) throw uploadError;
     return fileName;
   };

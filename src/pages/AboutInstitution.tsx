@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/image-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -122,9 +123,9 @@ export default function AboutInstitution() {
         principal_message: center.principal_message || "",
         established_date: center.established_date || "",
         academic_info: (center as any).academic_info || "",
-        facilities: (center as any).facilities || [],
-        achievements: (center as any).achievements || [],
-        gallery: (center as any).gallery || [],
+        facilities: Array.isArray((center as any).facilities) ? (center as any).facilities : [],
+        achievements: Array.isArray((center as any).achievements) ? (center as any).achievements : [],
+        gallery: Array.isArray((center as any).gallery) ? (center as any).gallery : [],
         social_links: (center as any).social_links || {},
         phone: center.phone || "",
         email: center.email || "",
@@ -184,12 +185,14 @@ export default function AboutInstitution() {
   };
 
   const updateFacility = (id: string, field: keyof Facility, value: string) => {
-    const updated = (formData.facilities || []).map(f => f.id === id ? { ...f, [field]: value } : f);
+    const currentFacilities = Array.isArray(formData.facilities) ? formData.facilities : [];
+    const updated = currentFacilities.map(f => f.id === id ? { ...f, [field]: value } : f);
     setFormData(prev => ({ ...prev, facilities: updated }));
   };
 
   const removeFacility = (id: string) => {
-    setFormData(prev => ({ ...prev, facilities: (prev.facilities || []).filter(f => f.id !== id) }));
+    const currentFacilities = Array.isArray(formData.facilities) ? formData.facilities : [];
+    setFormData(prev => ({ ...prev, facilities: currentFacilities.filter(f => f.id !== id) }));
   };
 
   const addAchievement = () => {
@@ -203,12 +206,14 @@ export default function AboutInstitution() {
   };
 
   const updateAchievement = (id: string, field: keyof Achievement, value: string) => {
-    const updated = (formData.achievements || []).map(a => a.id === id ? { ...a, [field]: value } : a);
+    const currentAchievements = Array.isArray(formData.achievements) ? formData.achievements : [];
+    const updated = currentAchievements.map(a => a.id === id ? { ...a, [field]: value } : a);
     setFormData(prev => ({ ...prev, achievements: updated }));
   };
 
   const removeAchievement = (id: string) => {
-    setFormData(prev => ({ ...prev, achievements: (prev.achievements || []).filter(a => a.id !== id) }));
+    const currentAchievements = Array.isArray(formData.achievements) ? formData.achievements : [];
+    setFormData(prev => ({ ...prev, achievements: currentAchievements.filter(a => a.id !== id) }));
   };
 
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,12 +224,13 @@ export default function AboutInstitution() {
     const toastId = toast.loading("Uploading image to gallery...");
 
     try {
+      const compressedFile = await compressImage(file, 100);
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.center_id}/gallery-${Date.now()}.${fileExt}`;
 
       const { data, error: uploadError } = await supabase.storage
         .from('center-backgrounds')
-        .upload(fileName, file);
+        .upload(fileName, compressedFile);
 
       if (uploadError) throw uploadError;
 
@@ -248,11 +254,13 @@ export default function AboutInstitution() {
   };
 
   const removeGalleryItem = (id: string) => {
-    setFormData(prev => ({ ...prev, gallery: (prev.gallery || []).filter(item => item.id !== id) }));
+    const currentGallery = Array.isArray(formData.gallery) ? formData.gallery : [];
+    setFormData(prev => ({ ...prev, gallery: currentGallery.filter(item => item.id !== id) }));
   };
 
   const updateGalleryCaption = (id: string, caption: string) => {
-    const updated = (formData.gallery || []).map(item => item.id === id ? { ...item, caption } : item);
+    const currentGallery = Array.isArray(formData.gallery) ? formData.gallery : [];
+    const updated = currentGallery.map(item => item.id === id ? { ...item, caption } : item);
     setFormData(prev => ({ ...prev, gallery: updated }));
   };
 
@@ -575,7 +583,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(formData.facilities || []).map((facility) => (
+                {(Array.isArray(formData.facilities) ? formData.facilities : []).map((facility) => (
                   <Card key={facility.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeFacility(facility.id)}
@@ -613,8 +621,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(formData.facilities || []).length > 0 ? (
-                  (formData.facilities || []).map((facility) => (
+                {Array.isArray(formData.facilities) && formData.facilities.length > 0 ? (
+                  formData.facilities.map((facility) => (
                     <Card key={facility.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all hover:-translate-y-1">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-center gap-3">
@@ -658,7 +666,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid md:grid-cols-2 gap-6">
-                {(formData.achievements || []).map((achievement) => (
+                {(Array.isArray(formData.achievements) ? formData.achievements : []).map((achievement) => (
                   <Card key={achievement.id} className="border-2 border-dashed border-border/50 rounded-3xl p-6 space-y-4 relative group">
                     <button
                       onClick={() => removeAchievement(achievement.id)}
@@ -707,8 +715,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {(formData.achievements || []).length > 0 ? (
-                  (formData.achievements || []).map((achievement) => (
+                {Array.isArray(formData.achievements) && formData.achievements.length > 0 ? (
+                  formData.achievements.map((achievement) => (
                     <Card key={achievement.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-start justify-between">
@@ -766,7 +774,7 @@ export default function AboutInstitution() {
 
             {isEditing ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {(formData.gallery || []).map((item) => (
+                {(Array.isArray(formData.gallery) ? formData.gallery : []).map((item) => (
                   <div key={item.id} className="relative group rounded-3xl overflow-hidden aspect-square border shadow-soft">
                     <img src={item.url} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -797,8 +805,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {(formData.gallery || []).length > 0 ? (
-                  (formData.gallery || []).map((item) => (
+                {Array.isArray(formData.gallery) && formData.gallery.length > 0 ? (
+                  formData.gallery.map((item) => (
                     <Card key={item.id} className="border-none shadow-soft rounded-3xl overflow-hidden group hover:shadow-strong transition-all hover:-translate-y-1">
                       <div className="aspect-square relative overflow-hidden">
                         <img src={item.url} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
