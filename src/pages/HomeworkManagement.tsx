@@ -57,7 +57,10 @@ export default function HomeworkManagement() {
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
-      if (user?.role === 'teacher') {
+      // Full access for teachers if module is enabled
+      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.homework_management === true;
+
+      if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -73,7 +76,10 @@ export default function HomeworkManagement() {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
 
-      if (user?.role === 'teacher') {
+      // Full access for teachers if module is enabled
+      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.homework_management === true;
+
+      if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 

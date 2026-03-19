@@ -96,7 +96,10 @@ export default function PreschoolActivities() {
         .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
         .in("student_id", studentIds);
 
-      if (user?.role === 'teacher') {
+      // Full access for teachers if module is enabled
+      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.preschool_activities === true;
+
+      if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('activities.created_by', user.id);
       }
 

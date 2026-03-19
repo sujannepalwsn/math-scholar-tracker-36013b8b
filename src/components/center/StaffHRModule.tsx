@@ -12,6 +12,7 @@ import { FileText, Plus, Trash2, Upload, ExternalLink, ShieldCheck, UserCheck, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/image-utils";
 
 export default function StaffHRModule({ teacherId, teacherName }: { teacherId: string, teacherName: string }) {
   const queryClient = useQueryClient();
@@ -117,13 +118,19 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
 
     try {
       setIsUploading(true);
+
+      let finalFile: File | Blob = file;
+      if (file.type.startsWith('image/')) {
+        finalFile = await compressImage(file, 100);
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${authCenterId}/${teacherId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('staff-documents')
-        .upload(filePath, file);
+        .upload(filePath, finalFile);
 
       if (uploadError) throw uploadError;
 

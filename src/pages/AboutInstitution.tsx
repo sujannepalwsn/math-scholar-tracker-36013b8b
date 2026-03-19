@@ -65,6 +65,7 @@ export default function AboutInstitution() {
     achievements: [] as Achievement[],
     gallery: [] as GalleryItem[],
     social_links: {} as SocialLinks,
+    institution_type: "Co-Educational",
     phone: "",
     email: "",
     address: "",
@@ -127,6 +128,7 @@ export default function AboutInstitution() {
         achievements: Array.isArray((center as any).achievements) ? (center as any).achievements : [],
         gallery: Array.isArray((center as any).gallery) ? (center as any).gallery : [],
         social_links: (center as any).social_links || {},
+        institution_type: (center as any).institution_type || "Co-Educational",
         phone: center.phone || "",
         email: center.email || "",
         address: center.address || "",
@@ -154,6 +156,7 @@ export default function AboutInstitution() {
           achievements: formData.achievements as any,
           gallery: formData.gallery as any,
           social_links: formData.social_links as any,
+          institution_type: formData.institution_type,
           phone: formData.phone,
           email: formData.email,
           address: formData.address,
@@ -281,7 +284,7 @@ export default function AboutInstitution() {
     );
   }
 
-  const canEdit = user?.role === 'center';
+  const canEdit = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.about_institution === true);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -517,7 +520,15 @@ export default function AboutInstitution() {
                     </div>
                     <div className="flex justify-between items-center border-b border-white/10 pb-2">
                       <span className="text-[10px] font-bold uppercase opacity-70">Institution Type</span>
-                      <span className="text-sm font-black">Co-Educational</span>
+                      {isEditing ? (
+                        <Input
+                          className="h-6 text-[10px] w-28 bg-white/20 border-none text-white p-1 text-right"
+                          value={formData.institution_type}
+                          onChange={(e) => setFormData({ ...formData, institution_type: e.target.value })}
+                        />
+                      ) : (
+                        <span className="text-sm font-black">{formData.institution_type || "Co-Educational"}</span>
+                      )}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-bold uppercase opacity-70">Location</span>

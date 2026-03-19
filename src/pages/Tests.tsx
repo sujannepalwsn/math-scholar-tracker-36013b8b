@@ -19,6 +19,7 @@ import BulkMarksEntry from "@/components/BulkMarksEntry";
 import QuestionPaperViewer from "@/components/QuestionPaperViewer";
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
+import { compressImage } from "@/lib/image-utils";
 "use client";
 
 
@@ -170,11 +171,16 @@ export default function Tests() {
       let uploadedFileUrl = null;
 
       if (uploadedFile) {
+        let finalFile: File | Blob = uploadedFile;
+        if (uploadedFile.type.startsWith('image/')) {
+          finalFile = await compressImage(uploadedFile, 100);
+        }
+
         const fileExt = uploadedFile.name.split(".").pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from("test-files")
-          .upload(fileName, uploadedFile);
+          .upload(fileName, finalFile);
 
         if (uploadError) throw uploadError;
         uploadedFileUrl = fileName;

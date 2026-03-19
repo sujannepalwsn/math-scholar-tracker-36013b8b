@@ -192,7 +192,7 @@ export default function DashboardHeader() {
     );
   }
 
-  const canEdit = user?.role === 'center';
+  const canEdit = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.settings_access === true);
 
   return (
     <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">

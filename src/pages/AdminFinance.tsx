@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 const AdminFinance = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.finance === true);
 
   // Fetch invoices summary
   const { data: invoices = [] } = useQuery({

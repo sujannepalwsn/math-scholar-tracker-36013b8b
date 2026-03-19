@@ -83,7 +83,7 @@ export default function TakeAttendance() {
     enabled: !!user?.teacher_id && user?.role === 'teacher' });
 
   const isTeacher = user?.role === 'teacher';
-  const isCenter = user?.role === 'center';
+  const isCenter = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.take_attendance === true);
 
   const { data: students } = useQuery({
     queryKey: ["students", user?.center_id],
@@ -123,7 +123,7 @@ export default function TakeAttendance() {
         .eq("date", dateStr)
         .eq("center_id", user.center_id);
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && !isCenter) {
         query = query.eq('marked_by', user.id);
       }
 

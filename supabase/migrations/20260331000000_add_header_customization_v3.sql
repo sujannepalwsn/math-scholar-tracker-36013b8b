@@ -1,9 +1,0 @@
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_text_transform TEXT DEFAULT 'none';
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_title_visible BOOLEAN DEFAULT true;
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_address_visible BOOLEAN DEFAULT true;
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_principal_visible BOOLEAN DEFAULT true;
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_code_visible BOOLEAN DEFAULT true;
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_year_visible BOOLEAN DEFAULT true;
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_contact_visible BOOLEAN DEFAULT true;
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_email_visible BOOLEAN DEFAULT true;
-ALTER TABLE centers ADD COLUMN IF NOT EXISTS header_website_visible BOOLEAN DEFAULT true;

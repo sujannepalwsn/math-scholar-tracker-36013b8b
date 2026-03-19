@@ -41,6 +41,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/image-utils";
 import { Switch } from "@/components/ui/switch";
 
 export default function LeaveApplications() {
@@ -127,13 +128,18 @@ export default function LeaveApplications() {
 
     setUploading(true);
     try {
+      let finalFile: File | Blob = file;
+      if (file.type.startsWith('image/')) {
+        finalFile = await compressImage(file, 100);
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${user?.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('leave-documents')
-        .upload(filePath, file);
+        .upload(filePath, finalFile);
 
       if (uploadError) throw uploadError;
 

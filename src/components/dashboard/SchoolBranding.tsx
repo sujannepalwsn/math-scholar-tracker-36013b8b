@@ -18,7 +18,7 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
       if (!user?.center_id) return null;
       const { data, error } = await supabase
         .from("centers")
-        .select("name, logo_url, address, header_font_family, header_font_color")
+        .select("name, logo_url, address, header_font_family, header_font_color, header_text_transform")
         .eq("id", user.center_id)
         .single();
       if (error) return null;
@@ -49,7 +49,8 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
             className="text-sm font-black truncate max-w-[200px] md:max-w-[300px] leading-tight"
             style={{
               fontFamily: center?.header_font_family || 'inherit',
-              color: center?.header_font_color || 'inherit'
+              color: center?.header_font_color || 'inherit',
+              textTransform: (center as any)?.header_text_transform as any || 'none'
             }}
           >
             {center?.name || user?.center_name}

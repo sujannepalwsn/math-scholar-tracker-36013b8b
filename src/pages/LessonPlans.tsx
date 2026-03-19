@@ -70,7 +70,10 @@ export default function LessonPlans() {
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
 
-      if (isTeacher) {
+      // Full access for teachers if module is enabled
+      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.lesson_plans === true;
+
+      if (isTeacher && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 

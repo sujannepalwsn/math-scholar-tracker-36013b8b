@@ -449,7 +449,7 @@ export default function Sidebar({
           {renderNavLinks(filteredNavItems, false)}
         </nav>
         <div className="mt-auto p-4 border-t space-y-4">
-          {user?.role === 'center' && (
+          {(user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.settings_access === true)) && (
             <div className="space-y-2">
               <Button
                 variant="ghost"
@@ -487,15 +487,15 @@ export default function Sidebar({
   const mobileSidebar = (
     <div
       className={cn(
-        "fixed inset-0 z-[100] md:hidden transition-opacity duration-200",
-        isMobileOpen ? "bg-foreground/20 backdrop-blur-sm" : "pointer-events-none opacity-0"
+        "fixed inset-0 z-[200] md:hidden transition-opacity duration-200",
+        isMobileOpen ? "bg-foreground/40 backdrop-blur-md" : "pointer-events-none opacity-0"
       )}
       onClick={handleMobileClose}
     >
       {isMobileOpen && <style>{`body { overflow: hidden; }`}</style>}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-72 bg-card text-card-foreground shadow-elevated flex flex-col transition-transform duration-200 ease-out z-[110]",
+          "fixed top-0 left-0 h-full w-[80%] max-w-[300px] bg-card text-card-foreground shadow-[0_0_40px_rgba(0,0,0,0.3)] flex flex-col transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) z-[210]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
