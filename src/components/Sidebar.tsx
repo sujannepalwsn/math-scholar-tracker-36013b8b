@@ -449,7 +449,7 @@ export default function Sidebar({
           {renderNavLinks(filteredNavItems, false)}
         </nav>
         <div className="mt-auto p-4 border-t space-y-4">
-          {(user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.settings_access === true)) && (
+          {(user?.role === 'center' || (user?.role === 'teacher' && (user.teacherPermissions?.settings_access === true || user.teacherPermissions?.test_management === true))) && (
             <div className="space-y-2">
               <Button
                 variant="ghost"
