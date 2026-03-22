@@ -5,11 +5,15 @@ import { FileText, GraduationCap, Home, ShieldCheck, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/contexts/AuthContext"
+import { hasPermission } from "@/utils/permissions"
 
 interface NavItem {
   to: string;
   label: string;
   icon: React.ElementType;
+  featureName?: string;
+  is_active?: boolean;
   unreadCount?: number;
   category?: 'Academics' | 'Administration' | 'Reports and Communication';
 }
@@ -19,14 +23,23 @@ interface BottomNavProps {
 }
 
 export default function BottomNav({ navItems }: BottomNavProps) {
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState<'Academics' | 'Administration' | 'Reports and Communication' | null>(null);
 
-  const dashboardItem = navItems.find(item => item.label === "Dashboard");
-  const academicsItems = navItems.filter(item => item.category === 'Academics');
-  const administrationItems = navItems.filter(item => item.category === 'Administration');
-  const reportsItems = navItems.filter(item => item.category === 'Reports and Communication');
+  const filteredItems = navItems.filter(item => {
+    if (item.is_active === false) return false;
+    if (item.featureName) {
+      return hasPermission(user, item.featureName);
+    }
+    return true;
+  });
+
+  const dashboardItem = filteredItems.find(item => item.label === "Dashboard");
+  const academicsItems = filteredItems.filter(item => item.category === 'Academics');
+  const administrationItems = filteredItems.filter(item => item.category === 'Administration');
+  const reportsItems = filteredItems.filter(item => item.category === 'Reports and Communication');
 
   const handleMenuToggle = (menu: 'Academics' | 'Administration' | 'Reports and Communication') => {
     if (activeMenu === menu) {

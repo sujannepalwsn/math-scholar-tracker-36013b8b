@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { hasPermission } from "@/utils/permissions";
 
 interface NavItem {
   to: string;
@@ -159,39 +160,7 @@ export default function Sidebar({
     if ((item as any).is_active === false && !isEditMode) return false;
     if (item.role && user?.role !== item.role) return false;
     if (item.featureName) {
-      if (user?.role === 'center' && user.centerPermissions) {
-        return user.centerPermissions[item.featureName] !== false;
-      }
-      if (user?.role === 'teacher') {
-        // Teachers can have their own specific feature permissions (administrative toggles)
-
-        // 1. Check centerPermissions first (GLOBAL OVERRIDE)
-        // If the center has explicitly disabled the feature, hide it for ALL teachers.
-        if (user.centerPermissions && user.centerPermissions[item.featureName] === false) {
-          return false;
-        }
-
-        // 2. Map names if needed (some features have inconsistent naming in DB)
-        const mapping: Record<string, string> = {
-          'register_student': 'students_registration',
-          'student_report_access': 'student_report',
-          'student_report': 'student_report_access'
-        };
-        const mappedName = mapping[item.featureName];
-
-        // 3. Check teacher-specific permissions
-        if (user.teacherPermissions) {
-          if (user.teacherPermissions[item.featureName] !== undefined) {
-            return user.teacherPermissions[item.featureName] === true;
-          }
-          if (mappedName && user.teacherPermissions[mappedName] !== undefined) {
-            return user.teacherPermissions[mappedName] === true;
-          }
-        }
-
-        // 4. Default to true if not explicitly restricted
-        return true;
-      }
+      return hasPermission(user, item.featureName);
     }
     return true;
   });

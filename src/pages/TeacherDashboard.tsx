@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
+import { hasPermission } from "@/utils/permissions";
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -480,13 +481,13 @@ export default function TeacherDashboard() {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard title="Daily Check-In" value="Attendance" description="Mark Presence" icon={User} color="green" onClick={() => navigate("/teacher/my-attendance")} />
-        <KPICard title="Class Attendance" value={`${attendanceRate}%`} description="Presence Index" icon={Users} color="indigo" onClick={() => scrollToSection("attendance-section")} />
-        <KPICard title="Today's Classes" value={todayClasses.length} description="Instruction Units" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />
-        <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Active Submissions" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />
-        <KPICard title="Lesson Plans" value={allLessonPlans.length} description="Instructional Assets" icon={FileText} color="purple" onClick={() => navigate("/teacher/lesson-plans")} />
-        <KPICard title="Approvals" value={allLessonPlans.filter(lp => lp.status === 'pending').length} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/teacher/lesson-plans")} />
-        <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Score Synthesis" icon={TrendingUp} color="purple" trendData={attendanceTrend} onClick={() => scrollToSection("tests-section")} />
-        <KPICard title="Messages" value="View" description="Admin Liaison" icon={MessageSquare} color="pink" onClick={() => navigate("/teacher-messages")} />
+        {hasPermission(user, 'take_attendance') && <KPICard title="Class Attendance" value={`${attendanceRate}%`} description="Presence Index" icon={Users} color="indigo" onClick={() => scrollToSection("attendance-section")} />}
+        {hasPermission(user, 'class_routine') && <KPICard title="Today's Classes" value={todayClasses.length} description="Instruction Units" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />}
+        {hasPermission(user, 'homework_management') && <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Active Submissions" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />}
+        {hasPermission(user, 'lesson_plans') && <KPICard title="Lesson Plans" value={allLessonPlans.length} description="Instructional Assets" icon={FileText} color="purple" onClick={() => navigate("/teacher/lesson-plans")} />}
+        {hasPermission(user, 'lesson_plans') && <KPICard title="Approvals" value={allLessonPlans.filter(lp => lp.status === 'pending').length} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/teacher/lesson-plans")} />}
+        {hasPermission(user, 'test_management') && <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Score Synthesis" icon={TrendingUp} color="purple" trendData={attendanceTrend} onClick={() => scrollToSection("tests-section")} />}
+        {hasPermission(user, 'messaging') && <KPICard title="Messages" value="View" description="Admin Liaison" icon={MessageSquare} color="pink" onClick={() => navigate("/teacher-messages")} />}
       </div>
 
       {/* Subject Wise Performance Cards */}
