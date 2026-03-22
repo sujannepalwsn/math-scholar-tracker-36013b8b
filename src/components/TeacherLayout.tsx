@@ -55,15 +55,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher');
+  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher' || it.role === 'center');
 
   // Auto-sync defaults if no teacher items exist for this center
   React.useEffect(() => {
-    if (user?.center_id && dynamicItems.length > 0 && teacherDynamicItems.length === 0) {
+    if (user?.center_id && dynamicItems.length > 0 && dynamicItems.filter(it => it.role === 'teacher').length === 0) {
       console.log("TeacherLayout: No teacher nav items found, synchronizing defaults...");
       syncDefaults.mutate();
     }
-  }, [user?.center_id, dynamicItems.length, teacherDynamicItems.length]);
+  }, [user?.center_id, dynamicItems.length]);
 
   const updatedNavItems = teacherDynamicItems.length > 0
     ? teacherDynamicItems.map(it => {
@@ -75,18 +75,18 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           role: it.role as any,
           featureName: it.feature_name,
           category: cat?.name,
-          unreadCount: it.route === "/teacher-messages" ? unreadMessageCount : undefined,
+          unreadCount: (it.route === "/teacher-messages" || it.route === "/messages") ? unreadMessageCount : undefined,
           is_active: it.is_active
         };
       })
-    : staticNavItems.map(item => ({
+    : DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher' || it.role === 'center').map(item => ({
         to: item.route,
         label: item.name,
         icon: getIcon(item.icon),
         role: item.role as any,
         featureName: item.feature_name,
         category: item.category as any,
-        unreadCount: item.route === "/teacher-messages" ? unreadMessageCount : undefined
+        unreadCount: (item.route === "/teacher-messages" || item.route === "/messages") ? unreadMessageCount : undefined
       }));
 
   const headerContent = (

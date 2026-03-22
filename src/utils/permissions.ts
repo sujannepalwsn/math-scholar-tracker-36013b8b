@@ -1,77 +1,98 @@
 
+/**
+ * PERMISSION_MAPPING aligns navigation/feature names with database column names.
+ * The keys are the 'featureName' used in navigation items or UI checks.
+ * The values are the corresponding column names in 'center_feature_permissions' and 'teacher_feature_permissions'.
+ */
 export const PERMISSION_MAPPING: Record<string, string> = {
-  'register_student': 'students_registration',
-  'student_report_access': 'student_report',
-  'student_report': 'student_report_access',
+  // Navigation / UI Key -> Database Column Name
+  'register_student': 'register_student',
+  'students_registration': 'register_student', // Support both names
+  'student_report': 'student_report',
+  'student_report_access': 'student_report', // Support both names
+  'homework_management': 'homework_management',
   'homework': 'homework_management',
+  'lesson_plans': 'lesson_plans',
   'lesson_plan_management': 'lesson_plans',
+  'lesson_tracking': 'lesson_tracking',
+  'take_attendance': 'take_attendance',
   'attendance': 'take_attendance',
+  'teacher_management': 'teacher_management',
   'teachers': 'teacher_management',
+  'discipline_issues': 'discipline_issues',
   'discipline': 'discipline_issues',
+  'preschool_activities': 'preschool_activities',
   'activities': 'preschool_activities',
+  'exams_results': 'exams_results',
   'exams': 'exams_results',
+  'view_records': 'view_records',
   'records': 'view_records',
   'finance': 'finance',
+  'messaging': 'messaging',
   'messages': 'messaging',
+  'meetings_management': 'meetings_management',
   'meetings': 'meetings_management',
+  'calendar_events': 'calendar_events',
   'calendar': 'calendar_events',
+  'attendance_summary': 'attendance_summary',
   'attendance-summary': 'attendance_summary',
   'summary': 'summary',
+  'teacher_reports': 'teacher_reports',
   'teacher-performance': 'teacher_reports',
+  'chapter_performance': 'chapter_performance',
   'chapter-performance-overview': 'chapter_performance',
-  'leave-management': 'leave_management',
+  'leave_management': 'leave_management',
+  'student_id_cards': 'student_id_cards',
   'student-id-cards': 'student_id_cards',
+  'inventory_assets': 'inventory_assets',
   'inventory': 'inventory_assets',
+  'transport_tracking': 'transport_tracking',
   'transport': 'transport_tracking',
-  'school-days': 'school_days',
+  'school_days': 'school_days',
+  'settings_access': 'settings_access',
   'settings': 'settings_access',
-  'about-institution': 'about_institution'
+  'about_institution': 'about_institution',
+  'about-institution': 'about_institution',
+  'ai_insights': 'ai_insights',
+  'class_routine': 'class_routine',
 };
 
 /**
  * Checks if a user has permission for a specific feature.
- * Features are enabled by default (null/undefined = true) unless explicitly set to false.
- * Center-level permissions act as a global override for teachers.
+ * 1. Super Admin (admin role without center_id) always has permission.
+ * 2. Center-level permission is the GLOBAL OVERRIDE. If it's explicitly 'false', NO ONE has access.
+ * 3. If center-level permission is 'true' or 'null' (enabled by default):
+ *    - Center role users have access.
+ *    - Teacher role users have access UNLESS their specific teacherPermission is explicitly 'false'.
  */
-export const hasPermission = (user: any, featureName: string): boolean => {
+export const hasPermission = (user: any, featureKey: string): boolean => {
   if (!user) return false;
 
   // Super Admin bypass
   if (user.role === 'admin' && !user.center_id) return true;
 
-  const centerPerms = user.centerPermissions;
-  const teacherPerms = user.teacherPermissions;
+  const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
+  const centerPerms = user.centerPermissions || {};
+  const teacherPerms = user.teacherPermissions || {};
 
-  // 1. Check Global Center Override
-  // If the center has explicitly disabled the feature, NO ONE (center admin or teacher) can see it.
-  if (centerPerms && centerPerms[featureName] === false) {
+  // 1. Check Global Center Override (Default to TRUE if undefined/null)
+  if (centerPerms[dbColumnName] === false) {
     return false;
   }
 
-  // 2. Role-based check
+  // 2. Role-based logic
   if (user.role === 'center' || user.role === 'admin') {
-    return true; // If not globally disabled by center perms, center admins have access
+    return true;
   }
 
   if (user.role === 'teacher') {
-    // A teacher must pass the center override (checked above)
-    // AND must have permission in their specific teacher-level toggles.
-
-    if (!teacherPerms) return true; // Default to true if no teacher-specific record exists
-
-    const mappedName = PERMISSION_MAPPING[featureName];
-
-    // Check direct name
-    if (teacherPerms[featureName] === false) return false;
-
-    // Check mapped name
-    if (mappedName && teacherPerms[mappedName] === false) return false;
-
-    return true; // Default to true if not explicitly disabled
+    // If center perms allow it, check teacher perms (Default to TRUE if undefined/null)
+    if (teacherPerms[dbColumnName] === false) {
+      return false;
+    }
+    return true;
   }
 
-  // Parents and other roles - for now, we follow the same global override
-  if (centerPerms && centerPerms[featureName] === false) return false;
-
+  // Parents follow center global override
   return true;
 };
