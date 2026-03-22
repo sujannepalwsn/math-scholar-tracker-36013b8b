@@ -252,7 +252,9 @@ export default function LessonPlans() {
               ))}
             </SelectContent>
           </Select>
-          {isTeacher && (
+          {(user?.role === 'center' || (user?.role === 'teacher' &&
+            user.centerPermissions?.lesson_plans !== false &&
+            user.teacherPermissions?.lesson_plans !== false)) && (
             <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-xl h-10 px-4 font-bold shadow-soft transition-all gap-2">
               <Plus className="h-4 w-4" /> CREATE PLAN
             </Button>

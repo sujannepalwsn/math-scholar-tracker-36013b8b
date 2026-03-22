@@ -164,29 +164,32 @@ export default function Sidebar({
       }
       if (user?.role === 'teacher') {
         // Teachers can have their own specific feature permissions (administrative toggles)
-        // Check if the permission is explicitly set in teacherPermissions
-        if (user.teacherPermissions && user.teacherPermissions[item.featureName] !== undefined) {
-          return user.teacherPermissions[item.featureName] === true;
-        }
 
-        // Some teacher permissions might have slightly different names than center permissions
-        // Let's try mapping if direct match fails
-        const mapping: Record<string, string> = {
-          'register_student': 'students_registration',
-          'student_report_access': 'student_report'
-        };
-        const mappedName = mapping[item.featureName];
-        if (mappedName && user.teacherPermissions && user.teacherPermissions[mappedName] !== undefined) {
-          return user.teacherPermissions[mappedName] === true;
-        }
-
-        // If not explicitly set in teacherPermissions, check centerPermissions for global feature status
+        // 1. Check centerPermissions first (GLOBAL OVERRIDE)
+        // If the center has explicitly disabled the feature, hide it for ALL teachers.
         if (user.centerPermissions && user.centerPermissions[item.featureName] === false) {
           return false;
         }
 
-        // Special case for administrative items for teachers - if they are default in navigation-defaults,
-        // they should probably be visible unless explicitly disabled.
+        // 2. Map names if needed (some features have inconsistent naming in DB)
+        const mapping: Record<string, string> = {
+          'register_student': 'students_registration',
+          'student_report_access': 'student_report',
+          'student_report': 'student_report_access'
+        };
+        const mappedName = mapping[item.featureName];
+
+        // 3. Check teacher-specific permissions
+        if (user.teacherPermissions) {
+          if (user.teacherPermissions[item.featureName] !== undefined) {
+            return user.teacherPermissions[item.featureName] === true;
+          }
+          if (mappedName && user.teacherPermissions[mappedName] !== undefined) {
+            return user.teacherPermissions[mappedName] === true;
+          }
+        }
+
+        // 4. Default to true if not explicitly restricted
         return true;
       }
     }
