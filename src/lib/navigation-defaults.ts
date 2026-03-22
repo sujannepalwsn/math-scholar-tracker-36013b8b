@@ -10,7 +10,8 @@ export const DEFAULT_NAV_ITEMS = [
   // Academics Group
   { name: "Take Attendance", route: "/attendance", icon: "CheckSquare", role: "center", feature_name: "take_attendance", category: 'Academics', order: 1 },
   { name: "Class Routine", route: "/class-routine", icon: "Clock", role: "center", feature_name: "class_routine", category: 'Academics', order: 2 },
-  { name: "Lesson Plan Management", route: "/lesson-plan-management", icon: "LayoutList", role: "center", feature_name: "lesson_plans", category: 'Academics', order: 3 },
+  { name: "Lesson Plans", route: "/lesson-plans", icon: "LayoutList", role: "center", feature_name: "lesson_plans", category: 'Academics', order: 2.5 },
+  { name: "Lesson Plan Management", route: "/lesson-plan-management", icon: "ClipboardCheck", role: "center", feature_name: "lesson_plans", category: 'Academics', order: 3 },
   { name: "Lesson Tracking", route: "/lesson-tracking", icon: "BookOpen", role: "center", feature_name: "lesson_tracking", category: 'Academics', order: 4 },
   { name: "Homework", route: "/homework", icon: "Book", role: "center", feature_name: "homework_management", category: 'Academics', order: 5 },
   { name: "Tests", route: "/tests", icon: "ClipboardCheck", role: "center", feature_name: "test_management", category: 'Academics', order: 6 },

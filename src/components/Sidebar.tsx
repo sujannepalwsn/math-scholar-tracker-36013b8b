@@ -158,7 +158,6 @@ export default function Sidebar({
 
   const filteredNavItems = navItems.filter(item => {
     if ((item as any).is_active === false && !isEditMode) return false;
-    if (item.role && user?.role !== item.role) return false;
     if (item.featureName) {
       return hasPermission(user, item.featureName);
     }
