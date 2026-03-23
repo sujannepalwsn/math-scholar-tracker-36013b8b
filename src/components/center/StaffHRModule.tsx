@@ -95,6 +95,7 @@ export default function StaffHRModule({ teacherId, teacherName, canEdit }: { tea
 
   const addDocMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add staff documents.");
       const { error } = await supabase.from("staff_documents").insert({
         center_id: authCenterId,
         teacher_id: teacherId,
@@ -145,6 +146,7 @@ export default function StaffHRModule({ teacherId, teacherName, canEdit }: { tea
 
   const addContractMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add staff contracts.");
       const { error } = await supabase.from("staff_contracts").insert({
         center_id: authCenterId,
         teacher_id: teacherId,
@@ -165,6 +167,7 @@ export default function StaffHRModule({ teacherId, teacherName, canEdit }: { tea
 
   const addEvaluationMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to log evaluations.");
       const { error } = await supabase.from("performance_evaluations").insert({
         center_id: authCenterId,
         teacher_id: teacherId,
@@ -184,6 +187,7 @@ export default function StaffHRModule({ teacherId, teacherName, canEdit }: { tea
 
   const addPayrollMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to log payroll.");
       // 1. Get attendance for the selected month/year
       const monthMap: Record<string, number> = {
         January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,

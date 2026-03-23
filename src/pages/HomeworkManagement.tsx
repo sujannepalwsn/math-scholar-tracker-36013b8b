@@ -138,6 +138,9 @@ export default function HomeworkManagement() {
 
   const createHomeworkMutation = useMutation({
     mutationFn: async () => {
+      if (!hasActionPermission(user, 'homework_management', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to assign homework.");
+      }
       if (!user?.center_id) throw new Error("Center ID not found");
       if (grade === "select-grade") throw new Error("Please select a valid grade.");
       let fileUrl: string | null = null;
@@ -176,6 +179,9 @@ export default function HomeworkManagement() {
 
   const updateHomeworkMutation = useMutation({
     mutationFn: async () => {
+      if (!hasActionPermission(user, 'homework_management', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to modify homework.");
+      }
       if (!editingHomework || !user?.center_id) throw new Error("Missing info");
       if (grade === "select-grade") throw new Error("Select grade");
       let attachmentUrl = editingHomework.attachment_url;
@@ -191,6 +197,9 @@ export default function HomeworkManagement() {
 
   const deleteHomeworkMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!hasActionPermission(user, 'homework_management', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to delete homework.");
+      }
       const { error } = await supabase.from("homework").delete().eq("id", id);
       if (error) throw error;
     },
@@ -198,6 +207,9 @@ export default function HomeworkManagement() {
 
   const updateStudentHomeworkRecordMutation = useMutation({
     mutationFn: async ({ id, status, teacher_remarks }: { id: string; status: StudentHomeworkRecord['status']; teacher_remarks: string }) => {
+      if (!hasActionPermission(user, 'homework_management', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to track homework.");
+      }
       const { error } = await supabase.from("student_homework_records").update({ status, teacher_remarks, submission_date: status === 'completed' || status === 'checked' ? format(new Date(), "yyyy-MM-dd") : null }).eq("id", id);
       if (error) throw error;
     },
@@ -205,6 +217,9 @@ export default function HomeworkManagement() {
 
   const bulkUpdateHomeworkMutation = useMutation({
     mutationFn: async () => {
+      if (!hasActionPermission(user, 'homework_management', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to perform bulk updates.");
+      }
       if (bulkSelectedStudents.length === 0) return;
       const { error } = await supabase
         .from("student_homework_records")

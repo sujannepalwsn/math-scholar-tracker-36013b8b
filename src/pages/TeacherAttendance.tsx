@@ -54,6 +54,7 @@ export default function TeacherAttendancePage() {
 
   const isTeacher = user?.role === 'teacher';
   const isCenter = hasPermission(user, 'teachers_attendance');
+  const canEdit = hasActionPermission(user, 'teachers_attendance', 'edit');
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, TeacherAttendance>>({});
@@ -312,6 +313,7 @@ export default function TeacherAttendancePage() {
   const saveAttendanceMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to modify teacher attendance.");
 
       const recordsToUpsert: any[] = [];
 
@@ -710,8 +712,12 @@ export default function TeacherAttendancePage() {
               </Popover>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" size="sm" onClick={markAllPresent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Present</Button>
-              <Button variant="outline" size="sm" onClick={markAllAbsent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Absent</Button>
+              {canEdit && (
+                <>
+                  <Button variant="outline" size="sm" onClick={markAllPresent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Present</Button>
+                  <Button variant="outline" size="sm" onClick={markAllAbsent} className="rounded-xl h-11 border-2 font-bold px-4">Mark All Absent</Button>
+                </>
+              )}
             </div>
           </div>
         </Card>
@@ -766,6 +772,7 @@ export default function TeacherAttendancePage() {
                             <Select
                               value={record?.status || 'absent'}
                               onValueChange={(value: TeacherAttendance['status']) => handleStatusChange(teacher.id, value)}
+                              disabled={!canEdit}
                             >
                               <SelectTrigger className="w-[120px] h-9 bg-white shadow-soft border-none focus:ring-primary/20 rounded-xl font-bold text-xs">
                                 <SelectValue />
@@ -782,7 +789,7 @@ export default function TeacherAttendancePage() {
                               type="time"
                               value={record?.time_in || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_in', e.target.value)}
-                              disabled={record?.status !== 'present'}
+                              disabled={record?.status !== 'present' || !canEdit}
                               className="h-9 w-32 bg-card/80 border-none shadow-soft rounded-xl text-xs font-bold"
                             />
                           </TableCell>
@@ -791,7 +798,7 @@ export default function TeacherAttendancePage() {
                               type="time"
                               value={record?.time_out || ''}
                               onChange={(e) => handleTimeChange(teacher.id, 'time_out', e.target.value)}
-                              disabled={record?.status !== 'present'}
+                              disabled={record?.status !== 'present' || !canEdit}
                               className="h-9 w-32 bg-card/80 border-none shadow-soft rounded-xl text-xs font-bold"
                             />
                           </TableCell>
@@ -807,6 +814,7 @@ export default function TeacherAttendancePage() {
                                 }
                               }))}
                               placeholder="Add observation..."
+                              disabled={!canEdit}
                               className="h-9 bg-card/80 border-none shadow-soft rounded-xl text-xs font-medium"
                             />
                           </TableCell>
@@ -817,6 +825,7 @@ export default function TeacherAttendancePage() {
                 </Table>
               </div>
               <div className="p-6 border-t border-muted/10">
+                {canEdit && (
                 <Button
                   type="submit"
                   className="w-full h-14 text-lg font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
@@ -831,6 +840,7 @@ export default function TeacherAttendancePage() {
                     'COMMIT FACULTY ATTENDANCE'
                   )}
                 </Button>
+                )}
               </div>
             </form>
           )}

@@ -59,6 +59,7 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
 
   const issueBookMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to issue books.");
       const { error: loanError } = await supabase.from("book_loans").insert({
         center_id: centerId,
         book_id: issueForm.bookId,
@@ -89,6 +90,7 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
 
   const addBookMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add books to the catalog.");
       const { error } = await supabase.from("books").insert({
         center_id: centerId,
         title: bookForm.title,
@@ -110,6 +112,7 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
 
   const returnBookMutation = useMutation({
     mutationFn: async (loanId: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to process book returns.");
       const { data: loan } = await supabase.from("book_loans").select("book_id").eq("id", loanId).single();
       const { error } = await supabase.from("book_loans").update({
         return_date: new Date().toISOString().split('T')[0],

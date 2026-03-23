@@ -111,6 +111,9 @@ export default function LeaveManagement() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes: string }) => {
+      if (!hasActionPermission(user, 'leave_management', 'approve')) {
+        throw new Error("Access Denied: You do not have permission to approve/reject leave applications.");
+      }
       const { error } = await supabase
         .from("leave_applications")
         .update({ status, admin_notes: notes, updated_at: new Date().toISOString() })

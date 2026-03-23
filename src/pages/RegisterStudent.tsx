@@ -309,6 +309,7 @@ export default function RegisterStudent() {
       if (!selectedStudentForParent || !user?.center_id) {
         throw new Error("Student or Center ID not found.");
       }
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to create parent accounts.");
       const { data, error } = await supabase.functions.invoke('create-parent-account', {
         body: {
           username: parentUsername,
@@ -1310,15 +1311,15 @@ export default function RegisterStudent() {
         </TabsContent>
 
         <TabsContent value="admission" className="outline-none">
-          <AdmissionWorkflow centerId={user?.center_id || ""} />
+          <AdmissionWorkflow centerId={user?.center_id || ""} canEdit={hasFullAccess} />
         </TabsContent>
 
         <TabsContent value="promotion" className="outline-none">
-          <StudentPromotion centerId={user?.center_id || ""} />
+          <StudentPromotion centerId={user?.center_id || ""} canEdit={hasFullAccess} />
         </TabsContent>
 
         <TabsContent value="alumni" className="outline-none">
-          <AlumniManagement centerId={user?.center_id || ""} />
+          <AlumniManagement centerId={user?.center_id || ""} canEdit={hasFullAccess} />
         </TabsContent>
       </Tabs>
     </div>

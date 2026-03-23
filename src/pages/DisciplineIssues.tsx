@@ -123,6 +123,9 @@ export default function DisciplineIssues() {
 
   const createIssueMutation = useMutation({
     mutationFn: async () => {
+      if (!hasActionPermission(user, 'discipline_issues', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to log discipline issues.");
+      }
       if (!user?.center_id || selectedStudentIds.length === 0 || disciplineCategoryId === "select-category") throw new Error("Please select at least one student and category."); // Validation
 
       const issueRecords = selectedStudentIds.map(sid => ({
@@ -164,6 +167,9 @@ export default function DisciplineIssues() {
 
   const updateIssueMutation = useMutation({
     mutationFn: async () => {
+      if (!hasActionPermission(user, 'discipline_issues', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to modify discipline issues.");
+      }
       if (!editingIssue || !user?.center_id || selectedStudentIds.length === 0 || disciplineCategoryId === "select-category") throw new Error("Please select a student and category.");
 
       const { error } = await supabase.from("discipline_issues").update({
@@ -188,6 +194,9 @@ export default function DisciplineIssues() {
 
   const deleteIssueMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!hasActionPermission(user, 'discipline_issues', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to delete discipline issues.");
+      }
       const { error } = await supabase.from("discipline_issues").delete().eq("id", id);
       if (error) throw error;
     },

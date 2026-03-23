@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Plus, Trash2, Save, Calculator, Percent } from "lucide-react";
 
-export default function PayrollSettings({ centerId }: { centerId: string }) {
+export default function PayrollSettings({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [newSlab, setNewSlab] = useState({ min: "", max: "", percent: "" });
   const [latePenalty, setLatePenalty] = useState("");
@@ -48,6 +48,7 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
 
   const addSlabMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add tax slabs.");
       const { error } = await supabase.from("tax_slabs").insert({
         center_id: centerId,
         min_income: parseFloat(newSlab.min),
@@ -65,6 +66,7 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
 
   const deleteSlabMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete tax slabs.");
       const { error } = await supabase.from("tax_slabs").delete().eq("id", id);
       if (error) throw error;
     },
@@ -76,6 +78,7 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
 
   const updatePenaltyMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to update penalty settings.");
       const { error } = await supabase
         .from("centers")
         .update({ late_penalty_per_day: parseFloat(latePenalty) })
@@ -110,9 +113,11 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
                 <Label className="text-[10px] font-black uppercase">Tax %</Label>
                 <div className="flex gap-2">
                   <Input type="number" value={newSlab.percent} onChange={e => setNewSlab({...newSlab, percent: e.target.value})} className="h-9" />
-                  <Button size="sm" onClick={() => addSlabMutation.mutate()} className="h-9 px-3 rounded-lg">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  {canEdit && (
+                    <Button size="sm" onClick={() => addSlabMutation.mutate()} className="h-9 px-3 rounded-lg">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -135,9 +140,11 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
                       </TableCell>
                       <TableCell className="text-xs font-black text-primary">{slab.tax_percent}%</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => deleteSlabMutation.mutate(slab.id)} className="h-7 w-7 text-rose-500">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" onClick={() => deleteSlabMutation.mutate(slab.id)} className="h-7 w-7 text-rose-500">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -162,9 +169,11 @@ export default function PayrollSettings({ centerId }: { centerId: string }) {
               <Label className="text-[10px] font-black uppercase">Penalty Amount (per late day)</Label>
               <div className="flex gap-3">
                 <Input type="number" value={latePenalty} onChange={e => setLatePenalty(e.target.value)} className="h-11 rounded-xl font-bold" />
-                <Button onClick={() => updatePenaltyMutation.mutate()} className="h-11 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest">
-                  <Save className="h-4 w-4 mr-2" /> Save
-                </Button>
+                {canEdit && (
+                  <Button onClick={() => updatePenaltyMutation.mutate()} className="h-11 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest">
+                    <Save className="h-4 w-4 mr-2" /> Save
+                  </Button>
+                )}
               </div>
               <p className="text-[10px] text-slate-400 italic">This amount will be automatically deducted during payroll calculation for each late attendance record.</p>
             </div>

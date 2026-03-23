@@ -54,6 +54,7 @@ export default function MeetingManagement() {
 
   const deleteMeetingMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete meetings.");
       // First, delete associated meeting_attendees records
       const { error: attendeesError } = await supabase
         .from("meeting_attendees")
@@ -81,6 +82,10 @@ export default function MeetingManagement() {
     } });
 
   const handleMeetingSave = async (meetingData: Tables<'meetings'>, selectedStudentIds: string[], selectedTeacherIds: string[]) => {
+    if (!canEdit) {
+      toast.error("Access Denied: You do not have permission to save meetings.");
+      return;
+    }
     // This function is called by MeetingForm after meeting is created/updated
     // meetingData is the newly created or updated meeting object from the DB.
 

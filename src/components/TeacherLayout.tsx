@@ -89,7 +89,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         featureName: item.feature_name,
         feature_name: item.feature_name,
         category: item.category as any,
-        unreadCount: (item.route === "/teacher-messages" || item.route === "/messages") ? unreadMessageCount : undefined
+        unreadCount: (item.route === "/teacher-messages" || item.route === "/messages") ? unreadMessageCount : undefined,
+        is_active: true
       }));
 
   // Ensure mandatory items from defaults are always present (fixing issue for existing customized navigation)
@@ -119,7 +120,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         featureName: item.feature_name,
         feature_name: item.feature_name,
         category: item.category as any,
-        unreadCount: (item.route === "/teacher-messages" || item.route === "/messages") ? unreadMessageCount : undefined
+        unreadCount: (item.route === "/teacher-messages" || item.route === "/messages") ? unreadMessageCount : undefined,
+        is_active: true
       }));
       updatedNavItems = [...updatedNavItems, ...additionalItems];
     }

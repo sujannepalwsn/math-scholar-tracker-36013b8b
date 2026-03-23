@@ -120,6 +120,9 @@ export default function LessonPlans() {
 
   const saveLessonPlan = useMutation({
     mutationFn: async (submit: boolean) => {
+      if (!hasActionPermission(user, 'lesson_plans', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to create or modify lesson plans.");
+      }
       if (!user?.center_id) throw new Error("Center ID not found");
       let fileUrl: string | null = editingLessonPlan?.lesson_file_url || null;
       if (file) fileUrl = await uploadFile(file, "lesson-files");
@@ -177,7 +180,12 @@ export default function LessonPlans() {
   });
 
   const deleteLessonPlanMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("lesson_plans").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      if (!hasActionPermission(user, 'lesson_plans', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to delete lesson plans.");
+      }
+      const { error } = await supabase.from("lesson_plans").delete().eq("id", id); if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans-all"] }); toast.success("Deleted!"); },
     onError: (error: Error) => toast.error(error.message || "Failed to delete") });
 
@@ -381,14 +389,16 @@ export default function LessonPlans() {
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleViewClick(lp)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {(isTeacher && (lp.status === 'draft' || lp.status === 'rejected')) && (
+                          {(hasActionPermission(user, 'lesson_plans', 'edit') && (isTeacher && (lp.status === 'draft' || lp.status === 'rejected'))) && (
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(lp)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {hasActionPermission(user, 'lesson_plans', 'edit') && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

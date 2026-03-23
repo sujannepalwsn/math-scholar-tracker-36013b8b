@@ -89,6 +89,7 @@ export default function CalendarEvents() {
   const createEventMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to create calendar events.");
       const { error } = await supabase.from("center_events").insert({
         center_id: user.center_id,
         title,
@@ -112,6 +113,7 @@ export default function CalendarEvents() {
   const updateEventMutation = useMutation({
     mutationFn: async () => {
       if (!editingEvent?.id) throw new Error("Event ID not found");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to update calendar events.");
       const { error } = await supabase.from("center_events").update({
         title,
         description: description || null,
@@ -132,6 +134,7 @@ export default function CalendarEvents() {
 
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete calendar events.");
       const { error } = await supabase.from("center_events").delete().eq("id", id);
       if (error) throw error;
     },

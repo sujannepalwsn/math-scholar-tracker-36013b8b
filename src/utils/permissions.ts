@@ -89,6 +89,14 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/teacher/settings': 'settings_access',
 };
 
+export const ADMIN_MODULES = [
+  'register_student', 'teacher_management', 'finance', 'settings_access',
+  'hr_management', 'inventory_assets', 'transport_tracking', 'school_days',
+  'teachers_attendance', 'about_institution', 'exams_results', 'published_results',
+  'student_report', 'teacher_reports', 'chapter_performance', 'leave_management',
+  'student_id_cards'
+];
+
 /**
  * Checks if a user has permission for a specific feature.
  * A module is accessible only if it's enabled and the user can view it.
@@ -129,20 +137,21 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   }
 
   if (user.role === 'teacher') {
-    // Administrative modules are disabled by default for teachers unless explicitly granted
-    const adminModules = [
-      'register_student', 'teacher_management', 'finance', 'settings_access',
-      'hr_management', 'inventory_assets', 'transport_tracking', 'school_days',
-      'teachers_attendance', 'about_institution', 'exams_results', 'published_results',
-      'student_report', 'teacher_reports', 'chapter_performance', 'leave_management',
-      'student_id_cards'
-    ];
-
     // Check granular JSONB permissions if available
-    if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
+    if (teacherPerms.permissions) {
       const modulePerms = teacherPerms.permissions[dbColumnName];
-      // A module is accessible only if enabled AND can_view is true
-      return modulePerms.enabled === true && modulePerms.can_view === true;
+
+      // If the specific module is defined in the JSONB, use it as the source of truth
+      if (modulePerms) {
+        // A module is accessible only if enabled AND can_view is true
+        return modulePerms.enabled === true && modulePerms.can_view === true;
+      }
+
+      // If JSONB exists but doesn't have this key, it might be an administrative module
+      // not yet granted or a newly added module.
+      if (ADMIN_MODULES.includes(dbColumnName)) {
+        return false;
+      }
     }
 
     // Fallback to legacy boolean columns if JSONB is not yet loaded or migrated
@@ -152,7 +161,7 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
     // Default behavior for undefined teacher permissions:
     // - Academic/Communication features: True (unless globally disabled at center level)
     // - Administrative features: False
-    return !adminModules.includes(dbColumnName);
+    return !ADMIN_MODULES.includes(dbColumnName);
   }
 
   // Parents follow center global override
@@ -161,10 +170,12 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
 
 /**
  * Checks if a teacher has granular permission for a specific action within a module.
- * Actions: 'edit', 'approve', 'publish'
+ * Actions: 'view', 'edit', 'approve', 'publish'
  */
-export const hasActionPermission = (user: any, featureKey: string, action: 'edit' | 'approve' | 'publish'): boolean => {
+export const hasActionPermission = (user: any, featureKey: string, action: 'view' | 'edit' | 'approve' | 'publish'): boolean => {
   if (!user) return false;
+
+  if (action === 'view') return hasPermission(user, featureKey);
 
   // Super Admin/Center Admin bypass
   if (user.role === 'admin' || user.role === 'center') {
@@ -197,8 +208,14 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'edit
   }
 
   // Fallback for legacy mode: if the module is enabled, allow editing by default
-  // (Legacy mode doesn't have granular approve/publish)
+  // EXCEPT for administrative modules which are strictly guarded
   if (action === 'edit') {
+    if (ADMIN_MODULES.includes(dbColumnName)) {
+       // For admin modules in legacy mode, check if the legacy boolean is explicitly true
+       return teacherPerms[dbColumnName] === true;
+    }
+
+    // For academic modules, if we don't have JSONB yet, we assume edit is allowed if view is allowed
     return hasPermission(user, featureKey);
   }
 
