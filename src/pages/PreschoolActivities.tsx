@@ -342,7 +342,7 @@ export default function PreschoolActivities() {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" /> Log Activity</Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="log-activity-title" aria-describedby="log-activity-description">
+          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="log-activity-title" aria-describedby="log-activity-description">
             <DialogHeader>
               <DialogTitle id="log-activity-title">{editingActivity ? "Edit Activity" : "Log New Activity"}</DialogTitle>
               <DialogDescription id="log-activity-description">
@@ -573,7 +573,7 @@ export default function PreschoolActivities() {
 
       {/* Activity Type Management Dialog */}
       <Dialog open={showActivityTypeManagement} onOpenChange={setShowActivityTypeManagement}>
-        <DialogContent className="max-w-2xl" aria-labelledby="activity-type-management-title" aria-describedby="activity-type-management-description">
+        <DialogContent className="w-[95vw] sm:max-w-2xl" aria-labelledby="activity-type-management-title" aria-describedby="activity-type-management-description">
           <DialogHeader>
             <DialogTitle id="activity-type-management-title">Manage Activity Types</DialogTitle>
             <DialogDescription id="activity-type-management-description">

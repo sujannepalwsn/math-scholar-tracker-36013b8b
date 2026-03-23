@@ -63,7 +63,7 @@ export const AlertList = ({
               </Button>
             )}
           </DialogTrigger>
-          <DialogContent className="max-w-2xl bg-card/90 backdrop-blur-xl border-none shadow-strong rounded-[2rem] p-0 overflow-hidden">
+          <DialogContent className="w-[95vw] sm:max-w-2xl bg-card/90 backdrop-blur-xl border-none shadow-strong rounded-[2rem] p-0 overflow-hidden">
             <DialogHeader className="p-8 border-b border-slate-100 bg-slate-50/50">
               <div className="flex items-center justify-between">
                 <DialogTitle className="text-2xl font-black text-foreground/90 tracking-tight flex items-center gap-3">

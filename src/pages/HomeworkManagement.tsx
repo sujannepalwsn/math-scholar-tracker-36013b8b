@@ -277,7 +277,7 @@ export default function HomeworkManagement() {
                 <Plus className="h-4 w-4 mr-2" /> Create Homework
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle>
                 <DialogDescription>Enter details below.</DialogDescription>
@@ -400,7 +400,7 @@ export default function HomeworkManagement() {
         </CardContent>
       </Card>
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Submission Track: {selectedHomeworkForStatus?.title}</DialogTitle>
             <DialogDescription>Manage individual or bulk submission statuses.</DialogDescription>

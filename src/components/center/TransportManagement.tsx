@@ -151,7 +151,7 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
   return (
     <div className="space-y-6">
       <Tabs defaultValue="routes">
-        <TabsList className="bg-slate-100 p-1 rounded-xl h-12">
+        <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-slate-100 p-1 rounded-xl h-12">
           <TabsTrigger value="routes" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Bus Routes</TabsTrigger>
           <TabsTrigger value="vehicles" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Fleet Management</TabsTrigger>
           <TabsTrigger value="assignments" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Assignments</TabsTrigger>

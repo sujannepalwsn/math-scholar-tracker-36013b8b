@@ -176,7 +176,7 @@ export default function TeacherMeetings() {
 
       {/* Conclusion View Dialog */}
       <Dialog open={showConclusionDialog} onOpenChange={setShowConclusionDialog}>
-        <DialogContent className="max-w-2xl" aria-labelledby="conclusion-view-title" aria-describedby="conclusion-view-description">
+        <DialogContent className="w-[95vw] sm:max-w-2xl" aria-labelledby="conclusion-view-title" aria-describedby="conclusion-view-description">
           <DialogHeader>
             <DialogTitle id="conclusion-view-title">Meeting Conclusion</DialogTitle>
             <DialogDescription id="conclusion-view-description">

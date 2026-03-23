@@ -940,7 +940,7 @@ export default function TeacherAttendancePage() {
           setSelectedTeacherDetail(null);
         }
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-2xl font-black">
               <div className="p-2 rounded-xl bg-primary/10 text-primary">

@@ -198,7 +198,7 @@ export default function ParentMeetings() {
 
       {/* Conclusion View Dialog */}
       <Dialog open={showConclusionDialog} onOpenChange={setShowConclusionDialog}>
-        <DialogContent className="max-w-2xl rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
+        <DialogContent className="w-[95vw] sm:max-w-2xl rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
           <DialogHeader className="pb-4 border-b border-slate-100">
             <DialogTitle className="text-2xl font-black tracking-tight text-foreground/90">Meeting Conclusion</DialogTitle>
             <DialogDescription className="text-xs font-bold uppercase tracking-widest text-primary">Official Institutional Summary</DialogDescription>

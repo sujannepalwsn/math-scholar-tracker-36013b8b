@@ -49,13 +49,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const parsedUser: User = JSON.parse(storedUser);
           setUser(parsedUser);
 
-          // Fetch fresh permissions from DB to avoid stale localStorage data
+          // Fetch fresh permissions and metadata from DB to avoid stale localStorage data
           if (parsedUser.center_id) {
             // We use a helper function to avoid async in useEffect directly
-            const fetchFreshPermissions = async (userToUpdate: User) => {
+            const fetchFreshData = async (userToUpdate: User) => {
               try {
-                let updatedUser = { ...userToUpdate };
+                const updatedUser = { ...userToUpdate };
                 let hasChanges = false;
+
+                // Fetch fresh center metadata
+                const { data: centerData } = await supabase
+                  .from('centers')
+                  .select('name')
+                  .eq('id', userToUpdate.center_id!)
+                  .maybeSingle();
+
+                if (centerData && centerData.name !== userToUpdate.center_name) {
+                  updatedUser.center_name = centerData.name;
+                  hasChanges = true;
+                }
 
                 // Always fetch center permissions
                 const { data: centerPerms } = await supabase
@@ -92,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             };
 
-            fetchFreshPermissions(parsedUser);
+            fetchFreshData(parsedUser);
           }
         } catch (e) {
           console.error("Failed to parse auth_user", e);
@@ -137,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('auth_user', JSON.stringify(loggedInUser));
       console.log('AuthContext: User state updated and stored in localStorage.');
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error('AuthContext: Login error caught in client-side:', error);
       // Log the full error object for more details
       console.error('AuthContext: Full client-side error object:', JSON.stringify(error, null, 2));

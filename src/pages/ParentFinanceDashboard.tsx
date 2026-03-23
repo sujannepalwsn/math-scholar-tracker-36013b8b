@@ -220,7 +220,7 @@ const ParentFinanceDashboard = () => {
                 </div>
                 Account Ledger
               </CardTitle>
-              <TabsList className="bg-slate-200/50 p-1 rounded-2xl">
+              <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-slate-200/50 p-1 rounded-2xl">
                 <TabsTrigger value="invoices" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft px-6">Invoices</TabsTrigger>
                 <TabsTrigger value="payments" className="rounded-xl font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft px-6">Payments</TabsTrigger>
               </TabsList>
@@ -323,7 +323,7 @@ const ParentFinanceDashboard = () => {
 
       {/* Invoice Details Dialog */}
       <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
-        <DialogContent className="max-w-2xl rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
+        <DialogContent className="w-[95vw] sm:max-w-2xl rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
           <DialogHeader className="pb-4 border-b border-slate-100">
             <DialogTitle className="text-2xl font-black tracking-tight text-foreground/90">Financial Document</DialogTitle>
             <DialogDescription className="text-xs font-bold uppercase tracking-widest text-primary">Official Institutional Record</DialogDescription>

@@ -317,7 +317,7 @@ export default function TeacherManagement() {
                 ENROL FACULTY
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="teacher-dialog-title" aria-describedby="teacher-dialog-description">
+          <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="teacher-dialog-title" aria-describedby="teacher-dialog-description">
             <DialogHeader>
               <DialogTitle id="teacher-dialog-title">{editingTeacher ? "Edit Teacher" : "Add New Teacher(s)"}</DialogTitle>
               <DialogDescription id="teacher-dialog-description">{editingTeacher ? "Update details." : "Add individually or in bulk."}</DialogDescription>
@@ -388,7 +388,7 @@ export default function TeacherManagement() {
               </div>
             ) : (
               <Tabs defaultValue="individual" className="mt-4">
-                <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="individual">Individual</TabsTrigger><TabsTrigger value="bulk">Bulk</TabsTrigger></TabsList>
+                <TabsList className="flex flex-nowrap overflow-x-auto w-full grid w-full grid-cols-2"><TabsTrigger value="individual">Individual</TabsTrigger><TabsTrigger value="bulk">Bulk</TabsTrigger></TabsList>
                 <TabsContent value="individual" className="space-y-4 pt-4">
                   <Tabs defaultValue="basic" className="w-full">
                     <TabsList className="flex flex-nowrap w-full overflow-x-auto h-10 p-1 custom-scrollbar">
@@ -635,7 +635,7 @@ export default function TeacherManagement() {
 
       {/* Manage Teacher Permissions Dialog */}
       <Dialog open={showPermissionsDialog} onOpenChange={setShowPermissionsDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Manage Permissions</DialogTitle>
             <DialogDescription>Toggle features for {selectedTeacherForPermissions?.name}.</DialogDescription>
@@ -646,7 +646,7 @@ export default function TeacherManagement() {
 
       {/* HR Module Dialog */}
       <Dialog open={showHRDialog} onOpenChange={setShowHRDialog}>
-        <DialogContent className="max-w-3xl" aria-labelledby="hr-terminal-title" aria-describedby="hr-terminal-description">
+        <DialogContent className="w-[95vw] sm:max-w-3xl" aria-labelledby="hr-terminal-title" aria-describedby="hr-terminal-description">
           <DialogHeader>
             <DialogTitle id="hr-terminal-title" className="text-2xl font-black uppercase tracking-tight">Faculty HR Terminal</DialogTitle>
             <DialogDescription id="hr-terminal-description" className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">

@@ -81,7 +81,7 @@ export default function BottomNav({ navItems }: BottomNavProps) {
   const renderSubMenu = (category: string, items: NavItem[]) => (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-16 bg-card border-t shadow-elevated p-4 grid grid-cols-4 gap-3 transition-all duration-200 z-30",
+        "fixed inset-x-0 bottom-16 bg-card border-t shadow-elevated p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3 transition-all duration-200 z-30 max-h-[60vh] overflow-y-auto",
         activeMenu === category ? "translate-y-0 opacity-100" : "translate-y-full pointer-events-none opacity-0"
       )}
     >

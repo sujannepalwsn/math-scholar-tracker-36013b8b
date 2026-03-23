@@ -125,7 +125,7 @@ export default function OCRModal({ open, onOpenChange, onSave }: OCRModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-labelledby="ocr-modal-title" aria-describedby="ocr-modal-description">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto" aria-labelledby="ocr-modal-title" aria-describedby="ocr-modal-description">
         <DialogHeader>
           <DialogTitle id="ocr-modal-title">Upload Test Paper & Extract Text</DialogTitle>
           <DialogDescription id="ocr-modal-description">

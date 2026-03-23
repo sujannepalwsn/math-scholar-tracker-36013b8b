@@ -116,8 +116,15 @@ export default function AboutInstitution() {
     enabled: !!user?.center_id
   });
 
+  // Keep track of when we last saved to prevent immediate re-syncing while refetching
+  const [lastSaved, setLastSaved] = useState<number>(0);
+
   useEffect(() => {
-    if (center && !isEditing) {
+    // Only sync from DB if NOT editing AND we aren't in the middle of a post-save refetch
+    // We add a small 2s buffer after saving to allow the cache to settle
+    const isRecentlySaved = Date.now() - lastSaved < 2000;
+
+    if (center && !isEditing && !isRecentlySaved) {
       setFormData({
         name: center.name || "",
         about_description: center.about_description || "",
@@ -140,50 +147,44 @@ export default function AboutInstitution() {
         header_bg_url: center.header_bg_url || ""
       });
     }
-  }, [center, isEditing]);
+  }, [center, isEditing, lastSaved]);
 
   const updateAboutMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("centers")
         .update({
-          about_description: formData.about_description,
-          mission: formData.mission,
-          vision: formData.vision,
-          principal_message: formData.principal_message,
-          established_date: formData.established_date || null,
-          academic_info: formData.academic_info,
+          about_description: center?.about_description,
+          mission: center?.mission,
+          vision: center?.vision,
+          principal_message: center?.principal_message,
+          established_date: center?.established_date || null,
+          academic_info: center?.academic_info,
           facilities: formData.facilities as unknown as Json,
           achievements: formData.achievements as unknown as Json,
           gallery: formData.gallery as unknown as Json,
           social_links: formData.social_links as unknown as Json,
-          institution_type: formData.institution_type,
-          phone: formData.phone,
-          email: formData.email,
-          address: formData.address,
-          principal_name: formData.principal_name,
-          website_url: formData.website_url,
-          short_code: formData.short_code,
+          institution_type: center?.institution_type,
+          phone: center?.phone,
+          email: center?.email,
+          address: center?.address,
+          principal_name: center?.principal_name,
+          website_url: center?.website_url,
+          short_code: center?.short_code,
           header_bg_url: formData.header_bg_url
         })
-        .eq("id", user.center_id);
+        .eq("id", user.center_id)
+        .select()
+        .single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
-      // Optimistically update the query cache with the current form data
-      queryClient.setQueryData(["center-about", user?.center_id], (oldData: Tables<'centers'> | undefined) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          ...formData,
-          // Ensure achievements and other JSONB arrays are correctly updated
-          facilities: formData.facilities,
-          achievements: formData.achievements,
-          gallery: formData.gallery,
-          social_links: formData.social_links
-        };
-      });
+    onSuccess: (updatedData) => {
+      setLastSaved(Date.now());
+
+      // Update the query cache with the ACTUAL data returned from the server
+      queryClient.setQueryData(["center-about", user?.center_id], updatedData);
 
       queryClient.invalidateQueries({ queryKey: ["center-about"] });
       queryClient.invalidateQueries({ queryKey: ["center-details"] });
@@ -439,7 +440,7 @@ export default function AboutInstitution() {
                   ) : (
                     <div className="prose prose-slate max-w-none">
                       <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                        {formData.about_description || "Welcome to our institution. We are dedicated to providing excellence in education."}
+                        {center?.about_description || "Welcome to our institution. We are dedicated to providing excellence in education."}
                       </p>
                     </div>
                   )}
@@ -466,7 +467,7 @@ export default function AboutInstitution() {
                       />
                     ) : (
                       <p className="text-muted-foreground text-sm italic leading-relaxed whitespace-pre-wrap">
-                        {formData.mission || "To empower students with knowledge and character."}
+                        {center?.mission || "To empower students with knowledge and character."}
                       </p>
                     )}
                   </CardContent>
@@ -491,7 +492,7 @@ export default function AboutInstitution() {
                       />
                     ) : (
                       <p className="text-muted-foreground text-sm italic leading-relaxed whitespace-pre-wrap">
-                        {formData.vision || "To be a global leader in holistic education."}
+                        {center?.vision || "To be a global leader in holistic education."}
                       </p>
                     )}
                   </CardContent>
@@ -521,7 +522,7 @@ export default function AboutInstitution() {
                     <div className="relative">
                       <div className="absolute -top-4 -left-2 text-6xl text-indigo-500/10 font-serif">"</div>
                       <p className="text-muted-foreground text-sm leading-relaxed relative z-10 whitespace-pre-wrap">
-                        {formData.principal_message || "Education is the most powerful weapon which you can use to change the world."}
+                        {center?.principal_message || "Education is the most powerful weapon which you can use to change the world."}
                       </p>
                       <div className="mt-4 pt-4 border-t border-border/50">
                         <p className="font-black text-[10px] uppercase tracking-tighter text-indigo-600">The Principal</p>
@@ -549,7 +550,7 @@ export default function AboutInstitution() {
                           onChange={(e) => setFormData({ ...formData, established_date: e.target.value })}
                         />
                       ) : (
-                        <span className="text-sm font-black">{formData.established_date || "N/A"}</span>
+                        <span className="text-sm font-black">{center?.established_date || "N/A"}</span>
                       )}
                     </div>
                     <div className="flex justify-between items-center border-b border-white/10 pb-2">
@@ -561,12 +562,12 @@ export default function AboutInstitution() {
                           onChange={(e) => setFormData({ ...formData, institution_type: e.target.value })}
                         />
                       ) : (
-                        <span className="text-sm font-black">{formData.institution_type || "Co-Educational"}</span>
+                        <span className="text-sm font-black">{center?.institution_type || "Co-Educational"}</span>
                       )}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] font-bold uppercase opacity-70">Location</span>
-                      <span className="text-sm font-black truncate max-w-[150px]">{formData.address || "Nepal"}</span>
+                      <span className="text-sm font-black truncate max-w-[150px]">{center?.address || "Nepal"}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -596,9 +597,9 @@ export default function AboutInstitution() {
                 />
               ) : (
                 <div className="prose prose-slate max-w-none">
-                  {formData.academic_info ? (
+                  {center?.academic_info ? (
                     <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {formData.academic_info}
+                      {center?.academic_info}
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
@@ -668,8 +669,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {Array.isArray(formData.facilities) && formData.facilities.length > 0 ? (
-                  formData.facilities.map((facility) => (
+                {Array.isArray(center?.facilities) && (center.facilities as unknown as Facility[]).length > 0 ? (
+                  (center.facilities as unknown as Facility[]).map((facility) => (
                     <Card key={facility.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all hover:-translate-y-1">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-center gap-3">
@@ -762,8 +763,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-6">
-                {Array.isArray(formData.achievements) && formData.achievements.length > 0 ? (
-                  formData.achievements.map((achievement) => (
+                {Array.isArray(center?.achievements) && (center.achievements as unknown as Achievement[]).length > 0 ? (
+                  (center.achievements as unknown as Achievement[]).map((achievement) => (
                     <Card key={achievement.id} className="border-none shadow-soft rounded-3xl bg-card/40 backdrop-blur-md border border-border/10 hover:shadow-strong transition-all">
                       <CardContent className="p-6 space-y-3">
                         <div className="flex items-start justify-between">
@@ -852,8 +853,8 @@ export default function AboutInstitution() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {Array.isArray(formData.gallery) && formData.gallery.length > 0 ? (
-                  formData.gallery.map((item) => (
+                {Array.isArray(center?.gallery) && (center.gallery as unknown as GalleryItem[]).length > 0 ? (
+                  (center.gallery as unknown as GalleryItem[]).map((item) => (
                     <Card key={item.id} className="border-none shadow-soft rounded-3xl overflow-hidden group hover:shadow-strong transition-all hover:-translate-y-1">
                       <div className="aspect-square relative overflow-hidden">
                         <img src={item.url} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -904,7 +905,7 @@ export default function AboutInstitution() {
                           className="rounded-xl h-10"
                         />
                       ) : (
-                        <p className="font-bold text-foreground/80">{formData.phone || "Not specified"}</p>
+                        <p className="font-bold text-foreground/80">{center?.phone || "Not specified"}</p>
                       )}
                     </div>
                   </div>
@@ -922,7 +923,7 @@ export default function AboutInstitution() {
                           className="rounded-xl h-10"
                         />
                       ) : (
-                        <p className="font-bold text-foreground/80">{formData.email || "Not specified"}</p>
+                        <p className="font-bold text-foreground/80">{center?.email || "Not specified"}</p>
                       )}
                     </div>
                   </div>
@@ -940,7 +941,7 @@ export default function AboutInstitution() {
                           className="rounded-xl h-10"
                         />
                       ) : (
-                        <p className="font-bold text-foreground/80">{formData.address || "Not specified"}</p>
+                        <p className="font-bold text-foreground/80">{center?.address || "Not specified"}</p>
                       )}
                     </div>
                   </div>
@@ -958,7 +959,7 @@ export default function AboutInstitution() {
                           className="rounded-xl h-10"
                         />
                       ) : (
-                        <p className="font-bold text-foreground/80">{formData.principal_name || "Not specified"}</p>
+                        <p className="font-bold text-foreground/80">{center?.principal_name || "Not specified"}</p>
                       )}
                     </div>
                   </div>
@@ -976,7 +977,7 @@ export default function AboutInstitution() {
                           className="rounded-xl h-10"
                         />
                       ) : (
-                        <p className="font-bold text-foreground/80">{formData.short_code || "Not specified"}</p>
+                        <p className="font-bold text-foreground/80">{center?.short_code || "Not specified"}</p>
                       )}
                     </div>
                   </div>
@@ -995,43 +996,43 @@ export default function AboutInstitution() {
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-4">
-                  {[
-                    { id: 'website', label: 'Website', icon: Globe, color: 'text-primary' },
-                    { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-600' },
-                    { id: 'twitter', label: 'Twitter', icon: Twitter, color: 'text-sky-400' },
-                    { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
-                    { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' }
-                  ].map((platform) => (
-                    <div key={platform.id} className="flex items-center gap-4">
-                      <div className={cn("p-2 rounded-xl bg-muted/50", platform.color)}>
-                        <platform.icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{platform.label}</p>
-                        {isEditing ? (
-                          <Input
-                            value={(formData.social_links || {})[platform.id as keyof SocialLinks] || ""}
-                            onChange={(e) => updateSocialLink(platform.id as keyof SocialLinks, e.target.value)}
-                            className="rounded-xl h-10"
-                            placeholder={`URL for ${platform.label}`}
-                          />
-                        ) : (
-                          (formData.social_links || {})[platform.id as keyof SocialLinks] ? (
-                            <a
-                              href={(formData.social_links || {})[platform.id as keyof SocialLinks]}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="font-bold text-primary hover:underline flex items-center gap-2"
-                            >
-                              Visit Page <ChevronRight className="h-3 w-3" />
-                            </a>
+                    {[
+                      { id: 'website', label: 'Website', icon: Globe, color: 'text-primary' },
+                      { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-600' },
+                      { id: 'twitter', label: 'Twitter', icon: Twitter, color: 'text-sky-400' },
+                      { id: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-500' },
+                      { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' }
+                    ].map((platform) => (
+                      <div key={platform.id} className="flex items-center gap-4">
+                        <div className={cn("p-2 rounded-xl bg-muted/50", platform.color)}>
+                          <platform.icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{platform.label}</p>
+                          {isEditing ? (
+                            <Input
+                              value={(formData.social_links || {})[platform.id as keyof SocialLinks] || ""}
+                              onChange={(e) => updateSocialLink(platform.id as keyof SocialLinks, e.target.value)}
+                              className="rounded-xl h-10"
+                              placeholder={`URL for ${platform.label}`}
+                            />
                           ) : (
-                            <p className="font-bold text-muted-foreground opacity-50 italic text-xs">Not connected</p>
-                          )
-                        )}
+                            (center?.social_links as unknown as SocialLinks)?.[platform.id as keyof SocialLinks] ? (
+                              <a
+                                href={(center?.social_links as unknown as SocialLinks)?.[platform.id as keyof SocialLinks]}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-bold text-primary hover:underline flex items-center gap-2"
+                              >
+                                Visit Page <ChevronRight className="h-3 w-3" />
+                              </a>
+                            ) : (
+                              <p className="font-bold text-muted-foreground opacity-50 italic text-xs">Not connected</p>
+                            )
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </CardContent>
             </Card>

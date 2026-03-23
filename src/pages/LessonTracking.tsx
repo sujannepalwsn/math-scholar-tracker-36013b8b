@@ -406,7 +406,7 @@ export default function LessonTracking() {
               RECORD SESSION
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-labelledby="record-lesson-title" aria-describedby="record-lesson-description">
+          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto" aria-labelledby="record-lesson-title" aria-describedby="record-lesson-description">
             <DialogHeader>
               <DialogTitle id="record-lesson-title">Record Lesson Taught</DialogTitle>
               <DialogDescription id="record-lesson-description">Select a lesson plan and students who attended</DialogDescription>
@@ -779,7 +779,7 @@ export default function LessonTracking() {
 
       {/* View Lesson Dialog */}
       <Dialog open={showViewLessonDialog} onOpenChange={setShowViewLessonDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Lesson Tracking Details</DialogTitle>
             <DialogDescription>Complete log of student performance for this session.</DialogDescription>
@@ -858,7 +858,7 @@ export default function LessonTracking() {
 
       {/* Edit Student Lesson Record Dialog */}
       <Dialog open={showEditStudentRecordDialog} onOpenChange={setShowEditStudentRecordDialog}>
-        <DialogContent className="max-w-xl" aria-labelledby="edit-student-lesson-record-title" aria-describedby="edit-student-lesson-record-description">
+        <DialogContent className="w-[95vw] sm:max-w-xl" aria-labelledby="edit-student-lesson-record-title" aria-describedby="edit-student-lesson-record-description">
           <DialogHeader>
             <DialogTitle id="edit-student-lesson-record-title">Edit Student Lesson Record</DialogTitle>
             <DialogDescription id="edit-student-lesson-record-description">

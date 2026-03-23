@@ -59,7 +59,7 @@ export default function ParentChapterDetailModal({ open, onOpenChange, chapterGr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl p-0">
+      <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl p-0">
         <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-md p-8 border-b border-slate-100 shrink-0">
           <DialogHeader>
             <div className="flex items-center gap-4 mb-2">

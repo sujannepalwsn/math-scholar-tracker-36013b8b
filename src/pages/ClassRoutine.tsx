@@ -1009,7 +1009,7 @@ export default function ClassRoutine() {
 
       {/* Global Dialogs */}
       <Dialog open={showImportDialog} onOpenChange={(open) => { setShowImportDialog(open); if (!open) resetImport(); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Import Routine CSV</DialogTitle>
             <DialogDescription>Bulk upload class schedule from a CSV file (Max 2000 rows, 5MB).</DialogDescription>
@@ -1094,7 +1094,7 @@ export default function ClassRoutine() {
       </Dialog>
 
       <Dialog open={!!selectedVacantClass} onOpenChange={(open) => !open && setSelectedVacantClass(null)}>
-        <DialogContent className="max-w-2xl" aria-labelledby="vacant-fulfillment-title" aria-describedby="vacant-fulfillment-description">
+        <DialogContent className="w-[95vw] sm:max-w-2xl" aria-labelledby="vacant-fulfillment-title" aria-describedby="vacant-fulfillment-description">
           <DialogHeader>
             <DialogTitle id="vacant-fulfillment-title">Vacant Period Fulfilment</DialogTitle>
             <DialogDescription id="vacant-fulfillment-description">
@@ -1160,7 +1160,7 @@ export default function ClassRoutine() {
       </Dialog>
 
       <Dialog open={showScheduleDialog} onOpenChange={(open) => { setShowScheduleDialog(open); if (!open) resetScheduleForm(); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[95vw] sm:max-w-lg">
           <DialogHeader><DialogTitle>{editingSchedule ? "Edit Schedule" : "Add Schedule"}</DialogTitle><DialogDescription>Configure a class schedule entry.</DialogDescription></DialogHeader>
           <form onSubmit={handleScheduleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

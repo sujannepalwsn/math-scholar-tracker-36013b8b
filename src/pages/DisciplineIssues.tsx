@@ -277,7 +277,7 @@ export default function DisciplineIssues() {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" /> Log Issue</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="discipline-issue-log-title" aria-describedby="discipline-issue-log-description">
+            <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="discipline-issue-log-title" aria-describedby="discipline-issue-log-description">
               <DialogHeader>
                 <DialogTitle id="discipline-issue-log-title">{editingIssue ? "Edit Discipline Issue" : "Log New Discipline Issue"}</DialogTitle>
                 <DialogDescription id="discipline-issue-log-description">
@@ -500,7 +500,7 @@ export default function DisciplineIssues() {
 
       {/* Discipline Category Management Dialog */}
       <Dialog open={showCategoryManagement} onOpenChange={setShowCategoryManagement}>
-        <DialogContent className="max-w-2xl" aria-labelledby="discipline-category-management-title" aria-describedby="discipline-category-management-description">
+        <DialogContent className="w-[95vw] sm:max-w-2xl" aria-labelledby="discipline-category-management-title" aria-describedby="discipline-category-management-description">
           <DialogHeader>
             <DialogTitle id="discipline-category-management-title">Manage Discipline Categories</DialogTitle>
             <DialogDescription id="discipline-category-management-description">

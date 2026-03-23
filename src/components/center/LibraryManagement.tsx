@@ -132,7 +132,7 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="catalog">
-        <TabsList className="bg-slate-100 p-1 rounded-xl h-12">
+        <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-slate-100 p-1 rounded-xl h-12">
           <TabsTrigger value="catalog" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Book Catalog</TabsTrigger>
           <TabsTrigger value="loans" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Issue / Return</TabsTrigger>
         </TabsList>

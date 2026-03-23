@@ -77,8 +77,14 @@ export default function DashboardHeader() {
     enabled: !!user?.center_id
   });
 
+  // Keep track of when we last saved to prevent immediate re-syncing while refetching
+  const [lastSaved, setLastSaved] = useState<number>(0);
+
   useEffect(() => {
-    if (center && !isEditMode) {
+    // Only sync from DB if NOT editing AND we aren't in the middle of a post-save refetch
+    const isRecentlySaved = Date.now() - lastSaved < 2000;
+
+    if (center && !isEditMode && !isRecentlySaved) {
       setFormData({
         name: center.name || "",
         address: center.address || "",
@@ -105,29 +111,29 @@ export default function DashboardHeader() {
         header_website_visible: center.header_website_visible !== false
       });
     }
-  }, [center, isEditMode]);
+  }, [center, isEditMode, lastSaved]);
 
   const updateCenterMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("centers")
         .update({
-          name: formData.name,
-          address: formData.address,
-          phone: formData.phone,
-          email: formData.email,
-          principal_name: formData.principal_name,
-          short_code: formData.short_code,
-          website_url: formData.website_url,
+          name: center?.name,
+          address: center?.address,
+          phone: center?.phone,
+          email: center?.email,
+          principal_name: center?.principal_name,
+          short_code: center?.short_code,
+          website_url: center?.website_url,
           logo_url: formData.logo_url,
-          header_bg_url: formData.header_bg_url,
-          header_overlay_color: formData.header_overlay_color,
-          header_overlay_opacity: formData.header_overlay_opacity,
-          header_font_family: formData.header_font_family,
-          header_font_color: formData.header_font_color,
-          header_font_size: formData.header_font_size,
-          header_text_transform: formData.header_text_transform,
+          header_bg_url: center?.header_bg_url,
+          header_overlay_color: center?.header_overlay_color,
+          header_overlay_opacity: center?.header_overlay_opacity,
+          header_font_family: center?.header_font_family,
+          header_font_color: center?.header_font_color,
+          header_font_size: center?.header_font_size,
+          header_text_transform: center?.header_text_transform,
           header_title_visible: formData.header_title_visible,
           header_address_visible: formData.header_address_visible,
           header_principal_visible: formData.header_principal_visible,
@@ -137,18 +143,17 @@ export default function DashboardHeader() {
           header_email_visible: formData.header_email_visible,
           header_website_visible: formData.header_website_visible
         })
-        .eq("id", user.center_id);
+        .eq("id", user.center_id)
+        .select()
+        .single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
-      // Optimistically update the query cache with the current form data
-      queryClient.setQueryData(["center-details", user?.center_id], (oldData: Tables<'centers'> | undefined) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          ...formData
-        };
-      });
+    onSuccess: (updatedData) => {
+      setLastSaved(Date.now());
+
+      // Update the query cache with the ACTUAL data returned from the server
+      queryClient.setQueryData(["center-details", user?.center_id], updatedData);
 
       queryClient.invalidateQueries({ queryKey: ["center-details"] });
       queryClient.invalidateQueries({ queryKey: ["center-about"] }); // Cross-invalidate AboutInstitution
@@ -210,10 +215,10 @@ export default function DashboardHeader() {
   return (
     <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">
       {/* Background Image */}
-      {formData.header_bg_url && (
+      {center?.header_bg_url && (
         <div
           className="absolute inset-0 z-0 pointer-events-none bg-cover bg-center"
-          style={{ backgroundImage: `url(${formData.header_bg_url})` }}
+          style={{ backgroundImage: `url(${center?.header_bg_url})` }}
         />
       )}
 
@@ -221,16 +226,16 @@ export default function DashboardHeader() {
       <div
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
-          backgroundColor: formData.header_overlay_color || "rgba(255, 255, 255, 0.9)",
-          opacity: (formData.header_overlay_opacity || 90) / 100
+          backgroundColor: center?.header_overlay_color || "rgba(255, 255, 255, 0.9)",
+          opacity: (center?.header_overlay_opacity || 90) / 100
         }}
       />
 
       <CardContent
         className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8"
         style={{
-          fontFamily: formData.header_font_family || 'inherit',
-          color: formData.header_font_color || 'inherit'
+          fontFamily: center?.header_font_family || 'inherit',
+          color: center?.header_font_color || 'inherit'
         }}
       >
         {/* Centered Name and Address */}
@@ -245,10 +250,10 @@ export default function DashboardHeader() {
                     onChange={handleInputChange}
                     className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center pr-10"
                     style={{
-                      fontSize: formData.header_font_size === 'large' ? '2.5rem' : formData.header_font_size === 'small' ? '1.5rem' : '2rem',
-                      color: formData.header_font_color || 'inherit',
-                      fontFamily: formData.header_font_family || 'inherit',
-                      textTransform: formData.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize",
+                      fontSize: center?.header_font_size === 'large' ? '2.5rem' : center?.header_font_size === 'small' ? '1.5rem' : '2rem',
+                      color: center?.header_font_color || 'inherit',
+                      fontFamily: center?.header_font_family || 'inherit',
+                      textTransform: center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize",
                       opacity: formData.header_title_visible ? 1 : 0.5
                     }}
                     placeholder="School Name"
@@ -264,20 +269,20 @@ export default function DashboardHeader() {
                 <h1
                   className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
                   style={{
-                    fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
-                    color: formData.header_font_color || '#1e293b',
-                    fontFamily: formData.header_font_family || 'inherit',
-                    textTransform: formData.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize"
+                    fontSize: center?.header_font_size === 'large' ? '3rem' : center?.header_font_size === 'small' ? '1.5rem' : '2.25rem',
+                    color: center?.header_font_color || '#1e293b',
+                    fontFamily: center?.header_font_family || 'inherit',
+                    textTransform: center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize"
                   }}
                 >
-                  {formData.name || "School Name"}
+                  {center?.name || "School Name"}
                 </h1>
               )}
             </div>
           )}
 
           {(isEditMode || formData.header_address_visible) && (
-            <div className="flex flex-col items-center gap-1 w-full" style={{ color: formData.header_font_color || '#4285f4' }}>
+            <div className="flex flex-col items-center gap-1 w-full" style={{ color: center?.header_font_color || '#4285f4' }}>
               {isEditMode ? (
                 <div className="flex items-center gap-2 max-w-xl mx-auto w-full relative group/item">
                   <MapPin className="h-4 w-4 shrink-0" />
@@ -287,7 +292,7 @@ export default function DashboardHeader() {
                     onChange={handleInputChange}
                     className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center pr-10"
                     style={{
-                      color: formData.header_font_color || 'inherit',
+                      color: center?.header_font_color || 'inherit',
                       opacity: formData.header_address_visible ? 1 : 0.5
                     }}
                     placeholder="Address"
@@ -302,7 +307,7 @@ export default function DashboardHeader() {
               ) : (
                 <div className="flex items-center justify-center gap-2 max-w-3xl mx-auto">
                   <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-                  <span className="text-xs md:text-lg font-bold opacity-80 break-words">{formData.address || "Address not specified"}</span>
+                  <span className="text-xs md:text-lg font-bold opacity-80 break-words">{center?.address || "Address not specified"}</span>
                 </div>
               )}
             </div>
@@ -367,7 +372,7 @@ export default function DashboardHeader() {
                     <div className="flex gap-1.5 items-center">
                       <input
                         type="color"
-                        value={formData.header_overlay_color.startsWith('rgba') ? '#ffffff' : formData.header_overlay_color}
+                        value={formData.header_overlay_color.startsWith('rgba') ? '#ffffff' : center?.header_overlay_color}
                         onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
                         className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
                       />
@@ -381,7 +386,7 @@ export default function DashboardHeader() {
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Opacity</Label>
-                      <span className="text-[8px] font-black text-primary">{formData.header_overlay_opacity}%</span>
+                      <span className="text-[8px] font-black text-primary">{center?.header_overlay_opacity}%</span>
                     </div>
                     <input
                       type="range"
@@ -439,7 +444,7 @@ export default function DashboardHeader() {
                           onClick={() => setFormData(prev => ({ ...prev, header_font_size: size }))}
                           className={cn(
                             "flex-1 h-5 text-[7px] font-black uppercase rounded-sm transition-all",
-                            formData.header_font_size === size ? "bg-white shadow-sm text-primary" : "text-slate-400"
+                            center?.header_font_size === size ? "bg-white shadow-sm text-primary" : "text-slate-400"
                           )}
                         >
                           {size}
@@ -462,7 +467,7 @@ export default function DashboardHeader() {
                           onClick={() => setFormData(prev => ({ ...prev, header_text_transform: transform.id }))}
                           className={cn(
                             "flex-1 h-5 text-[6px] font-black uppercase rounded-sm transition-all",
-                            formData.header_text_transform === transform.id ? "bg-white shadow-sm text-primary" : "text-slate-400"
+                            center?.header_text_transform === transform.id ? "bg-white shadow-sm text-primary" : "text-slate-400"
                           )}
                         >
                           {transform.label}
