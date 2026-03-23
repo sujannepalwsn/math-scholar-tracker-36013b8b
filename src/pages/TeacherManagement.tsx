@@ -27,7 +27,21 @@ interface BulkTeacherEntry {
   name: string;
   email: string;
   contactNumber: string;
+  hireDate: string;
+  address: string;
+  employeeId: string;
+  dob: string;
+  gender: string;
   monthlySalary: number;
+  qualifications: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankName: string;
+  emergencyContactName: string;
+  emergencyContactRelation: string;
+  emergencyContactPhone: string;
+  expectedCheckIn: string;
+  expectedCheckOut: string;
   regularInTime: string;
   regularOutTime: string;
 }
@@ -137,17 +151,132 @@ export default function TeacherManagement() {
     setEditingTeacher(null); setBulkText(""); setParsedBulkEntries([]);
   };
 
+  const parseCSV = (csv: string): string[][] => {
+    const rows: string[][] = [];
+    let current = "";
+    let row: string[] = [];
+    let inQuotes = false;
+    for (let i = 0; i < csv.length; i++) {
+      const ch = csv[i];
+      const nxt = csv[i + 1];
+      if (ch === '"') {
+        if (inQuotes && nxt === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === "," && !inQuotes) {
+        row.push(current.trim());
+        current = "";
+      } else if ((ch === "\n" || ch === "\r") && !inQuotes) {
+        if (current !== "" || row.length > 0) {
+          row.push(current.trim());
+          rows.push(row);
+          row = [];
+          current = "";
+        }
+        if (ch === "\r" && csv[i + 1] === "\n") i++;
+      } else {
+        current += ch;
+      }
+    }
+    if (current !== "" || row.length > 0) {
+      row.push(current.trim());
+      rows.push(row);
+    }
+    return rows;
+  };
+
   const parseBulkText = () => {
-    const lines = bulkText.trim().split('\n').filter(line => line.trim());
+    const parsed = parseCSV(bulkText.trim());
+    if (!parsed || parsed.length === 0) {
+      toast.error("No valid entries found");
+      return;
+    }
+
+    const header = parsed[0].map(h => h.toLowerCase().trim());
+    const expectedFields = ["name", "email", "contact_number", "hire_date", "address", "employee_id", "dob", "gender", "monthly_salary", "qualifications", "bank_account_name", "bank_account_number", "bank_name", "emergency_contact_name", "emergency_contact_relation", "emergency_contact_phone", "expected_check_in", "expected_check_out", "regular_in_time", "regular_out_time"];
+
+    let startIndex = 0;
+    let hasHeader = expectedFields.every(f => header.includes(f));
+    if (hasHeader) startIndex = 1;
+
     const entries: BulkTeacherEntry[] = [];
-    for (const line of lines) {
-      const parts = line.split(',').map(p => p.trim());
-      if (parts.length >= 1 && parts[0]) {
-        entries.push({ name: parts[0], email: parts[1] || '', contactNumber: parts[2] || '', monthlySalary: parseFloat(parts[3]) || 0, regularInTime: parts[4] || '09:00', regularOutTime: parts[5] || '17:00' });
+    for (let i = startIndex; i < parsed.length; i++) {
+      const cols = parsed[i];
+      if (cols.length === 0 || !cols[0]) continue;
+
+      if (hasHeader) {
+        const rowObj: any = {};
+        for (let c = 0; c < header.length; c++) {
+          rowObj[header[c]] = cols[c] || "";
+        }
+        entries.push({
+          name: rowObj["name"] || "",
+          email: rowObj["email"] || "",
+          contactNumber: rowObj["contact_number"] || "",
+          hireDate: rowObj["hire_date"] || format(new Date(), "yyyy-MM-dd"),
+          address: rowObj["address"] || "",
+          employeeId: rowObj["employee_id"] || "",
+          dob: rowObj["dob"] || "",
+          gender: rowObj["gender"] || "Male",
+          monthlySalary: parseFloat(rowObj["monthly_salary"]) || 0,
+          qualifications: rowObj["qualifications"] || "",
+          bankAccountName: rowObj["bank_account_name"] || "",
+          bankAccountNumber: rowObj["bank_account_number"] || "",
+          bankName: rowObj["bank_name"] || "",
+          emergencyContactName: rowObj["emergency_contact_name"] || "",
+          emergencyContactRelation: rowObj["emergency_contact_relation"] || "",
+          emergencyContactPhone: rowObj["emergency_contact_phone"] || "",
+          expectedCheckIn: rowObj["expected_check_in"] || "09:00",
+          expectedCheckOut: rowObj["expected_check_out"] || "17:00",
+          regularInTime: rowObj["regular_in_time"] || "09:00",
+          regularOutTime: rowObj["regular_out_time"] || "17:00",
+        });
+      } else {
+        const [
+          name = "", email = "", contactNumber = "", hireDate = format(new Date(), "yyyy-MM-dd"),
+          address = "", employeeId = "", dob = "", gender = "Male",
+          monthlySalary = "0", qualifications = "",
+          bankAccountName = "", bankAccountNumber = "", bankName = "",
+          emergencyContactName = "", emergencyContactRelation = "", emergencyContactPhone = "",
+          expectedCheckIn = "09:00", expectedCheckOut = "17:00",
+          regularInTime = "09:00", regularOutTime = "17:00"
+        ] = cols;
+        entries.push({
+          name, email, contactNumber, hireDate, address, employeeId, dob, gender,
+          monthlySalary: parseFloat(monthlySalary) || 0, qualifications,
+          bankAccountName, bankAccountNumber, bankName,
+          emergencyContactName, emergencyContactRelation, emergencyContactPhone,
+          expectedCheckIn, expectedCheckOut, regularInTime, regularOutTime
+        });
       }
     }
     setParsedBulkEntries(entries);
     entries.length > 0 ? toast.success(`Parsed ${entries.length} teacher entries`) : toast.error("No valid entries found");
+  };
+
+  const downloadTemplate = () => {
+    const header = ["name", "email", "contact_number", "hire_date", "address", "employee_id", "dob", "gender", "monthly_salary", "qualifications", "bank_account_name", "bank_account_number", "bank_name", "emergency_contact_name", "emergency_contact_relation", "emergency_contact_phone", "expected_check_in", "expected_check_out", "regular_in_time", "regular_out_time"];
+    const example = ["Jane Doe", "jane@example.com", "9800000000", "2024-01-01", "456 Avenue", "EMP001", "1990-01-01", "Female", "30000", "M.Sc Mathematics", "Jane Doe", "1234567890", "Global Bank", "Robert Doe", "Husband", "9811111111", "09:00", "17:00", "09:00", "17:00"];
+    const csv = [header.join(","), example.join(",")].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "teachers-template.csv";
+    a.click();
+  };
+
+  const handleCsvFile = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBulkText(String(reader.result || ""));
+      toast.info("CSV loaded. Click Parse to review.");
+    };
+    reader.readAsText(file);
   };
 
   const createTeacherMutation = useMutation({
@@ -178,9 +307,33 @@ export default function TeacherManagement() {
       if (!user?.center_id) throw new Error("Center ID not found");
       if (parsedBulkEntries.length === 0) throw new Error("No entries to add");
       const teachersToInsert = parsedBulkEntries.map(entry => ({
-        center_id: user.center_id, name: entry.name, contact_number: entry.contactNumber || null, email: entry.email || null,
-        hire_date: format(new Date(), "yyyy-MM-dd"), is_active: true, monthly_salary: entry.monthlySalary || 0,
-        regular_in_time: entry.regularInTime || '09:00', regular_out_time: entry.regularOutTime || '17:00' }));
+        center_id: user.center_id,
+        name: entry.name,
+        contact_number: entry.contactNumber || null,
+        email: entry.email || null,
+        hire_date: entry.hireDate || format(new Date(), "yyyy-MM-dd"),
+        is_active: true,
+        address: entry.address || null,
+        employee_id: entry.employeeId || null,
+        date_of_birth: entry.dob || null,
+        gender: entry.gender || "Male",
+        monthly_salary: entry.monthlySalary || 0,
+        qualifications: entry.qualifications ? entry.qualifications.split(',').map(q => q.trim()).filter(Boolean) : [],
+        bank_details: {
+          account_name: entry.bankAccountName || null,
+          account_number: entry.bankAccountNumber || null,
+          bank_name: entry.bankName || null
+        },
+        emergency_contact: {
+          name: entry.emergencyContactName || null,
+          relation: entry.emergencyContactRelation || null,
+          phone: entry.emergencyContactPhone || null
+        },
+        expected_check_in: entry.expectedCheckIn || "09:00",
+        expected_check_out: entry.expectedCheckOut || "17:00",
+        regular_in_time: entry.regularInTime || '09:00',
+        regular_out_time: entry.regularOutTime || '17:00'
+      }));
       const { data: newTeachers, error } = await supabase.from("teachers").insert(teachersToInsert as any).select();
       if (error) throw error;
       if (newTeachers && newTeachers.length > 0) {
@@ -453,19 +606,75 @@ export default function TeacherManagement() {
                   <Button onClick={handleSubmit} disabled={!name || createTeacherMutation.isPending} className="w-full">{createTeacherMutation.isPending ? "Adding..." : "Add Teacher"}</Button>
                 </TabsContent>
                 <TabsContent value="bulk" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label>Bulk Entry (CSV Format)</Label>
-                    <p className="text-sm text-muted-foreground">Name, Email, Contact, Salary, InTime, OutTime</p>
-                    <Textarea placeholder={`John Doe, john@example.com, 9876543210, 25000, 09:00, 17:00`} value={bulkText} onChange={(e) => setBulkText(e.target.value)} rows={6} />
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <Label>Bulk Entry (CSV Format)</Label>
+                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Provide CSV text or upload a file</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={downloadTemplate} className="h-8 text-[10px] font-black uppercase tracking-widest">
+                        Template
+                      </Button>
+                      <input
+                        type="file"
+                        accept=".csv,text/csv"
+                        id="teacher-csv-upload"
+                        className="hidden"
+                        onChange={(e) => handleCsvFile(e.target.files?.[0] ?? null)}
+                      />
+                      <label htmlFor="teacher-csv-upload">
+                        <Button variant="outline" size="sm" asChild className="h-8 text-[10px] font-black uppercase tracking-widest cursor-pointer">
+                          <span>Upload CSV</span>
+                        </Button>
+                      </label>
+                    </div>
                   </div>
-                  <Button variant="outline" onClick={parseBulkText} className="w-full"><Upload className="h-4 w-4 mr-2" /> Parse</Button>
+                  <Textarea
+                    placeholder="name, email, contact_number, hire_date, address, employee_id, dob, gender, monthly_salary, qualifications, bank_account_name, bank_account_number, bank_name, emergency_contact_name, emergency_contact_relation, emergency_contact_phone, expected_check_in, expected_check_out, regular_in_time, regular_out_time"
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    rows={6}
+                    className="font-mono text-xs"
+                  />
+                  <Button variant="outline" onClick={parseBulkText} className="w-full h-10 font-black uppercase tracking-widest text-[10px] border-2">
+                    <Upload className="h-4 w-4 mr-2" /> Parse Data
+                  </Button>
                   {parsedBulkEntries.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Parsed ({parsedBulkEntries.length})</Label>
-                      <div className="max-h-40 overflow-y-auto border rounded p-2 text-sm">
-                        {parsedBulkEntries.map((entry, idx) => <div key={idx} className="py-1 border-b last:border-0"><strong>{entry.name}</strong> - {entry.email || 'No email'} - ₹{entry.monthlySalary}</div>)}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-black uppercase tracking-widest">Parsed Matrix ({parsedBulkEntries.length})</Label>
                       </div>
-                      <Button onClick={() => bulkCreateTeachersMutation.mutate()} disabled={bulkCreateTeachersMutation.isPending} className="w-full">{bulkCreateTeachersMutation.isPending ? "Adding..." : `Add ${parsedBulkEntries.length} Teachers`}</Button>
+                      <div className="max-h-64 overflow-auto border rounded-2xl">
+                        <Table>
+                          <TableHeader className="bg-muted/50">
+                            <TableRow>
+                              <TableHead className="text-[9px] font-black uppercase tracking-tighter">Name</TableHead>
+                              <TableHead className="text-[9px] font-black uppercase tracking-tighter">Email</TableHead>
+                              <TableHead className="text-[9px] font-black uppercase tracking-tighter">Contact</TableHead>
+                              <TableHead className="text-[9px] font-black uppercase tracking-tighter">Salary</TableHead>
+                              <TableHead className="text-[9px] font-black uppercase tracking-tighter">Timing</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {parsedBulkEntries.map((entry, idx) => (
+                              <TableRow key={idx} className="text-[10px]">
+                                <TableCell className="font-bold">{entry.name}</TableCell>
+                                <TableCell>{entry.email}</TableCell>
+                                <TableCell>{entry.contactNumber}</TableCell>
+                                <TableCell>₹{entry.monthlySalary}</TableCell>
+                                <TableCell>{entry.regularInTime}-{entry.regularOutTime}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      <Button
+                        onClick={() => bulkCreateTeachersMutation.mutate()}
+                        disabled={bulkCreateTeachersMutation.isPending}
+                        className="w-full h-12 bg-slate-900 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg"
+                      >
+                        {bulkCreateTeachersMutation.isPending ? "Adding Faculty..." : `Execute Batch Enrolment (${parsedBulkEntries.length})`}
+                      </Button>
                     </div>
                   )}
                 </TabsContent>

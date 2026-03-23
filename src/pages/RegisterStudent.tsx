@@ -48,6 +48,11 @@ type StudentInput = {
   school_name: string;
   parent_name: string;
   contact_number: string;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  blood_group?: string | null;
+  roll_number?: string | null;
+  address?: string | null;
   center_id?: string | null;
 };
 
@@ -391,7 +396,7 @@ export default function RegisterStudent() {
     const header = rows[0].map((h) => h.toLowerCase());
     let startIndex = 0;
     let hasHeader = false;
-    const expectedFields = ["name", "grade", "school_name", "parent_name", "contact_number"];
+    const expectedFields = ["name", "grade", "school_name", "parent_name", "contact_number", "date_of_birth", "gender", "blood_group", "roll_number", "address"];
     const matchesHeader = expectedFields.every((f) => header.includes(f));
     if (matchesHeader) {
       hasHeader = true;
@@ -404,7 +409,7 @@ export default function RegisterStudent() {
       if (hasHeader) {
         const rowObj: any = {};
         for (let c = 0; c < header.length; c++) {
-          const key = header[c];
+          const key = header[c].trim();
           const val = cols[c] ?? "";
           rowObj[key] = val;
         }
@@ -413,15 +418,27 @@ export default function RegisterStudent() {
           grade: (rowObj["grade"] || "").trim(),
           school_name: (rowObj["school_name"] || rowObj["school"] || "").trim(),
           parent_name: (rowObj["parent_name"] || rowObj["parent"] || "").trim(),
-          contact_number: (rowObj["contact_number"] || rowObj["contact"] || "").trim() };
+          contact_number: (rowObj["contact_number"] || rowObj["contact"] || "").trim(),
+          date_of_birth: (rowObj["date_of_birth"] || "").trim() || null,
+          gender: (rowObj["gender"] || "Male").trim(),
+          blood_group: (rowObj["blood_group"] || "").trim() || null,
+          roll_number: (rowObj["roll_number"] || "").trim() || null,
+          address: (rowObj["address"] || "").trim() || null
+        };
       } else {
-        const [name = "", grade = "", school_name = "", parent_name = "", contact_number = ""] = cols;
+        const [name = "", grade = "", school_name = "", parent_name = "", contact_number = "", dob = "", gender = "Male", blood = "", roll = "", addr = ""] = cols;
         student = {
           name: name.trim(),
           grade: grade.trim(),
           school_name: school_name.trim(),
           parent_name: parent_name.trim(),
-          contact_number: contact_number.trim() };
+          contact_number: contact_number.trim(),
+          date_of_birth: dob.trim() || null,
+          gender: gender.trim() || "Male",
+          blood_group: blood.trim() || null,
+          roll_number: roll.trim() || null,
+          address: addr.trim() || null
+        };
       }
       const rowNumber = i + 1;
       const rowErrors: string[] = [];
@@ -482,8 +499,8 @@ export default function RegisterStudent() {
   };
 
   const downloadTemplate = () => {
-    const header = ["name", "grade", "school_name", "parent_name", "contact_number"];
-    const example = ["John Doe", "6", "ABC School", "Robert Doe", "9812345678"];
+    const header = ["name", "grade", "school_name", "parent_name", "contact_number", "date_of_birth", "gender", "blood_group", "roll_number", "address"];
+    const example = ["John Doe", "6", "ABC School", "Robert Doe", "9812345678", "2010-05-15", "Male", "O+", "01", "123 Street Name"];
     const csv = [header.join(","), example.join(",")].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1003,6 +1020,11 @@ export default function RegisterStudent() {
                   <TableHead className="font-black uppercase text-[9px] tracking-widest">Academy</TableHead>
                   <TableHead className="font-black uppercase text-[9px] tracking-widest">Guardian</TableHead>
                   <TableHead className="font-black uppercase text-[9px] tracking-widest">Telecom</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">DOB</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Gender</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Blood</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Roll</TableHead>
+                  <TableHead className="font-black uppercase text-[9px] tracking-widest">Address</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1013,6 +1035,11 @@ export default function RegisterStudent() {
                     <TableCell className="text-[10px] font-medium text-slate-500">{row.school_name}</TableCell>
                     <TableCell className="text-xs font-black uppercase text-slate-600">{row.parent_name}</TableCell>
                     <TableCell className="text-xs font-black text-primary">{row.contact_number}</TableCell>
+                    <TableCell className="text-[10px]">{row.date_of_birth || '-'}</TableCell>
+                    <TableCell className="text-[10px]">{row.gender || '-'}</TableCell>
+                    <TableCell className="text-[10px]">{row.blood_group || '-'}</TableCell>
+                    <TableCell className="text-[10px]">{row.roll_number || '-'}</TableCell>
+                    <TableCell className="text-[10px] truncate max-w-[100px]">{row.address || '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
