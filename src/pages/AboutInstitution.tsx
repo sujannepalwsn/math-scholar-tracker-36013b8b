@@ -186,6 +186,7 @@ export default function AboutInstitution() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["center-about"] });
+      queryClient.invalidateQueries({ queryKey: ["center-details"] });
       toast.success("Institution information updated successfully!");
       setIsEditing(false);
     },

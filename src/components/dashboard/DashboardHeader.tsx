@@ -89,23 +89,23 @@ export default function DashboardHeader() {
         website_url: center.website_url || "",
         logo_url: center.logo_url || "",
         header_bg_url: center.header_bg_url || "",
-        header_overlay_color: (center as any).header_overlay_color || "rgba(255, 255, 255, 0.9)",
-        header_overlay_opacity: (center as any).header_overlay_opacity || 90,
-        header_font_family: (center as any).header_font_family || "Inter",
-        header_font_color: (center as any).header_font_color || "#1e293b",
-        header_font_size: (center as any).header_font_size || "normal",
-        header_text_transform: (center as any).header_text_transform || "none",
-        header_title_visible: (center as any).header_title_visible !== false,
-        header_address_visible: (center as any).header_address_visible !== false,
-        header_principal_visible: (center as any).header_principal_visible !== false,
-        header_code_visible: (center as any).header_code_visible !== false,
-        header_year_visible: (center as any).header_year_visible !== false,
-        header_contact_visible: (center as any).header_contact_visible !== false,
-        header_email_visible: (center as any).header_email_visible !== false,
-        header_website_visible: (center as any).header_website_visible !== false
+        header_overlay_color: center.header_overlay_color || "rgba(255, 255, 255, 0.9)",
+        header_overlay_opacity: center.header_overlay_opacity || 90,
+        header_font_family: center.header_font_family || "Inter",
+        header_font_color: center.header_font_color || "#1e293b",
+        header_font_size: center.header_font_size || "normal",
+        header_text_transform: center.header_text_transform || "none",
+        header_title_visible: center.header_title_visible !== false,
+        header_address_visible: center.header_address_visible !== false,
+        header_principal_visible: center.header_principal_visible !== false,
+        header_code_visible: center.header_code_visible !== false,
+        header_year_visible: center.header_year_visible !== false,
+        header_contact_visible: center.header_contact_visible !== false,
+        header_email_visible: center.header_email_visible !== false,
+        header_website_visible: center.header_website_visible !== false
       });
     }
-  }, [center]);
+  }, [center, isEditMode]);
 
   const updateCenterMutation = useMutation({
     mutationFn: async () => {
@@ -141,13 +141,23 @@ export default function DashboardHeader() {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Optimistically update the query cache with the current form data
+      queryClient.setQueryData(["center-details", user?.center_id], (oldData: Tables<'centers'> | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          ...formData
+        };
+      });
+
       queryClient.invalidateQueries({ queryKey: ["center-details"] });
+      queryClient.invalidateQueries({ queryKey: ["center-about"] }); // Cross-invalidate AboutInstitution
       queryClient.invalidateQueries({ queryKey: ["center-branding"] });
       queryClient.invalidateQueries({ queryKey: ["center-logo"] });
       toast.success("School details updated successfully!");
       setIsEditMode(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update school details");
     }
   });
@@ -180,9 +190,10 @@ export default function DashboardHeader() {
       setFormData(prev => ({ ...prev, [type === 'logo' ? 'logo_url' : 'header_bg_url']: publicUrl }));
       toast.dismiss(toastId);
       toast.success(`${type === 'logo' ? 'Logo' : 'Background'} ready!`);
-    } catch (error: any) {
+    } catch (error) {
       toast.dismiss(toastId);
-      toast.error(`Upload failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error(`Upload failed: ${errorMessage}`);
     }
   };
 
@@ -237,7 +248,7 @@ export default function DashboardHeader() {
                       fontSize: formData.header_font_size === 'large' ? '2.5rem' : formData.header_font_size === 'small' ? '1.5rem' : '2rem',
                       color: formData.header_font_color || 'inherit',
                       fontFamily: formData.header_font_family || 'inherit',
-                      textTransform: formData.header_text_transform as any,
+                      textTransform: formData.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize",
                       opacity: formData.header_title_visible ? 1 : 0.5
                     }}
                     placeholder="School Name"
@@ -256,7 +267,7 @@ export default function DashboardHeader() {
                     fontSize: formData.header_font_size === 'large' ? '3rem' : formData.header_font_size === 'small' ? '1.5rem' : '2.25rem',
                     color: formData.header_font_color || '#1e293b',
                     fontFamily: formData.header_font_family || 'inherit',
-                    textTransform: formData.header_text_transform as any
+                    textTransform: formData.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize"
                   }}
                 >
                   {formData.name || "School Name"}
