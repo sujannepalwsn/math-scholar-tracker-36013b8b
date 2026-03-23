@@ -24,7 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Database, Tables } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { KPICard } from "@/components/dashboard/KPICard"
-import { hasPermission } from "@/utils/permissions"
+import { hasPermission, hasActionPermission } from "@/utils/permissions"
 
 type Teacher = Tables<'teachers'>;
 type TeacherAttendance = Tables<'teacher_attendance'>;
