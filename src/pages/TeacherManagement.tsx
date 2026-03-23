@@ -46,9 +46,12 @@ interface BulkTeacherEntry {
   regularOutTime: string;
 }
 
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
+
 export default function TeacherManagement() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const hasFullAccess = hasActionPermission(user, 'teacher_management', 'edit');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
 
@@ -282,6 +285,7 @@ export default function TeacherManagement() {
   const createTeacherMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to enrol faculty.");
       const { error, data: newTeacher } = await supabase.from("teachers").insert({
         center_id: user.center_id, name, contact_number: contactNumber || null, email: email || null,
         hire_date: hireDate, is_active: true, monthly_salary: parseFloat(monthlySalary) || 0,
@@ -327,6 +331,7 @@ export default function TeacherManagement() {
   const bulkCreateTeachersMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to perform bulk enrolment.");
       if (parsedBulkEntries.length === 0) throw new Error("No entries to add");
       const teachersToInsert = parsedBulkEntries.map(entry => ({
         center_id: user.center_id,
@@ -396,6 +401,7 @@ export default function TeacherManagement() {
   const updateTeacherMutation = useMutation({
     mutationFn: async () => {
       if (!editingTeacher || !user?.center_id) throw new Error("Teacher or Center ID not found");
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to update faculty records.");
       const { error } = await supabase.from("teachers").update({
         name, contact_number: contactNumber || null, email: email || null, hire_date: hireDate,
         monthly_salary: parseFloat(monthlySalary) || 0, regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
@@ -412,6 +418,7 @@ export default function TeacherManagement() {
 
   const toggleTeacherStatusMutation = useMutation({
     mutationFn: async (teacher: Teacher) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to toggle faculty status.");
       const { error } = await supabase.from("teachers").update({ is_active: !teacher.is_active }).eq("id", teacher.id);
       if (error) throw error;
     },
@@ -419,13 +426,18 @@ export default function TeacherManagement() {
     onError: (error: any) => toast.error(error.message) });
 
   const deleteTeacherMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("teachers").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to delete faculty records.");
+      const { error } = await supabase.from("teachers").delete().eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher deleted!"); },
     onError: (error: any) => toast.error(error.message) });
 
   const createTeacherLoginMutation = useMutation({
     mutationFn: async () => {
       if (!selectedTeacherForLogin || !user?.center_id) throw new Error("Missing info");
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to generate faculty logins.");
       const { data: existingUser, error: existingUserError } = await supabase.from('users').select('id').eq('username', teacherUsername).single();
       if (existingUserError && existingUserError.code !== 'PGRST116') throw existingUserError;
       if (existingUser) throw new Error('Username already exists.');
@@ -440,6 +452,7 @@ export default function TeacherManagement() {
   const assignClassTeacherMutation = useMutation({
     mutationFn: async () => {
       if (!selectedTeacherForClassAssign || !user?.center_id || classTeacherGrade === "select-grade") throw new Error("Select a grade");
+      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to assign class teachers.");
       // Upsert: replace existing assignment for that grade
       const { error } = await supabase.from("class_teacher_assignments").upsert({
         teacher_id: selectedTeacherForClassAssign.id,
@@ -512,12 +525,14 @@ export default function TeacherManagement() {
             </div>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
-                <Plus className="h-5 w-5 mr-2" />
-                ENROL FACULTY
-              </Button>
-            </DialogTrigger>
+            {hasFullAccess && (
+              <DialogTrigger asChild>
+                <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+                  <Plus className="h-5 w-5 mr-2" />
+                  ENROL FACULTY
+                </Button>
+              </DialogTrigger>
+            )}
           <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="teacher-dialog-title" aria-describedby="teacher-dialog-description">
             <DialogHeader>
               <DialogTitle id="teacher-dialog-title">{editingTeacher ? "Edit Teacher" : "Add New Teacher(s)"}</DialogTitle>
@@ -815,21 +830,29 @@ export default function TeacherManagement() {
                         </TableCell>
                         <TableCell className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-1.5">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleEditClick(teacher)}>
-                              <Edit className="h-3.5 w-3.5 text-primary" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleClassTeacherClick(teacher)} title="Assign Grade Oversight">
-                              <GraduationCap className="h-3.5 w-3.5 text-primary" />
-                            </Button>
+                            {hasFullAccess && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleEditClick(teacher)}>
+                                  <Edit className="h-3.5 w-3.5 text-primary" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleClassTeacherClick(teacher)} title="Assign Grade Oversight">
+                                  <GraduationCap className="h-3.5 w-3.5 text-primary" />
+                                </Button>
+                              </>
+                            )}
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleHRClick(teacher)} title="HR & Documents">
                               <FileText className="h-3.5 w-3.5 text-blue-600" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleManagePermissionsClick(teacher)}>
-                              <Settings className="h-3.5 w-3.5 text-slate-500" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteTeacherMutation.mutate(teacher.id)}>
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
+                            {hasFullAccess && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleManagePermissionsClick(teacher)}>
+                                  <Settings className="h-3.5 w-3.5 text-slate-500" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteTeacherMutation.mutate(teacher.id)}>
+                                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

@@ -31,8 +31,11 @@ interface CenterTheme {
 }
 
 
+import { hasActionPermission } from "@/utils/permissions";
+
 export default function CenterSettings() {
   const { user, logout } = useAuth();
+  const canEdit = hasActionPermission(user, 'settings_access', 'edit');
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "general";
@@ -196,6 +199,7 @@ export default function CenterSettings() {
   const updateCenterMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to update center settings.");
       const { error } = await supabase
         .from("centers")
         .update({
@@ -683,7 +687,7 @@ export default function CenterSettings() {
               <CardDescription className="font-medium">Define tax slabs and late penalty protocols.</CardDescription>
             </CardHeader>
             <CardContent className="p-8">
-              <PayrollSettings centerId={user?.center_id || ""} />
+              <PayrollSettings centerId={user?.center_id || ""} canEdit={canEdit} />
             </CardContent>
           </Card>
         </TabsContent>

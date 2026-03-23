@@ -146,6 +146,7 @@ export default function Messaging() {
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
       if (!selectedConversation?.id || !user?.id || !newMessage.trim()) throw new Error("Missing data");
+      if (!canEdit && user.role !== 'parent') throw new Error("Access Denied: You do not have permission to send messages.");
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: selectedConversation.id,
         sender_user_id: user.id,
@@ -209,6 +210,7 @@ export default function Messaging() {
   const createConversationMutation = useMutation({
     mutationFn: async (studentData: any) => {
       if (!user?.center_id) throw new Error("Center ID not found");
+      if (!canEdit && user.role !== 'parent') throw new Error("Access Denied: You do not have permission to start conversations.");
       const { data: existing } = await supabase.from("chat_conversations").select("id").eq("center_id", user.center_id).eq("student_id", studentData.id).eq("parent_user_id", studentData.parentUser.id).maybeSingle();
       if (existing) return existing;
       const { data, error } = await supabase.from("chat_conversations").insert({ center_id: user.center_id, student_id: studentData.id, parent_user_id: studentData.parentUser.id }).select().single();
@@ -228,6 +230,7 @@ export default function Messaging() {
   const sendBroadcastMessageMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id || !user?.center_id || !broadcastMessageText.trim()) throw new Error("Required fields missing");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to send broadcasts.");
       const { data, error } = await supabase.functions.invoke("send-broadcast-message", {
         body: { senderUserId: user.id, centerId: user.center_id, messageText: broadcastMessageText.trim(), targetAudience: broadcastTargetAudience, targetGrade: broadcastTargetGrade === "all" ? null : broadcastTargetGrade },
       });

@@ -70,6 +70,7 @@ export default function TransportManagement({ centerId, canEdit }: { centerId: s
 
   const addRouteMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add routes.");
       const { error } = await supabase.from("bus_routes").insert({
         center_id: centerId,
         route_name: routeForm.name,
@@ -88,6 +89,7 @@ export default function TransportManagement({ centerId, canEdit }: { centerId: s
 
   const addVehicleMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add vehicles.");
       const { error } = await supabase.from("vehicles").insert({
         center_id: centerId,
         vehicle_number: vehicleForm.number,
@@ -109,6 +111,7 @@ export default function TransportManagement({ centerId, canEdit }: { centerId: s
 
   const assignTransportMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to assign transport.");
       if (selectedStudents.length === 0) throw new Error("Please select at least one student");
 
       const inserts = selectedStudents.map(studentId => ({

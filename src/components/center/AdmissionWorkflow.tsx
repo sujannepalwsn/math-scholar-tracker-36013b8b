@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
+export default function AdmissionWorkflow({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [selectedApp, setSelectedApp] = useState<any>(null);
 
@@ -32,6 +32,7 @@ export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to update application status.");
       const { error } = await supabase
         .from("admission_applications")
         .update({ status })
@@ -135,19 +136,23 @@ export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="ghost" size="icon" onClick={() => setSelectedApp(app)}><Eye className="h-4 w-4" /></Button>
-                  {app.status === "Application Submitted" || app.status === "Application Under Review" ? (
+                  {canEdit && (
                     <>
-                      <Button variant="ghost" size="icon" className="text-emerald-600" onClick={() => updateStatusMutation.mutate({ id: app.id, status: "Application Approved" })}>
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-rose-600" onClick={() => updateStatusMutation.mutate({ id: app.id, status: "Rejected" })}>
-                        <X className="h-4 w-4" />
-                      </Button>
+                      {app.status === "Application Submitted" || app.status === "Application Under Review" ? (
+                        <>
+                          <Button variant="ghost" size="icon" className="text-emerald-600" onClick={() => updateStatusMutation.mutate({ id: app.id, status: "Application Approved" })}>
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-rose-600" onClick={() => updateStatusMutation.mutate({ id: app.id, status: "Rejected" })}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : app.status === "Application Approved" && (
+                        <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase" onClick={() => updateStatusMutation.mutate({ id: app.id, status: "Enrollment Completed" })}>
+                           Complete Enrollment
+                        </Button>
+                      )}
                     </>
-                  ) : app.status === "Application Approved" && (
-                    <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase" onClick={() => updateStatusMutation.mutate({ id: app.id, status: "Enrollment Completed" })}>
-                       Complete Enrollment
-                    </Button>
                   )}
                 </TableCell>
               </TableRow>

@@ -220,6 +220,7 @@ export default function TakeAttendance() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!filteredStudents || !user?.center_id) return;
+      if (!hasEditPermission) throw new Error("Access Denied: You do not have permission to mark attendance.");
       // Delete existing records for these students on this date
       const { error: deleteError } = await supabase.from("attendance").delete().eq("date", dateStr).in("student_id", filteredStudents.map((s) => s.id));
       if (deleteError) throw deleteError;

@@ -120,6 +120,9 @@ export default function LessonPlans() {
 
   const saveLessonPlan = useMutation({
     mutationFn: async (submit: boolean) => {
+      if (!hasActionPermission(user, 'lesson_plans', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to create or modify lesson plans.");
+      }
       if (!user?.center_id) throw new Error("Center ID not found");
       let fileUrl: string | null = editingLessonPlan?.lesson_file_url || null;
       if (file) fileUrl = await uploadFile(file, "lesson-files");
@@ -177,7 +180,12 @@ export default function LessonPlans() {
   });
 
   const deleteLessonPlanMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("lesson_plans").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      if (!hasActionPermission(user, 'lesson_plans', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to delete lesson plans.");
+      }
+      const { error } = await supabase.from("lesson_plans").delete().eq("id", id); if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans-all"] }); toast.success("Deleted!"); },
     onError: (error: Error) => toast.error(error.message || "Failed to delete") });
 

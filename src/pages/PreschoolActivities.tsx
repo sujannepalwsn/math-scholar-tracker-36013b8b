@@ -151,6 +151,9 @@ export default function PreschoolActivities() {
 
   const createActivityMutation = useMutation({
     mutationFn: async () => {
+      if (!hasActionPermission(user, 'preschool_activities', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to log activities.");
+      }
       if (!user?.center_id || selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title) throw new Error("Please select at least one student, activity type, and provide a title."); // Validation
 
       let photoUrl: string | null = null;
@@ -209,6 +212,9 @@ export default function PreschoolActivities() {
 
   const updateActivityMutation = useMutation({
     mutationFn: async () => {
+      if (!hasActionPermission(user, 'preschool_activities', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to modify activities.");
+      }
       if (!editingActivity || !user?.center_id || selectedStudentIds.length === 0 || activityTypeId === "select-activity-type" || !title) throw new Error("Please select a student, activity type, and provide a title."); // Validation
 
       let photoUrl: string | null = (editingActivity as any).activities?.photo_url;
@@ -245,6 +251,9 @@ export default function PreschoolActivities() {
 
   const deleteActivityMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!hasActionPermission(user, 'preschool_activities', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to delete activities.");
+      }
       // First delete the student_activity record
       const { error: saDeleteError } = await supabase.from("student_activities").delete().eq("id", id);
       if (saDeleteError) throw saDeleteError;

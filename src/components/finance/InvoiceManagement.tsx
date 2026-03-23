@@ -62,6 +62,7 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const createInvoiceMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error('Center ID not found');
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to create invoices.');
       
       const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
       
@@ -90,6 +91,7 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const generateBulkInvoicesMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error('Center ID not found');
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to generate bulk invoices.');
 
       const { data, error } = await supabase.functions.invoke('generate-monthly-invoices', {
         body: {
@@ -117,6 +119,7 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
 
   const markAsPaidMutation = useMutation({
     mutationFn: async (invoiceId: string) => {
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to mark invoices as paid.');
       const invoice = invoices.find(i => i.id === invoiceId);
       if (!invoice) throw new Error('Invoice not found');
 

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-export default function AlumniManagement({ centerId }: { centerId: string }) {
+export default function AlumniManagement({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Graduated");
@@ -39,6 +39,7 @@ export default function AlumniManagement({ centerId }: { centerId: string }) {
 
   const generateTCMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to generate transfer certificates.");
       const { error } = await supabase.from("transfer_certificates").insert({
         center_id: centerId,
         student_id: selectedStudentForTC.id,
@@ -118,7 +119,9 @@ export default function AlumniManagement({ centerId }: { centerId: string }) {
                   <TableCell className="text-xs">{s.student_id_number || "-"}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="ghost" size="icon" title="View History"><History className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" title="Generate TC" onClick={() => setSelectedStudentForTC(s)}><FileText className="h-4 w-4" /></Button>
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" title="Generate TC" onClick={() => setSelectedStudentForTC(s)}><FileText className="h-4 w-4" /></Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -66,6 +66,7 @@ export default function SchoolDays() {
   const upsertMutation = useMutation({
     mutationFn: async (payload: any) => {
       if (!centerId) throw new Error("Center ID is missing");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to modify school days.");
 
       const upsertData: any = {
         center_id: centerId,
@@ -93,6 +94,7 @@ export default function SchoolDays() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to remove calendar overrides.");
       const { error } = await supabase.from("school_days").delete().eq("id", id);
       if (error) throw error;
     },

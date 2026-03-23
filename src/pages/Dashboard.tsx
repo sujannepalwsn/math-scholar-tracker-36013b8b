@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib/utils";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { AlertList } from "@/components/dashboard/AlertList";
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule";
+import { hasActionPermission } from "@/utils/permissions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
@@ -43,6 +44,9 @@ export default function Dashboard() {
   const [attendanceRange, setAttendanceRange] = useState<AttendanceRange>("weekly");
   const [selectedVacantClass, setSelectedVacantClass] = useState<any>(null);
   const [isCustomizeMode, setIsCustomizeMode] = useState(false);
+
+  const canEditRoutine = hasActionPermission(user, 'class_routine', 'edit');
+  const canEditDashboard = hasActionPermission(user, 'dashboard', 'edit');
 
   const [kpiOrder, setKpiOrder] = useState<string[]>([]);
   const [visibleWidgets, setVisibleWidgets] = useState<Record<string, boolean>>({});
@@ -757,6 +761,8 @@ export default function Dashboard() {
       });
       if (error) throw error;
 
+      if (!canEditRoutine) throw new Error("Access Denied: You do not have permission to assign substitutions.");
+
       // Create notification for the substitute teacher
       const subTeacher = teachers.find(t => t.id === teacherId);
       if (subTeacher?.user_id) {
@@ -911,18 +917,20 @@ export default function Dashboard() {
         <div className="p-2 rounded-full bg-white shadow-soft border border-slate-100 h-10 w-10 flex items-center justify-center">
           <NotificationBell />
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsCustomizeMode(!isCustomizeMode)}
-          className={cn(
-            "gap-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all",
-            isCustomizeMode ? "bg-primary text-primary-foreground shadow-medium" : "text-muted-foreground"
-          )}
-        >
-          <Settings2 className={cn("h-4 w-4", isCustomizeMode && "animate-spin-slow")} />
-          {isCustomizeMode ? "Exit Customization" : "Customize Dashboard"}
-        </Button>
+        {canEditDashboard && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCustomizeMode(!isCustomizeMode)}
+            className={cn(
+              "gap-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all",
+              isCustomizeMode ? "bg-primary text-primary-foreground shadow-medium" : "text-muted-foreground"
+            )}
+          >
+            <Settings2 className={cn("h-4 w-4", isCustomizeMode && "animate-spin-slow")} />
+            {isCustomizeMode ? "Exit Customization" : "Customize Dashboard"}
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

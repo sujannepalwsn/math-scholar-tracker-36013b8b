@@ -170,6 +170,7 @@ export default function Tests() {
   // Create test mutation
   const createTestMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to create or modify tests.");
       let uploadedFileUrl = null;
 
       if (uploadedFile) {
@@ -229,6 +230,7 @@ export default function Tests() {
   // Add test result mutation
   const addResultMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to record test results.");
       const totalMarksObtainedFromQuestions = questionMarks.reduce((sum, qm) => sum + qm.marksObtained, 0);
 
       const resultData = {
@@ -286,6 +288,7 @@ export default function Tests() {
   // Bulk marks entry mutation
   const bulkMarksMutation = useMutation({
     mutationFn: async (marks: Array<{ studentId: string; marks: number }>) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to perform bulk marks entry.");
       console.log("Attempting bulk marks save for test:", selectedTest, "with marks:", marks);
 
       // Delete existing records for these students in this test to prevent unique constraint errors
@@ -349,6 +352,7 @@ export default function Tests() {
   // Delete test result
   const deleteResultMutation = useMutation({
     mutationFn: async (resultId: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete results.");
       const { error } = await supabase
         .from("test_results")
         .delete()
@@ -367,6 +371,7 @@ export default function Tests() {
   // Delete test mutation
   const deleteTestMutation = useMutation({
     mutationFn: async (testId: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete tests.");
       const test = tests.find(t => t.id === testId);
       if (!test) throw new Error("Test not found");
       

@@ -63,6 +63,7 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
 
   const distributeMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to distribute consumables.");
       if (!showDistribute) return;
       const amount = parseFloat(distForm.amount);
       const { data: current } = await supabase.from('consumables').select('current_stock').eq('id', showDistribute).single();
@@ -129,6 +130,7 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
 
   const updateStockMutation = useMutation({
     mutationFn: async ({ id, amount, type }: { id: string, amount: number, type: 'consume' | 'dispose' }) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to adjust inventory stock.");
       const { data: current } = await supabase.from('consumables').select('current_stock').eq('id', id).single();
       if (!current) throw new Error("Item not found");
 
@@ -160,6 +162,7 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
 
   const addMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add consumables.");
       const { error } = await supabase.from("consumables").insert({
         center_id: centerId,
         name: form.name,

@@ -54,6 +54,7 @@ const FeeManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const createHeadingMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error('Center ID not found');
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to create fee headings.');
       const { error } = await supabase
         .from('fee_headings')
         .insert({
@@ -76,6 +77,7 @@ const FeeManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const createStructureMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error('Center ID not found');
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to create fee structures.');
       const { error } = await supabase
         .from('fee_structures')
         .insert({
@@ -98,6 +100,7 @@ const FeeManagement = ({ canEdit }: { canEdit?: boolean }) => {
 
   const deleteHeadingMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to delete fee headings.');
       const { error } = await supabase.from('fee_headings').delete().eq('id', id);
       if (error) throw error;
     },

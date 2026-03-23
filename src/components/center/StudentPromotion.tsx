@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users } from "lucide-react";
 
-export default function StudentPromotion({ centerId }: { centerId: string }) {
+export default function StudentPromotion({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [fromGrade, setFromGrade] = useState<string>("");
   const [toGrade, setToGrade] = useState<string>("");
@@ -34,6 +34,7 @@ export default function StudentPromotion({ centerId }: { centerId: string }) {
 
   const promoteMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to execute promotions.");
       if (!toGrade || selectedStudentIds.length === 0) {
         throw new Error("Please select target grade and at least one student.");
       }
@@ -192,13 +193,15 @@ export default function StudentPromotion({ centerId }: { centerId: string }) {
             <p className="text-xs text-muted-foreground font-medium">
               {selectedStudentIds.length} students selected for promotion.
             </p>
-            <Button
-              disabled={promoteMutation.isPending || selectedStudentIds.length === 0 || !toGrade}
-              onClick={() => promoteMutation.mutate()}
-              className="rounded-xl font-black uppercase text-xs tracking-widest"
-            >
-              Execute Promotion
-            </Button>
+            {canEdit && (
+              <Button
+                disabled={promoteMutation.isPending || selectedStudentIds.length === 0 || !toGrade}
+                onClick={() => promoteMutation.mutate()}
+                className="rounded-xl font-black uppercase text-xs tracking-widest"
+              >
+                Execute Promotion
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

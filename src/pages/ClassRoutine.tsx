@@ -185,6 +185,7 @@ export default function ClassRoutine() {
 
   const createSubjectMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage subjects.");
       if (!user?.center_id) throw new Error("Center ID not found");
       const { error } = await supabase.from("subjects").insert({ center_id: user.center_id, name: subjectName });
       if (error) throw error;
@@ -194,6 +195,7 @@ export default function ClassRoutine() {
 
   const updateSubjectMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage subjects.");
       if (!editingSubjectId) throw new Error("Subject ID not found");
       const { error } = await supabase.from("subjects").update({ name: subjectName }).eq("id", editingSubjectId);
       if (error) throw error;
@@ -202,12 +204,16 @@ export default function ClassRoutine() {
     onError: (error: any) => toast.error(error.message || "Failed to update subject") });
 
   const deleteSubjectMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("subjects").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete subjects.");
+      const { error } = await supabase.from("subjects").delete().eq("id", id); if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["registered-subjects"] }); toast.success("Subject deleted!"); },
     onError: (error: any) => toast.error(error.message || "Failed to delete subject") });
 
   const createPeriodMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage slots.");
       if (!user?.center_id) throw new Error("Center ID not found");
       const { error } = await supabase.from("class_periods").insert({ center_id: user.center_id, period_number: parseInt(periodNumber), start_time: startTime, end_time: endTime });
       if (error) throw error;
@@ -217,6 +223,7 @@ export default function ClassRoutine() {
 
   const updatePeriodMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage slots.");
       if (!editingPeriod?.id) throw new Error("Period ID not found");
       const { error } = await supabase.from("class_periods").update({ period_number: parseInt(periodNumber), start_time: startTime, end_time: endTime }).eq("id", editingPeriod.id);
       if (error) throw error;
@@ -225,12 +232,16 @@ export default function ClassRoutine() {
     onError: (error: any) => toast.error(error.message || "Failed to update period") });
 
   const deletePeriodMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("class_periods").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete slots.");
+      const { error } = await supabase.from("class_periods").delete().eq("id", id); if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["class-periods"] }); toast.success("Period deleted!"); },
     onError: (error: any) => toast.error(error.message || "Failed to delete period") });
 
   const createScheduleMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage schedule.");
       if (!user?.center_id) throw new Error("Center ID not found");
       // Sunday to Friday weekdays = 0-5
       if (scheduleDay === "weekdays") {
@@ -268,6 +279,7 @@ export default function ClassRoutine() {
 
   const updateScheduleMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage schedule.");
       if (!editingSchedule?.id) throw new Error("Schedule ID not found");
       const dayNum = parseInt(scheduleDay);
       if (isNaN(dayNum)) throw new Error("Invalid day selected");
@@ -284,7 +296,10 @@ export default function ClassRoutine() {
     onError: (error: any) => toast.error(error.message || "Failed to update schedule") });
 
   const deleteScheduleMutation = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("period_schedules").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete schedule.");
+      const { error } = await supabase.from("period_schedules").delete().eq("id", id); if (error) throw error;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["period-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["all-period-schedules"] });
@@ -294,6 +309,7 @@ export default function ClassRoutine() {
 
   const publishRoutineMutation = useMutation({
     mutationFn: async (publish: boolean) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to publish routine.");
       const { error } = await supabase.from("class_periods").update({ is_published: publish }).eq("center_id", user?.center_id);
       if (error) throw error;
     },
@@ -306,6 +322,7 @@ export default function ClassRoutine() {
 
   const importRoutineMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to import routine.");
       if (!user?.center_id || importPreview.length === 0) return;
 
       if (importMode === "replace") {
@@ -342,6 +359,7 @@ export default function ClassRoutine() {
 
   const assignSubstitutionMutation = useMutation({
     mutationFn: async (teacherId: string) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to assign substitutions.");
       const { error } = await supabase.from('class_substitutions').insert({
         center_id: user?.center_id,
         period_schedule_id: selectedVacantClass.id,

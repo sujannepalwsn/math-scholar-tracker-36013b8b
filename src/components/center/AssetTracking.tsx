@@ -30,6 +30,7 @@ export default function AssetTracking({ centerId, canEdit }: { centerId: string,
   const addAssetMutation = useMutation({
     mutationFn: async () => {
       if (!centerId) throw new Error("Security Context: Center ID not verified. Operation aborted.");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to add assets.");
       const payload: any = {
         center_id: centerId,
         name: assetForm.name,
@@ -60,6 +61,7 @@ export default function AssetTracking({ centerId, canEdit }: { centerId: string,
 
   const updateAssetStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string, status: string }) => {
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to update asset status.");
       const { error } = await supabase.from('assets').update({ status }).eq('id', id);
       if (error) throw error;
     },
