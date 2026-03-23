@@ -9,6 +9,12 @@ DROP POLICY IF EXISTS "Center and Admin access on nav_categories" ON public.nav_
 DROP POLICY IF EXISTS "Teacher read access on nav_items" ON public.nav_items;
 DROP POLICY IF EXISTS "Teacher read access on nav_categories" ON public.nav_categories;
 
+-- Drop the NEW policy names just in case they partially exist (avoid already exists error)
+DROP POLICY IF EXISTS "Allow center admins to manage nav_categories" ON public.nav_categories;
+DROP POLICY IF EXISTS "Allow authenticated users to view nav_categories" ON public.nav_categories;
+DROP POLICY IF EXISTS "Allow center admins to manage nav_items" ON public.nav_items;
+DROP POLICY IF EXISTS "Allow authenticated users to view nav_items" ON public.nav_items;
+
 -- Apply standardized non-recursive policies
 -- 1. nav_categories
 ALTER TABLE public.nav_categories ENABLE ROW LEVEL SECURITY;
