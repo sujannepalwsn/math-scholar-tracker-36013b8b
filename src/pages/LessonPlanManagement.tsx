@@ -281,7 +281,7 @@ export default function LessonPlanManagement() {
 
       {/* Review Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-0 sm:p-6">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-0 sm:p-6">
           <DialogHeader className="p-6 pb-0 sm:p-0">
             <DialogTitle className="text-xl font-black uppercase tracking-tight">Lesson Plan Review</DialogTitle>
             <DialogDescription>Detailed view for approving or rejecting a lesson plan.</DialogDescription>

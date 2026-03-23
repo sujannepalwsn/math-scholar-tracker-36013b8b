@@ -316,7 +316,7 @@ export default function ExamManagement() {
       </div>
 
       <Tabs defaultValue="exams" className="space-y-8">
-        <TabsList className="bg-white/50 border border-slate-100 p-1 rounded-2xl h-14 shadow-soft backdrop-blur-md">
+        <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-white/50 border border-slate-100 p-1 rounded-2xl h-14 shadow-soft backdrop-blur-md">
           <TabsTrigger value="exams" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Exams</TabsTrigger>
           <TabsTrigger value="settings" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Settings & Scales</TabsTrigger>
         </TabsList>

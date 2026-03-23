@@ -263,7 +263,7 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview">
-        <TabsList className="bg-slate-100 p-1 rounded-xl h-12">
+        <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-slate-100 p-1 rounded-xl h-12">
           <TabsTrigger value="overview" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Global Overview</TabsTrigger>
           <TabsTrigger value="profile" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Extended Profile</TabsTrigger>
           <TabsTrigger value="contracts" className="rounded-lg px-4 font-bold text-[10px] uppercase tracking-widest">Tenure & Salary</TabsTrigger>

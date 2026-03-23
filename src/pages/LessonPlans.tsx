@@ -409,7 +409,7 @@ export default function LessonPlans() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
           <DialogHeader>
             <div className="flex justify-between items-center pr-10">
               <div>
@@ -535,7 +535,7 @@ export default function LessonPlans() {
 
       {/* View/Approval Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-none shadow-strong">
+        <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-none shadow-strong">
           <style>
             {`
               @media print {

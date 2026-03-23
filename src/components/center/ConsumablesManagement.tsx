@@ -184,7 +184,7 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
   return (
     <div className="space-y-6">
       <Tabs defaultValue="inventory">
-        <TabsList className="bg-slate-100 p-1 rounded-xl h-12">
+        <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-slate-100 p-1 rounded-xl h-12">
           <TabsTrigger value="inventory" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Live Inventory</TabsTrigger>
           <TabsTrigger value="logs" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Distribution History</TabsTrigger>
         </TabsList>

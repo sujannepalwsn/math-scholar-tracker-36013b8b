@@ -2212,7 +2212,7 @@ export default function StudentReport() {
 
       {/* Exam Schedule Dialog */}
       <Dialog open={!!selectedExamSchedule} onOpenChange={() => setSelectedExamSchedule(null)}>
-        <DialogContent className="max-w-md rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md rounded-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
@@ -2265,7 +2265,7 @@ export default function StudentReport() {
 
       {/* Published Result Marksheet Dialog */}
       <Dialog open={!!selectedExamResult} onOpenChange={() => setSelectedExamResult(null)}>
-        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
           <DialogHeader className="no-print">
             <DialogTitle>Official Marksheet</DialogTitle>
             <DialogDescription>Formal academic record for {selectedExamResult?.name}</DialogDescription>
@@ -2408,7 +2408,7 @@ export default function StudentReport() {
 
       {/* Chapter Detail Dialog */}
       <Dialog open={!!selectedChapterDetail} onOpenChange={() => setSelectedChapterDetail(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <BookOpen className="h-6 w-6 text-blue-600" />
@@ -2547,7 +2547,7 @@ export default function StudentReport() {
 
       {/* Discipline Detail Dialog */}
       <Dialog open={!!selectedDisciplineIssue} onOpenChange={() => setSelectedDisciplineIssue(null)}>
-        <DialogContent className="max-w-md" aria-describedby="discipline-detail-description">
+        <DialogContent className="w-[95vw] sm:max-w-md" aria-describedby="discipline-detail-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />

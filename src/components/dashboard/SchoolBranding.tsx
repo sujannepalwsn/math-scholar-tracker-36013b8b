@@ -30,16 +30,16 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
 
   if (!center && !user?.center_name) return null;
 
-  const header_title_visible = (center as any)?.header_title_visible !== false;
-  const header_address_visible = (center as any)?.header_address_visible !== false;
+  const header_title_visible = center?.header_title_visible !== false;
+  const header_address_visible = center?.header_address_visible !== false;
 
   return (
     <div className={cn("flex flex-col items-center text-center px-2 py-1 rounded-xl relative overflow-hidden", className)}>
       {/* Optional Header Background Mini-Overlay if needed */}
-      {(center as any)?.header_bg_url && (
+      {center?.header_bg_url && (
         <div
           className="absolute inset-0 z-0 opacity-10 pointer-events-none bg-cover bg-center"
-          style={{ backgroundImage: `url(${(center as any).header_bg_url})` }}
+          style={{ backgroundImage: `url(${center.header_bg_url})` }}
         />
       )}
 
@@ -62,8 +62,8 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
               style={{
                 fontFamily: center?.header_font_family || 'inherit',
                 color: center?.header_font_color || 'inherit',
-                textTransform: (center as any)?.header_text_transform as any || 'none',
-                fontSize: (center as any)?.header_font_size === 'large' ? '1.1rem' : (center as any)?.header_font_size === 'small' ? '0.75rem' : '0.875rem'
+                textTransform: (center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize") || 'none',
+                fontSize: center?.header_font_size === 'large' ? '1.1rem' : center?.header_font_size === 'small' ? '0.75rem' : '0.875rem'
               }}
             >
               {center?.name || user?.center_name}

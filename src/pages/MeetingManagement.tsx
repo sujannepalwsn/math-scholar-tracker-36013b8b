@@ -219,7 +219,7 @@ export default function MeetingManagement() {
               CREATE SESSION
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="meeting-form-title" aria-describedby="meeting-form-description">
+          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="meeting-form-title" aria-describedby="meeting-form-description">
             <DialogHeader>
               <DialogTitle id="meeting-form-title" className="text-2xl font-black tracking-tight">{editingMeeting ? "Update Consultation" : "Schedule New Assembly"}</DialogTitle>
               <DialogDescription id="meeting-form-description" className="font-medium">
@@ -329,7 +329,7 @@ export default function MeetingManagement() {
 
       {/* Attendance Recorder Dialog */}
       <Dialog open={showAttendanceDialog} onOpenChange={setShowAttendanceDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="attendance-recorder-title" aria-describedby="attendance-recorder-description">
+        <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="attendance-recorder-title" aria-describedby="attendance-recorder-description">
           <DialogHeader>
             <DialogTitle id="attendance-recorder-title">Record Attendance for {selectedMeetingForAttendance?.title}</DialogTitle>
             <DialogDescription id="attendance-recorder-description">
@@ -347,7 +347,7 @@ export default function MeetingManagement() {
 
       {/* Conclusion Form/Viewer Dialog (now includes attendees) */}
       <Dialog open={showConclusionDialog} onOpenChange={setShowConclusionDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="conclusion-dialog-title" aria-describedby="conclusion-dialog-description">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="conclusion-dialog-title" aria-describedby="conclusion-dialog-description">
           <DialogHeader>
             <DialogTitle id="conclusion-dialog-title">Meeting Details for {selectedMeetingForConclusion?.title}</DialogTitle>
             <DialogDescription id="conclusion-dialog-description">

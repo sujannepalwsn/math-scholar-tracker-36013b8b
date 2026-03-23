@@ -605,7 +605,7 @@ export default function RegisterStudent() {
       </div>
 
       <Tabs defaultValue="enrolment" className="space-y-8">
-        <TabsList className="bg-card/40 backdrop-blur-md border border-border/20 rounded-2xl p-1 h-14 shadow-soft">
+        <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-card/40 backdrop-blur-md border border-border/20 rounded-2xl p-1 h-14 shadow-soft">
           <TabsTrigger value="enrolment" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Enrolment</TabsTrigger>
           <TabsTrigger value="admission" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Admission Pipeline</TabsTrigger>
           <TabsTrigger value="promotion" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Promotion</TabsTrigger>
@@ -976,7 +976,7 @@ export default function RegisterStudent() {
 
       {/* CSV Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl" aria-labelledby="csv-preview-title" aria-describedby="csv-preview-description">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[85vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl" aria-labelledby="csv-preview-title" aria-describedby="csv-preview-description">
           <DialogHeader>
             <DialogTitle id="csv-preview-title" className="text-2xl font-black tracking-tight">Bulk Import Matrix</DialogTitle>
             <DialogDescription id="csv-preview-description" className="text-[10px] font-black uppercase tracking-widest text-primary/60">
@@ -1032,7 +1032,7 @@ export default function RegisterStudent() {
 
       {/* Create Parent Dialog */}
       <Dialog open={isCreatingParent} onOpenChange={setIsCreatingParent}>
-        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl" aria-labelledby="create-parent-title" aria-describedby="create-parent-description">
+        <DialogContent className="w-[95vw] sm:max-w-md rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl" aria-labelledby="create-parent-title" aria-describedby="create-parent-description">
           <DialogHeader>
             <DialogTitle id="create-parent-title" className="text-2xl font-black tracking-tight">Access Protocol Setup</DialogTitle>
             <DialogDescription id="create-parent-description" className="text-[10px] font-black uppercase tracking-widest text-primary">
@@ -1073,7 +1073,7 @@ export default function RegisterStudent() {
 
       {/* Edit Student Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black flex items-center gap-3">
                <div className="p-2 rounded-xl bg-primary/10">

@@ -855,7 +855,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-6 pb-24 md:pb-8 animate-in fade-in duration-1000">
       {/* Substitution Dialog */}
       <Dialog open={!!selectedVacantClass} onOpenChange={(open) => !open && setSelectedVacantClass(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black">Assign Substitute</DialogTitle>
             <DialogDescription className="font-medium">

@@ -411,7 +411,7 @@ export default function PublishedResults() {
 
       {/* Exam Schedule Dialog */}
       <Dialog open={!!selectedExamSchedule} onOpenChange={() => setSelectedExamSchedule(null)}>
-        <DialogContent className="max-w-md rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-md rounded-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
@@ -464,7 +464,7 @@ export default function PublishedResults() {
 
       {/* Marksheet Modal */}
       <Dialog open={!!selectedStudentResult} onOpenChange={() => setSelectedStudentResult(null)}>
-        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
+        <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
           <DialogHeader className="no-print">
             <DialogTitle>Student Marksheet</DialogTitle>
             <DialogDescription>Formal academic record for {selectedExam?.name}</DialogDescription>

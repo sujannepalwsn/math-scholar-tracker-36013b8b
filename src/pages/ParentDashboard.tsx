@@ -966,7 +966,7 @@ const ParentDashboardContent = () => {
 
       {/* Chapter Detail Dialog */}
       <Dialog open={!!selectedChapterDetail} onOpenChange={() => setSelectedChapterDetail(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem]">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-black">
               <BookOpen className="h-6 w-6 text-primary" />
@@ -1065,7 +1065,7 @@ const ParentDashboardContent = () => {
 
       {/* Discipline Detail Dialog */}
       <Dialog open={!!selectedDisciplineIssue} onOpenChange={() => setSelectedDisciplineIssue(null)}>
-        <DialogContent className="max-w-md rounded-[2rem]">
+        <DialogContent className="w-[95vw] sm:max-w-md rounded-[2rem]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-black">
               <AlertTriangle className="h-5 w-5 text-rose-600" />

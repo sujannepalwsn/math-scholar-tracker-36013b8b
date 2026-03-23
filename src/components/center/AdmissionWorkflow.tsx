@@ -195,7 +195,7 @@ export default function AdmissionWorkflow({ centerId }: { centerId: string }) {
       </Dialog>
 
       <Dialog open={showPublicForm} onOpenChange={setShowPublicForm}>
-        <DialogContent className="max-w-md rounded-[2.5rem] bg-indigo-900 text-white border-none shadow-strong">
+        <DialogContent className="w-[95vw] sm:max-w-md rounded-[2.5rem] bg-indigo-900 text-white border-none shadow-strong">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase text-white">Public Admission Portal</DialogTitle>
             <DialogDescription className="text-indigo-200">Prospective student registration form</DialogDescription>

@@ -532,7 +532,7 @@ export default function Tests() {
                 Create Test
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="create-test-title" aria-describedby="create-test-description">
+          <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="create-test-title" aria-describedby="create-test-description">
             <DialogHeader>
               <DialogTitle id="create-test-title">Create New Test</DialogTitle>
               <DialogDescription id="create-test-description">
@@ -1012,7 +1012,7 @@ export default function Tests() {
       />
 
       <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Test Specifications & Results</DialogTitle>
             <DialogDescription>Overview of test structure and student scores.</DialogDescription>
