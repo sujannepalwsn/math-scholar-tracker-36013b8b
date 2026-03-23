@@ -97,12 +97,8 @@ export default function PreschoolActivities() {
         .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
         .in("student_id", studentIds);
 
-      // Full access for teachers if module is enabled
-      const canEdit = hasActionPermission(user, 'preschool_activities', 'edit');
-
-      if (user?.role === 'teacher' && !canEdit) {
-        query = query.eq('activities.created_by', user.id);
-      }
+      // Empowered teachers see all activities in the center if they have view permission
+      // Edit buttons are hidden separately based on hasActionPermission
 
       const { data, error } = await query.order("created_at", { ascending: false });
 

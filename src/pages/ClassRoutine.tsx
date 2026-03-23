@@ -1007,12 +1007,6 @@ export default function ClassRoutine() {
                             </Badge>
                           </TableCell>
                           <TableCell className="flex gap-1 print:hidden">
-                          {canEdit && (
-                            <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditSubject(s)}><Edit className="h-3 w-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSubjectMutation.mutate(s.id)}><Trash2 className="h-3 w-3" /></Button>
-                            </>
-                          )}
                             {canEdit && (
                               <>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditPeriod(p)}><Edit className="h-3 w-3" /></Button>

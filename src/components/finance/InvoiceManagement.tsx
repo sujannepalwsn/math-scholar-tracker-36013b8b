@@ -243,7 +243,6 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
                     </Button>
                   </div>
                 </DialogContent>
-                </DialogContent>
               </Dialog>
               )}
 

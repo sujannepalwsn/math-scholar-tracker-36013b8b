@@ -140,14 +140,14 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
         can_publish: false
       };
     }
-    // If turning ON master toggle, enable view/edit by default
+    // If turning ON master toggle, enable ALL sub-permissions by default
     else if (field === 'enabled' && value === true) {
       updatedModule = {
         enabled: true,
         can_view: true,
         can_edit: true,
-        can_approve: currentModule.can_approve,
-        can_publish: currentModule.can_publish
+        can_approve: true,
+        can_publish: true
       };
     }
 

@@ -296,7 +296,8 @@ export default function TeacherManagement() {
       const defaultModules = [
         'take_attendance', 'lesson_tracking', 'homework_management', 'preschool_activities',
         'discipline_issues', 'test_management', 'student_report', 'meetings_management',
-        'dashboard_access', 'class_routine', 'messaging', 'calendar_events', 'summary'
+        'dashboard_access', 'class_routine', 'messaging', 'calendar_events', 'summary',
+        'lesson_plans', 'leave_management', 'exams_results', 'published_results'
       ];
 
       const permissionsObj: any = {};
@@ -361,7 +362,8 @@ export default function TeacherManagement() {
         const defaultModules = [
           'take_attendance', 'lesson_tracking', 'homework_management', 'preschool_activities',
           'discipline_issues', 'test_management', 'student_report', 'meetings_management',
-          'dashboard_access', 'class_routine', 'messaging', 'calendar_events', 'summary'
+          'dashboard_access', 'class_routine', 'messaging', 'calendar_events', 'summary',
+          'lesson_plans', 'leave_management', 'exams_results', 'published_results'
         ];
 
         const permissions = newTeachers.map(t => {
