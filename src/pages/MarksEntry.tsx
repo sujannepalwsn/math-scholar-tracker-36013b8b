@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 function getGrade(percentage: number): string {
   if (percentage >= 90) return "A+";

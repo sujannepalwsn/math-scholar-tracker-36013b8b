@@ -270,7 +270,7 @@ export default function TakeAttendance() {
       toast.error("Cannot mark attendance on a non-school day.");
       return;
     }
-    if (isLocked && !canEdit) {
+    if (isLocked && !hasEditPermission) {
       toast.error("Attendance is locked. Only center admin can edit.");
       return;
     }
@@ -333,7 +333,7 @@ export default function TakeAttendance() {
         </Alert>
       )}
 
-      {isLocked && !canEdit && isOperationalDay && (
+      {isLocked && !hasEditPermission && isOperationalDay && (
         <div className="flex items-center gap-3 p-4 bg-orange-50/50 backdrop-blur-sm border border-orange-200 rounded-2xl text-orange-700 shadow-soft animate-in slide-in-from-top-2">
           <div className="p-2 rounded-xl bg-orange-100">
             <Lock className="h-4 w-4" />

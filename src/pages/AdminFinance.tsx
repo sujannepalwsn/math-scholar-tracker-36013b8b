@@ -14,7 +14,7 @@ import ExpenseManagement from '@/components/finance/ExpenseManagement';
 import FinanceReports from '@/components/finance/FinanceReports';
 import FinanceSettings from '@/components/finance/FinanceSettings';
 import { cn, formatCurrency } from "@/lib/utils"
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid, Bar, BarChart, Legend, Cell, Pie, PieChart } from "recharts";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
