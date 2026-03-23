@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
 import { cn } from "@/lib/utils"
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -84,7 +84,8 @@ export default function TakeAttendance() {
     enabled: !!user?.teacher_id && user?.role === 'teacher' });
 
   const isTeacher = user?.role === 'teacher';
-  const isCenter = hasPermission(user, 'take_attendance');
+  const isCenter = user?.role === 'center' || user?.role === 'admin';
+  const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
 
   const { data: students } = useQuery({
     queryKey: ["students", user?.center_id],
@@ -136,7 +137,8 @@ export default function TakeAttendance() {
 
   // Check if attendance is locked for this date
   const isLocked = existingAttendance?.some((a: any) => a.is_locked) || false;
-  const canEdit = isCenter; // Only center admin can edit locked attendance
+  const canModifyLocked = isCenter; // Only center admin can edit locked attendance
+  const canMarkAttendance = hasEditPermission;
 
   // For teachers, filter available grades to their assigned grades
   const availableGrades = students ? Array.from(new Set(students.map(s => s.grade))).sort() : [];
@@ -268,7 +270,7 @@ export default function TakeAttendance() {
       toast.error("Cannot mark attendance on a non-school day.");
       return;
     }
-    if (isLocked && !canEdit) {
+    if (isLocked && !hasEditPermission) {
       toast.error("Attendance is locked. Only center admin can edit.");
       return;
     }
@@ -331,7 +333,7 @@ export default function TakeAttendance() {
         </Alert>
       )}
 
-      {isLocked && !canEdit && isOperationalDay && (
+      {isLocked && !hasEditPermission && isOperationalDay && (
         <div className="flex items-center gap-3 p-4 bg-orange-50/50 backdrop-blur-sm border border-orange-200 rounded-2xl text-orange-700 shadow-soft animate-in slide-in-from-top-2">
           <div className="p-2 rounded-xl bg-orange-100">
             <Lock className="h-4 w-4" />
@@ -403,10 +405,10 @@ export default function TakeAttendance() {
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" type="button" size="sm" onClick={() => setBulkAction({ type: 'present', open: true })} disabled={(isLocked && !canEdit) || !isOperationalDay} className="rounded-xl border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600 h-10 px-4 font-bold">
+              <Button variant="outline" type="button" size="sm" onClick={() => setBulkAction({ type: 'present', open: true })} disabled={(isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance} className="rounded-xl border-2 hover:bg-green-50 hover:border-green-200 hover:text-green-600 h-10 px-4 font-bold">
                 Mark All Present
               </Button>
-              <Button variant="outline" type="button" size="sm" onClick={() => setBulkAction({ type: 'absent', open: true })} disabled={(isLocked && !canEdit) || !isOperationalDay} className="rounded-xl border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 h-10 px-4 font-bold">
+              <Button variant="outline" type="button" size="sm" onClick={() => setBulkAction({ type: 'absent', open: true })} disabled={(isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance} className="rounded-xl border-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 h-10 px-4 font-bold">
                 Mark All Absent
               </Button>
             </div>
@@ -457,7 +459,7 @@ export default function TakeAttendance() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleStatusChange(student.id, "present")}
-                          disabled={(isLocked && !canEdit) || !isOperationalDay}
+                          disabled={(isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance}
                           className={cn(
                             "flex-1 h-10 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all gap-2",
                             attendance[student.id]?.status === "present" ? "bg-green-500 border-green-500 text-white hover:bg-green-600 shadow-soft" : "hover:bg-green-50 text-muted-foreground"
@@ -470,7 +472,7 @@ export default function TakeAttendance() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleStatusChange(student.id, "late")}
-                          disabled={(isLocked && !canEdit) || !isOperationalDay}
+                          disabled={(isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance}
                           className={cn(
                             "flex-1 h-10 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all gap-2",
                             attendance[student.id]?.status === "late" ? "bg-yellow-500 border-yellow-500 text-white hover:bg-yellow-600 shadow-soft" : "hover:bg-yellow-50 text-muted-foreground"
@@ -483,7 +485,7 @@ export default function TakeAttendance() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleStatusChange(student.id, "absent")}
-                          disabled={(isLocked && !canEdit) || !isOperationalDay}
+                          disabled={(isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance}
                           className={cn(
                             "flex-1 h-10 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all gap-2",
                             attendance[student.id]?.status === "absent" ? "bg-red-500 border-red-500 text-white hover:bg-red-600 shadow-soft" : "hover:bg-red-50 text-muted-foreground"
@@ -501,7 +503,7 @@ export default function TakeAttendance() {
                               type="time"
                               value={attendance[student.id]?.timeIn || ""}
                               onChange={(e) => handleTimeChange(student.id, "timeIn", e.target.value)}
-                              disabled={(isLocked && !canEdit) || !isOperationalDay}
+                              disabled={(isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance}
                               className="h-10 bg-card/40 rounded-xl text-xs font-bold border-none shadow-inner"
                             />
                           </div>
@@ -511,7 +513,7 @@ export default function TakeAttendance() {
                               type="time"
                               value={attendance[student.id]?.timeOut || ""}
                               onChange={(e) => handleTimeChange(student.id, "timeOut", e.target.value)}
-                              disabled={(isLocked && !canEdit) || !isOperationalDay}
+                              disabled={(isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance}
                               className="h-10 bg-card/40 rounded-xl text-xs font-bold border-none shadow-inner"
                             />
                           </div>
@@ -524,7 +526,7 @@ export default function TakeAttendance() {
               <Button
                 type="submit"
                 className="w-full h-16 text-xl font-black shadow-strong rounded-[2rem] bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300 mt-8"
-                disabled={saveMutation.isPending || (isLocked && !canEdit) || !isOperationalDay}
+                disabled={saveMutation.isPending || (isLocked && !canModifyLocked) || !isOperationalDay || !canMarkAttendance}
               >
                 {saveMutation.isPending ? (
                   <div className="flex items-center gap-3">

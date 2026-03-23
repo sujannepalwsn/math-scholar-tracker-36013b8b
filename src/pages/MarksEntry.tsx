@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 function getGrade(percentage: number): string {
   if (percentage >= 90) return "A+";
@@ -27,7 +27,7 @@ function getGrade(percentage: number): string {
 
 export default function MarksEntry() {
   const { user } = useAuth();
-  const hasFullAccess = hasPermission(user, 'exams_results');
+  const canEdit = hasActionPermission(user, 'exams_results', 'edit');
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
@@ -144,7 +144,7 @@ export default function MarksEntry() {
 
   const saveMarks = useMutation({
     mutationFn: async () => {
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to enter marks.");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to enter marks.");
       if (!centerId || !selectedExamId) return;
       const records: any[] = [];
       Object.entries(marksData).forEach(([studentId, subjectMarks]) => {
@@ -294,7 +294,7 @@ export default function MarksEntry() {
 
       {selectedExamId && subjects.length > 0 && students.length > 0 && (
         <>
-          {hasFullAccess && (
+          {canEdit && (
             <div className="flex justify-end">
               <Button onClick={() => saveMarks.mutate()} disabled={saveMarks.isPending} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
                 {saveMarks.isPending ? "Commiting Marks..." : <><Save className="h-4 w-4 mr-2" /> Commit Score Registry</>}
@@ -336,6 +336,7 @@ export default function MarksEntry() {
                           className="w-20 mx-auto text-center h-9 font-bold bg-white/50 border-none shadow-soft rounded-xl focus:ring-primary/20"
                           value={marksData[student.id]?.[subj.id] || ""}
                           onChange={(e) => handleMarkChange(student.id, subj.id, e.target.value)}
+                          disabled={!canEdit}
                         />
                       </TableCell>
                     ))}

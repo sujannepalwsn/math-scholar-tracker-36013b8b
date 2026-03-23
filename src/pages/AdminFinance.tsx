@@ -14,7 +14,7 @@ import ExpenseManagement from '@/components/finance/ExpenseManagement';
 import FinanceReports from '@/components/finance/FinanceReports';
 import FinanceSettings from '@/components/finance/FinanceSettings';
 import { cn, formatCurrency } from "@/lib/utils"
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid, Bar, BarChart, Legend, Cell, Pie, PieChart } from "recharts";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 const AdminFinance = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const hasFullAccess = hasPermission(user, 'finance');
+  const canEdit = hasActionPermission(user, 'finance', 'edit');
 
   // Fetch invoices summary
   const { data: invoices = [] } = useQuery({
@@ -292,12 +292,12 @@ const AdminFinance = () => {
             <TabsTrigger value="settings" className="rounded-[1.5rem] flex-1 min-w-[100px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium font-black uppercase text-[10px] tracking-widest">Settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="invoices"><InvoiceManagement /></TabsContent>
-          <TabsContent value="fees"><FeeManagement /></TabsContent>
-          <TabsContent value="payments"><PaymentTracking /></TabsContent>
-          <TabsContent value="expenses"><ExpenseManagement /></TabsContent>
+          <TabsContent value="invoices"><InvoiceManagement canEdit={canEdit} /></TabsContent>
+          <TabsContent value="fees"><FeeManagement canEdit={canEdit} /></TabsContent>
+          <TabsContent value="payments"><PaymentTracking canEdit={canEdit} /></TabsContent>
+          <TabsContent value="expenses"><ExpenseManagement canEdit={canEdit} /></TabsContent>
           <TabsContent value="reports"><FinanceReports /></TabsContent>
-          <TabsContent value="settings"><FinanceSettings centerId={user?.center_id || ""} /></TabsContent>
+          <TabsContent value="settings"><FinanceSettings centerId={user?.center_id || ""} canEdit={canEdit} /></TabsContent>
         </Tabs>
       </div>
     </div>

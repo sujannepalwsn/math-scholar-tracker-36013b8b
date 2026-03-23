@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { format, isSameDay, parseISO } from "date-fns"
+import { hasActionPermission } from "@/utils/permissions";
 
 const EVENT_TYPES = [
   { value: "holiday", label: "Holiday", icon: PartyPopper, color: "bg-red-100 text-red-800" },
@@ -25,6 +26,7 @@ const EVENT_TYPES = [
 
 export default function CalendarEvents() {
   const { user } = useAuth();
+  const canEdit = hasActionPermission(user, 'calendar_events', 'edit');
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showEventDialog, setShowEventDialog] = useState(false);
@@ -191,7 +193,7 @@ export default function CalendarEvents() {
             </div>
           </div>
         </div>
-        {!isParent && (
+        {!isParent && canEdit && (
           <Dialog open={showEventDialog} onOpenChange={(open) => {
             setShowEventDialog(open);
             if (!open) resetForm();
@@ -346,7 +348,7 @@ export default function CalendarEvents() {
                           </div>
                         </div>
                       </div>
-                      {!isParent && (
+                      {!isParent && canEdit && (
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEditEvent(event)}>
                             <Edit className="h-4 w-4" />
@@ -405,7 +407,7 @@ export default function CalendarEvents() {
                         )}
                       </div>
                     </div>
-                    {!isParent && (
+                    {!isParent && canEdit && (
                       <Button
                         variant="ghost"
                         size="sm"

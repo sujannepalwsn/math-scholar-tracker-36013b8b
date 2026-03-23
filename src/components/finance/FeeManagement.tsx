@@ -14,7 +14,7 @@ import { formatCurrency } from "@/lib/utils"
 import { Select } from "@/components/ui/select"
 
 
-const FeeManagement = () => {
+const FeeManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showHeadingDialog, setShowHeadingDialog] = useState(false);
@@ -115,10 +115,11 @@ const FeeManagement = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Fee Headings</CardTitle>
-            <Dialog open={showHeadingDialog} onOpenChange={setShowHeadingDialog}>
-              <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" />New Heading</Button>
-              </DialogTrigger>
+            {canEdit && (
+              <Dialog open={showHeadingDialog} onOpenChange={setShowHeadingDialog}>
+                <DialogTrigger asChild>
+                  <Button><Plus className="h-4 w-4 mr-2" />New Heading</Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Create Fee Heading</DialogTitle>
@@ -146,8 +147,9 @@ const FeeManagement = () => {
                     {createHeadingMutation.isPending ? 'Creating...' : 'Create'}
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -171,7 +173,9 @@ const FeeManagement = () => {
                     <TableCell>{h.description || '-'}</TableCell>
                     <TableCell>{h.is_active ? <span className="text-green-600 flex items-center gap-1"><Check className="h-4 w-4" />Active</span> : 'Inactive'}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => deleteHeadingMutation.mutate(h.id)}><Trash2 className="h-4 w-4" /></Button>
+                      {canEdit && (
+                        <Button variant="ghost" size="sm" onClick={() => deleteHeadingMutation.mutate(h.id)}><Trash2 className="h-4 w-4" /></Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -187,10 +191,11 @@ const FeeManagement = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Fee Structures</CardTitle>
-            <Dialog open={showStructureDialog} onOpenChange={setShowStructureDialog}>
-              <DialogTrigger asChild>
-                <Button disabled={headings.length === 0}><Plus className="h-4 w-4 mr-2" />New Structure</Button>
-              </DialogTrigger>
+            {canEdit && (
+              <Dialog open={showStructureDialog} onOpenChange={setShowStructureDialog}>
+                <DialogTrigger asChild>
+                  <Button disabled={headings.length === 0}><Plus className="h-4 w-4 mr-2" />New Structure</Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Create Fee Structure</DialogTitle>
@@ -228,8 +233,9 @@ const FeeManagement = () => {
                     {createStructureMutation.isPending ? 'Creating...' : 'Create'}
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>

@@ -1,12 +1,12 @@
-import { Calendar } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogDescription } from "@/components/ui/dialog"
+import { DialogDescription } from "@/components/ui/dialog"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
+import { Check, X, AlertCircle } from "lucide-react"
 
 const TEACHER_FEATURES = [
   { name: 'dashboard_access', label: 'Dashboard' },
@@ -37,7 +37,17 @@ const TEACHER_FEATURES = [
   { name: 'inventory_assets', label: 'Inventory & Assets' },
   { name: 'transport_tracking', label: 'Transport & Tracking' },
   { name: 'school_days', label: 'School Days' },
+  { name: 'exams_results', label: 'Exams & Results' },
+  { name: 'published_results', label: 'Published Results' },
 ];
+
+interface ModulePermission {
+  enabled: boolean;
+  can_view: boolean;
+  can_edit: boolean;
+  can_approve: boolean;
+  can_publish: boolean;
+}
 
 export default function TeacherFeaturePermissions({ teacherId, teacherName }: { teacherId: string; teacherName: string }) {
   const queryClient = useQueryClient();
@@ -53,7 +63,16 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
     enabled: !!user?.center_id
   });
 
-  const { data: permissions, isLoading: permissionsLoading } = useQuery({
+  const { data: permissionMeta, isLoading: metaLoading } = useQuery({
+    queryKey: ['module-permissions-meta'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('module_permissions_meta').select('*');
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const { data: rawPermissions, isLoading: permissionsLoading } = useQuery({
     queryKey: ['teacher-feature-permissions', teacherId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -64,83 +83,208 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
       if (error) throw error;
       return data;
     },
-    enabled: !!teacherId });
+    enabled: !!teacherId
+  });
+
+  const permissions = rawPermissions?.permissions || {};
 
   const updatePermissionMutation = useMutation({
-    mutationFn: async ({ featureName, isEnabled }: { featureName: string; isEnabled: boolean }) => {
-      if (permissions) {
-        // Update existing record
+    mutationFn: async ({ updatedPermissions, legacyFields }: { updatedPermissions: any, legacyFields: any }) => {
+      if (rawPermissions) {
         const { error } = await supabase
           .from('teacher_feature_permissions')
-          .update({ [featureName]: isEnabled })
+          .update({
+            permissions: updatedPermissions,
+            ...legacyFields // Sync legacy boolean columns for RLS support
+          })
           .eq('teacher_id', teacherId);
         if (error) throw error;
       } else {
-        // Insert new record with this permission set
         const { error } = await supabase
           .from('teacher_feature_permissions')
-          .insert({ teacher_id: teacherId, [featureName]: isEnabled });
+          .insert({
+            teacher_id: teacherId,
+            permissions: updatedPermissions,
+            ...legacyFields
+          });
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacher-feature-permissions', teacherId] });
-      toast.success('Teacher feature permission updated successfully!');
+      toast.success('Permissions updated successfully!');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update teacher feature permission');
-    } });
+      toast.error(error.message || 'Failed to update permissions');
+    }
+  });
 
-  const handleToggle = (featureName: string, currentStatus: boolean) => {
-    updatePermissionMutation.mutate({ featureName, isEnabled: !currentStatus });
+  const handleToggle = (featureName: string, field: keyof ModulePermission, value: boolean) => {
+    const currentModule = permissions[featureName] || {
+      enabled: false,
+      can_view: false,
+      can_edit: false,
+      can_approve: false,
+      can_publish: false
+    };
+
+    let updatedModule = { ...currentModule, [field]: value };
+
+    // Master Toggle logic: If OFF, disable everything
+    if (field === 'enabled' && value === false) {
+      updatedModule = {
+        enabled: false,
+        can_view: false,
+        can_edit: false,
+        can_approve: false,
+        can_publish: false
+      };
+    }
+    // If turning ON master toggle, enable ALL sub-permissions by default
+    else if (field === 'enabled' && value === true) {
+      updatedModule = {
+        enabled: true,
+        can_view: true,
+        can_edit: true,
+        can_approve: true,
+        can_publish: true
+      };
+    }
+
+    const updatedPermissions = {
+      ...permissions,
+      [featureName]: updatedModule
+    };
+
+    // Prepare legacy fields for RLS compatibility
+    // Legacy column should be true ONLY if both enabled and can_view are true
+    // This ensures that backend RLS (which relies on boolean columns) correctly blocks access.
+    const legacyFields = {
+      [featureName]: updatedModule.enabled && updatedModule.can_view
+    };
+
+    updatePermissionMutation.mutate({ updatedPermissions, legacyFields });
   };
 
-  if (permissionsLoading) {
-    return <p>Loading teacher permissions...</p>;
+  if (permissionsLoading || metaLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
   }
 
   return (
-    <Card className="max-h-[70vh] overflow-hidden flex flex-col">
-      <CardHeader>
-        <CardTitle id="teacher-permissions-title">Manage Features for {teacherName}</CardTitle>
-        <DialogDescription id="teacher-permissions-description">
-          Enable or disable specific features for this teacher.
+    <Card className="max-h-[80vh] overflow-hidden flex flex-col border-none shadow-none">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle className="text-xl font-black uppercase tracking-tight">Access Control Matrix</CardTitle>
+        <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+          Defining operational boundaries for {teacherName}
         </DialogDescription>
       </CardHeader>
-      <CardContent className="overflow-y-auto flex-1">
-        <div className="overflow-x-auto">
-  <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Feature</TableHead>
-              <TableHead className="text-center">Enabled</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {TEACHER_FEATURES.filter(f => {
-              if (!centerPermissions) return true;
-              const dbColumn = f.name;
-              return centerPermissions[dbColumn] !== false;
-            }).map(feature => {
-              const dbFieldName = feature.name;
-              const isEnabled = permissions?.[dbFieldName] ?? true;
+      <CardContent className="overflow-y-auto flex-1 px-0">
+        <div className="overflow-x-auto border rounded-2xl">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="font-black uppercase text-[10px] tracking-widest">Module</TableHead>
+                <TableHead className="text-center font-black uppercase text-[10px] tracking-widest">Master</TableHead>
+                <TableHead className="text-center font-black uppercase text-[10px] tracking-widest">View</TableHead>
+                <TableHead className="text-center font-black uppercase text-[10px] tracking-widest">Edit</TableHead>
+                <TableHead className="text-center font-black uppercase text-[10px] tracking-widest">Approve</TableHead>
+                <TableHead className="text-center font-black uppercase text-[10px] tracking-widest">Publish</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {TEACHER_FEATURES.filter(f => {
+                if (!centerPermissions) return true;
+                return centerPermissions[f.name] !== false;
+              }).map(feature => {
+                const modulePerms: ModulePermission = permissions[feature.name] || {
+                  enabled: false,
+                  can_view: false,
+                  can_edit: false,
+                  can_approve: false,
+                  can_publish: false
+                };
 
-              return (
-                <TableRow key={feature.name}>
-                  <TableCell className="font-medium">{feature.label}</TableCell>
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={Boolean(isEnabled)}
-                      onCheckedChange={() => handleToggle(dbFieldName, Boolean(isEnabled))}
-                      disabled={updatePermissionMutation.isPending}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-</div>
+                const dbMeta = permissionMeta?.find(m => m.module_key === feature.name);
+
+                // Hardcoded fallbacks to ensure toggles show even if meta fetch fails or table is empty
+                const meta = {
+                  has_approve: dbMeta?.has_approve || ['lesson_plans', 'leave_management'].includes(feature.name),
+                  has_publish: dbMeta?.has_publish || ['exams_results', 'published_results'].includes(feature.name)
+                };
+
+                const isMasterOn = modulePerms.enabled;
+
+                return (
+                  <TableRow key={feature.name} className="hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-bold text-xs py-3">{feature.label}</TableCell>
+
+                    {/* Master Toggle */}
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={isMasterOn}
+                        onCheckedChange={(val) => handleToggle(feature.name, 'enabled', val)}
+                        disabled={updatePermissionMutation.isPending}
+                        className="scale-90"
+                      />
+                    </TableCell>
+
+                    {/* View Permission */}
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={modulePerms.can_view}
+                        onCheckedChange={(val) => handleToggle(feature.name, 'can_view', val)}
+                        disabled={!isMasterOn || updatePermissionMutation.isPending}
+                        className="scale-75"
+                      />
+                    </TableCell>
+
+                    {/* Edit Permission */}
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={modulePerms.can_edit}
+                        onCheckedChange={(val) => handleToggle(feature.name, 'can_edit', val)}
+                        disabled={!isMasterOn || !modulePerms.can_view || updatePermissionMutation.isPending}
+                        className="scale-75"
+                      />
+                    </TableCell>
+
+                    {/* Approve Permission */}
+                    <TableCell className="text-center">
+                      {meta.has_approve ? (
+                        <Switch
+                          checked={modulePerms.can_approve}
+                          onCheckedChange={(val) => handleToggle(feature.name, 'can_approve', val)}
+                          disabled={!isMasterOn || !modulePerms.can_view || updatePermissionMutation.isPending}
+                          className="scale-75"
+                        />
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
+                    </TableCell>
+
+                    {/* Publish Permission */}
+                    <TableCell className="text-center">
+                      {meta.has_publish ? (
+                        <Switch
+                          checked={modulePerms.can_publish}
+                          onCheckedChange={(val) => handleToggle(feature.name, 'can_publish', val)}
+                          disabled={!isMasterOn || !modulePerms.can_view || updatePermissionMutation.isPending}
+                          className="scale-75"
+                        />
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

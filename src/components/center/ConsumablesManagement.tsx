@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function ConsumablesManagement({ centerId }: { centerId: string }) {
+export default function ConsumablesManagement({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -200,9 +200,11 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button onClick={() => setShowAdd(!showAdd)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest ml-4">
-          {showAdd ? "Cancel" : "Add Item"}
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setShowAdd(!showAdd)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest ml-4">
+            {showAdd ? "Cancel" : "Add Item"}
+          </Button>
+        )}
       </div>
 
       {showDistribute && (
@@ -319,28 +321,32 @@ export default function ConsumablesManagement({ centerId }: { centerId: string }
                 <TableCell className="text-xs font-bold text-slate-500">₹{c.unit_price}</TableCell>
                 <TableCell className="text-right px-6">
                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-lg text-[9px] font-black uppercase text-indigo-600 border-indigo-200 hover:bg-indigo-50"
-                        onClick={() => setShowDistribute(c.id)}
-                      >
-                        <Package className="h-3 w-3 mr-1" /> Distribute
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-lg text-[9px] font-black uppercase text-slate-500 border-slate-200"
-                        onClick={() => {
-                          const amount = window.prompt("Enter quantity to dispose/discard:");
-                          if (amount && !isNaN(parseFloat(amount))) {
-                            updateStockMutation.mutate({ id: c.id, amount: parseFloat(amount), type: 'dispose' });
-                          }
-                        }}
-                      >
-                         Discard
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                      {canEdit && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg text-[9px] font-black uppercase text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                            onClick={() => setShowDistribute(c.id)}
+                          >
+                            <Package className="h-3 w-3 mr-1" /> Distribute
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg text-[9px] font-black uppercase text-slate-500 border-slate-200"
+                            onClick={() => {
+                              const amount = window.prompt("Enter quantity to dispose/discard:");
+                              if (amount && !isNaN(parseFloat(amount))) {
+                                updateStockMutation.mutate({ id: c.id, amount: parseFloat(amount), type: 'dispose' });
+                              }
+                            }}
+                          >
+                             Discard
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                        </>
+                      )}
                    </div>
                 </TableCell>
               </TableRow>

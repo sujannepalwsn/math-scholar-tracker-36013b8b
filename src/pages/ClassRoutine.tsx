@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import TimetableAutomation from "@/components/center/TimetableAutomation";
+import { hasActionPermission } from "@/utils/permissions";
 
 // Sunday(0) to Friday(5) only
 const DAYS_OF_WEEK = [
@@ -39,6 +40,7 @@ const DEFAULT_GRADES = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5", "6", "
 
 export default function ClassRoutine() {
   const { user } = useAuth();
+  const canEdit = hasActionPermission(user, 'class_routine', 'edit');
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split("T")[0];
 
@@ -673,9 +675,11 @@ export default function ClassRoutine() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
-            <Upload className="h-4 w-4 mr-1" /> Import CSV
-          </Button>
+          {canEdit && (
+            <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
+              <Upload className="h-4 w-4 mr-1" /> Import CSV
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={downloadTemplate}>
             <Download className="h-4 w-4 mr-1" /> Template
           </Button>
@@ -685,14 +689,16 @@ export default function ClassRoutine() {
           <Button variant="outline" size="sm" onClick={printRoutine}>
             <Printer className="h-4 w-4 mr-1" /> Print
           </Button>
-          <Button
-            variant={isAnyPeriodPublished ? "destructive" : "default"}
-            size="sm"
-            onClick={() => publishRoutineMutation.mutate(!isAnyPeriodPublished)}
-          >
-            {isAnyPeriodPublished ? <XCircle className="h-4 w-4 mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
-            {isAnyPeriodPublished ? "Unpublish Routine" : "Publish Routine"}
-          </Button>
+          {canEdit && (
+            <Button
+              variant={isAnyPeriodPublished ? "destructive" : "default"}
+              size="sm"
+              onClick={() => publishRoutineMutation.mutate(!isAnyPeriodPublished)}
+            >
+              {isAnyPeriodPublished ? <XCircle className="h-4 w-4 mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
+              {isAnyPeriodPublished ? "Unpublish Routine" : "Publish Routine"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -851,10 +857,14 @@ export default function ClassRoutine() {
                 <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{allGrades.map(g => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}</SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={() => setShowAddGradeDialog(true)}><Plus className="h-4 w-4 mr-1" /> Grade</Button>
+              {canEdit && (
+                <Button variant="outline" size="sm" onClick={() => setShowAddGradeDialog(true)}><Plus className="h-4 w-4 mr-1" /> Grade</Button>
+              )}
             </div>
 
-            <Button size="sm" onClick={() => { resetScheduleForm(); setShowScheduleDialog(true); }}><Plus className="h-4 w-4 mr-1" /> Add Entry</Button>
+            {canEdit && (
+              <Button size="sm" onClick={() => { resetScheduleForm(); setShowScheduleDialog(true); }}><Plus className="h-4 w-4 mr-1" /> Add Entry</Button>
+            )}
           </div>
 
           {schedulesLoading ? (
@@ -915,11 +925,13 @@ export default function ClassRoutine() {
         </TabsContent>
 
         <TabsContent value="subjects" className="space-y-4">
-          <div className="flex justify-end print:hidden">
-            <Button onClick={() => setShowSubjectDialog(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-10 px-6">
-              <Plus className="h-4 w-4 mr-2" /> Add Subject
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex justify-end print:hidden">
+              <Button onClick={() => setShowSubjectDialog(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-10 px-6">
+                <Plus className="h-4 w-4 mr-2" /> Add Subject
+              </Button>
+            </div>
+          )}
 
           <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
             <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
@@ -956,11 +968,13 @@ export default function ClassRoutine() {
         </TabsContent>
 
         <TabsContent value="periods" className="space-y-4">
-          <div className="flex justify-end print:hidden">
-            <Button onClick={() => setShowPeriodDialog(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-10 px-6">
-              <Plus className="h-4 w-4 mr-2" /> Add Slot
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex justify-end print:hidden">
+              <Button onClick={() => setShowPeriodDialog(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-10 px-6">
+                <Plus className="h-4 w-4 mr-2" /> Add Slot
+              </Button>
+            </div>
+          )}
 
           <Card className="border-none shadow-strong rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-white/20">
             <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
@@ -993,8 +1007,12 @@ export default function ClassRoutine() {
                             </Badge>
                           </TableCell>
                           <TableCell className="flex gap-1 print:hidden">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditPeriod(p)}><Edit className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deletePeriodMutation.mutate(p.id)}><Trash2 className="h-3 w-3" /></Button>
+                            {canEdit && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditPeriod(p)}><Edit className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deletePeriodMutation.mutate(p.id)}><Trash2 className="h-3 w-3" /></Button>
+                              </>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}

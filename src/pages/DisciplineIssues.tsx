@@ -19,6 +19,7 @@ import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import DisciplineCategoryManagement from "@/components/center/DisciplineCategoryManagement"; // Import the new component
 import { cn } from "@/lib/utils"
+import { hasActionPermission } from "@/utils/permissions";
 
 
 
@@ -267,15 +268,19 @@ export default function DisciplineIssues() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => setShowCategoryManagement(true)} className="rounded-xl h-11">
-            <Settings className="h-4 w-4 mr-2" /> Categories
-          </Button>
+          {hasActionPermission(user, 'discipline_issues', 'edit') && (
+            <Button variant="outline" onClick={() => setShowCategoryManagement(true)} className="rounded-xl h-11">
+              <Settings className="h-4 w-4 mr-2" /> Categories
+            </Button>
+          )}
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" /> Log Issue</Button>
+              {hasActionPermission(user, 'discipline_issues', 'edit') && (
+                <Button><Plus className="h-4 w-4 mr-2" /> Log Issue</Button>
+              )}
             </DialogTrigger>
             <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="discipline-issue-log-title" aria-describedby="discipline-issue-log-description">
               <DialogHeader>
@@ -481,12 +486,16 @@ export default function DisciplineIssues() {
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(issue)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteIssueMutation.mutate(issue.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {hasActionPermission(user, 'discipline_issues', 'edit') && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(issue)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteIssueMutation.mutate(issue.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

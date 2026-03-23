@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { CreditCard, Plus, Trash2, Settings } from "lucide-react";
 
-export default function FinanceSettings({ centerId }: { centerId: string }) {
+export default function FinanceSettings({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [provider, setProvider] = useState("Stripe");
   const [apiKey, setApiKey] = useState("");
@@ -84,9 +84,11 @@ export default function FinanceSettings({ centerId }: { centerId: string }) {
               className="h-11 rounded-xl"
             />
           </div>
-          <Button onClick={() => saveGatewayMutation.mutate()} className="w-full h-11 rounded-xl font-black uppercase text-xs tracking-widest mt-2">
-            Save Configuration
-          </Button>
+          {canEdit && (
+            <Button onClick={() => saveGatewayMutation.mutate()} className="w-full h-11 rounded-xl font-black uppercase text-xs tracking-widest mt-2">
+              Save Configuration
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -117,7 +119,9 @@ export default function FinanceSettings({ centerId }: { centerId: string }) {
             <h4 className="font-bold text-purple-800 text-sm mb-1">Monthly Auto-Invoicing</h4>
             <p className="text-xs text-purple-600 mb-4">Generate invoices automatically on the 1st of every month.</p>
             <div className="flex items-center gap-3">
-              <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-lg text-[10px] font-black uppercase">Enable Automation</Button>
+              {canEdit && (
+                <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-lg text-[10px] font-black uppercase">Enable Automation</Button>
+              )}
               <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Currently Disabled</span>
             </div>
           </div>

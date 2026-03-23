@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -210,7 +210,7 @@ export default function DashboardHeader() {
     );
   }
 
-  const canEdit = hasPermission(user, 'settings_access');
+  const canEdit = hasActionPermission(user, 'settings_access', 'edit');
 
   return (
     <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">

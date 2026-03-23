@@ -10,12 +10,12 @@ import AssetTracking from "@/components/center/AssetTracking";
 import LibraryManagement from "@/components/center/LibraryManagement";
 import ConsumablesManagement from "@/components/center/ConsumablesManagement";
 import { useAuth } from "@/contexts/AuthContext";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 export default function InventoryManagement() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
-  const hasFullAccess = hasPermission(user, 'inventory_assets');
+  const canEdit = hasActionPermission(user, 'inventory_assets', 'edit');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
@@ -53,7 +53,7 @@ export default function InventoryManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
-              <AssetTracking centerId={centerId} />
+              <AssetTracking centerId={centerId} canEdit={canEdit} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -66,7 +66,7 @@ export default function InventoryManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
-              <LibraryManagement centerId={centerId} />
+              <LibraryManagement centerId={centerId} canEdit={canEdit} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -79,7 +79,7 @@ export default function InventoryManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
-               <ConsumablesManagement centerId={centerId} />
+               <ConsumablesManagement centerId={centerId} canEdit={canEdit} />
             </CardContent>
           </Card>
         </TabsContent>

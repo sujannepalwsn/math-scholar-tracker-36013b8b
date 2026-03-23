@@ -18,6 +18,7 @@ import MeetingAttendanceRecorder from "@/components/meetings/MeetingAttendanceRe
 import MeetingConclusionForm from "@/components/meetings/MeetingConclusionForm";
 import MeetingConclusionViewer from "@/components/meetings/MeetingConclusionViewer";
 import MeetingAttendeesViewer from "@/components/meetings/MeetingAttendeesViewer";
+import { hasActionPermission } from "@/utils/permissions";
 "use client";
 
 
@@ -27,6 +28,7 @@ type MeetingConclusion = Tables<'meeting_conclusions'>;
 export default function MeetingManagement() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const canEdit = hasActionPermission(user, 'meetings_management', 'edit');
 
   const [showMeetingFormDialog, setShowMeetingFormDialog] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
@@ -209,30 +211,32 @@ export default function MeetingManagement() {
             </div>
           </div>
         </div>
-        <Dialog open={showMeetingFormDialog} onOpenChange={(open) => {
-          setShowMeetingFormDialog(open);
-          if (!open) setEditingMeeting(null);
-        }}>
-          <DialogTrigger asChild>
-            <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
-              <Plus className="h-5 w-5 mr-2" />
-              CREATE SESSION
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="meeting-form-title" aria-describedby="meeting-form-description">
-            <DialogHeader>
-              <DialogTitle id="meeting-form-title" className="text-2xl font-black tracking-tight">{editingMeeting ? "Update Consultation" : "Schedule New Assembly"}</DialogTitle>
-              <DialogDescription id="meeting-form-description" className="font-medium">
-                {editingMeeting ? "Modify session parameters and attendees." : "Initialize a new communication protocol with stakeholders."}
-              </DialogDescription>
-            </DialogHeader>
-            <MeetingForm
-              meeting={editingMeeting}
-              onSave={handleMeetingSave}
-              onCancel={() => setShowMeetingFormDialog(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        {canEdit && (
+          <Dialog open={showMeetingFormDialog} onOpenChange={(open) => {
+            setShowMeetingFormDialog(open);
+            if (!open) setEditingMeeting(null);
+          }}>
+            <DialogTrigger asChild>
+              <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+                <Plus className="h-5 w-5 mr-2" />
+                CREATE SESSION
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="meeting-form-title" aria-describedby="meeting-form-description">
+              <DialogHeader>
+                <DialogTitle id="meeting-form-title" className="text-2xl font-black tracking-tight">{editingMeeting ? "Update Consultation" : "Schedule New Assembly"}</DialogTitle>
+                <DialogDescription id="meeting-form-description" className="font-medium">
+                  {editingMeeting ? "Modify session parameters and attendees." : "Initialize a new communication protocol with stakeholders."}
+                </DialogDescription>
+              </DialogHeader>
+              <MeetingForm
+                meeting={editingMeeting}
+                onSave={handleMeetingSave}
+                onCancel={() => setShowMeetingFormDialog(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
@@ -303,20 +307,24 @@ export default function MeetingManagement() {
                         )}
                       </TableCell>
                       <TableCell className="flex gap-2">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white shadow-soft group-hover:scale-105 transition-all" onClick={() => handleEditClick(meeting)}>
-                          <Edit className="h-4 w-4 text-primary" />
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-9 rounded-xl border-2 font-bold px-3" onClick={() => handleAttendanceClick(meeting)}>
-                          <Users className="h-4 w-4 mr-1.5" />
-                          ROLL CALL
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-9 rounded-xl border-2 font-bold px-3" onClick={() => handleConclusionClick(meeting)}>
-                          <FileText className="h-4 w-4 mr-1.5" />
-                          MINUTES
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteMeetingMutation.mutate(meeting.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {canEdit && (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white shadow-soft group-hover:scale-105 transition-all" onClick={() => handleEditClick(meeting)}>
+                              <Edit className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-9 rounded-xl border-2 font-bold px-3" onClick={() => handleAttendanceClick(meeting)}>
+                              <Users className="h-4 w-4 mr-1.5" />
+                              ROLL CALL
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-9 rounded-xl border-2 font-bold px-3" onClick={() => handleConclusionClick(meeting)}>
+                              <FileText className="h-4 w-4 mr-1.5" />
+                              MINUTES
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteMeetingMutation.mutate(meeting.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

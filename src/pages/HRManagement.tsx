@@ -10,12 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 export default function HRManagement() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
-  const hasFullAccess = hasPermission(user, 'hr_management');
+  const canEdit = hasActionPermission(user, 'hr_management', 'edit');
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -137,7 +137,7 @@ export default function HRManagement() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-8">
-                  <StaffHRModule teacherId={selectedTeacherId} teacherName={selectedTeacher?.name || ""} />
+                  <StaffHRModule teacherId={selectedTeacherId} teacherName={selectedTeacher?.name || ""} canEdit={canEdit} />
                 </CardContent>
               </Card>
             </div>

@@ -18,7 +18,7 @@ import { Tables } from "@/integrations/supabase/types"
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component
 import { Badge } from "@/components/ui/badge"
 import { compressImage } from "@/lib/image-utils";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 
 type Activity = Tables<'activities'>;
@@ -97,12 +97,8 @@ export default function PreschoolActivities() {
         .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
         .in("student_id", studentIds);
 
-      // Full access for teachers if module is enabled
-      const hasFullAccess = hasPermission(user, 'preschool_activities');
-
-      if (user?.role === 'teacher' && !hasFullAccess) {
-        query = query.eq('activities.created_by', user.id);
-      }
+      // Empowered teachers see all activities in the center if they have view permission
+      // Edit buttons are hidden separately based on hasActionPermission
 
       const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -332,15 +328,19 @@ export default function PreschoolActivities() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => setShowActivityTypeManagement(true)} className="rounded-xl h-11">
-            <Settings className="h-4 w-4 mr-2" /> Categories
-          </Button>
+          {hasActionPermission(user, 'preschool_activities', 'edit') && (
+            <Button variant="outline" onClick={() => setShowActivityTypeManagement(true)} className="rounded-xl h-11">
+              <Settings className="h-4 w-4 mr-2" /> Categories
+            </Button>
+          )}
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" /> Log Activity</Button>
+              {hasActionPermission(user, 'preschool_activities', 'edit') && (
+                <Button><Plus className="h-4 w-4 mr-2" /> Log Activity</Button>
+              )}
             </DialogTrigger>
           <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="log-activity-title" aria-describedby="log-activity-description">
             <DialogHeader>
@@ -554,12 +554,16 @@ export default function PreschoolActivities() {
                                </a>
                              </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(activity)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {hasActionPermission(user, 'preschool_activities', 'edit') && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(activity)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteActivityMutation.mutate(activity.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

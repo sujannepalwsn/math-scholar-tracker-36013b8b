@@ -293,9 +293,31 @@ export default function TeacherManagement() {
         emergency_contact: { name: emergencyContactName, relation: emergencyContactRelation, phone: emergencyContactPhone }
       } as any).select().single();
       if (error) throw error;
+      const defaultModules = [
+        'take_attendance', 'lesson_tracking', 'homework_management', 'preschool_activities',
+        'discipline_issues', 'test_management', 'student_report', 'meetings_management',
+        'dashboard_access', 'class_routine', 'messaging', 'calendar_events', 'summary',
+        'lesson_plans', 'leave_management', 'exams_results', 'published_results'
+      ];
+
+      const permissionsObj: any = {};
+      const legacyObj: any = { teacher_id: newTeacher.id };
+
+      defaultModules.forEach(mod => {
+        permissionsObj[mod] = {
+          enabled: true,
+          can_view: true,
+          can_edit: true,
+          can_approve: ['lesson_plans', 'leave_management'].includes(mod),
+          can_publish: ['exams_results', 'published_results'].includes(mod)
+        };
+        legacyObj[mod] = true;
+      });
+
       const { error: permError } = await supabase.from('teacher_feature_permissions').insert({
-        teacher_id: newTeacher.id, take_attendance: true, lesson_tracking: true, homework_management: true,
-        preschool_activities: true, discipline_issues: true, test_management: true, student_report: true, meetings_management: true });
+        ...legacyObj,
+        permissions: permissionsObj
+      });
       if (permError) console.error('Error seeding default permissions:', permError);
       return newTeacher;
     },
@@ -337,7 +359,33 @@ export default function TeacherManagement() {
       const { data: newTeachers, error } = await supabase.from("teachers").insert(teachersToInsert as any).select();
       if (error) throw error;
       if (newTeachers && newTeachers.length > 0) {
-        const permissions = newTeachers.map(t => ({ teacher_id: t.id, take_attendance: true, lesson_tracking: true, homework_management: true, preschool_activities: true, discipline_issues: true, test_management: true, student_report: true, meetings_management: true }));
+        const defaultModules = [
+          'take_attendance', 'lesson_tracking', 'homework_management', 'preschool_activities',
+          'discipline_issues', 'test_management', 'student_report', 'meetings_management',
+          'dashboard_access', 'class_routine', 'messaging', 'calendar_events', 'summary',
+          'lesson_plans', 'leave_management', 'exams_results', 'published_results'
+        ];
+
+        const permissions = newTeachers.map(t => {
+          const permissionsObj: any = {};
+          const legacyObj: any = { teacher_id: t.id };
+
+          defaultModules.forEach(mod => {
+            permissionsObj[mod] = {
+              enabled: true,
+              can_view: true,
+              can_edit: true,
+              can_approve: ['lesson_plans', 'leave_management'].includes(mod),
+              can_publish: ['exams_results', 'published_results'].includes(mod)
+            };
+            legacyObj[mod] = true;
+          });
+
+          return {
+            ...legacyObj,
+            permissions: permissionsObj
+          };
+        });
         await supabase.from('teacher_feature_permissions').insert(permissions);
       }
       return newTeachers;

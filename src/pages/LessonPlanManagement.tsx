@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { KPICard } from "@/components/dashboard/KPICard"
+import { hasActionPermission } from "@/utils/permissions";
 
 type LessonPlan = Tables<'lesson_plans'>;
 
@@ -351,34 +352,44 @@ export default function LessonPlanManagement() {
                </div>
 
                {viewingLessonPlan.status === 'pending' && (
-                  <div className="p-8 rounded-[2.5rem] bg-slate-900 text-white shadow-strong space-y-6">
-                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Institutional Review Notes</Label>
-                        <Textarea
-                          value={adminRemarks}
-                          onChange={(e) => setAdminRemarks(e.target.value)}
-                          placeholder="Provide feedback or justification for rejection..."
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/30 rounded-2xl h-24"
-                        />
-                     </div>
-                     <div className="flex gap-4">
-                        <Button
-                          variant="ghost"
-                          className="flex-1 h-12 rounded-xl font-black uppercase text-[10px] tracking-widest text-rose-400 hover:bg-rose-400/10"
-                          onClick={() => updateStatusMutation.mutate({ id: viewingLessonPlan.id, status: 'rejected', remarks: adminRemarks })}
-                          disabled={updateStatusMutation.isPending}
-                        >
-                           Reject Plan
-                        </Button>
-                        <Button
-                          className="flex-[2] h-12 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 hover:bg-emerald-600"
-                          onClick={() => updateStatusMutation.mutate({ id: viewingLessonPlan.id, status: 'approved', remarks: adminRemarks })}
-                          disabled={updateStatusMutation.isPending}
-                        >
-                           Grant Approval
-                        </Button>
-                     </div>
-                  </div>
+                 <>
+                   {hasActionPermission(user, 'lesson_plans', 'approve') ? (
+                    <div className="p-8 rounded-[2.5rem] bg-slate-900 text-white shadow-strong space-y-6">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Institutional Review Notes</Label>
+                            <Textarea
+                              value={adminRemarks}
+                              onChange={(e) => setAdminRemarks(e.target.value)}
+                              placeholder="Provide feedback or justification for rejection..."
+                              className="bg-white/10 border-white/20 text-white placeholder:text-white/30 rounded-2xl h-24"
+                            />
+                        </div>
+                        <div className="flex gap-4">
+                            <Button
+                              variant="ghost"
+                              className="flex-1 h-12 rounded-xl font-black uppercase text-[10px] tracking-widest text-rose-400 hover:bg-rose-400/10"
+                              onClick={() => updateStatusMutation.mutate({ id: viewingLessonPlan.id, status: 'rejected', remarks: adminRemarks })}
+                              disabled={updateStatusMutation.isPending}
+                            >
+                              Reject Plan
+                            </Button>
+                            <Button
+                              className="flex-[2] h-12 rounded-xl font-black uppercase text-[10px] tracking-widest bg-emerald-500 hover:bg-emerald-600"
+                              onClick={() => updateStatusMutation.mutate({ id: viewingLessonPlan.id, status: 'approved', remarks: adminRemarks })}
+                              disabled={updateStatusMutation.isPending}
+                            >
+                              Grant Approval
+                            </Button>
+                        </div>
+                    </div>
+                   ) : (
+                    <div className="p-6 rounded-3xl border-2 border-dashed bg-amber-50/50 border-amber-100">
+                        <p className="text-sm font-medium text-amber-700 italic flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4" /> You do not have permission to approve or reject lesson plans.
+                        </p>
+                    </div>
+                   )}
+                 </>
                )}
 
                {(viewingLessonPlan.status === 'approved' || viewingLessonPlan.status === 'rejected') && (

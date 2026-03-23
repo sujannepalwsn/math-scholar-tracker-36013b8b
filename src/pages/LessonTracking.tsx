@@ -20,6 +20,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import EditStudentLessonRecord from "@/components/center/EditStudentLessonRecord"; // Import the new component
+import { hasActionPermission } from "@/utils/permissions";
 
 type LessonPlan = Tables<'lesson_plans'>;
 type Student = Tables<'students'>;
@@ -41,6 +42,7 @@ interface GroupedLessonRecord {
 
 export default function LessonTracking() {
   const { user } = useAuth();
+  const canEdit = hasActionPermission(user, 'lesson_tracking', 'edit');
   const queryClient = useQueryClient();
 
   // State for recording new lessons
@@ -401,10 +403,12 @@ export default function LessonTracking() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
-              <Plus className="h-5 w-5 mr-2" />
-              RECORD SESSION
-            </Button>
+            {canEdit && (
+              <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
+                <Plus className="h-5 w-5 mr-2" />
+                RECORD SESSION
+              </Button>
+            )}
           </DialogTrigger>
           <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto" aria-labelledby="record-lesson-title" aria-describedby="record-lesson-description">
             <DialogHeader>
@@ -631,39 +635,41 @@ export default function LessonTracking() {
                     </div>
 
                     {/* Bulk Evaluation Section */}
-                    <div className="bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10 space-y-4 mx-2">
-                       <div className="flex items-center gap-3">
-                          <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600"><Star className="h-4 w-4" /></div>
-                          <h4 className="text-sm font-black uppercase tracking-widest">Bulk Evaluation Portal</h4>
-                       </div>
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                          <div className="space-y-2">
-                             <Label className="text-[10px] font-bold uppercase ml-1">Assign Rating</Label>
-                             <Select value={bulkRating.toString()} onValueChange={(v) => setBulkRating(parseInt(v))}>
-                                <SelectTrigger className="bg-white rounded-xl h-10 shadow-sm border-none"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                   {[1, 2, 3, 4, 5].map(r => <SelectItem key={r} value={r.toString()}>{r} Stars</SelectItem>)}
-                                </SelectContent>
-                             </Select>
-                          </div>
-                          <div className="space-y-2">
-                             <Label className="text-[10px] font-bold uppercase ml-1">Shared Remarks</Label>
-                             <Input
-                                placeholder="Excellent participation!"
-                                value={bulkTeacherNotes}
-                                onChange={e => setBulkTeacherNotes(e.target.value)}
-                                className="bg-white rounded-xl h-10 shadow-sm border-none"
-                             />
-                          </div>
-                          <Button
-                            onClick={() => bulkEvaluateMutation.mutate()}
-                            disabled={bulkEvaluationSelected.length === 0 || bulkEvaluateMutation.isPending}
-                            className="rounded-xl h-10 font-bold bg-amber-500 hover:bg-amber-600"
-                          >
-                            Rate {bulkEvaluationSelected.length} Students
-                          </Button>
-                       </div>
-                    </div>
+                    {canEdit && (
+                      <div className="bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10 space-y-4 mx-2">
+                         <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600"><Star className="h-4 w-4" /></div>
+                            <h4 className="text-sm font-black uppercase tracking-widest">Bulk Evaluation Portal</h4>
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div className="space-y-2">
+                               <Label className="text-[10px] font-bold uppercase ml-1">Assign Rating</Label>
+                               <Select value={bulkRating.toString()} onValueChange={(v) => setBulkRating(parseInt(v))}>
+                                  <SelectTrigger className="bg-white rounded-xl h-10 shadow-sm border-none"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                     {[1, 2, 3, 4, 5].map(r => <SelectItem key={r} value={r.toString()}>{r} Stars</SelectItem>)}
+                                  </SelectContent>
+                               </Select>
+                            </div>
+                            <div className="space-y-2">
+                               <Label className="text-[10px] font-bold uppercase ml-1">Shared Remarks</Label>
+                               <Input
+                                  placeholder="Excellent participation!"
+                                  value={bulkTeacherNotes}
+                                  onChange={e => setBulkTeacherNotes(e.target.value)}
+                                  className="bg-white rounded-xl h-10 shadow-sm border-none"
+                               />
+                            </div>
+                            <Button
+                              onClick={() => bulkEvaluateMutation.mutate()}
+                              disabled={bulkEvaluationSelected.length === 0 || bulkEvaluateMutation.isPending}
+                              className="rounded-xl h-10 font-bold bg-amber-500 hover:bg-amber-600"
+                            >
+                              Rate {bulkEvaluationSelected.length} Students
+                            </Button>
+                         </div>
+                      </div>
+                    )}
 
                     <div className="overflow-x-auto border border-border/40 rounded-2xl bg-white/20 backdrop-blur-sm">
                       <Table>
@@ -734,25 +740,29 @@ export default function LessonTracking() {
                               </TableCell>
                               <TableCell className="text-right pr-6">
                                 <div className="flex justify-end gap-1 opacity-0 group-row:opacity-100 group-hover/row:opacity-100 transition-opacity">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10"
-                                    onClick={() => {
-                                      setEditingStudentChapterId(record.id);
-                                      setShowEditStudentRecordDialog(true);
-                                    }}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10"
-                                    onClick={() => deleteStudentLessonRecordMutation.mutate(record.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                  {canEdit && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10"
+                                        onClick={() => {
+                                          setEditingStudentChapterId(record.id);
+                                          setShowEditStudentRecordDialog(true);
+                                        }}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10"
+                                        onClick={() => deleteStudentLessonRecordMutation.mutate(record.id)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
                               </TableCell>
                             </TableRow>
