@@ -64,6 +64,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
           icon: getIcon(it.icon),
           role: it.role as any,
           featureName: it.feature_name,
+          feature_name: it.feature_name,
           category: cat?.name,
           unreadCount: it.route === "/messages" ? unreadMessageCount : undefined,
           is_active: it.is_active
@@ -75,6 +76,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         icon: getIcon(item.icon),
         role: item.role as any,
         featureName: item.feature_name,
+        feature_name: item.feature_name,
         category: item.category as any,
         unreadCount: item.route === "/messages" ? unreadMessageCount : undefined
       }));
@@ -104,6 +106,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         icon: getIcon(item.icon),
         role: item.role as any,
         featureName: item.feature_name,
+        feature_name: item.feature_name,
         category: item.category as any,
         unreadCount: item.route === "/messages" ? unreadMessageCount : undefined
       }));
