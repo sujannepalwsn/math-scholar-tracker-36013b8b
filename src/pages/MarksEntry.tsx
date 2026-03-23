@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
+import { hasPermission } from "@/utils/permissions";
 
 function getGrade(percentage: number): string {
   if (percentage >= 90) return "A+";
@@ -26,7 +27,7 @@ function getGrade(percentage: number): string {
 
 export default function MarksEntry() {
   const { user } = useAuth();
-  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.exams_results === true);
+  const hasFullAccess = hasPermission(user, 'exams_results');
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;

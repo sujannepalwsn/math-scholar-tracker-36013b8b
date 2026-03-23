@@ -10,11 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { hasPermission } from "@/utils/permissions";
 
 export default function HRManagement() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
-  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.hr_management === true);
+  const hasFullAccess = hasPermission(user, 'hr_management');
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 

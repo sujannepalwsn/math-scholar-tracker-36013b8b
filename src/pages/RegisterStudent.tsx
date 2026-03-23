@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdmissionWorkflow from "@/components/center/AdmissionWorkflow"
 import StudentPromotion from "@/components/center/StudentPromotion"
 import AlumniManagement from "@/components/center/AlumniManagement"
+import { hasPermission } from "@/utils/permissions";
 
 interface Student {
   id: string;
@@ -53,7 +54,7 @@ type StudentInput = {
 export default function RegisterStudent() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.students_registration === true);
+  const hasFullAccess = hasPermission(user, 'register_student');
   const [formData, setFormData] = useState({
     name: "",
     grade: "",

@@ -18,6 +18,7 @@ import { Tables } from "@/integrations/supabase/types"
 import ActivityTypeManagement from "@/components/center/ActivityTypeManagement"; // Import the new component
 import { Badge } from "@/components/ui/badge"
 import { compressImage } from "@/lib/image-utils";
+import { hasPermission } from "@/utils/permissions";
 
 
 type Activity = Tables<'activities'>;
@@ -97,7 +98,7 @@ export default function PreschoolActivities() {
         .in("student_id", studentIds);
 
       // Full access for teachers if module is enabled
-      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.preschool_activities === true;
+      const hasFullAccess = hasPermission(user, 'preschool_activities');
 
       if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('activities.created_by', user.id);

@@ -158,13 +158,15 @@ export default function Sidebar({
 
   const filteredNavItems = navItems.filter(item => {
     if ((item as any).is_active === false && !isEditMode) return false;
-    if (item.featureName) {
-      return hasPermission(user, item.featureName);
-    }
-    return true;
+
+    const featureKey = item.featureName || (item as any).feature_name;
+    // Always pass route to help with identification
+    return hasPermission(user, featureKey || 'unknown', item.to);
   });
 
   const renderNavLinks = (items: NavItem[], isMobile: boolean) => {
+    if (items.length === 0) return null;
+
     // Ensure "Dashboard" is always first, then sort by category
     const sortedItems = [...items].sort((a, b) => {
       if (a.to.endsWith('/dashboard') || a.to === '/dashboard') return -1;
@@ -181,10 +183,11 @@ export default function Sidebar({
     let currentCategoryItems: React.ReactNode[] = [];
 
     // Separate items into categorized and uncategorized
-    const uncategorizedItems = items.filter(it => !it.category);
-    const categorizedItems = items.filter(it => it.category);
+    const uncategorizedItems = sortedItems.filter(it => !it.category);
+    const categorizedItems = sortedItems.filter(it => it.category);
 
     const flushCategory = (category: string, children: React.ReactNode[]) => {
+      if (!children || children.length === 0) return null;
       const isExpanded = expandedCategories.includes(category);
       const catObj = dynamicCategories.find(c => c.name === category);
 
@@ -531,7 +534,7 @@ export default function Sidebar({
           {renderNavLinks(filteredNavItems, false)}
         </nav>
         <div className="mt-auto p-4 border-t space-y-4">
-          {(user?.role === 'center' || (user?.role === 'teacher' && (user.teacherPermissions?.settings_access === true || user.teacherPermissions?.test_management === true))) && (
+          {(user?.role === 'center' || (user?.role === 'teacher' && (hasPermission(user, 'settings_access') || hasPermission(user, 'test_management')))) && (
             <div className="space-y-2">
               <Button
                 variant="ghost"

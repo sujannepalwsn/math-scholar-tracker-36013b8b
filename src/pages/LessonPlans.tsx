@@ -74,7 +74,7 @@ export default function LessonPlans() {
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
 
       // Full access for teachers if module is enabled
-      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.lesson_plans === true;
+      const hasFullAccess = hasPermission(user, 'lesson_plans');
 
       if (isTeacher && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
