@@ -389,14 +389,16 @@ export default function LessonPlans() {
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleViewClick(lp)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {(isTeacher && (lp.status === 'draft' || lp.status === 'rejected')) && (
+                          {(hasActionPermission(user, 'lesson_plans', 'edit') && (isTeacher && (lp.status === 'draft' || lp.status === 'rejected'))) && (
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleEditClick(lp)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {hasActionPermission(user, 'lesson_plans', 'edit') && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10" onClick={() => deleteLessonPlanMutation.mutate(lp.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

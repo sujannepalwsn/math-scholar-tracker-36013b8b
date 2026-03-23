@@ -771,8 +771,11 @@ export default function ClassRoutine() {
                     {periods.map((p: any) => (
                       <TableRow key={p.id}>
                         <TableCell
-                          className="border border-slate-200 font-bold text-center text-xs py-4 cursor-pointer hover:bg-slate-50 transition-colors"
-                          onClick={() => handleEditPeriod(p)}
+                          className={cn(
+                            "border border-slate-200 font-bold text-center text-xs py-4 transition-colors",
+                            canEdit ? "cursor-pointer hover:bg-slate-50" : ""
+                          )}
+                          onClick={() => canEdit && handleEditPeriod(p)}
                         >
                           <div className="font-black text-primary">Period {p.period_number}</div>
                           <div className="text-[10px] text-muted-foreground">{p.start_time} - {p.end_time}</div>
@@ -792,9 +795,10 @@ export default function ClassRoutine() {
                               key={g}
                               className={cn(
                                 "border border-slate-200 text-center p-2 min-h-[80px] transition-colors relative",
-                                "cursor-pointer hover:bg-slate-50"
+                                canEdit ? "cursor-pointer hover:bg-slate-50" : ""
                               )}
                               onClick={() => {
+                                if (!canEdit) return;
                                 if (entry) {
                                   handleEditSchedule(entry);
                                 } else {

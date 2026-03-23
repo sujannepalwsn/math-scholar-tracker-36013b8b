@@ -138,10 +138,20 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
 
   if (user.role === 'teacher') {
     // Check granular JSONB permissions if available
-    if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
+    if (teacherPerms.permissions) {
       const modulePerms = teacherPerms.permissions[dbColumnName];
-      // A module is accessible only if enabled AND can_view is true
-      return modulePerms.enabled === true && modulePerms.can_view === true;
+
+      // If the specific module is defined in the JSONB, use it as the source of truth
+      if (modulePerms) {
+        // A module is accessible only if enabled AND can_view is true
+        return modulePerms.enabled === true && modulePerms.can_view === true;
+      }
+
+      // If JSONB exists but doesn't have this key, it might be an administrative module
+      // not yet granted or a newly added module.
+      if (ADMIN_MODULES.includes(dbColumnName)) {
+        return false;
+      }
     }
 
     // Fallback to legacy boolean columns if JSONB is not yet loaded or migrated

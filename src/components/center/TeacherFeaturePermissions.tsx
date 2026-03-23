@@ -25,9 +25,12 @@ const TEACHER_FEATURES = [
   { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'summary', label: 'Summary' },
   { name: 'chapter_performance', label: 'Chapter Performance' },
+  { name: 'teacher_reports', label: 'Teacher Reports' },
   { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance Access' },
   { name: 'ai_insights', label: 'AI Insights' },
+  { name: 'about_institution', label: 'About Institution' },
+  { name: 'settings_access', label: 'Settings Access' },
   { name: 'register_student', label: 'Students Registration' },
   { name: 'teacher_management', label: 'Teachers Registration' },
   { name: 'teachers_attendance', label: 'Teachers Attendance' },
@@ -159,8 +162,9 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
     // Prepare legacy fields for RLS compatibility
     // Legacy column should be true ONLY if both enabled and can_view are true
     // This ensures that backend RLS (which relies on boolean columns) correctly blocks access.
+    // ALSO: Explicitly handle dashboard_access which might not have can_view toggle in UI but needs to be synced
     const legacyFields = {
-      [featureName]: updatedModule.enabled && updatedModule.can_view
+      [featureName]: updatedModule.enabled && (featureName === 'dashboard_access' ? true : updatedModule.can_view)
     };
 
     updatePermissionMutation.mutate({ updatedPermissions, legacyFields });
