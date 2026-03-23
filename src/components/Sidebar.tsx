@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { hasPermission } from "@/utils/permissions";
 
 interface NavItem {
   to: string;
@@ -157,38 +158,8 @@ export default function Sidebar({
 
   const filteredNavItems = navItems.filter(item => {
     if ((item as any).is_active === false && !isEditMode) return false;
-    if (item.role && user?.role !== item.role) return false;
     if (item.featureName) {
-      if (user?.role === 'center' && user.centerPermissions) {
-        return user.centerPermissions[item.featureName] !== false;
-      }
-      if (user?.role === 'teacher') {
-        // Teachers can have their own specific feature permissions (administrative toggles)
-        // Check if the permission is explicitly set in teacherPermissions
-        if (user.teacherPermissions && user.teacherPermissions[item.featureName] !== undefined) {
-          return user.teacherPermissions[item.featureName] === true;
-        }
-
-        // Some teacher permissions might have slightly different names than center permissions
-        // Let's try mapping if direct match fails
-        const mapping: Record<string, string> = {
-          'register_student': 'students_registration',
-          'student_report_access': 'student_report'
-        };
-        const mappedName = mapping[item.featureName];
-        if (mappedName && user.teacherPermissions && user.teacherPermissions[mappedName] !== undefined) {
-          return user.teacherPermissions[mappedName] === true;
-        }
-
-        // If not explicitly set in teacherPermissions, check centerPermissions for global feature status
-        if (user.centerPermissions && user.centerPermissions[item.featureName] === false) {
-          return false;
-        }
-
-        // Special case for administrative items for teachers - if they are default in navigation-defaults,
-        // they should probably be visible unless explicitly disabled.
-        return true;
-      }
+      return hasPermission(user, item.featureName);
     }
     return true;
   });

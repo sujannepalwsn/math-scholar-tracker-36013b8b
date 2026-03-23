@@ -117,8 +117,8 @@ serve(async (req) => {
       }
     }
 
-    // Fetch center feature permissions if role is center
-    if (userData.role === 'center' && userData.center_id) {
+    // Fetch center feature permissions if role is center OR teacher OR parent
+    if (userData.center_id) {
       const { data: permissionsData } = await supabaseClient
         .from('center_feature_permissions')
         .select('*')
@@ -126,29 +126,9 @@ serve(async (req) => {
         .maybeSingle();
       
       if (permissionsData) {
-        // Map boolean columns to permissions object
-        user.centerPermissions = {
-          register_student: permissionsData.register_student ?? true,
-          take_attendance: permissionsData.take_attendance ?? true,
-          attendance_summary: permissionsData.attendance_summary ?? true,
-          view_records: permissionsData.view_records ?? true,
-          lesson_plans: permissionsData.lesson_plans ?? true,
-          lesson_tracking: permissionsData.lesson_tracking ?? true,
-          homework_management: permissionsData.homework_management ?? true,
-          preschool_activities: permissionsData.preschool_activities ?? true,
-          discipline_issues: permissionsData.discipline_issues ?? true,
-          teacher_management: permissionsData.teacher_management ?? true,
-          test_management: permissionsData.test_management ?? true,
-          student_report: permissionsData.student_report ?? true,
-          ai_insights: permissionsData.ai_insights ?? true,
-          summary: permissionsData.summary ?? true,
-          finance: permissionsData.finance ?? true,
-          meetings_management: permissionsData.meetings_management ?? true,
-          calendar_events: permissionsData.calendar_events ?? true,
-          class_routine: permissionsData.class_routine ?? true,
-          messaging: permissionsData.messaging ?? true,
-          about_institution: permissionsData.about_institution ?? true,
-        };
+        user.centerPermissions = permissionsData;
+      } else {
+        user.centerPermissions = {};
       }
     }
 
@@ -160,29 +140,11 @@ serve(async (req) => {
         .eq('teacher_id', userData.teacher_id)
         .maybeSingle();
       
-      // Set permissions, defaulting to true if not explicitly set to false
-      user.teacherPermissions = {
-        take_attendance: permissionsData?.take_attendance ?? true,
-        attendance_summary: permissionsData?.attendance_summary ?? true,
-        lesson_plans: permissionsData?.lesson_plans ?? true,
-        lesson_tracking: permissionsData?.lesson_tracking ?? true,
-        homework_management: permissionsData?.homework_management ?? true,
-        activities: permissionsData?.activities ?? true,
-        preschool_activities: permissionsData?.preschool_activities ?? true,
-        discipline_issues: permissionsData?.discipline_issues ?? true,
-        test_management: permissionsData?.test_management ?? true,
-        student_report_access: permissionsData?.student_report_access ?? true,
-        chapter_performance: permissionsData?.chapter_performance ?? true,
-        ai_insights: permissionsData?.ai_insights ?? true,
-        view_records: permissionsData?.view_records ?? true,
-        summary: permissionsData?.summary ?? true,
-        finance: permissionsData?.finance ?? true,
-        meetings_management: permissionsData?.meetings_management ?? true,
-        messaging: permissionsData?.messaging ?? true,
-        class_routine: permissionsData?.class_routine ?? true,
-        calendar_events: permissionsData?.calendar_events ?? true,
-        about_institution: permissionsData?.about_institution ?? true,
-      };
+      if (permissionsData) {
+        user.teacherPermissions = permissionsData;
+      } else {
+        user.teacherPermissions = {};
+      }
     }
 
     // Update last login

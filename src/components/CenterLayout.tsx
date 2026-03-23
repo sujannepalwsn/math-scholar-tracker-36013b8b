@@ -23,7 +23,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { dynamicCategories, dynamicItems, getIcon } = useDynamicNavigation();
+  const { dynamicCategories, dynamicItems, getIcon, syncMissingItems } = useDynamicNavigation();
 
   const handleLogout = () => {
     logout();
@@ -55,7 +55,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     refetchInterval: 10000 });
 
   const centerDynamicItems = dynamicItems.filter(it => it.role === 'center');
-  const updatedNavItems = centerDynamicItems.length > 1
+  let updatedNavItems = centerDynamicItems.length > 1
     ? centerDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
         return {
@@ -78,6 +78,38 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         category: item.category as any,
         unreadCount: item.route === "/messages" ? unreadMessageCount : undefined
       }));
+
+  // Ensure mandatory items from defaults are always present (fixing issue for existing customized navigation)
+  React.useEffect(() => {
+    if (centerDynamicItems.length > 1) {
+      const hasMissing = staticNavItems.some(
+        staticItem => !centerDynamicItems.some(it => it.route === staticItem.route)
+      );
+      if (hasMissing) {
+        console.log("CenterLayout: Detected missing navigation items, syncing...");
+        syncMissingItems.mutate();
+      }
+    }
+  }, [centerDynamicItems.length, staticNavItems.length]);
+
+  if (centerDynamicItems.length > 1) {
+    const missingItems = staticNavItems.filter(
+      staticItem => !centerDynamicItems.some(it => it.route === staticItem.route)
+    );
+
+    if (missingItems.length > 0) {
+      const additionalItems = missingItems.map(item => ({
+        to: item.route,
+        label: item.name,
+        icon: getIcon(item.icon),
+        role: item.role as any,
+        featureName: item.feature_name,
+        category: item.category as any,
+        unreadCount: item.route === "/messages" ? unreadMessageCount : undefined
+      }));
+      updatedNavItems = [...updatedNavItems, ...additionalItems];
+    }
+  }
 
   const headerContent = (
     <SchoolBranding />

@@ -20,6 +20,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { hasPermission } from "@/utils/permissions";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -787,15 +788,17 @@ export default function Dashboard() {
     if (!visibleWidgets[id] && !isCustomizeMode) return null;
 
     const cards: Record<string, React.ReactNode> = {
-      "students": <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" onClick={() => navigate("/register")} />,
-      "teachers": <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" onClick={() => navigate("/teachers")} />,
-      "student-attendance": <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} onClick={() => navigate("/attendance")} />,
-      "teacher-attendance": <KPICard title="Teacher Attendance" value={`${teacherAttendanceRate}%`} description="Daily Logging" icon={Clock} color="orange" trendData={teacherAttendanceTrend} onClick={() => navigate("/teacher-attendance")} />,
-      "lesson-plans": <KPICard title="Lesson Plans" value={upcomingLessons.length} description="Pedagogical Assets" icon={FileText} color="purple" onClick={() => navigate("/lesson-plans")} />,
-      "approvals": <KPICard title="Approvals" value={pendingLessonPlansCount} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/lesson-plans")} />,
-      "leave-requests": <KPICard title="Leave Requests" value={pendingLeavesCount} description="Pending Applications" icon={Calendar} color="rose" onClick={() => navigate("/leave-management")} />,
-      "messages": <KPICard title="Messages" value="View" description="Communication Hub" icon={Bell} color="pink" onClick={() => navigate("/messages")} />,
+      "students": hasPermission(user, 'register_student') ? <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" onClick={() => navigate("/register")} /> : null,
+      "teachers": hasPermission(user, 'teacher_management') ? <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" onClick={() => navigate("/teachers")} /> : null,
+      "student-attendance": hasPermission(user, 'take_attendance') ? <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} onClick={() => navigate("/attendance")} /> : null,
+      "teacher-attendance": hasPermission(user, 'teachers_attendance') ? <KPICard title="Teacher Attendance" value={`${teacherAttendanceRate}%`} description="Daily Logging" icon={Clock} color="orange" trendData={teacherAttendanceTrend} onClick={() => navigate("/teacher-attendance")} /> : null,
+      "lesson-plans": hasPermission(user, 'lesson_plans') ? <KPICard title="Lesson Plans" value={upcomingLessons.length} description="Pedagogical Assets" icon={FileText} color="purple" onClick={() => navigate("/lesson-plans")} /> : null,
+      "approvals": hasPermission(user, 'lesson_plans') ? <KPICard title="Approvals" value={pendingLessonPlansCount} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/lesson-plans")} /> : null,
+      "leave-requests": hasPermission(user, 'leave_management') ? <KPICard title="Leave Requests" value={pendingLeavesCount} description="Pending Applications" icon={Calendar} color="rose" onClick={() => navigate("/leave-management")} /> : null,
+      "messages": hasPermission(user, 'messaging') ? <KPICard title="Messages" value="View" description="Communication Hub" icon={Bell} color="pink" onClick={() => navigate("/messages")} /> : null,
     };
+
+    if (!cards[id]) return null;
 
     return (
       <div

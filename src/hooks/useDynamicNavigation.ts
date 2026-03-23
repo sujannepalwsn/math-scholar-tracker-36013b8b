@@ -164,6 +164,42 @@ export function useDynamicNavigation() {
     },
   });
 
+  const syncMissingItems = useMutation({
+    mutationFn: async () => {
+      if (!user?.center_id || dynamicItems.length === 0) return;
+
+      const itemsToInsert = [];
+      for (const it of DEFAULT_NAV_ITEMS) {
+        const existing = dynamicItems.find(existingItem =>
+          existingItem.route === it.route && existingItem.role === it.role
+        );
+
+        if (!existing) {
+          const category = it.category ? dynamicCategories?.find(c => c.name === it.category) : null;
+          itemsToInsert.push({
+            center_id: user.center_id,
+            category_id: category?.id || null,
+            name: it.name,
+            route: it.route,
+            icon: it.icon,
+            role: it.role,
+            feature_name: it.feature_name,
+            order: it.order,
+            is_active: true
+          });
+        }
+      }
+
+      if (itemsToInsert.length > 0) {
+        const { error } = await supabase.from("nav_items").insert(itemsToInsert);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["nav-items"] });
+    },
+  });
+
   return {
     dynamicCategories,
     dynamicItems,
@@ -172,6 +208,7 @@ export function useDynamicNavigation() {
     deleteCategory,
     updateOrders,
     toggleItemActive,
-    syncDefaults
+    syncDefaults,
+    syncMissingItems
   };
 }

@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import {
   CalendarIcon, CheckCircle2, Download, Eye, FileText,
   Filter, Loader2, Search, User, XCircle, AlertCircle,
-  TrendingUp, BookOpen, Clock
+  TrendingUp, BookOpen, Clock, Plus
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +28,7 @@ type LessonPlan = Tables<'lesson_plans'>;
 
 export default function LessonPlanManagement() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan & { teachers?: { name: string } } | null>(null);
@@ -153,6 +155,11 @@ export default function LessonPlanManagement() {
               </div>
             </div>
           </div>
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+          <Button onClick={() => navigate("/lesson-plans")} size="sm" className="rounded-xl h-10 px-4 font-bold shadow-soft transition-all gap-2">
+            <Plus className="h-4 w-4" /> CREATE PLAN
+          </Button>
         </div>
       </div>
 

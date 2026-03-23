@@ -48,12 +48,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const parsedUser: User = JSON.parse(storedUser);
           setUser(parsedUser);
-          // Permissions are now fetched by the Edge Function during login,
-          // but we can keep this for initial load if needed, or remove for simplicity.
-          // For now, let's assume the stored user has the latest permissions.
+
+          // Fetch fresh permissions from DB to avoid stale localStorage data
+          if (parsedUser.center_id) {
+            // We use a helper function to avoid async in useEffect directly
+            const fetchFreshPermissions = async (userToUpdate: User) => {
+              try {
+                let updatedUser = { ...userToUpdate };
+                let hasChanges = false;
+
+                // Always fetch center permissions
+                const { data: centerPerms } = await supabase
+                  .from('center_feature_permissions')
+                  .select('*')
+                  .eq('center_id', userToUpdate.center_id!)
+                  .maybeSingle();
+
+                if (centerPerms) {
+                  updatedUser.centerPermissions = centerPerms;
+                  hasChanges = true;
+                }
+
+                // Fetch teacher permissions if user is a teacher
+                if (userToUpdate.role === 'teacher' && userToUpdate.teacher_id) {
+                  const { data: teacherPerms } = await supabase
+                    .from('teacher_feature_permissions')
+                    .select('*')
+                    .eq('teacher_id', userToUpdate.teacher_id)
+                    .maybeSingle();
+
+                  if (teacherPerms) {
+                    updatedUser.teacherPermissions = teacherPerms;
+                    hasChanges = true;
+                  }
+                }
+
+                if (hasChanges) {
+                  setUser(updatedUser);
+                  localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+                }
+              } catch (err) {
+                console.error("Error fetching fresh permissions:", err);
+              }
+            };
+
+            fetchFreshPermissions(parsedUser);
+          }
         } catch (e) {
-          console.error("Failed to parse auth_user from localStorage", e);
-          localStorage.removeItem('auth_user');
+          console.error("Failed to parse auth_user", e);
         }
       }
       setLoading(false);

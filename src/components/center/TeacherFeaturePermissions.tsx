@@ -21,14 +21,14 @@ const TEACHER_FEATURES = [
   { name: 'messaging', label: 'Messages' },
   { name: 'meetings_management', label: 'Meetings' },
   { name: 'calendar_events', label: 'Calendar & Events' },
-  { name: 'student_report_access', label: 'Student Report' },
+  { name: 'student_report', label: 'Student Report' },
   { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'summary', label: 'Summary' },
   { name: 'chapter_performance', label: 'Chapter Performance' },
   { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance Access' },
   { name: 'ai_insights', label: 'AI Insights' },
-  { name: 'students_registration', label: 'Students Registration' },
+  { name: 'register_student', label: 'Students Registration' },
   { name: 'teacher_management', label: 'Teachers Registration' },
   { name: 'teachers_attendance', label: 'Teachers Attendance' },
   { name: 'hr_management', label: 'HR Management' },
@@ -119,13 +119,11 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
           <TableBody>
             {TEACHER_FEATURES.filter(f => {
               if (!centerPermissions) return true;
-              const centerVal = centerPermissions[f.name as keyof typeof centerPermissions];
-              return centerVal !== false;
+              const dbColumn = f.name;
+              return centerPermissions[dbColumn] !== false;
             }).map(feature => {
-              // Map student_report to student_report_access for the database update if necessary
-              // but for consistency let's use the DB names.
-              const dbFieldName = feature.name === 'student_report' ? 'student_report_access' : feature.name;
-              const isEnabled = permissions?.[dbFieldName as keyof typeof permissions] ?? true;
+              const dbFieldName = feature.name;
+              const isEnabled = permissions?.[dbFieldName] ?? true;
 
               return (
                 <TableRow key={feature.name}>

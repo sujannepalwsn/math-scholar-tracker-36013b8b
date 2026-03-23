@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2, PlusCircle, MinusCircle, Printer, Send, CheckCircle2, XCircle, User, Loader2 } from "lucide-react";
+import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2, PlusCircle, MinusCircle, Printer, Send, CheckCircle2, XCircle, User, Loader2, Scan } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -17,6 +17,8 @@ import { Tables } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
+import { hasPermission } from "@/utils/permissions";
+import LessonPlanOCR from "@/components/center/LessonPlanOCR";
 
 type LessonPlan = Tables<'lesson_plans'>;
 
@@ -24,6 +26,7 @@ export default function LessonPlans() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isOCROpen, setIsOCROpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingLessonPlan, setEditingLessonPlan] = useState<LessonPlan | null>(null);
   const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan | null>(null);
@@ -42,8 +45,8 @@ export default function LessonPlans() {
   const [period, setPeriod] = useState("");
   const [objectives, setObjectives] = useState("");
   const [warmUpReview, setWarmUpReview] = useState("");
-  const [learningActivities, setLearningActivities] = useState<string[]>([""]);
-  const [evaluationActivities, setEvaluationActivities] = useState<string[]>([""]);
+  const [learningActivities, setLearningActivities] = useState<string[]>(["", "", "", ""]);
+  const [evaluationActivities, setEvaluationActivities] = useState<string[]>(["", "", "", ""]);
   const [classWork, setClassWork] = useState("");
   const [homeAssignment, setHomeAssignment] = useState("");
   const [notes, setNotes] = useState("");
@@ -94,8 +97,8 @@ export default function LessonPlans() {
     setPeriod("");
     setObjectives("");
     setWarmUpReview("");
-    setLearningActivities([""]);
-    setEvaluationActivities([""]);
+    setLearningActivities(["", "", "", ""]);
+    setEvaluationActivities(["", "", "", ""]);
     setClassWork("");
     setHomeAssignment("");
     setNotes("");
@@ -190,8 +193,11 @@ export default function LessonPlans() {
     setPeriod(lp.period || "");
     setObjectives(lp.objectives || "");
     setWarmUpReview(lp.warm_up_review || "");
-    setLearningActivities(Array.isArray(lp.learning_activities) && lp.learning_activities.length > 0 ? (lp.learning_activities as string[]) : [""]);
-    setEvaluationActivities(Array.isArray(lp.evaluation_activities) && lp.evaluation_activities.length > 0 ? (lp.evaluation_activities as string[]) : [""]);
+    const activities = Array.isArray(lp.learning_activities) ? lp.learning_activities as string[] : [];
+    setLearningActivities([...activities, "", "", "", ""].slice(0, 4));
+
+    const evals = Array.isArray(lp.evaluation_activities) ? lp.evaluation_activities as string[] : [];
+    setEvaluationActivities([...evals, "", "", "", ""].slice(0, 4));
     setClassWork(lp.class_work || "");
     setHomeAssignment(lp.home_assignment || "");
     setNotes(lp.notes || "");
@@ -211,6 +217,26 @@ export default function LessonPlans() {
   };
 
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
+
+  const handleOCRExtracted = (data: any) => {
+    if (data.subject) setSubject(data.subject);
+    if (data.class) setSelectedGrade(data.class);
+    if (data.unit) setChapter(data.unit);
+    if (data.period) setPeriod(data.period);
+    if (data.topic) setTopic(data.topic);
+    if (data.date) setLessonDate(data.date);
+    if (data.objectives) setObjectives(data.objectives);
+    if (data.warm_up_review) setWarmUpReview(data.warm_up_review);
+    if (Array.isArray(data.learning_activities)) {
+      setLearningActivities([...data.learning_activities, "", "", "", ""].slice(0, 4));
+    }
+    if (Array.isArray(data.evaluation_activities)) {
+      setEvaluationActivities([...data.evaluation_activities, "", "", "", ""].slice(0, 4));
+    }
+    if (data.class_work) setClassWork(data.class_work);
+    if (data.home_assignment) setHomeAssignment(data.home_assignment);
+    if (data.notes) setNotes(data.notes);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
@@ -252,7 +278,7 @@ export default function LessonPlans() {
               ))}
             </SelectContent>
           </Select>
-          {isTeacher && (
+          {hasPermission(user, 'lesson_plans') && (
             <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-xl h-10 px-4 font-bold shadow-soft transition-all gap-2">
               <Plus className="h-4 w-4" /> CREATE PLAN
             </Button>
@@ -338,54 +364,70 @@ export default function LessonPlans() {
         </CardContent>
       </Card>
 
+      {/* OCR Scanner Dialog */}
+      <LessonPlanOCR
+        open={isOCROpen}
+        onOpenChange={setIsOCROpen}
+        onExtracted={handleOCRExtracted}
+      />
+
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black">{editingLessonPlan ? "Refine Lesson Architecture" : "Construct New Lesson Plan"}</DialogTitle>
-            <DialogDescription className="font-medium">Define the pedagogical structure for institutional review.</DialogDescription>
+            <div className="flex justify-between items-center pr-10">
+              <div>
+                <DialogTitle className="text-2xl font-black">{editingLessonPlan ? "Refine Lesson Architecture" : "Construct New Lesson Plan"}</DialogTitle>
+                <DialogDescription className="font-medium">Define the pedagogical structure for institutional review.</DialogDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsOCROpen(true)}
+                className="rounded-xl border-primary text-primary font-black uppercase text-[10px] tracking-widest gap-2 shadow-soft hover:bg-primary hover:text-white transition-all"
+              >
+                <Scan className="h-4 w-4" /> SCAN HANDWRITTEN
+              </Button>
+            </div>
           </DialogHeader>
           <div className="space-y-6 py-4">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Subject *</Label>
-                  <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Math" className="h-11 rounded-xl bg-card/50" />
+             {/* Daily Lesson Plan Format Header */}
+             <div className="border-2 border-slate-900 rounded-3xl overflow-hidden divide-y-2 md:divide-y-0 md:divide-x-2 divide-slate-900 grid grid-cols-1 md:grid-cols-2">
+                <div className="divide-y-2 divide-slate-900">
+                  <div className="p-4 flex items-center gap-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Subject:</Label>
+                    <Input value={subject} onChange={(e) => setSubject(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  </div>
+                  <div className="p-4 flex items-center gap-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Unit:</Label>
+                    <Input value={chapter} onChange={(e) => setChapter(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  </div>
+                  <div className="p-4 flex items-center gap-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Lesson Topic:</Label>
+                    <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Class *</Label>
-                  <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                    <SelectTrigger className="h-11 rounded-xl bg-card/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">General</SelectItem>
-                      {uniqueGrades.map(g => (
-                        <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Unit *</Label>
-                  <Input value={chapter} onChange={(e) => setChapter(e.target.value)} placeholder="e.g. Unit 1" className="h-11 rounded-xl bg-card/50" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Period *</Label>
-                  <Input value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="1st" className="h-11 rounded-xl bg-card/50" />
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Lesson Topic *</Label>
-                  <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Linear Equations" className="h-11 rounded-xl bg-card/50" />
-                </div>
-                <div className="space-y-1.5">
-                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Date *</Label>
-                   <Input type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} className="h-11 rounded-xl bg-card/50" />
+                <div className="divide-y-2 divide-slate-900">
+                  <div className="p-4 flex items-center gap-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Class:</Label>
+                    <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                      <SelectTrigger className="h-9 border-0 border-b border-slate-400 rounded-none focus:ring-0 px-0 bg-transparent font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">General</SelectItem>
+                        {uniqueGrades.map(g => <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="p-4 flex items-center gap-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Period:</Label>
+                    <Input value={period} onChange={(e) => setPeriod(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  </div>
+                  <div className="p-4 flex items-center gap-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Date:</Label>
+                    <Input type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  </div>
                 </div>
              </div>
 
@@ -403,15 +445,14 @@ export default function LessonPlans() {
                 <div className="space-y-3">
                    <div className="flex items-center justify-between">
                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary">3. Teaching Learning Activities</Label>
-                     <Button variant="ghost" size="sm" className="h-6 px-2 text-[9px] font-black uppercase text-primary hover:bg-primary/5" onClick={() => setLearningActivities([...learningActivities, ""])}><PlusCircle className="h-3 w-3 mr-1" /> Add</Button>
                    </div>
                    <div className="space-y-2">
                       {learningActivities.map((act, i) => (
-                        <div key={i} className="flex gap-2">
+                        <div key={i} className="flex gap-2 items-center">
+                           <span className="text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
                            <Input value={act} onChange={(e) => {
                              const n = [...learningActivities]; n[i] = e.target.value; setLearningActivities(n);
-                           }} className="h-9 rounded-xl bg-card/30 text-xs font-medium" />
-                           {learningActivities.length > 1 && <Button variant="ghost" size="icon" className="h-9 w-9 text-rose-500" onClick={() => setLearningActivities(learningActivities.filter((_, idx) => idx !== i))}><MinusCircle className="h-4 w-4" /></Button>}
+                           }} className="h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-xs font-medium" />
                         </div>
                       ))}
                    </div>
@@ -419,29 +460,31 @@ export default function LessonPlans() {
                 <div className="space-y-3">
                    <div className="flex items-center justify-between">
                      <Label className="text-[10px] font-black uppercase tracking-widest text-violet-600">4. Class Review / Evaluation</Label>
-                     <Button variant="ghost" size="sm" className="h-6 px-2 text-[9px] font-black uppercase text-violet-600 hover:bg-violet-50" onClick={() => setEvaluationActivities([...evaluationActivities, ""])}><PlusCircle className="h-3 w-3 mr-1" /> Add</Button>
                    </div>
                    <div className="space-y-2">
                       {evaluationActivities.map((act, i) => (
-                        <div key={i} className="flex gap-2">
+                        <div key={i} className="flex gap-2 items-center">
+                           <span className="text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
                            <Input value={act} onChange={(e) => {
                              const n = [...evaluationActivities]; n[i] = e.target.value; setEvaluationActivities(n);
-                           }} className="h-9 rounded-xl bg-card/30 text-xs font-medium" />
-                           {evaluationActivities.length > 1 && <Button variant="ghost" size="icon" className="h-9 w-9 text-rose-500" onClick={() => setEvaluationActivities(evaluationActivities.filter((_, idx) => idx !== i))}><MinusCircle className="h-4 w-4" /></Button>}
+                           }} className="h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-xs font-medium" />
                         </div>
                       ))}
                    </div>
                 </div>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Class Work</Label>
-                  <Textarea value={classWork} onChange={(e) => setClassWork(e.target.value)} rows={3} placeholder="Activities to be done in class..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Home Assignment</Label>
-                  <Textarea value={homeAssignment} onChange={(e) => setHomeAssignment(e.target.value)} rows={3} placeholder="Homework for students..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
+             <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-widest">5. Assignments</Label>
+                <div className="border-2 border-slate-900 md:divide-x-2 divide-slate-900 grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden">
+                  <div className="divide-y-2 divide-slate-900">
+                    <div className="bg-slate-50 p-2 text-center font-black uppercase text-[10px]">Class Work</div>
+                    <Textarea value={classWork} onChange={(e) => setClassWork(e.target.value)} rows={4} className="border-0 rounded-none focus-visible:ring-0 text-sm font-medium" />
+                  </div>
+                  <div className="divide-y-2 divide-slate-900 border-t-2 md:border-t-0 border-slate-900">
+                    <div className="bg-slate-50 p-2 text-center font-black uppercase text-[10px]">Home Assignment</div>
+                    <Textarea value={homeAssignment} onChange={(e) => setHomeAssignment(e.target.value)} rows={4} className="border-0 rounded-none focus-visible:ring-0 text-sm font-medium" />
+                  </div>
                 </div>
              </div>
 
