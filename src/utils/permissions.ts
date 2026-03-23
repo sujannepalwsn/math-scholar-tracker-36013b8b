@@ -6,6 +6,8 @@
  */
 export const PERMISSION_MAPPING: Record<string, string> = {
   // Navigation / UI Key -> Database Column Name
+  'dashboard': 'dashboard_access',
+  'dashboard_access': 'dashboard_access',
   'register_student': 'register_student',
   'students_registration': 'register_student', // Support both names
   'student_report': 'student_report',
@@ -19,6 +21,7 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   'attendance': 'take_attendance',
   'teacher_management': 'teacher_management',
   'teachers': 'teacher_management',
+  'teachers_attendance': 'teachers_attendance',
   'discipline_issues': 'discipline_issues',
   'discipline': 'discipline_issues',
   'preschool_activities': 'preschool_activities',
@@ -42,6 +45,7 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   'chapter_performance': 'chapter_performance',
   'chapter-performance-overview': 'chapter_performance',
   'leave_management': 'leave_management',
+  'hr_management': 'hr_management',
   'student_id_cards': 'student_id_cards',
   'student-id-cards': 'student_id_cards',
   'inventory_assets': 'inventory_assets',

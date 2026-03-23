@@ -53,7 +53,7 @@ const TEACHER_FEATURES = [
   { name: 'messaging', label: 'Messages' },
   { name: 'meetings_management', label: 'Meetings' },
   { name: 'calendar_events', label: 'Calendar & Events' },
-  { name: 'student_report_access', label: 'Student Report' },
+  { name: 'student_report', label: 'Student Report' },
   { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'summary', label: 'Summary' },
   { name: 'chapter_performance', label: 'Chapter Performance' },

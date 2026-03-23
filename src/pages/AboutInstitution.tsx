@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { hasPermission } from "@/utils/permissions";
 
 interface Facility {
   id: string;
@@ -300,7 +301,7 @@ export default function AboutInstitution() {
     );
   }
 
-  const canEdit = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.about_institution === true);
+  const canEdit = hasPermission(user, 'about_institution');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">

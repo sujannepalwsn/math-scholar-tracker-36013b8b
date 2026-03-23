@@ -166,7 +166,7 @@ export default function TeacherManagement() {
       if (error) throw error;
       const { error: permError } = await supabase.from('teacher_feature_permissions').insert({
         teacher_id: newTeacher.id, take_attendance: true, lesson_tracking: true, homework_management: true,
-        preschool_activities: true, discipline_issues: true, test_management: true, student_report_access: true, meetings_management: true });
+        preschool_activities: true, discipline_issues: true, test_management: true, student_report: true, meetings_management: true });
       if (permError) console.error('Error seeding default permissions:', permError);
       return newTeacher;
     },
@@ -184,7 +184,7 @@ export default function TeacherManagement() {
       const { data: newTeachers, error } = await supabase.from("teachers").insert(teachersToInsert as any).select();
       if (error) throw error;
       if (newTeachers && newTeachers.length > 0) {
-        const permissions = newTeachers.map(t => ({ teacher_id: t.id, take_attendance: true, lesson_tracking: true, homework_management: true, preschool_activities: true, discipline_issues: true, test_management: true, student_report_access: true, meetings_management: true }));
+        const permissions = newTeachers.map(t => ({ teacher_id: t.id, take_attendance: true, lesson_tracking: true, homework_management: true, preschool_activities: true, discipline_issues: true, test_management: true, student_report: true, meetings_management: true }));
         await supabase.from('teacher_feature_permissions').insert(permissions);
       }
       return newTeachers;

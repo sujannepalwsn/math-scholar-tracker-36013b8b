@@ -181,8 +181,8 @@ export default function Sidebar({
     let currentCategoryItems: React.ReactNode[] = [];
 
     // Separate items into categorized and uncategorized
-    const uncategorizedItems = items.filter(it => !it.category);
-    const categorizedItems = items.filter(it => it.category);
+    const uncategorizedItems = sortedItems.filter(it => !it.category);
+    const categorizedItems = sortedItems.filter(it => it.category);
 
     const flushCategory = (category: string, children: React.ReactNode[]) => {
       const isExpanded = expandedCategories.includes(category);
@@ -531,7 +531,7 @@ export default function Sidebar({
           {renderNavLinks(filteredNavItems, false)}
         </nav>
         <div className="mt-auto p-4 border-t space-y-4">
-          {(user?.role === 'center' || (user?.role === 'teacher' && (user.teacherPermissions?.settings_access === true || user.teacherPermissions?.test_management === true))) && (
+          {(user?.role === 'center' || (user?.role === 'teacher' && (hasPermission(user, 'settings_access') || hasPermission(user, 'test_management')))) && (
             <div className="space-y-2">
               <Button
                 variant="ghost"

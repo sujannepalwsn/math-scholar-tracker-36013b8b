@@ -10,11 +10,12 @@ import AssetTracking from "@/components/center/AssetTracking";
 import LibraryManagement from "@/components/center/LibraryManagement";
 import ConsumablesManagement from "@/components/center/ConsumablesManagement";
 import { useAuth } from "@/contexts/AuthContext";
+import { hasPermission } from "@/utils/permissions";
 
 export default function InventoryManagement() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
-  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.inventory_assets === true);
+  const hasFullAccess = hasPermission(user, 'inventory_assets');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">

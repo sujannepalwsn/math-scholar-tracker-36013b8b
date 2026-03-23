@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
 import { cn } from "@/lib/utils"
+import { hasPermission } from "@/utils/permissions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -83,7 +84,7 @@ export default function TakeAttendance() {
     enabled: !!user?.teacher_id && user?.role === 'teacher' });
 
   const isTeacher = user?.role === 'teacher';
-  const isCenter = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.take_attendance === true);
+  const isCenter = hasPermission(user, 'take_attendance');
 
   const { data: students } = useQuery({
     queryKey: ["students", user?.center_id],

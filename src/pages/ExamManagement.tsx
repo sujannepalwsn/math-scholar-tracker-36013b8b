@@ -19,12 +19,13 @@ import { cn, safeFormatDate } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ExamSettings from "@/components/center/ExamSettings";
+import { hasPermission } from "@/utils/permissions";
 
 const grades = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
 export default function ExamManagement() {
   const { user } = useAuth();
-  const hasFullAccess = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.exams_results === true);
+  const hasFullAccess = hasPermission(user, 'exams_results');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;

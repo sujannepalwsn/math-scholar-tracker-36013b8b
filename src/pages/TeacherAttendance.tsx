@@ -52,7 +52,7 @@ export default function TeacherAttendancePage() {
   const { user } = useAuth();
 
   const isTeacher = user?.role === 'teacher';
-  const isCenter = user?.role === 'center' || (user?.role === 'teacher' && user.teacherPermissions?.teachers_attendance === true);
+  const isCenter = hasPermission(user, 'teachers_attendance');
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, TeacherAttendance>>({});

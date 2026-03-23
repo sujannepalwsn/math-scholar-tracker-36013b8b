@@ -20,6 +20,7 @@ import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
+import { hasPermission } from "@/utils/permissions";
 
 type Homework = Tables<'homework'>;
 type Student = Tables<'students'>;
@@ -58,7 +59,7 @@ export default function HomeworkManagement() {
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
       // Full access for teachers if module is enabled
-      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.homework_management === true;
+      const hasFullAccess = hasPermission(user, 'homework_management');
 
       if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
@@ -77,7 +78,7 @@ export default function HomeworkManagement() {
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
 
       // Full access for teachers if module is enabled
-      const hasFullAccess = user?.role === 'teacher' && user.teacherPermissions?.homework_management === true;
+      const hasFullAccess = hasPermission(user, 'homework_management');
 
       if (user?.role === 'teacher' && !hasFullAccess) {
         query = query.eq('teacher_id', user.teacher_id);
