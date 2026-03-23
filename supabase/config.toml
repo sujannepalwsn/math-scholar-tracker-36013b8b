@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.ai-student-summary]
 verify_jwt = false
+
+[functions.lesson-plan-ocr]
+verify_jwt = false
