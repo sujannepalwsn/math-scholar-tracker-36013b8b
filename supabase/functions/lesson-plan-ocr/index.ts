@@ -7,10 +7,10 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // 1. Log request entry for debugging
-  console.log(`Request received: ${req.method} ${req.url}`);
+  // Always log method and URL for troubleshooting
+  console.log(`[OCR] ${req.method} request received`);
 
-  // 2. Handle CORS preflight request
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -18,14 +18,14 @@ serve(async (req) => {
   try {
     const { image } = await req.json();
     if (!image) {
-      throw new Error("No image data provided");
+      throw new Error("No image data provided in request body");
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY not configured');
+      console.error('[OCR] LOVABLE_API_KEY is not configured');
       return new Response(
-        JSON.stringify({ error: 'OCR service not configured' }),
+        JSON.stringify({ error: 'OCR service is not properly configured on the server.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -50,16 +50,16 @@ The fields to extract are:
 - notes: Any additional notes or teaching aids mentioned.
 
 Guidelines:
-- If a field is empty or unreadable, return an empty string (or empty array/padded array for activities).
-- Only return the structured JSON object. No other text.
-- Standardize the date to YYYY-MM-DD format if it appears in any common date format.
-- For activities, ensure the array has exactly 4 elements.`;
+- Return ONLY the structured JSON object. No other text or markdown formatting.
+- If a field is empty or unreadable, return an empty string.
+- For activities, always provide an array of exactly 4 strings.
+- Standardize the date to YYYY-MM-DD.`;
 
-    console.log("Sending request to AI Gateway...");
+    console.log("[OCR] Calling AI Gateway...");
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -69,12 +69,10 @@ Guidelines:
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Extract data from this handwritten lesson plan image.' },
+              { type: 'text', text: 'Extract lesson plan data from this image.' },
               {
                 type: 'image_url',
-                image_url: {
-                  url: image, // Data URL
-                },
+                image_url: { url: image },
               },
             ],
           },
@@ -85,32 +83,32 @@ Guidelines:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway Error:', errorText);
+      console.error(`[OCR] AI Gateway Error: ${response.status} - ${errorText}`);
       return new Response(
-        JSON.stringify({ error: `AI service error: ${response.status}`, details: errorText }),
+        JSON.stringify({ error: `AI Processing failed: ${response.status}`, details: errorText }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
-    console.log("AI Gateway Response received successfully.");
+    console.log("[OCR] Successfully received AI response.");
 
     let result;
     try {
       result = JSON.parse(data.choices[0].message.content);
     } catch (parseErr) {
-      console.error("Failed to parse AI response content:", data.choices[0].message.content);
-      throw new Error("Invalid format received from AI service");
+      console.error("[OCR] Failed to parse AI content:", data.choices[0].message.content);
+      throw new Error("The AI service returned an invalid data format.");
     }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in lesson-plan-ocr:', error);
+    console.error('[OCR] Internal Error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'An unknown error occurred during OCR processing.',
         timestamp: new Date().toISOString()
       }),
       {

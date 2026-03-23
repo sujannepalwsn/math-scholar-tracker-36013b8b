@@ -220,34 +220,33 @@ export default function LessonPlans() {
 
   const handleOCRExtracted = (data: any) => {
     console.log("Mapping OCR data to form...", data);
+    if (!data) return;
 
-    if (data.subject) setSubject(data.subject);
+    if (data.subject) setSubject(data.subject.toString());
 
     // Fuzzy match for grade
     if (data.class) {
-      const extractedGrade = data.class.toString().toUpperCase();
-      const matchedGrade = uniqueGrades.find(g =>
-        g?.toString().toUpperCase() === extractedGrade ||
-        g?.toString().toUpperCase().includes(extractedGrade) ||
-        extractedGrade.includes(g?.toString().toUpperCase() || "")
-      );
+      const extractedGrade = data.class.toString().toUpperCase().replace(/GRADE\s*/i, '').trim();
+      const matchedGrade = uniqueGrades.find(g => {
+        const gradeStr = g?.toString().toUpperCase().replace(/GRADE\s*/i, '').trim() || "";
+        return gradeStr === extractedGrade || gradeStr.includes(extractedGrade) || extractedGrade.includes(gradeStr);
+      });
       if (matchedGrade) {
         setSelectedGrade(matchedGrade);
       } else {
-        // If no direct match, still try to set it if it's a valid string
-        setSelectedGrade(data.class);
+        setSelectedGrade(data.class.toString());
       }
     }
 
-    if (data.unit) setChapter(data.unit);
+    if (data.unit) setChapter(data.unit.toString());
     if (data.period) setPeriod(data.period.toString());
-    if (data.topic) setTopic(data.topic);
+    if (data.topic) setTopic(data.topic.toString());
 
     // Validate and set date
     if (data.date) {
       try {
         const dateObj = new Date(data.date);
-        if (!isNaN(dateObj.getTime())) {
+        if (isValid(dateObj)) {
           setLessonDate(format(dateObj, "yyyy-MM-dd"));
         }
       } catch (e) {
@@ -255,22 +254,22 @@ export default function LessonPlans() {
       }
     }
 
-    if (data.objectives) setObjectives(data.objectives);
-    if (data.warm_up_review) setWarmUpReview(data.warm_up_review);
+    if (data.objectives) setObjectives(data.objectives.toString());
+    if (data.warm_up_review) setWarmUpReview(data.warm_up_review.toString());
 
     if (Array.isArray(data.learning_activities)) {
-      const activities = data.learning_activities.filter(Boolean);
+      const activities = data.learning_activities.map(a => a?.toString() || "").filter(Boolean);
       setLearningActivities([...activities, "", "", "", ""].slice(0, 4));
     }
 
     if (Array.isArray(data.evaluation_activities)) {
-      const evals = data.evaluation_activities.filter(Boolean);
+      const evals = data.evaluation_activities.map(e => e?.toString() || "").filter(Boolean);
       setEvaluationActivities([...evals, "", "", "", ""].slice(0, 4));
     }
 
-    if (data.class_work) setClassWork(data.class_work);
-    if (data.home_assignment) setHomeAssignment(data.home_assignment);
-    if (data.notes) setNotes(data.notes);
+    if (data.class_work) setClassWork(data.class_work.toString());
+    if (data.home_assignment) setHomeAssignment(data.home_assignment.toString());
+    if (data.notes) setNotes(data.notes.toString());
 
     toast.info("Form populated from AI extraction. Please review and save.");
   };
