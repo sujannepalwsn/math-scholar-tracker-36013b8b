@@ -20,6 +20,7 @@ import { compressImage } from "@/lib/image-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { hasPermission } from "@/utils/permissions";
+import { Json, Tables } from "@/integrations/supabase/types";
 
 interface Facility {
   id: string;
@@ -170,6 +171,20 @@ export default function AboutInstitution() {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Optimistically update the query cache with the current form data
+      queryClient.setQueryData(["center-about", user?.center_id], (oldData: Tables<'centers'> | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          ...formData,
+          // Ensure achievements and other JSONB arrays are correctly updated
+          facilities: formData.facilities,
+          achievements: formData.achievements,
+          gallery: formData.gallery,
+          social_links: formData.social_links
+        };
+      });
+
       queryClient.invalidateQueries({ queryKey: ["center-about"] });
       toast.success("Institution information updated successfully!");
       setIsEditing(false);
