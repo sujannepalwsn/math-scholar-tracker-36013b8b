@@ -82,14 +82,14 @@ export default function CenterSettings() {
       setAddress(center.address || "");
       setPhone(center.phone || "");
       setEmail(center.email || "");
-      setContactPerson((center as any).contact_person || "");
-      setLogoUrl((center as any).logo_url || "");
-      setShortCode((center as any).short_code || "");
-      setLatitude((center as any).latitude?.toString() || "");
-      setLongitude((center as any).longitude?.toString() || "");
-      setRadiusMeters((center as any).radius_meters?.toString() || "100");
+      setContactPerson(center.contact_person || "");
+      setLogoUrl(center.logo_url || "");
+      setShortCode(center.short_code || "");
+      setLatitude(center.latitude?.toString() || "");
+      setLongitude(center.longitude?.toString() || "");
+      setRadiusMeters(center.radius_meters?.toString() || "100");
 
-      const savedTheme = (center as any).theme;
+      const savedTheme = center.theme;
       if (savedTheme && typeof savedTheme === 'object') {
         setTheme({
           primary: savedTheme.primary || "#6366f1",
@@ -209,7 +209,7 @@ export default function CenterSettings() {
           latitude: latitude ? parseFloat(latitude) : null,
           longitude: longitude ? parseFloat(longitude) : null,
           radius_meters: radiusMeters ? parseInt(radiusMeters) : 100,
-          theme } as any)
+          theme: theme as unknown as Json } )
         .eq("id", user.center_id);
       if (error) throw error;
       // Apply theme after saving
@@ -219,7 +219,7 @@ export default function CenterSettings() {
       queryClient.invalidateQueries({ queryKey: ["center-details"] });
       toast.success("Center settings updated successfully!");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update settings");
     } });
 
@@ -264,16 +264,17 @@ export default function CenterSettings() {
       const hashedPassword = await bcrypt.hash(newPassword, 12);
       const { error: updateError } = await supabase
         .from('users')
-        .update({ password_hash: hashedPassword, updated_at: new Date().toISOString() } as any)
+        .update({ password_hash: hashedPassword, updated_at: new Date().toISOString() })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
 
       toast.success('Password changed successfully. Please log in again.');
       setTimeout(() => logout(), 2000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Password change error:', error);
-      toast.error(error.message || 'Failed to change password.');
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error(errorMessage || 'Failed to change password.');
     } finally {
       setPasswordLoading(false);
     }
@@ -284,9 +285,9 @@ export default function CenterSettings() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
-      <Tabs defaultValue={defaultTab} className="space-y-8">
-        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto">
+    <div className="space-y-8 animate-in fade-in duration-1000 max-w-full overflow-x-hidden">
+      <Tabs defaultValue={defaultTab} className="space-y-8 w-full">
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md w-full justify-start overflow-x-auto no-scrollbar">
           <TabsTrigger value="general" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">General</TabsTrigger>
           <TabsTrigger value="payroll" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Payroll Config</TabsTrigger>
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Cycles</TabsTrigger>
@@ -415,8 +416,8 @@ export default function CenterSettings() {
                     src={logoUrl}
                     alt="Center Logo Preview"
                     className="max-h-24 object-contain mx-auto"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
+                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                          e.currentTarget.style.display = 'none';
                     }}
                   />
                 </div>
