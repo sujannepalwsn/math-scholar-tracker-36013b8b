@@ -15,7 +15,7 @@ import { formatCurrency } from "@/lib/utils"
 
 const PAYMENT_METHODS = ['cash', 'cheque', 'bank_transfer', 'upi', 'card', 'other'];
 
-const PaymentTracking = () => {
+const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -116,10 +116,11 @@ const PaymentTracking = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Payment Records</CardTitle>
-            <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-              <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" />Record Payment</Button>
-              </DialogTrigger>
+            {canEdit && (
+              <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+                <DialogTrigger asChild>
+                  <Button><Plus className="h-4 w-4 mr-2" />Record Payment</Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Record Payment</DialogTitle>
@@ -162,8 +163,9 @@ const PaymentTracking = () => {
                     {recordPaymentMutation.isPending ? 'Recording...' : 'Record Payment'}
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>

@@ -14,7 +14,7 @@ import { toast } from "sonner"
 import { formatCurrency } from "@/lib/utils"
 import { format } from "date-fns"
 
-const InvoiceManagement = () => {
+const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -165,10 +165,11 @@ const InvoiceManagement = () => {
           <div className="flex items-center justify-between">
             <CardTitle>Invoice Management</CardTitle>
             <div className="flex gap-2">
-              <Dialog open={showBulkGenerateDialog} onOpenChange={setShowBulkGenerateDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="outline"><FilePlus className="h-4 w-4 mr-2" />Generate Monthly Invoices</Button>
-                </DialogTrigger>
+              {canEdit && (
+                <Dialog open={showBulkGenerateDialog} onOpenChange={setShowBulkGenerateDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline"><FilePlus className="h-4 w-4 mr-2" />Generate Monthly Invoices</Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Generate Monthly Invoices</DialogTitle>
@@ -242,12 +243,15 @@ const InvoiceManagement = () => {
                     </Button>
                   </div>
                 </DialogContent>
+                </DialogContent>
               </Dialog>
+              )}
 
-              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogTrigger asChild>
-                  <Button><Plus className="h-4 w-4 mr-2" />Create Single Invoice</Button>
-                </DialogTrigger>
+              {canEdit && (
+                <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                  <DialogTrigger asChild>
+                    <Button><Plus className="h-4 w-4 mr-2" />Create Single Invoice</Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Create Invoice</DialogTitle>
@@ -277,8 +281,9 @@ const InvoiceManagement = () => {
                       {createInvoiceMutation.isPending ? 'Creating...' : 'Create Invoice'}
                     </Button>
                   </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -313,7 +318,7 @@ const InvoiceManagement = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {invoice.status !== 'paid' && (
+                      {canEdit && invoice.status !== 'paid' && (
                         <Button variant="outline" size="sm" onClick={() => markAsPaidMutation.mutate(invoice.id)} disabled={markAsPaidMutation.isPending}>
                           <DollarSign className="h-4 w-4 mr-1" /> Mark Paid
                         </Button>

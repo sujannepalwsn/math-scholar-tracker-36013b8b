@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
 
-export default function StaffHRModule({ teacherId, teacherName }: { teacherId: string, teacherName: string }) {
+export default function StaffHRModule({ teacherId, teacherName, canEdit }: { teacherId: string, teacherName: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const authCenterId = user?.center_id;
@@ -440,11 +440,13 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
         </TabsContent>
 
         <TabsContent value="payroll" className="pt-6 space-y-4">
-           <div className="flex justify-end">
-              <Button size="sm" onClick={() => setShowAddPayroll(!showAddPayroll)} className="h-8 rounded-lg text-[9px] font-black uppercase">
-                {showAddPayroll ? "Cancel" : "Log Disbursement"}
-              </Button>
-           </div>
+           {canEdit && (
+             <div className="flex justify-end">
+                <Button size="sm" onClick={() => setShowAddPayroll(!showAddPayroll)} className="h-8 rounded-lg text-[9px] font-black uppercase">
+                  {showAddPayroll ? "Cancel" : "Log Disbursement"}
+                </Button>
+             </div>
+           )}
 
            {showAddPayroll && (
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
@@ -519,11 +521,13 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
         </TabsContent>
 
         <TabsContent value="contracts" className="pt-4 space-y-4">
-           <div className="flex justify-end">
-              <Button size="sm" onClick={() => setShowAddContract(!showAddContract)} className="h-8 rounded-lg text-[9px] font-black uppercase">
-                {showAddContract ? "Cancel" : "Add Contract Record"}
-              </Button>
-           </div>
+           {canEdit && (
+             <div className="flex justify-end">
+                <Button size="sm" onClick={() => setShowAddContract(!showAddContract)} className="h-8 rounded-lg text-[9px] font-black uppercase">
+                  {showAddContract ? "Cancel" : "Add Contract Record"}
+                </Button>
+             </div>
+           )}
 
            {showAddContract && (
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
@@ -578,11 +582,13 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
         </TabsContent>
 
         <TabsContent value="performance" className="pt-4 space-y-4">
-          <div className="flex justify-end">
-              <Button size="sm" onClick={() => setShowAddEvaluation(!showAddEvaluation)} className="h-8 rounded-lg text-[9px] font-black uppercase">
-                {showAddEvaluation ? "Cancel" : "Log Performance Index"}
-              </Button>
-           </div>
+          {canEdit && (
+            <div className="flex justify-end">
+                <Button size="sm" onClick={() => setShowAddEvaluation(!showAddEvaluation)} className="h-8 rounded-lg text-[9px] font-black uppercase">
+                  {showAddEvaluation ? "Cancel" : "Log Performance Index"}
+                </Button>
+             </div>
+          )}
 
            {showAddEvaluation && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
@@ -624,11 +630,13 @@ export default function StaffHRModule({ teacherId, teacherName }: { teacherId: s
         </TabsContent>
 
         <TabsContent value="documents" className="pt-4 space-y-4">
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => setShowAddDoc(!showAddDoc)} className="h-8 rounded-lg text-[9px] font-black uppercase">
-              <Upload className="h-3 w-3 mr-1" /> Secure Upload
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => setShowAddDoc(!showAddDoc)} className="h-8 rounded-lg text-[9px] font-black uppercase">
+                <Upload className="h-3 w-3 mr-1" /> Secure Upload
+              </Button>
+            </div>
+          )}
 
           {showAddDoc && (
             <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">

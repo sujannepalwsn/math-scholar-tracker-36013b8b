@@ -63,7 +63,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
     enabled: !!user?.center_id
   });
 
-  const { data: permissionMeta } = useQuery({
+  const { data: permissionMeta, isLoading: metaLoading } = useQuery({
     queryKey: ['module-permissions-meta'],
     queryFn: async () => {
       const { data, error } = await supabase.from('module_permissions_meta').select('*');
@@ -166,7 +166,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
     updatePermissionMutation.mutate({ updatedPermissions, legacyFields });
   };
 
-  if (permissionsLoading) {
+  if (permissionsLoading || metaLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -208,7 +208,14 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
                   can_publish: false
                 };
 
-                const meta = permissionMeta?.find(m => m.module_key === feature.name);
+                const dbMeta = permissionMeta?.find(m => m.module_key === feature.name);
+
+                // Hardcoded fallbacks to ensure toggles show even if meta fetch fails or table is empty
+                const meta = {
+                  has_approve: dbMeta?.has_approve || ['lesson_plans', 'leave_management'].includes(feature.name),
+                  has_publish: dbMeta?.has_publish || ['exams_results', 'published_results'].includes(feature.name)
+                };
+
                 const isMasterOn = modulePerms.enabled;
 
                 return (
@@ -247,7 +254,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
 
                     {/* Approve Permission */}
                     <TableCell className="text-center">
-                      {meta?.has_approve ? (
+                      {meta.has_approve ? (
                         <Switch
                           checked={modulePerms.can_approve}
                           onCheckedChange={(val) => handleToggle(feature.name, 'can_approve', val)}
@@ -261,7 +268,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
 
                     {/* Publish Permission */}
                     <TableCell className="text-center">
-                      {meta?.has_publish ? (
+                      {meta.has_publish ? (
                         <Switch
                           checked={modulePerms.can_publish}
                           onCheckedChange={(val) => handleToggle(feature.name, 'can_publish', val)}

@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-export default function TransportManagement({ centerId }: { centerId: string }) {
+export default function TransportManagement({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [showAddRoute, setShowAddRoute] = useState(false);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
@@ -158,11 +158,13 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
         </TabsList>
 
         <TabsContent value="routes" className="space-y-4 pt-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowAddRoute(!showAddRoute)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
-              {showAddRoute ? "Cancel" : "Add New Route"}
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex justify-end">
+              <Button onClick={() => setShowAddRoute(!showAddRoute)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                {showAddRoute ? "Cancel" : "Add New Route"}
+              </Button>
+            </div>
+          )}
 
           {showAddRoute && (
             <Card className="rounded-2xl border-none shadow-soft bg-blue-50">
@@ -221,11 +223,13 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
         </TabsContent>
 
         <TabsContent value="vehicles" className="space-y-4 pt-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowAddVehicle(!showAddVehicle)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
-              {showAddVehicle ? "Cancel" : "Add Vehicle"}
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex justify-end">
+              <Button onClick={() => setShowAddVehicle(!showAddVehicle)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                {showAddVehicle ? "Cancel" : "Add Vehicle"}
+              </Button>
+            </div>
+          )}
 
           {showAddVehicle && (
             <Card className="rounded-2xl border-none shadow-soft bg-emerald-50">
@@ -283,7 +287,9 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
                     <TableCell className="font-bold text-slate-700">{v.driver_name}</TableCell>
                     <TableCell className="text-blue-600 font-bold">{v.driver_phone}</TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                       {canEdit && (
+                         <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                       )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -294,11 +300,13 @@ export default function TransportManagement({ centerId }: { centerId: string }) 
         </TabsContent>
 
         <TabsContent value="assignments" className="space-y-4 pt-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowAddAssignment(!showAddAssignment)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
-              {showAddAssignment ? "Cancel" : "New Assignment"}
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex justify-end">
+              <Button onClick={() => setShowAddAssignment(!showAddAssignment)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                {showAddAssignment ? "Cancel" : "New Assignment"}
+              </Button>
+            </div>
+          )}
 
           {showAddAssignment && (
             <Card className="rounded-2xl border-none shadow-soft bg-indigo-50">

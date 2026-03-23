@@ -14,7 +14,7 @@ import { formatCurrency } from "@/lib/utils"
 
 const EXPENSE_CATEGORIES = ['salaries', 'rent', 'utilities', 'materials', 'maintenance', 'transport', 'admin', 'other'];
 
-const ExpenseManagement = () => {
+const ExpenseManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
@@ -90,13 +90,14 @@ const ExpenseManagement = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Expense Records</CardTitle>
-            <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Record Expense
-                </Button>
-              </DialogTrigger>
+            {canEdit && (
+              <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Record Expense
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Record Expense</DialogTitle>
@@ -153,8 +154,9 @@ const ExpenseManagement = () => {
                     {createExpenseMutation.isPending ? 'Recording...' : 'Record Expense'}
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>

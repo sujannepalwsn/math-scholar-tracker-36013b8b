@@ -20,7 +20,7 @@ import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 type Homework = Tables<'homework'>;
 type Student = Tables<'students'>;
@@ -272,11 +272,13 @@ export default function HomeworkManagement() {
             </SelectContent>
           </Select>
           <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="rounded-xl shadow-medium">
-                <Plus className="h-4 w-4 mr-2" /> Create Homework
-              </Button>
-            </DialogTrigger>
+            {hasActionPermission(user, 'homework_management', 'edit') && (
+              <DialogTrigger asChild>
+                <Button className="rounded-xl shadow-medium">
+                  <Plus className="h-4 w-4 mr-2" /> Create Homework
+                </Button>
+              </DialogTrigger>
+            )}
             <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle>
@@ -373,22 +375,26 @@ export default function HomeworkManagement() {
                             <Users className="h-4 w-4 mr-1" />
                             Track
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:text-primary hover:bg-primary/10"
-                            onClick={() => handleEditClick(hw)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => deleteHomeworkMutation.mutate(hw.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {hasActionPermission(user, 'homework_management', 'edit') && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:text-primary hover:bg-primary/10"
+                                onClick={() => handleEditClick(hw)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => deleteHomeworkMutation.mutate(hw.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -492,6 +498,7 @@ export default function HomeworkManagement() {
                           <Select
                             value={s.status}
                             onValueChange={(v: any) => updateStudentHomeworkRecordMutation.mutate({ id: s.id, status: v, teacher_remarks: s.teacher_remarks })}
+                            disabled={!hasActionPermission(user, 'homework_management', 'edit')}
                           >
                             <SelectTrigger className="h-8 text-xs font-bold rounded-lg border-muted/20 w-[120px]">
                               <SelectValue />

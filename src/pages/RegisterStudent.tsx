@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdmissionWorkflow from "@/components/center/AdmissionWorkflow"
 import StudentPromotion from "@/components/center/StudentPromotion"
 import AlumniManagement from "@/components/center/AlumniManagement"
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 
 interface Student {
   id: string;
@@ -59,7 +59,7 @@ type StudentInput = {
 export default function RegisterStudent() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const hasFullAccess = hasPermission(user, 'register_student');
+  const hasFullAccess = hasActionPermission(user, 'register_student', 'edit');
   const [formData, setFormData] = useState({
     name: "",
     grade: "",
@@ -604,20 +604,24 @@ export default function RegisterStudent() {
           <Button variant="outline" size="sm" onClick={downloadTemplate} className="rounded-xl h-11 border-2 font-black uppercase text-[10px] tracking-widest hover:bg-card/60 shadow-soft">
             <Download className="mr-2 h-4 w-4" /> Template
           </Button>
-          <input
-            type="file"
-            accept=".csv,text/csv"
-            id="csv-upload"
-            className="hidden"
-            onChange={(e) => handleCsvFile(e.target.files?.[0] ?? null)}
-          />
-          <label htmlFor="csv-upload">
-            <Button variant="outline" size="sm" asChild className="rounded-xl h-11 border-2 cursor-pointer font-black uppercase text-[10px] tracking-widest hover:bg-card/60 shadow-soft">
-              <span>
-                <Upload className="inline-block mr-2 h-4 w-4" /> Import CSV
-              </span>
-            </Button>
-          </label>
+          {hasFullAccess && (
+            <>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                id="csv-upload"
+                className="hidden"
+                onChange={(e) => handleCsvFile(e.target.files?.[0] ?? null)}
+              />
+              <label htmlFor="csv-upload">
+                <Button variant="outline" size="sm" asChild className="rounded-xl h-11 border-2 cursor-pointer font-black uppercase text-[10px] tracking-widest hover:bg-card/60 shadow-soft">
+                  <span>
+                    <Upload className="inline-block mr-2 h-4 w-4" /> Import CSV
+                  </span>
+                </Button>
+              </label>
+            </>
+          )}
         </div>
       </div>
 
@@ -832,29 +836,33 @@ export default function RegisterStudent() {
                   Continue <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={createMutation.isPending}
-                  className="h-12 rounded-2xl px-12 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
-                >
-                  {createMutation.isPending ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>PROCESSING...</span>
-                    </div>
-                  ) : (
-                    "FINALIZE ENROLMENT"
-                  )}
-                </Button>
+                hasFullAccess && (
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending}
+                    className="h-12 rounded-2xl px-12 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                  >
+                    {createMutation.isPending ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>PROCESSING...</span>
+                      </div>
+                    ) : (
+                      "FINALIZE ENROLMENT"
+                    )}
+                  </Button>
+                )
               )}
             </div>
 
             {/* Link Guardian (visible in all steps as secondary action) */}
-            <div className="flex justify-center pt-4">
-              <Button type="button" variant="outline" onClick={() => setShowLinkChildDialog(true)} className="h-11 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 shadow-soft hover:bg-card/60 px-6">
-                <Users className="h-4 w-4 mr-2" /> LINK EXISTING GUARDIAN
-              </Button>
-            </div>
+            {hasFullAccess && (
+              <div className="flex justify-center pt-4">
+                <Button type="button" variant="outline" onClick={() => setShowLinkChildDialog(true)} className="h-11 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 shadow-soft hover:bg-card/60 px-6">
+                  <Users className="h-4 w-4 mr-2" /> LINK EXISTING GUARDIAN
+                </Button>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

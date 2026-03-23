@@ -18,9 +18,11 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NoticeBoard from "@/components/center/NoticeBoard";
+import { hasActionPermission } from "@/utils/permissions";
 
 export default function Messaging() {
   const { user } = useAuth();
+  const canEdit = hasActionPermission(user, 'messaging', 'edit');
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
@@ -275,7 +277,7 @@ export default function Messaging() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search conversations..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9" />
         </div>
-        {user?.role === "center" && (
+        {(user?.role === "center" || canEdit) && (
           <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setShowNewConversation(!showNewConversation)}>
             + New Conversation
           </Button>
@@ -478,26 +480,32 @@ export default function Messaging() {
                 <p className="text-sm text-muted-foreground">Send a message to multiple recipients at once.</p>
               </CardHeader>
               <CardContent className="p-8">
-                <form onSubmit={(e) => { e.preventDefault(); if (broadcastMessageText.trim()) sendBroadcastMessageMutation.mutate(); }} className="space-y-6 max-w-2xl mx-auto">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Message Payload</label>
-                    <Textarea value={broadcastMessageText} onChange={(e) => setBroadcastMessageText(e.target.value)} rows={5} placeholder="Type your broadcast message..." required className="rounded-2xl border-none shadow-soft bg-white/50 backdrop-blur-sm focus:ring-primary/20 p-6 text-sm font-medium" />
+                {canEdit ? (
+                  <form onSubmit={(e) => { e.preventDefault(); if (broadcastMessageText.trim()) sendBroadcastMessageMutation.mutate(); }} className="space-y-6 max-w-2xl mx-auto">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Message Payload</label>
+                      <Textarea value={broadcastMessageText} onChange={(e) => setBroadcastMessageText(e.target.value)} rows={5} placeholder="Type your broadcast message..." required className="rounded-2xl border-none shadow-soft bg-white/50 backdrop-blur-sm focus:ring-primary/20 p-6 text-sm font-medium" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Target Audience</label>
+                      <Select value={broadcastTargetAudience} onValueChange={setBroadcastTargetAudience}>
+                        <SelectTrigger className="h-12 bg-white/50 border-none shadow-soft rounded-2xl focus:ring-primary/20 font-bold"><SelectValue placeholder="Select audience" /></SelectTrigger>
+                        <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
+                          <SelectItem value="all_parents">All Parents</SelectItem>
+                          <SelectItem value="all_teachers">All Teachers</SelectItem>
+                          {uniqueGrades.map((g) => (<SelectItem key={`grade_${g}`} value={`grade_${g}`}>Parents of Grade {g}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button type="submit" className="w-full h-14 text-lg font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300" disabled={!broadcastMessageText.trim() || sendBroadcastMessageMutation.isPending}>
+                      {sendBroadcastMessageMutation.isPending ? "TRANSMITTING..." : "INITIATE BROADCAST"}
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="p-12 text-center text-muted-foreground italic font-medium">
+                    You do not have permission to send broadcast messages.
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Target Audience</label>
-                    <Select value={broadcastTargetAudience} onValueChange={setBroadcastTargetAudience}>
-                      <SelectTrigger className="h-12 bg-white/50 border-none shadow-soft rounded-2xl focus:ring-primary/20 font-bold"><SelectValue placeholder="Select audience" /></SelectTrigger>
-                      <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
-                        <SelectItem value="all_parents">All Parents</SelectItem>
-                        <SelectItem value="all_teachers">All Teachers</SelectItem>
-                        {uniqueGrades.map((g) => (<SelectItem key={`grade_${g}`} value={`grade_${g}`}>Parents of Grade {g}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button type="submit" className="w-full h-14 text-lg font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300" disabled={!broadcastMessageText.trim() || sendBroadcastMessageMutation.isPending}>
-                    {sendBroadcastMessageMutation.isPending ? "TRANSMITTING..." : "INITIATE BROADCAST"}
-                  </Button>
-                </form>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

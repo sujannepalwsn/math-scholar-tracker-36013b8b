@@ -6,10 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import TransportManagement from "@/components/center/TransportManagement";
+import { hasActionPermission } from "@/utils/permissions";
 
 export default function TransportManagementPage() {
   const { user } = useAuth();
   const centerId = user?.center_id || "";
+  const canEdit = hasActionPermission(user, 'transport_tracking', 'edit');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
@@ -134,7 +136,7 @@ export default function TransportManagementPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
-              <TransportManagement centerId={centerId} />
+              <TransportManagement centerId={centerId} canEdit={canEdit} />
             </CardContent>
           </Card>
         </TabsContent>

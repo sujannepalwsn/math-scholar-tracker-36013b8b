@@ -11,7 +11,7 @@ import { Package, Plus, Trash2, Search, MapPin, User, Settings } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export default function AssetTracking({ centerId }: { centerId: string }) {
+export default function AssetTracking({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showAddAsset, setShowAddAsset] = useState(false);
@@ -97,9 +97,11 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button onClick={() => setShowAddAsset(!showAddAsset)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest ml-4">
-          {showAddAsset ? "Cancel" : "Log Asset"}
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setShowAddAsset(!showAddAsset)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest ml-4">
+            {showAddAsset ? "Cancel" : "Log Asset"}
+          </Button>
+        )}
       </div>
 
       {showAddAsset && (
@@ -212,7 +214,7 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
                 </TableCell>
                 <TableCell className="text-right px-6">
                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {a.status === 'Active' && (
+                      {canEdit && a.status === 'Active' && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -226,8 +228,12 @@ export default function AssetTracking({ centerId }: { centerId: string }) {
                            Dump Asset
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100"><Settings className="h-3.5 w-3.5 text-slate-400" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 text-rose-500"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      {canEdit && (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100"><Settings className="h-3.5 w-3.5 text-slate-400" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 text-rose-500"><Trash2 className="h-3.5 w-3.5" /></Button>
+                        </>
+                      )}
                    </div>
                 </TableCell>
               </TableRow>

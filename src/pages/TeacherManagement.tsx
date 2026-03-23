@@ -303,7 +303,13 @@ export default function TeacherManagement() {
       const legacyObj: any = { teacher_id: newTeacher.id };
 
       defaultModules.forEach(mod => {
-        permissionsObj[mod] = { enabled: true, can_view: true, can_edit: true, can_approve: false, can_publish: false };
+        permissionsObj[mod] = {
+          enabled: true,
+          can_view: true,
+          can_edit: true,
+          can_approve: ['lesson_plans', 'leave_management'].includes(mod),
+          can_publish: ['exams_results', 'published_results'].includes(mod)
+        };
         legacyObj[mod] = true;
       });
 
@@ -363,7 +369,13 @@ export default function TeacherManagement() {
           const legacyObj: any = { teacher_id: t.id };
 
           defaultModules.forEach(mod => {
-            permissionsObj[mod] = { enabled: true, can_view: true, can_edit: true, can_approve: false, can_publish: false };
+            permissionsObj[mod] = {
+              enabled: true,
+              can_view: true,
+              can_edit: true,
+              can_approve: ['lesson_plans', 'leave_management'].includes(mod),
+              can_publish: ['exams_results', 'published_results'].includes(mod)
+            };
             legacyObj[mod] = true;
           });
 

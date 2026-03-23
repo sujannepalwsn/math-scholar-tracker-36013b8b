@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export default function LibraryManagement({ centerId }: { centerId: string }) {
+export default function LibraryManagement({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [bookSearch, setBookSearch] = useState("");
   const [showAddBook, setShowAddBook] = useState(false);
@@ -148,9 +148,11 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
                 onChange={(e) => setBookSearch(e.target.value)}
               />
             </div>
-            <Button onClick={() => setShowAddBook(!showAddBook)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
-              {showAddBook ? "Cancel" : "Add Book"}
-            </Button>
+            {canEdit && (
+              <Button onClick={() => setShowAddBook(!showAddBook)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                {showAddBook ? "Cancel" : "Add Book"}
+              </Button>
+            )}
           </div>
 
           {showAddBook && (
@@ -209,7 +211,9 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                      {canEdit && (
+                        <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -220,11 +224,13 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
         </TabsContent>
 
         <TabsContent value="loans" className="space-y-4 pt-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowIssueForm(!showIssueForm)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
-              {showIssueForm ? "Cancel" : "New Issue"}
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex justify-end">
+              <Button onClick={() => setShowIssueForm(!showIssueForm)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                {showIssueForm ? "Cancel" : "New Issue"}
+              </Button>
+            </div>
+          )}
 
           {showIssueForm && (
             <Card className="rounded-2xl border-none shadow-soft bg-emerald-50">
@@ -294,7 +300,7 @@ export default function LibraryManagement({ centerId }: { centerId: string }) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {l.status === 'Issued' && (
+                      {canEdit && l.status === 'Issued' && (
                         <Button variant="outline" size="sm" onClick={() => returnBookMutation.mutate(l.id)} className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest">
                           <RotateCcw className="h-3 w-3 mr-1" /> Return
                         </Button>

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AcademicYearManagement from "@/components/center/AcademicYearManagement";
+import { hasActionPermission } from "@/utils/permissions";
 
 const CLOSURE_REASONS = [
   "Holiday",
@@ -30,6 +31,7 @@ const CLOSURE_REASONS = [
 
 export default function SchoolDays() {
   const { user } = useAuth();
+  const canEdit = hasActionPermission(user, 'school_days', 'edit');
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
 
@@ -137,44 +139,50 @@ export default function SchoolDays() {
 
         <TabsContent value="days" className="outline-none">
       <div className="grid gap-8 lg:grid-cols-3">
-        <Card className="lg:col-span-1 border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md h-fit border border-white/20">
-          <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
-            <CardTitle className="text-xl font-black uppercase tracking-widest">Configuration</CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Target Date</label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 bg-white/50 border-none shadow-soft rounded-xl font-bold" />
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/5 border border-primary/10">
-              <div className="space-y-0.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-700">Operational Day</label>
-                <p className="text-[9px] text-muted-foreground font-bold italic uppercase tracking-tight">Toggle off for closure</p>
-              </div>
-              <Switch checked={isSchoolDay} onCheckedChange={setIsSchoolDay} />
-            </div>
-            {!isSchoolDay && (
+        {canEdit ? (
+          <Card className="lg:col-span-1 border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md h-fit border border-white/20">
+            <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6">
+              <CardTitle className="text-xl font-black uppercase tracking-widest">Configuration</CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Reason for Closure</label>
-                <Select value={reason} onValueChange={setReason}>
-                  <SelectTrigger className="h-11 bg-white/50 border-none shadow-soft rounded-xl font-bold">
-                    <SelectValue placeholder="Select reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CLOSURE_REASONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Target Date</label>
+                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 bg-white/50 border-none shadow-soft rounded-xl font-bold" />
               </div>
-            )}
-            <Button
-              className="w-full h-14 text-sm font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
-              onClick={() => upsertMutation.mutate({ date, is_school_day: isSchoolDay, reason: isSchoolDay ? null : reason })}
-              disabled={upsertMutation.isPending}
-            >
-              {upsertMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "COMMIT CONFIGURATION"}
-            </Button>
-          </CardContent>
-        </Card>
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                <div className="space-y-0.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-700">Operational Day</label>
+                  <p className="text-[9px] text-muted-foreground font-bold italic uppercase tracking-tight">Toggle off for closure</p>
+                </div>
+                <Switch checked={isSchoolDay} onCheckedChange={setIsSchoolDay} />
+              </div>
+              {!isSchoolDay && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Reason for Closure</label>
+                  <Select value={reason} onValueChange={setReason}>
+                    <SelectTrigger className="h-11 bg-white/50 border-none shadow-soft rounded-xl font-bold">
+                      <SelectValue placeholder="Select reason" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CLOSURE_REASONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <Button
+                className="w-full h-14 text-sm font-black shadow-strong rounded-2xl bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.01] transition-all duration-300"
+                onClick={() => upsertMutation.mutate({ date, is_school_day: isSchoolDay, reason: isSchoolDay ? null : reason })}
+                disabled={upsertMutation.isPending}
+              >
+                {upsertMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "COMMIT CONFIGURATION"}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="lg:col-span-1 p-8 rounded-[2rem] border-2 border-dashed border-muted flex items-center justify-center text-center italic text-muted-foreground text-sm font-medium">
+             Configuration controls are restricted to administrators.
+          </div>
+        )}
 
         <Card className="lg:col-span-2 border-none shadow-strong rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
           <CardHeader className="bg-primary/5 border-b border-border/10 px-8 py-6 flex flex-row items-center justify-between">
@@ -221,12 +229,16 @@ export default function SchoolDays() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleToggle(sd)}>
-                              {sd.is_school_day ? <ShieldAlert className="h-3.5 w-3.5 text-rose-500" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />}
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive" onClick={() => deleteMutation.mutate(sd.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            {canEdit && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleToggle(sd)}>
+                                  {sd.is_school_day ? <ShieldAlert className="h-3.5 w-3.5 text-rose-500" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />}
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive" onClick={() => deleteMutation.mutate(sd.id)}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

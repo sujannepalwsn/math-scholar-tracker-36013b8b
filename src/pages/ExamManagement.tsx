@@ -25,7 +25,8 @@ const grades = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5", "6", "7", "8",
 
 export default function ExamManagement() {
   const { user } = useAuth();
-  const hasFullAccess = hasPermission(user, 'exams_results');
+  const canEdit = hasActionPermission(user, 'exams_results', 'edit');
+  const hasFullAccess = hasPermission(user, 'exams_results'); // Kept for viewing sub-sections
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
@@ -99,7 +100,7 @@ export default function ExamManagement() {
 
   const createExam = useMutation({
     mutationFn: async (data: typeof formData) => {
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to manage exams.");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage exams.");
       const payload = {
         ...data,
         center_id: centerId!,
@@ -125,7 +126,7 @@ export default function ExamManagement() {
 
   const deleteExam = useMutation({
     mutationFn: async (id: string) => {
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to delete exams.");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete exams.");
       const { error } = await supabase.from("exams").delete().eq("id", id);
       if (error) throw error;
     },
@@ -220,7 +221,7 @@ export default function ExamManagement() {
 
   const addSubject = useMutation({
     mutationFn: async () => {
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to manage exam subjects.");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to manage exam subjects.");
       if (!selectedExamId || !centerId) return;
       const { error } = await supabase.from("exam_subjects").insert({
         exam_id: selectedExamId,
@@ -241,7 +242,7 @@ export default function ExamManagement() {
 
   const deleteSubject = useMutation({
     mutationFn: async (id: string) => {
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to delete exam subjects.");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete exam subjects.");
       const { error } = await supabase.from("exam_subjects").delete().eq("id", id);
       if (error) throw error;
     },
@@ -322,7 +323,7 @@ export default function ExamManagement() {
         </TabsList>
 
         <TabsContent value="exams" className="space-y-6 outline-none">
-          {hasFullAccess && (
+          {canEdit && (
             <div className="flex justify-end">
               <Button onClick={() => setShowForm(true)} className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
                 <Plus className="h-4 w-4 mr-2" /> Create Exam
@@ -522,13 +523,13 @@ export default function ExamManagement() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                    {hasFullAccess && (
+                    {canEdit && (
                       <Button variant="outline" size="sm" onClick={() => { setSelectedExamId(exam.id); setShowSubjectDialog(true); }} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
                         <BookOpen className="h-3 w-3 mr-2" /> Subjects
                       </Button>
                     )}
 
-                    {exam.status === "draft" && hasActionPermission(user, 'exams_results', 'edit') && (
+                    {exam.status === "draft" && canEdit && (
                       <>
                         <Button variant="outline" size="sm" onClick={() => handleEdit(exam)} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-9">
                           <Edit className="h-3 w-3 mr-2" /> Edit

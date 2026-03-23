@@ -20,6 +20,7 @@ import QuestionPaperViewer from "@/components/QuestionPaperViewer";
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
+import { hasActionPermission } from "@/utils/permissions";
 "use client";
 
 
@@ -47,6 +48,7 @@ interface QuestionMark {
 export default function Tests() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const canEdit = hasActionPermission(user, 'test_management', 'edit');
   const [isAddingTest, setIsAddingTest] = useState(false);
   const [selectedTest, setSelectedTest] = useState<string>("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -521,16 +523,20 @@ export default function Tests() {
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={() => setShowOCRModal(true)} className="rounded-xl">
-            <FileUp className="mr-2 h-4 w-4" />
-            OCR Upload
-          </Button>
+          {canEdit && (
+            <Button variant="outline" onClick={() => setShowOCRModal(true)} className="rounded-xl">
+              <FileUp className="mr-2 h-4 w-4" />
+              OCR Upload
+            </Button>
+          )}
           <Dialog open={isAddingTest} onOpenChange={setIsAddingTest}>
             <DialogTrigger asChild>
-              <Button className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Test
-              </Button>
+              {canEdit && (
+                <Button className="rounded-xl shadow-strong font-black uppercase text-[10px] tracking-widest h-11 px-6">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Test
+                </Button>
+              )}
             </DialogTrigger>
           <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto" aria-labelledby="create-test-title" aria-describedby="create-test-description">
             <DialogHeader>
@@ -768,19 +774,21 @@ export default function Tests() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
-                              deleteTestMutation.mutate(test.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-xl bg-white shadow-soft text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Are you sure you want to delete "${test.name}"? This will also delete all associated student results.`)) {
+                                deleteTestMutation.mutate(test.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -804,15 +812,17 @@ export default function Tests() {
                   <CardTitle className="text-2xl font-black">Performance Entry</CardTitle>
                   <CardDescription className="text-primary-foreground/80 font-medium">Recording results for {selectedTestData.name}</CardDescription>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowBulkEntry(true)}
-                  disabled={questions.length > 0} // Disable bulk entry if questions are defined
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  Bulk Entry
-                </Button>
+                {canEdit && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowBulkEntry(true)}
+                    disabled={questions.length > 0} // Disable bulk entry if questions are defined
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Bulk Entry
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -873,6 +883,7 @@ export default function Tests() {
                               value={currentQuestionMark?.marksObtained || ''}
                               onChange={(e) => updateQuestionMark(q.id, 'marksObtained', parseInt(e.target.value) || 0)}
                               placeholder="0"
+                              disabled={!canEdit}
                             />
                           </div>
                           {q.correctAnswer && (
@@ -911,6 +922,7 @@ export default function Tests() {
                     value={marksObtained}
                     onChange={(e) => setMarksObtained(e.target.value)}
                     placeholder="0"
+                    disabled={!canEdit}
                   />
                 </div>
               )}
@@ -921,10 +933,12 @@ export default function Tests() {
                   type="date"
                   value={resultDate}
                   onChange={(e) => setResultDate(e.target.value)}
+                  disabled={!canEdit}
                 />
               </div>
-              <Button
-                onClick={() => {
+              {canEdit && (
+                <Button
+                  onClick={() => {
                   // Validate marks don't exceed total
                   if (questions.length === 0) {
                     const m = parseInt(marksObtained);
@@ -941,11 +955,12 @@ export default function Tests() {
                   }
                   addResultMutation.mutate();
                 }}
-                disabled={!selectedStudentId || (!marksObtained && questions.length === 0) || addResultMutation.isPending}
-                className="w-full"
-              >
-                Save Marks
-              </Button>
+                  disabled={!selectedStudentId || (!marksObtained && questions.length === 0) || addResultMutation.isPending}
+                  className="w-full"
+                >
+                  Save Marks
+                </Button>
+              )}
 
               {/* Display Entered Marks Table */}
               <div className="mt-8">
@@ -978,14 +993,16 @@ export default function Tests() {
                               <TableCell>{result.marks_obtained} / {selectedTestData.total_marks}</TableCell>
                               <TableCell>{percentage}%</TableCell>
                               <TableCell>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => deleteResultMutation.mutate(result.id)}
-                                  disabled={deleteResultMutation.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {canEdit && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => deleteResultMutation.mutate(result.id)}
+                                    disabled={deleteResultMutation.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </TableCell>
                             </TableRow>
                           );
