@@ -667,7 +667,7 @@ export default function Dashboard() {
       type: "info" as const,
       timestamp: h.created_at,
     })),
-    ...(pendingLeavesCount > 0 ? [{
+    ...(pendingLeavesCount > 0 && hasPermission(user, 'leave_management') ? [{
       id: "pending-leaves",
       title: `${pendingLeavesCount} Pending Leave Applications`,
       description: "Needs center admin review",
@@ -675,7 +675,7 @@ export default function Dashboard() {
       timestamp: new Date().toISOString(),
       onClick: () => navigate("/leave-management")
     }] : []),
-    ...(pendingLessonPlansCount > 0 ? [{
+    ...(pendingLessonPlansCount > 0 && hasPermission(user, 'lesson_plans') ? [{
       id: "pending-lesson-plans",
       title: `${pendingLessonPlansCount} Pending Lesson Plans`,
       description: "Needs pedagogical review",
@@ -1003,7 +1003,7 @@ export default function Dashboard() {
                   );
                   break;
                 case "performers":
-                  content = (
+                  content = hasPermission(user, 'student_report') ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative group/widget">
                       {isCustomizeMode && (
                         <div className="absolute top-2 right-2 z-10 flex gap-1">
@@ -1070,7 +1070,7 @@ export default function Dashboard() {
                         </CardContent>
                       </Card>
                     </div>
-                  );
+                  ) : null;
                   break;
                 case "teacher-status":
                   content = (
@@ -1108,9 +1108,10 @@ export default function Dashboard() {
                                 const attendance = teacherAttendance.find((ta) => ta.teacher_id === t.id);
                                 const leave = todayApprovedLeaves.find((l: any) => l.teacher_id === t.id);
                                 const status = leave ? "leave" : (attendance?.status || "pending");
+                                const canNavigateToTeachers = hasPermission(user, 'teacher_management');
 
                                 return (
-                                  <div key={t.id} className="p-5 flex justify-between items-center hover:bg-primary/5 transition-colors cursor-pointer" onClick={() => navigate("/teachers")}>
+                                  <div key={t.id} className={cn("p-5 flex justify-between items-center transition-colors", canNavigateToTeachers && "hover:bg-primary/5 cursor-pointer")} onClick={() => canNavigateToTeachers && navigate("/teachers")}>
                                     <div className="flex items-center gap-3">
                                       <div className={cn(
                                         "h-10 w-10 rounded-2xl flex items-center justify-center border-2",
@@ -1140,7 +1141,14 @@ export default function Dashboard() {
                         </CardContent>
                       </Card>
 
-                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] cursor-pointer hover:shadow-elevated transition-all duration-500 border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")} onClick={() => navigate("/finance")}>
+                      <Card
+                        className={cn(
+                          "border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] border border-white/20 transition-all duration-500",
+                          !visibleWidgets[id] && "opacity-40 grayscale",
+                          hasPermission(user, 'finance') && "cursor-pointer hover:shadow-elevated"
+                        )}
+                        onClick={() => hasPermission(user, 'finance') && navigate("/finance")}
+                      >
                         <CardHeader className="p-8">
                           <CardTitle className="text-lg font-black flex items-center gap-3">
                             <div className="p-2 rounded-xl bg-success/10 text-success">
@@ -1176,7 +1184,7 @@ export default function Dashboard() {
                   break;
 
                 case "leave-applications":
-                  content = (
+                  content = hasPermission(user, 'leave_management') ? (
                     <Card className="border shadow-soft bg-card rounded-2xl overflow-hidden relative group/widget">
                       {isCustomizeMode && (
                         <div className="absolute top-2 right-2 z-10 flex gap-1">
@@ -1246,7 +1254,7 @@ export default function Dashboard() {
                         </div>
                       </CardContent>
                     </Card>
-                  );
+                  ) : null;
                   break;
                 case "activities-discipline":
                   content = (
@@ -1266,65 +1274,69 @@ export default function Dashboard() {
                           </div>
                         </div>
                       )}
-                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
-                        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
-                          <CardTitle className="text-lg font-black flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                              <BookOpen className="h-5 w-5" />
-                            </div>
-                            Activities
-                          </CardTitle>
-                          <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-primary h-7" onClick={() => navigate("/activities")}>
-                            View All <ArrowRight className="h-3 w-3 ml-1" />
-                          </Button>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                          {recentActivities.length === 0 ? (
-                            <p className="p-8 text-center text-sm text-muted-foreground font-medium italic">No upcoming activities</p>
-                          ) : (
-                            <div className="divide-y divide-border/10">
-                              {recentActivities.map((a: any) => (
-                                <div key={a.id} className="p-5 hover:bg-primary/5 transition-colors">
-                                  <p className="text-sm font-black text-slate-800">{a.title || a.name}</p>
-                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-                                    Grade {a.grade || "All"} · {a.activity_date ? format(new Date(a.activity_date), "MMM d") : "No date"}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                      {hasPermission(user, 'preschool_activities') ? (
+                        <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                          <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+                            <CardTitle className="text-lg font-black flex items-center gap-3">
+                              <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                                <BookOpen className="h-5 w-5" />
+                              </div>
+                              Activities
+                            </CardTitle>
+                            <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-primary h-7" onClick={() => navigate("/activities")}>
+                              View All <ArrowRight className="h-3 w-3 ml-1" />
+                            </Button>
+                          </CardHeader>
+                          <CardContent className="p-0">
+                            {recentActivities.length === 0 ? (
+                              <p className="p-8 text-center text-sm text-muted-foreground font-medium italic">No upcoming activities</p>
+                            ) : (
+                              <div className="divide-y divide-border/10">
+                                {recentActivities.map((a: any) => (
+                                  <div key={a.id} className="p-5 hover:bg-primary/5 transition-colors">
+                                    <p className="text-sm font-black text-slate-800">{a.title || a.name}</p>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                                      Grade {a.grade || "All"} · {a.activity_date ? format(new Date(a.activity_date), "MMM d") : "No date"}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ) : <div />}
 
-                      <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
-                        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
-                          <CardTitle className="text-lg font-black flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-destructive/10 text-destructive">
-                              <AlertTriangle className="h-5 w-5" />
-                            </div>
-                            Discipline
-                          </CardTitle>
-                          <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-primary h-7" onClick={() => navigate("/discipline")}>
-                            View All <ArrowRight className="h-3 w-3 ml-1" />
-                          </Button>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                          {recentDiscipline.length === 0 ? (
-                            <p className="p-8 text-center text-sm text-muted-foreground font-medium italic">No discipline issues reported</p>
-                          ) : (
-                            <div className="divide-y divide-border/10">
-                              {recentDiscipline.map((d: any) => (
-                                <div key={d.id} className="p-5 hover:bg-destructive/5 transition-colors">
-                                  <p className="text-sm font-black text-slate-800 line-clamp-1">{d.description}</p>
-                                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-                                    {d.students?.name} · Grade {d.students?.grade} · {format(new Date(d.issue_date), "MMM d")}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                      {hasPermission(user, 'discipline_issues') ? (
+                        <Card className={cn("border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20", !visibleWidgets[id] && "opacity-40 grayscale")}>
+                          <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+                            <CardTitle className="text-lg font-black flex items-center gap-3">
+                              <div className="p-2 rounded-xl bg-destructive/10 text-destructive">
+                                <AlertTriangle className="h-5 w-5" />
+                              </div>
+                              Discipline
+                            </CardTitle>
+                            <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-primary h-7" onClick={() => navigate("/discipline")}>
+                              View All <ArrowRight className="h-3 w-3 ml-1" />
+                            </Button>
+                          </CardHeader>
+                          <CardContent className="p-0">
+                            {recentDiscipline.length === 0 ? (
+                              <p className="p-8 text-center text-sm text-muted-foreground font-medium italic">No discipline issues reported</p>
+                            ) : (
+                              <div className="divide-y divide-border/10">
+                                {recentDiscipline.map((d: any) => (
+                                  <div key={d.id} className="p-5 hover:bg-destructive/5 transition-colors">
+                                    <p className="text-sm font-black text-slate-800 line-clamp-1">{d.description}</p>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                                      {d.students?.name} · Grade {d.students?.grade} · {format(new Date(d.issue_date), "MMM d")}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ) : <div />}
                     </div>
                   );
                   break;
@@ -1350,32 +1362,46 @@ export default function Dashboard() {
           </div>
 
           {/* Management Tabs */}
-          <Card className="border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
-            <CardContent className="p-6">
-              <Tabs defaultValue="library" className="w-full">
-                <TabsList className="flex flex-nowrap w-full overflow-x-auto mb-8 bg-muted/50 p-1 rounded-2xl custom-scrollbar">
-                  <TabsTrigger value="library" className="flex-1 min-w-[100px] rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
-                    <Book className="h-4 w-4 mr-2" /> Library
-                  </TabsTrigger>
-                  <TabsTrigger value="transport" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
-                    <Bus className="h-4 w-4 mr-2" /> Transport
-                  </TabsTrigger>
-                  <TabsTrigger value="assets" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
-                    <Package className="h-4 w-4 mr-2" /> Assets
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="library" className="mt-0 focus-visible:outline-none">
-                  <LibraryManagement centerId={centerId || ""} />
-                </TabsContent>
-                <TabsContent value="transport" className="mt-0 focus-visible:outline-none">
-                  <TransportManagement centerId={centerId || ""} />
-                </TabsContent>
-                <TabsContent value="assets" className="mt-0 focus-visible:outline-none">
-                  <AssetTracking centerId={centerId || ""} />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+          {(hasPermission(user, 'inventory_assets') || hasPermission(user, 'transport_tracking')) && (
+            <Card className="border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-white/20">
+              <CardContent className="p-6">
+                <Tabs defaultValue={hasPermission(user, 'inventory_assets') ? "library" : "transport"} className="w-full">
+                  <TabsList className="flex flex-nowrap w-full overflow-x-auto mb-8 bg-muted/50 p-1 rounded-2xl custom-scrollbar">
+                    {hasPermission(user, 'inventory_assets') && (
+                      <TabsTrigger value="library" className="flex-1 min-w-[100px] rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
+                        <Book className="h-4 w-4 mr-2" /> Library
+                      </TabsTrigger>
+                    )}
+                    {hasPermission(user, 'transport_tracking') && (
+                      <TabsTrigger value="transport" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
+                        <Bus className="h-4 w-4 mr-2" /> Transport
+                      </TabsTrigger>
+                    )}
+                    {hasPermission(user, 'inventory_assets') && (
+                      <TabsTrigger value="assets" className="rounded-xl font-bold text-xs uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft">
+                        <Package className="h-4 w-4 mr-2" /> Assets
+                      </TabsTrigger>
+                    )}
+                  </TabsList>
+                  {hasPermission(user, 'inventory_assets') && (
+                    <TabsContent value="library" className="mt-0 focus-visible:outline-none">
+                      <LibraryManagement centerId={centerId || ""} />
+                    </TabsContent>
+                  )}
+                  {hasPermission(user, 'transport_tracking') && (
+                    <TabsContent value="transport" className="mt-0 focus-visible:outline-none">
+                      <TransportManagement centerId={centerId || ""} />
+                    </TabsContent>
+                  )}
+                  {hasPermission(user, 'inventory_assets') && (
+                    <TabsContent value="assets" className="mt-0 focus-visible:outline-none">
+                      <AssetTracking centerId={centerId || ""} />
+                    </TabsContent>
+                  )}
+                </Tabs>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Column */}
@@ -1419,13 +1445,19 @@ export default function Dashboard() {
               {(visibleWidgets["alerts"] || isCustomizeMode) && (
                 <div className={cn("transition-all duration-500", !visibleWidgets["alerts"] && "opacity-40 grayscale blur-[1px]")}>
                   <div className="rounded-[2.5rem] overflow-hidden shadow-strong border border-white/20">
-                    <AlertList alerts={recentAlerts} onViewAll={() => navigate("/messages")} onItemClick={(a) => {
-                      if (a.id.startsWith('vacant-')) {
-                        const classId = a.id.replace('vacant-', '');
-                        const cls = todayClasses.find(c => c.id === classId);
-                        if (cls) setSelectedVacantClass(cls);
-                      }
-                    }} />
+                    <AlertList
+                      alerts={recentAlerts}
+                      onViewAll={() => hasPermission(user, 'messaging') && navigate("/messages")}
+                      onItemClick={(a) => {
+                        if (a.id.startsWith('vacant-')) {
+                          const classId = a.id.replace('vacant-', '');
+                          const cls = todayClasses.find(c => c.id === classId);
+                          if (cls) setSelectedVacantClass(cls);
+                        } else if (a.onClick) {
+                          a.onClick();
+                        }
+                      }}
+                    />
                   </div>
                 </div>
               )}
@@ -1447,9 +1479,14 @@ export default function Dashboard() {
               {(visibleWidgets["class-schedule"] || isCustomizeMode) && (
                 <div className={cn("transition-all duration-500", !visibleWidgets["class-schedule"] && "opacity-40 grayscale blur-[1px]")}>
                   <div className="rounded-[2.5rem] overflow-hidden shadow-strong border border-white/20">
-                    <ClassSchedule classes={todayClasses} title="Today's Classes" onViewRoutine={() => navigate("/class-routine")} onItemClick={(item) => {
-                      if (item.isVacant) setSelectedVacantClass(item);
-                    }} />
+                    <ClassSchedule
+                      classes={todayClasses}
+                      title="Today's Classes"
+                      onViewRoutine={() => hasPermission(user, 'class_routine') && navigate("/class-routine")}
+                      onItemClick={(item) => {
+                        if (item.isVacant) setSelectedVacantClass(item);
+                      }}
+                    />
                   </div>
                 </div>
               )}
