@@ -124,12 +124,12 @@ export default function AboutInstitution() {
         vision: center.vision || "",
         principal_message: center.principal_message || "",
         established_date: center.established_date || "",
-        academic_info: (center as any).academic_info || "",
-        facilities: Array.isArray((center as any).facilities) ? (center as any).facilities : [],
-        achievements: Array.isArray((center as any).achievements) ? (center as any).achievements : [],
-        gallery: Array.isArray((center as any).gallery) ? (center as any).gallery : [],
-        social_links: (center as any).social_links || {},
-        institution_type: (center as any).institution_type || "Co-Educational",
+        academic_info: center.academic_info || "",
+        facilities: Array.isArray(center.facilities) ? (center.facilities as unknown as Facility[]) : [],
+        achievements: Array.isArray(center.achievements) ? (center.achievements as unknown as Achievement[]) : [],
+        gallery: Array.isArray(center.gallery) ? (center.gallery as unknown as GalleryItem[]) : [],
+        social_links: (center.social_links as unknown as SocialLinks) || {},
+        institution_type: center.institution_type || "Co-Educational",
         phone: center.phone || "",
         email: center.email || "",
         address: center.address || "",
@@ -139,7 +139,7 @@ export default function AboutInstitution() {
         header_bg_url: center.header_bg_url || ""
       });
     }
-  }, [center]);
+  }, [center, isEditing]);
 
   const updateAboutMutation = useMutation({
     mutationFn: async () => {
@@ -153,10 +153,10 @@ export default function AboutInstitution() {
           principal_message: formData.principal_message,
           established_date: formData.established_date || null,
           academic_info: formData.academic_info,
-          facilities: formData.facilities as any,
-          achievements: formData.achievements as any,
-          gallery: formData.gallery as any,
-          social_links: formData.social_links as any,
+          facilities: formData.facilities as unknown as Json,
+          achievements: formData.achievements as unknown as Json,
+          gallery: formData.gallery as unknown as Json,
+          social_links: formData.social_links as unknown as Json,
           institution_type: formData.institution_type,
           phone: formData.phone,
           email: formData.email,
@@ -174,7 +174,7 @@ export default function AboutInstitution() {
       toast.success("Institution information updated successfully!");
       setIsEditing(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update institution information");
     }
   });
@@ -265,9 +265,10 @@ export default function AboutInstitution() {
       setFormData(prev => ({ ...prev, gallery: [...(prev.gallery || []), newItem] }));
       toast.dismiss(toastId);
       toast.success("Image added to gallery!");
-    } catch (error: any) {
+    } catch (error) {
       toast.dismiss(toastId);
-      toast.error("Upload failed: " + error.message);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Upload failed: " + errorMessage);
     }
   };
 
