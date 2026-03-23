@@ -404,7 +404,7 @@ export default function AboutInstitution() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-8" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto w-full md:w-auto">
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md w-full justify-start overflow-x-auto no-scrollbar">
           <TabsTrigger value="overview" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Overview</TabsTrigger>
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Info</TabsTrigger>
           <TabsTrigger value="facilities" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Facilities</TabsTrigger>

@@ -124,7 +124,7 @@ export default function LessonPlans() {
       let fileUrl: string | null = editingLessonPlan?.lesson_file_url || null;
       if (file) fileUrl = await uploadFile(file, "lesson-files");
 
-      const payload: any = {
+      const payload: Partial<Tables<"lesson_plans">> = {
         center_id: user.center_id,
         teacher_id: user.teacher_id || null,
         title: topic,
@@ -173,13 +173,13 @@ export default function LessonPlans() {
       setIsDialogOpen(false);
       resetForm();
     },
-    onError: (error: any) => toast.error(error.message || "Failed to save")
+    onError: (error: Error) => toast.error(error.message || "Failed to save")
   });
 
   const deleteLessonPlanMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("lesson_plans").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lesson-plans-all"] }); toast.success("Deleted!"); },
-    onError: (error: any) => toast.error(error.message || "Failed to delete") });
+    onError: (error: Error) => toast.error(error.message || "Failed to delete") });
 
 
   const handleEditClick = (lp: LessonPlan) => {
@@ -218,7 +218,7 @@ export default function LessonPlans() {
 
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
 
-  const handleOCRExtracted = (data: any) => {
+  const handleOCRExtracted = (data: Record<string, unknown>) => {
     console.log("Mapping OCR data to form...", data);
     if (!data) return;
 
@@ -246,7 +246,7 @@ export default function LessonPlans() {
     if (data.date) {
       try {
         const dateObj = new Date(data.date);
-        if (isValid(dateObj)) {
+        if (!isNaN(dateObj.getTime())) {
           setLessonDate(format(dateObj, "yyyy-MM-dd"));
         }
       } catch (e) {
@@ -409,7 +409,7 @@ export default function LessonPlans() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-y-auto rounded-3xl">
+        <DialogContent className="w-[98vw] sm:max-w-4xl md:max-w-5xl max-h-[95vh] overflow-y-auto rounded-3xl p-4 sm:p-6">
           <DialogHeader>
             <div className="flex justify-between items-center pr-10">
               <div>
@@ -535,7 +535,7 @@ export default function LessonPlans() {
 
       {/* View/Approval Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-none shadow-strong">
+        <DialogContent className="w-[98vw] sm:max-w-6xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-strong">
           <style>
             {`
               @media print {
