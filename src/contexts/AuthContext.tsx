@@ -22,8 +22,8 @@ interface User {
   student_name?: string;
   teacher_id?: string | null;
   teacher_name?: string;
-  centerPermissions?: Record<string, boolean>;
-  teacherPermissions?: Record<string, boolean>;
+  centerPermissions?: Record<string, any>;
+  teacherPermissions?: Record<string, any>;
   linked_students?: LinkedStudent[];
 }
 

@@ -91,6 +91,7 @@ export const PERMISSION_MAPPING: Record<string, string> = {
 
 /**
  * Checks if a user has permission for a specific feature.
+ * A module is accessible only if it's enabled and the user can view it.
  */
 export const hasPermission = (user: any, featureKey: string, route?: string): boolean => {
   if (!user) return false;
@@ -137,6 +138,14 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
       'student_id_cards'
     ];
 
+    // Check granular JSONB permissions if available
+    if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
+      const modulePerms = teacherPerms.permissions[dbColumnName];
+      // A module is accessible only if enabled AND can_view is true
+      return modulePerms.enabled === true && modulePerms.can_view === true;
+    }
+
+    // Fallback to legacy boolean columns if JSONB is not yet loaded or migrated
     if (teacherPerms[dbColumnName] === true) return true;
     if (teacherPerms[dbColumnName] === false) return false;
 
@@ -148,4 +157,50 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
 
   // Parents follow center global override
   return true;
+};
+
+/**
+ * Checks if a teacher has granular permission for a specific action within a module.
+ * Actions: 'edit', 'approve', 'publish'
+ */
+export const hasActionPermission = (user: any, featureKey: string, action: 'edit' | 'approve' | 'publish'): boolean => {
+  if (!user) return false;
+
+  // Super Admin/Center Admin bypass
+  if (user.role === 'admin' || user.role === 'center') {
+    return hasPermission(user, featureKey);
+  }
+
+  if (user.role !== 'teacher') return false;
+
+  // Normalize feature key
+  const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
+
+  // Basic access check first (must be enabled and can_view)
+  if (!hasPermission(user, featureKey)) return false;
+
+  const teacherPerms = user.teacherPermissions || {};
+
+  if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
+    const modulePerms = teacherPerms.permissions[dbColumnName];
+
+    switch (action) {
+      case 'edit':
+        return modulePerms.can_edit === true;
+      case 'approve':
+        return modulePerms.can_approve === true;
+      case 'publish':
+        return modulePerms.can_publish === true;
+      default:
+        return false;
+    }
+  }
+
+  // Fallback for legacy mode: if the module is enabled, allow editing by default
+  // (Legacy mode doesn't have granular approve/publish)
+  if (action === 'edit') {
+    return hasPermission(user, featureKey);
+  }
+
+  return false;
 };

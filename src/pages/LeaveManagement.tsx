@@ -56,6 +56,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LeaveCategoryManager from "@/components/LeaveCategoryManager";
+import { hasActionPermission } from "@/utils/permissions";
 
 export default function LeaveManagement() {
   const { user } = useAuth();
@@ -436,21 +437,29 @@ export default function LeaveManagement() {
                   CLOSE
                 </Button>
                 <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    className="rounded-xl font-black uppercase text-[10px] tracking-widest border-2 border-red-200 text-red-600 hover:bg-red-50"
-                    onClick={handleReject}
-                    disabled={updateStatusMutation.isPending || selectedApp.status === 'rejected'}
-                  >
-                    <X className="w-4 h-4 mr-2" /> REJECT
-                  </Button>
-                  <Button
-                    className="rounded-xl font-black uppercase text-[10px] tracking-widest bg-gradient-to-r from-green-600 to-emerald-600 shadow-soft"
-                    onClick={handleApprove}
-                    disabled={updateStatusMutation.isPending || selectedApp.status === 'approved'}
-                  >
-                    <Check className="w-4 h-4 mr-2" /> APPROVE
-                  </Button>
+                  {hasActionPermission(user, 'leave_management', 'approve') ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="rounded-xl font-black uppercase text-[10px] tracking-widest border-2 border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={handleReject}
+                        disabled={updateStatusMutation.isPending || selectedApp.status === 'rejected'}
+                      >
+                        <X className="w-4 h-4 mr-2" /> REJECT
+                      </Button>
+                      <Button
+                        className="rounded-xl font-black uppercase text-[10px] tracking-widest bg-gradient-to-r from-green-600 to-emerald-600 shadow-soft"
+                        onClick={handleApprove}
+                        disabled={updateStatusMutation.isPending || selectedApp.status === 'approved'}
+                      >
+                        <Check className="w-4 h-4 mr-2" /> APPROVE
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-[10px] font-bold text-amber-600 uppercase italic flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> Approval Access Restricted
+                    </div>
+                  )}
                 </div>
               </DialogFooter>
             </>

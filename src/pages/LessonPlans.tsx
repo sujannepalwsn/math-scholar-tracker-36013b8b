@@ -17,7 +17,7 @@ import { Tables } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import LessonPlanOCR from "@/components/center/LessonPlanOCR";
 
 type LessonPlan = Tables<'lesson_plans'>;
@@ -314,7 +314,7 @@ export default function LessonPlans() {
               ))}
             </SelectContent>
           </Select>
-          {hasPermission(user, 'lesson_plans') && (
+          {hasActionPermission(user, 'lesson_plans', 'edit') && (
             <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-xl h-10 px-4 font-bold shadow-soft transition-all gap-2">
               <Plus className="h-4 w-4" /> CREATE PLAN
             </Button>
