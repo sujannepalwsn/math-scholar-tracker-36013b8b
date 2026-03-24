@@ -9,9 +9,8 @@ import { cn, formatCurrency, safeFormatDate } from "@/lib/utils"
 import { KPICard } from "@/components/dashboard/KPICard"
 import { AlertList } from "@/components/dashboard/AlertList"
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
-import CenterLogo from "@/components/CenterLogo";
-import NotificationBell from "@/components/NotificationBell";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -468,8 +467,23 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8 page-enter animate-in fade-in duration-1000">
       {/* Top Header - School Details */}
       <DashboardHeader />
+      <CommandCenter />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        {/* Command Center Search Trigger - Relocated and Enhanced */}
+        <div className="relative group/search flex-1 max-w-md hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <Input
+            placeholder="Search classes, students, lesson plans..."
+            className="pl-10 h-11 rounded-2xl bg-white/80 border-white/40 shadow-soft focus-visible:ring-primary/20 cursor-pointer backdrop-blur-sm group-hover:border-primary/30 transition-all"
+            readOnly
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-center'))}
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded-lg border bg-white/50 text-[10px] font-black text-slate-400">
+             <kbd className="font-sans">⌘</kbd> K
+          </div>
+        </div>
+
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
             <Home className="h-8 w-8 text-primary" />

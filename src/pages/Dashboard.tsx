@@ -15,9 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import CenterLogo from "@/components/CenterLogo";
-import NotificationBell from "@/components/NotificationBell";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1078,11 +1077,23 @@ export default function Dashboard() {
       </Dialog>
       {/* Top Header - School Details */}
       <DashboardHeader />
+      <CommandCenter />
 
       <div className="flex justify-end items-center gap-4">
-        <div className="p-2 rounded-full bg-white shadow-soft border border-slate-100 h-10 w-10 flex items-center justify-center">
-          <NotificationBell />
+        {/* Command Center Search Trigger - Relocated and Enhanced */}
+        <div className="relative group/search flex-1 max-w-md hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <Input
+            placeholder="Search modules, students, reports..."
+            className="pl-10 h-11 rounded-2xl bg-white/80 border-white/40 shadow-soft focus-visible:ring-primary/20 cursor-pointer backdrop-blur-sm group-hover:border-primary/30 transition-all"
+            readOnly
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-center'))}
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded-lg border bg-white/50 text-[10px] font-black text-slate-400">
+             <kbd className="font-sans">⌘</kbd> K
+          </div>
         </div>
+
         {canEditDashboard && (
           <Button
             variant="outline"

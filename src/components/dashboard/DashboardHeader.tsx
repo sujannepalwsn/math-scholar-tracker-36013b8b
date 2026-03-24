@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
   User, Hash, Calendar, Loader2, Camera, Image as ImageIcon,
-  Eye, EyeOff, Search, Users, CheckCircle2, AlertCircle
+  Eye, EyeOff, Sparkles
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +34,7 @@ export default function DashboardHeader() {
     header_overlay_opacity: 90,
     header_font_family: "Inter",
     header_font_color: "#1e293b",
+    details_font_color: "#64748b",
     header_font_size: "normal",
     header_text_transform: "none",
     header_title_visible: true,
@@ -100,6 +100,7 @@ export default function DashboardHeader() {
         header_overlay_opacity: center.header_overlay_opacity || 90,
         header_font_family: center.header_font_family || "Inter",
         header_font_color: center.header_font_color || "#1e293b",
+        details_font_color: (center.theme as any)?.details_font_color || "#64748b",
         header_font_size: center.header_font_size || "normal",
         header_text_transform: center.header_text_transform || "none",
         header_title_visible: center.header_title_visible !== false,
@@ -133,6 +134,7 @@ export default function DashboardHeader() {
           header_overlay_opacity: formData.header_overlay_opacity,
           header_font_family: formData.header_font_family,
           header_font_color: formData.header_font_color,
+          theme: { ...(center?.theme as any || {}), details_font_color: formData.details_font_color },
           header_font_size: formData.header_font_size,
           header_text_transform: formData.header_text_transform,
           header_title_visible: formData.header_title_visible,
@@ -214,7 +216,12 @@ export default function DashboardHeader() {
   const canEdit = hasActionPermission(user, 'settings_access', 'edit');
 
   return (
-    <Card className="border-none shadow-glass overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg mb-8 relative group/header">
+    <Card className="border-none shadow-glass overflow-hidden rounded-[2.5rem] md:rounded-[4rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl mb-8 relative group/header border border-white/20">
+      {/* Premium Scholarly Mathematical Pattern Overlay - Subtle dots and symbols */}
+      <div className="absolute inset-0 z-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none"
+           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-rule='evenodd'%3E%3Ccircle cx='50' cy='50' r='1'/%3E%3Cpath d='M10 10h1v1h-1zM90 10h1v1h-1zM10 90h1v1h-1zM90 90h1v1h-1z'/%3E%3Ctext x='45' y='15' font-family='serif' font-size='8' opacity='0.5'%3Eπ%3E%3C/text%3E%3Ctext x='85' y='45' font-family='serif' font-size='8' opacity='0.5'%3EΣ%3E%3C/text%3E%3Ctext x='15' y='85' font-family='serif' font-size='8' opacity='0.5'%3EΔ%3E%3C/text%3E%3Ctext x='75' y='85' font-family='serif' font-size='8' opacity='0.5'%3E∞%3E%3C/text%3E%3C/g%3E%3C/svg%3E")` }}
+      />
+
       {/* Background Image */}
       {center?.header_bg_url && (
         <div
@@ -233,280 +240,88 @@ export default function DashboardHeader() {
       />
 
       <CardContent
-        className="p-6 md:p-10 relative z-10 space-y-6 md:space-y-8"
+        className="p-5 md:p-12 relative z-10 space-y-6 md:space-y-12"
         style={{
           fontFamily: center?.header_font_family || 'inherit',
           color: center?.header_font_color || 'inherit'
         }}
       >
-        {/* Command Center Trigger */}
-        <div className="absolute top-6 left-10 z-20 hidden md:block">
-           <Button
-            variant="ghost"
-            className="rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-slate-700/40 px-4 py-2 flex items-center gap-3 text-muted-foreground hover:text-primary transition-all group/search"
-            onClick={() => window.dispatchEvent(new CustomEvent('open-command-center'))}
-           >
-             <Search className="h-4 w-4 group-hover/search:scale-110 transition-transform" />
-             <span className="text-xs font-bold uppercase tracking-widest">Command Center</span>
-             <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-               <span className="text-xs">⌘</span>K
-             </kbd>
-           </Button>
-        </div>
-
-        {/* Live Pulse Metrics Overlay */}
-        <div className="absolute top-6 right-20 z-20 hidden lg:flex items-center gap-4">
-           <PulseMetric icon={Users} label="Active Students" value="482" color="emerald" />
-           <PulseMetric icon={CheckCircle2} label="Present Today" value="94%" color="blue" />
-           <PulseMetric icon={AlertCircle} label="Pending Tasks" value="12" color="amber" />
-        </div>
-        {/* Centered Name and Address */}
-        <div className="flex flex-col items-center text-center space-y-2 relative">
-          {(isEditMode || formData.header_title_visible) && (
-            <div className="w-full relative group/item">
-              {isEditMode ? (
-                <div className="relative max-w-2xl mx-auto">
-                  <Input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-slate-50 border-primary/20 rounded-xl text-center pr-10"
-                    style={{
-                      fontSize: center?.header_font_size === 'large' ? '2.5rem' : center?.header_font_size === 'small' ? '1.5rem' : '2rem',
-                      color: center?.header_font_color || 'inherit',
-                      fontFamily: center?.header_font_family || 'inherit',
-                      textTransform: center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize",
-                      opacity: formData.header_title_visible ? 1 : 0.5
-                    }}
-                    placeholder="School Name"
-                  />
-                  <button
-                    onClick={() => setFormData(prev => ({ ...prev, header_title_visible: !prev.header_title_visible }))}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-200 transition-colors"
-                  >
-                    {formData.header_title_visible ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-slate-400" />}
-                  </button>
+        {/* Header Top Section: Branding & Modern KPIs */}
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center lg:justify-between gap-6 md:gap-8">
+          {/* School Branding Section */}
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 group/brand text-center md:text-left">
+             <div className="relative shrink-0">
+                <div className="relative h-20 w-20 md:h-28 md:w-28 rounded-full overflow-hidden flex items-center justify-center p-2 md:p-4 border-4 border-white/50 shadow-soft backdrop-blur-md bg-white/20 group-hover/brand:scale-105 transition-transform duration-500">
+                  {formData.logo_url ? (
+                    <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-lg" />
+                  ) : (
+                    <Building className="h-10 w-10 text-primary/40" />
+                  )}
+                  {isEditMode && (
+                    <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-100 transition-opacity">
+                      <Camera className="h-6 w-6 text-white" />
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo')} />
+                    </label>
+                  )}
                 </div>
-              ) : (
-                <h1
-                  className="text-2xl md:text-4xl font-black tracking-tight break-words max-w-4xl mx-auto"
-                  style={{
-                    fontSize: center?.header_font_size === 'large' ? '3rem' : center?.header_font_size === 'small' ? '1.5rem' : '2.25rem',
-                    color: center?.header_font_color || '#1e293b',
-                    fontFamily: center?.header_font_family || 'inherit',
-                    textTransform: center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize"
-                  }}
-                >
-                  {center?.name || "School Name"}
-                </h1>
-              )}
-            </div>
-          )}
-
-          {(isEditMode || formData.header_address_visible) && (
-            <div className="flex flex-col items-center gap-1 w-full" style={{ color: center?.header_font_color || '#4285f4' }}>
-              {isEditMode ? (
-                <div className="flex items-center gap-2 max-w-xl mx-auto w-full relative group/item">
-                  <MapPin className="h-4 w-4 shrink-0" />
-                  <Input
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="h-8 md:h-10 text-xs md:text-sm bg-slate-50 border-primary/20 rounded-xl text-center pr-10"
-                    style={{
-                      color: center?.header_font_color || 'inherit',
-                      opacity: formData.header_address_visible ? 1 : 0.5
-                    }}
-                    placeholder="Address"
-                  />
-                  <button
-                    onClick={() => setFormData(prev => ({ ...prev, header_address_visible: !prev.header_address_visible }))}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-200 transition-colors"
-                  >
-                    {formData.header_address_visible ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-slate-400" />}
-                  </button>
+                <div className="absolute bottom-0 right-0 h-6 w-6 md:h-8 md:w-8 rounded-full bg-primary text-white flex items-center justify-center shadow-lg border-2 border-white">
+                  <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
                 </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2 max-w-3xl mx-auto">
-                  <MapPin className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-                  <span className="text-xs md:text-lg font-bold opacity-80 break-words">{center?.address || "Address not specified"}</span>
-                </div>
-              )}
-            </div>
-          )}
+             </div>
 
-          {/* Icon-only Edit/Cancel Button at top-right of the card content area */}
-          {canEdit && (
-            <div className="absolute top-0 right-0">
-              <Button
-                onClick={() => isEditMode ? setIsEditMode(false) : setIsEditMode(true)}
-                variant="ghost"
-                className={cn(
-                  "rounded-full p-2 h-10 w-10 md:h-12 md:w-12 shadow-sm transition-all active:scale-95",
-                  isEditMode
-                    ? "bg-rose-100 text-rose-600 hover:bg-rose-200"
-                    : "bg-[#dbeafe] text-[#3b82f6] hover:bg-[#bfdbfe]"
+             <div className="space-y-1 md:space-y-2">
+                {(isEditMode || formData.header_title_visible) && (
+                  <div className="relative">
+                    {isEditMode ? (
+                      <Input
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="text-lg md:text-2xl font-black h-auto py-1 px-3 bg-white/50 border-primary/20 rounded-xl text-center md:text-left"
+                        style={{
+                          textTransform: (center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize") || 'none'
+                        }}
+                      />
+                    ) : (
+                      <h1
+                        className="text-xl md:text-5xl font-black tracking-tight leading-none whitespace-nowrap overflow-hidden text-ellipsis max-w-[85vw] md:max-w-none"
+                        style={{
+                          textTransform: (center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize") || 'none',
+                          // Responsive font resizing logic for mobile one-line display
+                          fontSize: center?.header_font_size === 'large' ? 'clamp(1.5rem, 6vw, 3.5rem)' :
+                                    center?.header_font_size === 'small' ? 'clamp(1rem, 4vw, 2rem)' :
+                                    'clamp(1.25rem, 5vw, 2.75rem)'
+                        }}
+                      >
+                        {center?.name || "School Name"}
+                      </h1>
+                    )}
+                  </div>
                 )}
-                title={isEditMode ? "Cancel" : "Edit Info"}
-              >
-                {isEditMode ? <X className="h-5 w-5 md:h-6 md:w-6" /> : <Edit2 className="h-5 w-5 md:h-6 md:w-6" />}
-              </Button>
-            </div>
-          )}
+
+                {(isEditMode || formData.header_address_visible) && (
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground">
+                    <MapPin className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                    {isEditMode ? (
+                      <Input
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        className="h-8 text-xs bg-white/50 border-primary/10 rounded-lg"
+                      />
+                    ) : (
+                      <span className="text-xs md:text-lg font-bold opacity-70">{center?.address || "Address not specified"}</span>
+                    )}
+                  </div>
+                )}
+             </div>
+          </div>
         </div>
 
-        {/* Content Row: Logo (shifted left) and Details Grid (fully visible text) */}
-        <div className="flex flex-row gap-3 md:gap-10 items-start">
-          {/* Logo Section - Shifted Slightly Left */}
-          <div className="relative group shrink-0 -ml-1 md:-ml-4">
-            <div className="relative h-16 w-16 sm:h-32 sm:w-32 md:h-52 md:w-52 rounded-xl sm:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-1.5 sm:p-6 border-2 sm:border-4 border-white/40 shadow-soft backdrop-blur-sm bg-white/10">
-              {formData.logo_url ? (
-                <img src={formData.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-md" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 opacity-20">
-                  <Building className="h-12 w-12 text-primary" />
-                  {isEditMode && <span className="text-[10px] font-black uppercase">Upload Logo</span>}
-                </div>
-              )}
-              {isEditMode && (
-                <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-8 w-8 text-white" />
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={(e) => handleFileUpload(e, 'logo')}
-                  />
-                </label>
-              )}
-            </div>
-            {isEditMode && (
-              <div className="mt-3 flex flex-col gap-2 items-center">
-                <label className="p-2 w-full rounded-xl bg-white shadow-soft border border-slate-100 cursor-pointer flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">
-                  <ImageIcon className="h-4 w-4" />
-                  Background
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
-                </label>
-
-                <div className="flex flex-col gap-2 p-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-soft w-full max-w-[200px] max-h-[300px] overflow-y-auto custom-scrollbar">
-                  <div className="space-y-1">
-                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Overlay Color</Label>
-                    <div className="flex gap-1.5 items-center">
-                      <input
-                        type="color"
-                        value={formData.header_overlay_color.startsWith('rgba') ? '#ffffff' : center?.header_overlay_color}
-                        onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
-                        className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
-                      />
-                      <Input
-                        value={formData.header_overlay_color}
-                        onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_color: e.target.value }))}
-                        className="h-5 text-[8px] px-1 font-bold bg-transparent border-none focus-visible:ring-0"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Opacity</Label>
-                      <span className="text-[8px] font-black text-primary">{center?.header_overlay_opacity}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={formData.header_overlay_opacity}
-                      onChange={(e) => setFormData(prev => ({ ...prev, header_overlay_opacity: parseInt(e.target.value) }))}
-                      className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-
-                  <div className="space-y-1 pt-1 border-t border-slate-100">
-                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Family</Label>
-                    <select
-                      value={formData.header_font_family}
-                      onChange={(e) => setFormData(prev => ({ ...prev, header_font_family: e.target.value }))}
-                      className="w-full h-6 text-[8px] font-bold bg-slate-50 border-none rounded-md px-1 outline-none"
-                    >
-                      <option value="Inter">Inter</option>
-                      <option value="Algerian">Algerian</option>
-                      <option value="Roboto">Roboto</option>
-                      <option value="Poppins">Poppins</option>
-                      <option value="Montserrat">Montserrat</option>
-                      <option value="Open Sans">Open Sans</option>
-                      <option value="Playfair Display">Playfair Display</option>
-                      <option value="Georgia">Georgia</option>
-                      <option value="Times New Roman">Times New Roman</option>
-                      <option value="Arial">Arial</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Color</Label>
-                    <div className="flex gap-1.5 items-center">
-                      <input
-                        type="color"
-                        value={formData.header_font_color}
-                        onChange={(e) => setFormData(prev => ({ ...prev, header_font_color: e.target.value }))}
-                        className="w-5 h-5 rounded-full border-none cursor-pointer overflow-hidden"
-                      />
-                      <Input
-                        value={formData.header_font_color}
-                        onChange={(e) => setFormData(prev => ({ ...prev, header_font_color: e.target.value }))}
-                        className="h-5 text-[8px] px-1 font-bold bg-transparent border-none focus-visible:ring-0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Font Size</Label>
-                    <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
-                      {['small', 'normal', 'large'].map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setFormData(prev => ({ ...prev, header_font_size: size }))}
-                          className={cn(
-                            "flex-1 h-5 text-[7px] font-black uppercase rounded-sm transition-all",
-                            center?.header_font_size === size ? "bg-white shadow-sm text-primary" : "text-slate-400"
-                          )}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Text Case</Label>
-                    <div className="flex gap-1 bg-slate-50 p-0.5 rounded-md">
-                      {[
-                        { id: 'none', label: 'Default' },
-                        { id: 'uppercase', label: 'UPPER' },
-                        { id: 'lowercase', label: 'lower' },
-                        { id: 'capitalize', label: 'Title' }
-                      ].map((transform) => (
-                        <button
-                          key={transform.id}
-                          onClick={() => setFormData(prev => ({ ...prev, header_text_transform: transform.id }))}
-                          className={cn(
-                            "flex-1 h-5 text-[6px] font-black uppercase rounded-sm transition-all",
-                            center?.header_text_transform === transform.id ? "bg-white shadow-sm text-primary" : "text-slate-400"
-                          )}
-                        >
-                          {transform.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Details Grid - Ensuring full visibility with 2-column horizontal layout on mobile */}
-          <div className="flex-1 min-w-0">
-            <div className="grid grid-cols-2 gap-y-3 md:gap-y-10 gap-x-2 md:gap-x-14">
+        {/* Detailed Information Row */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8 pt-6 md:pt-8 border-t border-black/5 dark:border-white/5">
               {(isEditMode || formData.header_principal_visible) && (
-                <DetailItem
+                <CompactDetail
                   icon={User}
                   label="Principal"
                   name="principal_name"
@@ -515,10 +330,11 @@ export default function DashboardHeader() {
                   onChange={handleInputChange}
                   isVisible={formData.header_principal_visible}
                   onToggleVisibility={() => setFormData(prev => ({ ...prev, header_principal_visible: !prev.header_principal_visible }))}
+                  customColor={formData.details_font_color}
                 />
               )}
               {(isEditMode || formData.header_code_visible) && (
-                <DetailItem
+                <CompactDetail
                   icon={Hash}
                   label="School Code"
                   name="short_code"
@@ -527,20 +343,22 @@ export default function DashboardHeader() {
                   onChange={handleInputChange}
                   isVisible={formData.header_code_visible}
                   onToggleVisibility={() => setFormData(prev => ({ ...prev, header_code_visible: !prev.header_code_visible }))}
+                  customColor={formData.details_font_color}
                 />
               )}
               {(isEditMode || formData.header_year_visible) && (
-                <DetailItem
+                <CompactDetail
                   icon={Calendar}
                   label="Academic Year"
                   value={currentYear?.name || "Not Set"}
                   isEdit={false}
                   isVisible={formData.header_year_visible}
                   onToggleVisibility={() => setFormData(prev => ({ ...prev, header_year_visible: !prev.header_year_visible }))}
+                  customColor={formData.details_font_color}
                 />
               )}
               {(isEditMode || formData.header_contact_visible) && (
-                <DetailItem
+                <CompactDetail
                   icon={Phone}
                   label="Contact"
                   name="phone"
@@ -549,10 +367,11 @@ export default function DashboardHeader() {
                   onChange={handleInputChange}
                   isVisible={formData.header_contact_visible}
                   onToggleVisibility={() => setFormData(prev => ({ ...prev, header_contact_visible: !prev.header_contact_visible }))}
+                  customColor={formData.details_font_color}
                 />
               )}
               {(isEditMode || formData.header_email_visible) && (
-                <DetailItem
+                <CompactDetail
                   icon={Mail}
                   label="Email"
                   name="email"
@@ -561,10 +380,11 @@ export default function DashboardHeader() {
                   onChange={handleInputChange}
                   isVisible={formData.header_email_visible}
                   onToggleVisibility={() => setFormData(prev => ({ ...prev, header_email_visible: !prev.header_email_visible }))}
+                  customColor={formData.details_font_color}
                 />
               )}
               {(isEditMode || formData.header_website_visible) && (
-                <DetailItem
+                <CompactDetail
                   icon={Globe}
                   label="Website"
                   name="website_url"
@@ -573,27 +393,67 @@ export default function DashboardHeader() {
                   onChange={handleInputChange}
                   isVisible={formData.header_website_visible}
                   onToggleVisibility={() => setFormData(prev => ({ ...prev, header_website_visible: !prev.header_website_visible }))}
+                  customColor={formData.details_font_color}
                 />
               )}
-            </div>
-          </div>
         </div>
 
-        {/* Action Bar for Edit Mode */}
-        {isEditMode && (
-          <div className="bg-primary/5 p-4 flex justify-end gap-4 border-t border-border/10 rounded-b-[2rem]">
+        {/* Floating Action Buttons */}
+        <div className="absolute top-6 right-6 flex items-center gap-2">
+          {isEditMode && (
             <Button
               onClick={() => updateCenterMutation.mutate()}
               disabled={updateCenterMutation.isPending}
-              className="rounded-full h-12 w-12 p-0 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-soft"
-              title="Save Changes"
+              size="icon"
+              className="rounded-2xl h-10 w-10 md:h-12 md:w-12 bg-emerald-500 hover:bg-emerald-600 shadow-lg text-white transition-all scale-in"
             >
-              {updateCenterMutation.isPending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Save className="h-5 w-5" />
-              )}
+              {updateCenterMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
             </Button>
+          )}
+
+          {canEdit && (
+            <Button
+              onClick={() => setIsEditMode(!isEditMode)}
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "rounded-2xl h-10 w-10 md:h-12 md:w-12 shadow-sm transition-all",
+                isEditMode ? "bg-rose-100 text-rose-600" : "bg-primary/10 text-primary hover:bg-primary/20"
+              )}
+            >
+              {isEditMode ? <X className="h-5 w-5" /> : <Edit2 className="h-5 w-5" />}
+            </Button>
+          )}
+        </div>
+
+        {/* Edit Mode Customization Panel (Optional Background Trigger) */}
+        {isEditMode && (
+          <div className="absolute bottom-6 left-12 flex items-center gap-6 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-primary/10 animate-in slide-in-from-bottom-4 overflow-x-auto max-w-[80vw]">
+             <Label className="cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 hover:bg-primary/10 rounded-xl transition-colors shrink-0">
+                <ImageIcon className="h-4 w-4" /> Change Background
+                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bg')} />
+             </Label>
+
+             <div className="flex items-center gap-4 border-l pl-4 border-primary/10 shrink-0">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] font-black uppercase text-slate-400">Main Font</span>
+                  <input
+                    type="color"
+                    value={formData.header_font_color}
+                    onChange={(e) => setFormData(prev => ({ ...prev, header_font_color: e.target.value }))}
+                    className="h-6 w-10 cursor-pointer rounded bg-transparent"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] font-black uppercase text-slate-400">Details Font</span>
+                  <input
+                    type="color"
+                    value={formData.details_font_color}
+                    onChange={(e) => setFormData(prev => ({ ...prev, details_font_color: e.target.value }))}
+                    className="h-6 w-10 cursor-pointer rounded bg-transparent"
+                  />
+                </div>
+             </div>
           </div>
         )}
       </CardContent>
@@ -601,68 +461,53 @@ export default function DashboardHeader() {
   );
 }
 
-interface DetailItemProps {
+interface CompactDetailProps {
   icon: React.ElementType;
   label: string;
   value: string;
-  isEdit?: boolean;
+  isEdit: boolean;
   name?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  isVisible?: boolean;
-  onToggleVisibility?: () => void;
+  isVisible: boolean;
+  onToggleVisibility: () => void;
+  customColor?: string;
 }
 
-function PulseMetric({ icon: Icon, label, value, color }: { icon: any, label: string, value: string, color: string }) {
-  const colors: any = {
-    emerald: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-    blue: "text-blue-500 bg-blue-500/10 border-blue-500/20",
-    amber: "text-amber-500 bg-amber-500/10 border-amber-500/20"
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn("px-4 py-2 rounded-2xl border backdrop-blur-md flex items-center gap-3", colors[color])}
-    >
-      <Icon className="h-4 w-4" />
-      <div className="flex flex-col">
-        <span className="text-[10px] font-black uppercase tracking-tighter opacity-70 leading-none mb-0.5">{label}</span>
-        <span className="text-sm font-display font-bold leading-none">{value}</span>
-      </div>
-    </motion.div>
-  );
-}
-
-function DetailItem({ icon: Icon, label, value, isEdit, name, onChange, isVisible, onToggleVisibility }: DetailItemProps) {
+function CompactDetail({ icon: Icon, label, value, isEdit, name, onChange, isVisible, onToggleVisibility, customColor }: CompactDetailProps) {
   return (
     <div className={cn(
-      "flex items-center gap-1.5 md:gap-5 group relative",
-      isEdit && !isVisible && "opacity-50"
+      "flex flex-col gap-1.5 md:gap-2 group/item relative",
+      isEdit && !isVisible && "opacity-40"
     )}>
-      <div className="p-1.5 md:p-3.5 rounded-full bg-[#f0f7ff] text-[#4285f4] group-hover:bg-[#4285f4] group-hover:text-white transition-all duration-300 shadow-soft shrink-0">
-        <Icon className="h-3 w-3 md:h-5 md:w-5" />
+      <div className="flex items-center gap-2">
+        <div className="p-1 md:p-1.5 rounded-lg bg-primary/5 text-primary group-hover/item:bg-primary group-hover/item:text-white transition-colors">
+          <Icon className="h-3 w-3 md:h-3.5 md:w-3.5" />
+        </div>
+        <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 leading-none">{label}</span>
       </div>
-      <div className="space-y-0.5 flex-1 min-w-0 pr-6">
-        <p className="text-[7px] md:text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
-        {isEdit ? (
+
+      {isEdit ? (
+        <div className="relative">
           <Input
             name={name}
             value={value}
             onChange={onChange}
-            className="h-6 md:h-11 text-[9px] md:text-sm px-1.5 mt-0.5 bg-slate-50 border-primary/10 rounded-md md:rounded-xl focus-visible:ring-primary/20"
+            className="h-7 md:h-8 text-[10px] md:text-xs bg-white/40 border-primary/10 rounded-lg pr-8 focus-visible:ring-primary/20"
           />
-        ) : (
-          <p className="text-[9px] md:text-lg font-black text-slate-700 break-words tracking-tight mt-0.5 leading-tight">{value || "---"}</p>
-        )}
-      </div>
-      {isEdit && (
-        <button
-          onClick={onToggleVisibility}
-          className="absolute right-0 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-100 transition-colors"
+          <button
+            onClick={onToggleVisibility}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-primary/40 hover:text-primary transition-colors"
+          >
+            {isVisible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+      ) : (
+        <span
+          className="text-[11px] md:text-sm font-black truncate leading-tight"
+          style={{ color: customColor || 'inherit' }}
         >
-          {isVisible ? <Eye className="h-3 w-3 md:h-4 md:w-4 text-primary" /> : <EyeOff className="h-3 w-3 md:h-4 md:w-4 text-slate-400" />}
-        </button>
+          {value || "---"}
+        </span>
       )}
     </div>
   );

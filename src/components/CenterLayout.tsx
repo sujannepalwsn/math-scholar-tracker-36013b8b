@@ -141,21 +141,20 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         onMobileOpenChange={setMobileMenuOpen}
       />
 
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-40 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)} className="h-9 w-9">
+      {/* Mobile Header - Optimized for narrow screens */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-b z-40 flex items-center justify-between px-2 sm:px-4 shadow-sm overflow-hidden">
+        <div className="flex items-center shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-primary/5 text-primary">
             <Menu className="h-5 w-5" />
           </Button>
         </div>
 
-        <SchoolBranding className="flex-1" />
+        <div className="flex-1 min-w-0 px-2 flex justify-center overflow-hidden">
+          <SchoolBranding className="max-w-full" isMobileCompact={true} />
+        </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center shrink-0">
           <NotificationBell />
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9">
-            <LogOut className="h-4 w-4" />
-          </Button>
         </div>
       </header>
 
@@ -167,11 +166,15 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-24" : "md:ml-72"
       )}>
-        {/* Desktop Header Overlay with Branding */}
-        <div className="hidden md:flex sticky top-4 left-0 right-0 h-20 glass-surface z-30 items-center justify-center px-8 mb-8 rounded-[2rem] shadow-glass mx-auto max-w-7xl">
+        {/* Desktop Header Overlay with Branding - Premium Glass Design */}
+        <div className="hidden md:flex sticky top-4 left-0 right-0 h-24 glass-surface z-30 items-center justify-between px-8 mb-8 rounded-[2.5rem] shadow-glass mx-auto max-w-7xl border border-white/40">
           <SchoolBranding />
-          <div className="absolute right-8 flex items-center gap-4">
-            <NotificationBell />
+          <div className="flex items-center gap-6 pr-4">
+             <div className="h-10 w-[1px] bg-black/5" />
+             <NotificationBell />
+             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-white shadow-soft">
+                <User className="h-5 w-5 text-primary" />
+             </div>
           </div>
         </div>
 
