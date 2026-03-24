@@ -83,11 +83,8 @@ export function useDynamicNavigation() {
   const updateOrders = useMutation({
     mutationFn: async ({ type, updates }: { type: 'categories' | 'items', updates: any[] }) => {
       const table = type === 'categories' ? 'nav_categories' : 'nav_items';
-      // Process updates individually or with onConflict to avoid RLS recursion/400 errors during batch upsert
-      for (const update of updates) {
-        const { error } = await supabase.from(table).upsert(update, { onConflict: 'id' });
-        if (error) throw error;
-      }
+      const { error } = await supabase.from(table).upsert(updates, { onConflict: 'id' });
+      if (error) throw error;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [variables.type === 'categories' ? "nav-categories" : "nav-items"] });

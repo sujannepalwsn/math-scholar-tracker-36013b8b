@@ -316,6 +316,10 @@ export default function AboutInstitution() {
     }));
   };
 
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 500], [0, 200]);
+  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+
   if (isCenterLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -325,10 +329,6 @@ export default function AboutInstitution() {
   }
 
   const canView = hasPermission(user, 'about_institution');
-
-  const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 500], [0, 200]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
