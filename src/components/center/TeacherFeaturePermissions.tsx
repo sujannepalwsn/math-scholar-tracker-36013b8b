@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { Check, X, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const TEACHER_FEATURES = [
   { name: 'dashboard_access', label: 'Dashboard' },

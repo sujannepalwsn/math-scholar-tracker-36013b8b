@@ -68,6 +68,7 @@ BEGIN
 
         EXECUTE FORMAT('DROP POLICY IF EXISTS "Center and Admin access on %I" ON public.%I', t_name, t_name);
         EXECUTE FORMAT('DROP POLICY IF EXISTS "Teacher read access on %I" ON public.%I', t_name, t_name);
+        EXECUTE FORMAT('DROP POLICY IF EXISTS "Teacher access on %I" ON public.%I', t_name, t_name);
 
         -- Admin and Center role still get full access
         EXECUTE FORMAT('CREATE POLICY "Admin and Center full access on %I" ON public.%I
@@ -183,6 +184,7 @@ DO $$ BEGIN
     DROP POLICY IF EXISTS "Center and Admin access on exams" ON public.exams;
     DROP POLICY IF EXISTS "Teacher read access on exams" ON public.exams;
     DROP POLICY IF EXISTS "Center users can manage exams" ON public.exams;
+    DROP POLICY IF EXISTS "Teacher access on exams" ON public.exams;
 
     CREATE POLICY "Admin and Center full access on exams" ON public.exams
     FOR ALL USING (public.get_user_role() IN ('admin', 'center') AND public.is_same_center(center_id));
@@ -204,6 +206,7 @@ END $$;
 DO $$ BEGIN
     DROP POLICY IF EXISTS "Center and Admin access on student_chapters" ON public.student_chapters;
     DROP POLICY IF EXISTS "Teacher read access on student_chapters" ON public.student_chapters;
+    DROP POLICY IF EXISTS "Teacher access on student_chapters" ON public.student_chapters;
 
     CREATE POLICY "Admin and Center full access on student_chapters" ON public.student_chapters
     FOR ALL USING (EXISTS (SELECT 1 FROM public.students s WHERE s.id = student_chapters.student_id AND public.is_same_center(s.center_id)) AND public.get_user_role() IN ('admin', 'center'));
