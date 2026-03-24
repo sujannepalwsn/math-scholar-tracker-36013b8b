@@ -68,7 +68,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Activities", route: "/teacher/activities", icon: "Paintbrush", role: "teacher", feature_name: "preschool_activities", category: 'Academics', order: 10 },
   { name: "Discipline", route: "/teacher/discipline-issues", icon: "AlertTriangle", role: "teacher", feature_name: "discipline_issues", category: 'Academics', order: 11 },
   { name: "Class Routine", route: "/teacher/class-routine", icon: "Clock", role: "teacher", feature_name: "class_routine", category: 'Academics', order: 12 },
-  { name: "Teacher Reports", route: "/teacher-performance", icon: "BarChart3", role: "teacher", feature_name: "teacher_reports", category: 'Reports and Communication', order: 12.5 },
+  { name: "Teacher Reports", route: "/teacher-performance", icon: "BarChart3", role: "teacher", feature_name: "teacher_reports", category: 'Reports and Communication', order: 13 },
   { name: "Chapter Performance", route: "/teacher/chapter-performance", icon: "TrendingUp", role: "teacher", feature_name: "chapter_performance", category: 'Administration', order: 13 },
   { name: "Settings", route: "/teacher/settings", icon: "Settings", role: "teacher", feature_name: "settings_access", category: 'Administration', order: 14 },
   { name: "Messages", route: "/teacher-messages", icon: "MessageSquare", role: "teacher", feature_name: "messaging", category: 'Reports and Communication', order: 15 },

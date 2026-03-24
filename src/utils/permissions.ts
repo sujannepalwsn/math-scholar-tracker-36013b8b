@@ -224,14 +224,14 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
   const teacherPerms = user.teacherPermissions || {};
   const isRestricted = user.teacher_scope_mode === 'restricted';
 
+  // Parents can only 'edit' (create) for specific modules like leave_management or messaging
+  if (user.role === 'parent') {
+    const allowedActions = ['leave_management', 'messaging'];
+    return action === 'edit' && allowedActions.includes(dbColumnName);
+  }
+
   if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
     const modulePerms = teacherPerms.permissions[dbColumnName];
-
-    // Parents can only 'edit' (create) for specific modules like leave_management or messaging
-    if (user.role === 'parent') {
-      const allowedActions = ['leave_management', 'messaging'];
-      return action === 'edit' && allowedActions.includes(dbColumnName);
-    }
 
     switch (action) {
       case 'edit':
