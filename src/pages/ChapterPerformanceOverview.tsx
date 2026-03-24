@@ -42,16 +42,31 @@ export default function ChapterPerformanceOverview() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [studentFilter, setStudentFilter] = useState<string>("all"); // NEW: Student filter state
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch all students for grade and student filters
   const { data: allStudents = [] } = useQuery({
-    queryKey: ["all-students-for-chapter-overview", user?.center_id],
+    queryKey: ["all-students-for-chapter-overview", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("students")
         .select("id, name, grade")
-        .eq("center_id", user.center_id)
-        .order("name");
+        .eq("center_id", user.center_id);
+
+      if (isRestricted) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },
@@ -75,7 +90,7 @@ export default function ChapterPerformanceOverview() {
 
   // Fetch all student_chapters for the center, filtered by student/grade/subject
   const { data: studentChaptersRaw = [], isLoading: studentChaptersLoading } = useQuery({
-    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter, user?.role, user?.teacher_id],
+    queryKey: ["all-student-chapters-overview", user?.center_id, subjectFilter, gradeFilter, studentFilter, user?.role, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("student_chapters").select(`
@@ -85,7 +100,7 @@ export default function ChapterPerformanceOverview() {
         recorded_by_teacher:recorded_by_teacher_id(name)
       `).eq("students.center_id", user.center_id);
 
-      if (user?.role === 'teacher' && user?.teacher_id) {
+      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
         query = query.eq('recorded_by_teacher_id', user.teacher_id);
       }
 
@@ -109,7 +124,7 @@ export default function ChapterPerformanceOverview() {
 
   // NEW: Fetch all test results for the center, including test details and linked lesson_plan_id
   const { data: allTestResults = [], isLoading: testResultsLoading } = useQuery({
-    queryKey: ["all-test-results-for-chapter-overview", user?.center_id, user?.role, user?.id],
+    queryKey: ["all-test-results-for-chapter-overview", user?.center_id, user?.role, user?.id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
@@ -122,7 +137,7 @@ export default function ChapterPerformanceOverview() {
         `) // Removed lesson_plans(chapter) as it's not directly on tests
         .eq("tests.center_id", user.center_id); // Ensure tests belong to the same center
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('tests.created_by', user.id);
       }
 

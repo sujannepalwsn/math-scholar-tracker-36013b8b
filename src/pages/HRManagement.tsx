@@ -19,10 +19,18 @@ export default function HRManagement() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: teachers = [], isLoading } = useQuery({
-    queryKey: ["teachers-hr", centerId],
+    queryKey: ["teachers-hr", centerId, isRestricted, user?.teacher_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("teachers").select("*").eq("center_id", centerId).order("name");
+      let query = supabase.from("teachers").select("*").eq("center_id", centerId);
+
+      if (isRestricted) {
+        query = query.eq('id', user?.teacher_id);
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },

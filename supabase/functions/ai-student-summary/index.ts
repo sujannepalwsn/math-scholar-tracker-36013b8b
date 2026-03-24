@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { studentId } = await req.json();
+    const authHeader = req.headers.get("Authorization")!;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -24,6 +25,19 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Get the user from the JWT
+    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (userError || !user) throw new Error("Unauthorized");
+
+    // Fetch user profile to check role and scope
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role, center_id, teacher_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile) throw new Error("Profile not found");
+
     // Fetch student info
     const { data: student, error: studentError } = await supabase
       .from("students")
@@ -31,7 +45,43 @@ serve(async (req) => {
       .eq("id", studentId)
       .single();
 
-    if (studentError) throw studentError;
+    if (studentError || !student) throw new Error("Student not found");
+
+    // Security check: Ensure student belongs to the same center
+    if (student.center_id !== profile.center_id) {
+      throw new Error("Access Denied: Student belongs to another center.");
+    }
+
+    // Teacher Scope Check
+    if (profile.role === 'teacher' && profile.teacher_id) {
+      const { data: teacherPerms } = await supabase
+        .from("teacher_feature_permissions")
+        .select("teacher_scope_mode, teacher_id")
+        .eq("teacher_id", profile.teacher_id)
+        .single();
+
+      if (teacherPerms?.teacher_scope_mode === 'restricted') {
+        // Check if student is in assigned grades
+        const { data: assignments } = await supabase
+          .from("class_teacher_assignments")
+          .select("grade")
+          .eq("teacher_id", teacherPerms.teacher_id);
+
+        const { data: schedules } = await supabase
+          .from("period_schedules")
+          .select("grade")
+          .eq("teacher_id", teacherPerms.teacher_id);
+
+        const assignedGrades = new Set([
+          ...(assignments?.map(a => a.grade) || []),
+          ...(schedules?.map(s => s.grade) || [])
+        ]);
+
+        if (!assignedGrades.has(student.grade)) {
+          throw new Error("Access Denied: You do not have access to this student's data in restricted mode.");
+        }
+      }
+    }
 
     // Fetch attendance (last 30 days)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();

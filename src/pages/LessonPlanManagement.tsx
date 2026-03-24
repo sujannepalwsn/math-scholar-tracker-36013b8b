@@ -64,8 +64,10 @@ export default function LessonPlanManagement() {
     enabled: !!user?.center_id
   });
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: lessonPlans = [], isLoading } = useQuery({
-    queryKey: ["lesson-plans-mgmt", user?.center_id, statusFilter, subjectFilter, gradeFilter, teacherFilter],
+    queryKey: ["lesson-plans-mgmt", user?.center_id, statusFilter, subjectFilter, gradeFilter, teacherFilter, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
@@ -78,6 +80,10 @@ export default function LessonPlanManagement() {
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
       if (teacherFilter !== "all") query = query.eq("teacher_id", teacherFilter);
+
+      if (isRestricted) {
+        query = query.eq('teacher_id', user?.teacher_id);
+      }
 
       const { data, error } = await query;
       if (error) throw error;

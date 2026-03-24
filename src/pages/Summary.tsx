@@ -27,12 +27,27 @@ export default function Summary() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>(format(new Date(), "yyyy-MM"));
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch students
   const { data: students } = useQuery({
-    queryKey: ["students", user?.center_id],
+    queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       let query = supabase.from("students").select("*").order("name");
       if (user?.role !== "admin" && user?.center_id) query = query.eq("center_id", user.center_id);
+
+      if (isRestricted) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -41,7 +56,7 @@ export default function Summary() {
   // Fetch attendance
   const studentIds = students?.map((s) => s.id) || [];
   const { data: allAttendance } = useQuery({
-    queryKey: ["all-attendance", user?.center_id, studentIds.length > 0 ? studentIds.join(",") : "", user?.role, user?.id],
+    queryKey: ["all-attendance", user?.center_id, studentIds.length > 0 ? studentIds.join(",") : "", user?.role, user?.id, isRestricted],
     queryFn: async () => {
       if (!studentIds.length) return [];
       let query = supabase
@@ -49,7 +64,7 @@ export default function Summary() {
         .select("*")
         .in("student_id", studentIds);
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 

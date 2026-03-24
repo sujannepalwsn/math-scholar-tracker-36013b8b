@@ -68,15 +68,38 @@ export default function ExamManagement() {
     enabled: !!centerId,
   });
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: exams = [], isLoading } = useQuery({
-    queryKey: ["exams", centerId],
+    queryKey: ["exams", centerId, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("exams")
         .select("*")
         .eq("center_id", centerId)
         .order("created_at", { ascending: false });
+
+      if (isRestricted) {
+        // Teacher restricted mode: only exams they created OR exams for their assigned grades
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        const conditions = [`created_by.eq.${user?.id}`];
+        if (myGrades.length > 0) {
+          // Check if any of myGrades is in applicable_grades array OR matches grade column
+          // Using .or with complex conditions in Supabase can be tricky with arrays,
+          // but we can use grade column for simple cases.
+          myGrades.forEach(g => {
+            conditions.push(`grade.eq.${g}`);
+            conditions.push(`applicable_grades.cs.{${g}}`);
+          });
+        }
+        query = query.or(conditions.join(','));
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

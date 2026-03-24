@@ -43,6 +43,8 @@ export default function PublishedResults() {
         query = query.in("status", ["published", "results_published"]);
       }
 
+      const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
       if (user?.role === 'teacher' && user?.teacher_id) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
         const assignedGrades = assignments?.map(a => a.grade) || [];
@@ -53,12 +55,12 @@ export default function PublishedResults() {
 
         const allTeacherGrades = Array.from(new Set([...assignedGrades, ...subjectGrades]));
 
-        if (allTeacherGrades.length > 0) {
-          query = query.in('grade', allTeacherGrades);
-        } else {
-          // If no specific grade assignments, show all for center admin-like experience if center_id matches
-          // But usually we should restrict. For now let's keep it restricted to assigned grades.
-          return [];
+        if (isRestricted) {
+           if (allTeacherGrades.length > 0) {
+             query = query.in('grade', allTeacherGrades);
+           } else {
+             return [];
+           }
         }
       }
 
@@ -101,7 +103,8 @@ export default function PublishedResults() {
         query = query.eq("grade", selectedExam.grade);
       } else {
         // If no exam selected, and user is teacher, filter students by teacher's assigned grades
-        if (user?.role === 'teacher' && user?.teacher_id) {
+        const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+        if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
            const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
            const assignedGrades = assignments?.map(a => a.grade) || [];
            const { data: subjectAssignments } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);

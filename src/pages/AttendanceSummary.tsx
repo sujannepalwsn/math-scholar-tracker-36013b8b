@@ -35,13 +35,28 @@ export default function AttendanceSummary() {
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState('all');
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: students = [] } = useQuery({
-    queryKey: ['students', user?.center_id],
+    queryKey: ['students', user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       let query = supabase.from('students').select('id, name, grade').order('name');
       if (user?.role !== 'admin' && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }
+
+      if (isRestricted) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -50,7 +65,7 @@ export default function AttendanceSummary() {
   const classes = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
   const { data: attendanceData = [] } = useQuery({
-    queryKey: ['attendance-summary', selectedMonth.toISOString().slice(0, 7), user?.center_id, user?.id],
+    queryKey: ['attendance-summary', selectedMonth.toISOString().slice(0, 7), user?.center_id, user?.id, isRestricted],
     queryFn: async () => {
       const startDate = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(selectedMonth), 'yyyy-MM-dd');
@@ -59,12 +74,12 @@ export default function AttendanceSummary() {
 
       let query = supabase
         .from('attendance')
-        .select('*, students(name, grade)')
+        .select('*, students!inner(name, grade)')
         .in('student_id', studentIds)
         .gte('date', startDate)
         .lte('date', endDate);
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 

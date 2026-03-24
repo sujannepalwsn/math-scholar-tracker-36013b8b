@@ -57,9 +57,11 @@ export default function CalendarEvents() {
   // Determine center_id: use user's center_id for center/teacher/admin, or student's center_id for parents
   const centerId = isParent ? student?.center_id : user?.center_id;
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch events
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["center-events", centerId, user?.role, user?.id],
+    queryKey: ["center-events", centerId, user?.role, user?.id, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -67,7 +69,7 @@ export default function CalendarEvents() {
         .select("*")
         .eq("center_id", centerId);
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('created_by', user.id);
       }
 

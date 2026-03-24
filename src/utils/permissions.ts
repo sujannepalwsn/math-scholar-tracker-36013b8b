@@ -191,12 +191,17 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
   if (!hasPermission(user, featureKey)) return false;
 
   const teacherPerms = user.teacherPermissions || {};
+  const isRestricted = user.teacher_scope_mode === 'restricted';
 
   if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
     const modulePerms = teacherPerms.permissions[dbColumnName];
 
     switch (action) {
       case 'edit':
+        // If in restricted mode, some administrative modules are forced to read-only
+        if (isRestricted && ADMIN_MODULES.includes(dbColumnName)) {
+          return false;
+        }
         return modulePerms.can_edit === true;
       case 'approve':
         return modulePerms.can_approve === true;

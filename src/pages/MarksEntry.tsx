@@ -36,16 +36,36 @@ export default function MarksEntry() {
   const [marksData, setMarksData] = useState<Record<string, Record<string, string>>>({});
   const [filterGrade, setFilterGrade] = useState<string>("all");
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: exams = [] } = useQuery({
-    queryKey: ["exams-entry-list", centerId],
+    queryKey: ["exams-entry-list", centerId, isRestricted, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("exams")
         .select("*")
         .eq("center_id", centerId)
         .in("status", ["draft", "published", "results_published"])
         .order("created_at", { ascending: false });
+
+      if (isRestricted) {
+        // Teacher restricted mode: only exams they created OR exams for their assigned grades
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        const conditions = [`created_by.eq.${user?.id}`];
+        if (myGrades.length > 0) {
+          myGrades.forEach(g => {
+            conditions.push(`grade.eq.${g}`);
+            conditions.push(`applicable_grades.cs.{${g}}`);
+          });
+        }
+        query = query.or(conditions.join(','));
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

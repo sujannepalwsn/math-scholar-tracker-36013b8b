@@ -37,16 +37,25 @@ export default function MeetingManagement() {
   const [showConclusionDialog, setShowConclusionDialog] = useState(false);
   const [selectedMeetingForConclusion, setSelectedMeetingForConclusion] = useState<Meeting & { meeting_conclusions: MeetingConclusion[] } | null>(null);
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch meetings for the current center
   const { data: meetings = [], isLoading } = useQuery({
-    queryKey: ["meetings", user?.center_id],
+    queryKey: ["meetings", user?.center_id, isRestricted, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("meetings")
-        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees(student_id, user_id, teacher_id), related_meeting:related_meeting_id(id, title, meeting_date)")
+        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees!inner(student_id, user_id, teacher_id), related_meeting:related_meeting_id(id, title, meeting_date)")
         .eq("center_id", user.center_id)
         .order("meeting_date", { ascending: false });
+
+      if (isRestricted) {
+        // Teachers in restricted mode see meetings they created OR meetings where they are an attendee
+        query = query.or(`created_by.eq.${user?.id},meeting_attendees.user_id.eq.${user?.id}`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

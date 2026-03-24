@@ -36,11 +36,27 @@ export default function StudentIdCard() {
     enabled: !!centerId,
   });
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: students = [] } = useQuery({
-    queryKey: ["students-idcard", centerId],
+    queryKey: ["students-idcard", centerId, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true).order("name");
+      let query = supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
+
+      if (isRestricted) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },

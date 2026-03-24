@@ -65,8 +65,10 @@ export default function LessonPlans() {
     enabled: !!user?.center_id });
   const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
+  const isRestricted = isTeacher && user?.teacher_scope_mode === 'restricted';
+
   const { data: lessonPlans = [], isLoading } = useQuery({
-    queryKey: ["lesson-plans-all", user?.center_id, subjectFilter, gradeFilter, user?.teacher_id],
+    queryKey: ["lesson-plans-all", user?.center_id, subjectFilter, gradeFilter, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*, teachers(name)").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
@@ -76,7 +78,7 @@ export default function LessonPlans() {
       // Full access for teachers if module is enabled
       const hasFullAccess = hasPermission(user, 'lesson_plans');
 
-      if (isTeacher && !hasFullAccess) {
+      if (isTeacher && (isRestricted || !hasFullAccess)) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 

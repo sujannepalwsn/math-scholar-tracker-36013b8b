@@ -59,18 +59,26 @@ export default function TeacherDashboard() {
   const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan | null>(null);
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Data Fetching
   const { data: teacherStudents = [], isLoading: isStudentsLoading } = useQuery({
-    queryKey: ["teacher-students", teacherId, user?.role],
+    queryKey: ["teacher-students", teacherId, user?.role, isRestricted],
     queryFn: async () => {
       if (!teacherId) return [];
       let query = supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
 
       if (user?.role === 'teacher') {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', teacherId);
-        const grades = assignments?.map(a => a.grade) || [];
-        if (grades.length > 0) {
-          query = query.in('grade', grades);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', teacherId);
+        const grades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (isRestricted) {
+           if (grades.length > 0) {
+             query = query.in('grade', grades);
+           } else {
+             return [];
+           }
         }
       }
 
@@ -195,7 +203,7 @@ export default function TeacherDashboard() {
     enabled: !!centerId && !!user?.id });
 
   const { data: historicalAttendance = [] } = useQuery({
-    queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to, user?.role, user?.id],
+    queryKey: ["teacher-student-attendance-historical", teacherId, dateRange.from, dateRange.to, user?.role, user?.id, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -205,7 +213,7 @@ export default function TeacherDashboard() {
         .gte("date", dateRange.from)
         .lte("date", dateRange.to);
 
-      if (user?.role === 'teacher' && user?.id) {
+      if (user?.role === 'teacher' && user?.id && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 
@@ -249,14 +257,25 @@ export default function TeacherDashboard() {
     enabled: !!teacherId });
 
   const { data: disciplineIssues = [] } = useQuery({
-    queryKey: ["teacher-discipline-issues", user?.id, dateRange],
+    queryKey: ["teacher-discipline-issues", user?.id, dateRange, isRestricted],
     queryFn: async () => {
       if (!centerId || !user?.id) return [];
-      let query = supabase.from("discipline_issues").select("*, discipline_categories(name), students(name, grade)")
+      let query = supabase.from("discipline_issues").select("*, discipline_categories(name), students!inner(name, grade)")
         .eq("center_id", centerId)
-        .eq("reported_by", user.id)
         .gte("issue_date", dateRange.from)
         .lte("issue_date", dateRange.to);
+
+      if (isRestricted) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', teacherId);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', teacherId);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        const conditions = [`reported_by.eq.${user.id}`];
+        if (myGrades.length > 0) {
+          conditions.push(`students.grade.in.(${myGrades.join(',')})`);
+        }
+        query = query.or(conditions.join(','));
+      }
 
       const { data, error } = await query;
       if (error) throw error;

@@ -24,6 +24,7 @@ interface User {
   teacher_name?: string;
   centerPermissions?: Record<string, any>;
   teacherPermissions?: Record<string, any>;
+  teacher_scope_mode?: 'full' | 'restricted';
   linked_students?: LinkedStudent[];
 }
 
@@ -91,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                   if (teacherPerms) {
                     updatedUser.teacherPermissions = teacherPerms;
+                    updatedUser.teacher_scope_mode = teacherPerms.teacher_scope_mode || 'full';
                     hasChanges = true;
                   }
                 }

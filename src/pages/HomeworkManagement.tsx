@@ -50,8 +50,10 @@ export default function HomeworkManagement() {
   const [bulkStatus, setBulkStatus] = useState<StudentHomeworkRecord['status']>("completed");
   const [bulkRemarks, setBulkRemarks] = useState("");
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: homeworkList = [], isLoading } = useQuery({
-    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id],
+    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("homework").select("*, lesson_plans(*)").eq("center_id", user.center_id).order("due_date", { ascending: false });
@@ -61,7 +63,7 @@ export default function HomeworkManagement() {
       // Full access for teachers if module is enabled
       const hasFullAccess = hasPermission(user, 'homework_management');
 
-      if (user?.role === 'teacher' && !hasFullAccess) {
+      if (user?.role === 'teacher' && (isRestricted || !hasFullAccess)) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -72,7 +74,7 @@ export default function HomeworkManagement() {
     enabled: !!user?.center_id });
 
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-for-homework", user?.center_id, user?.teacher_id],
+    queryKey: ["lesson-plans-for-homework", user?.center_id, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
@@ -80,7 +82,7 @@ export default function HomeworkManagement() {
       // Full access for teachers if module is enabled
       const hasFullAccess = hasPermission(user, 'homework_management');
 
-      if (user?.role === 'teacher' && !hasFullAccess) {
+      if (user?.role === 'teacher' && (isRestricted || !hasFullAccess)) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
