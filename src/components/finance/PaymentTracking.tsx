@@ -72,6 +72,7 @@ const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
 
   const recordPaymentMutation = useMutation({
     mutationFn: async () => {
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to record payments.');
       if (!paymentForm.invoice_id || !paymentForm.amount) throw new Error('Please fill required fields');
 
       const invoice = unpaidInvoices.find(i => i.id === paymentForm.invoice_id);

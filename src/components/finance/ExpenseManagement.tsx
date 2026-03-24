@@ -44,6 +44,7 @@ const ExpenseManagement = ({ canEdit }: { canEdit?: boolean }) => {
   const createExpenseMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error('Center ID not found');
+      if (!canEdit) throw new Error('Access Denied: You do not have permission to record expenses.');
 
       const { error } = await supabase
         .from('expenses')
