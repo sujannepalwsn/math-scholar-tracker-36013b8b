@@ -864,18 +864,110 @@ export default function Dashboard() {
 
   const isLoading = isStudentsLoading || isTeachersLoading;
 
+  const getDelta = (trend: any[]) => {
+    if (trend.length < 2) return 0;
+    const current = trend[trend.length - 1].value;
+    const previous = trend[trend.length - 2].value;
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  };
+
   const renderKPICard = (id: string) => {
     if (!visibleWidgets[id] && !isCustomizeMode) return null;
 
     const cards: Record<string, React.ReactNode> = {
-      "students": hasPermission(user, 'register_student') ? <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" delta={2.4} target={95} onClick={() => navigate("/register")} /> : null,
-      "teachers": hasPermission(user, 'teacher_management') ? <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" delta={0.5} onClick={() => navigate("/teachers")} /> : null,
-      "student-attendance": hasPermission(user, 'take_attendance') ? <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} delta={1.2} target={studentAttendanceRate} onClick={() => navigate("/attendance")} /> : null,
-      "teacher-attendance": hasPermission(user, 'teachers_attendance') ? <KPICard title="Teacher Attendance" value={`${teacherAttendanceRate}%`} description="Daily Logging" icon={Clock} color="orange" trendData={teacherAttendanceTrend} delta={-0.4} target={teacherAttendanceRate} onClick={() => navigate("/teacher-attendance")} /> : null,
-      "lesson-plans": hasPermission(user, 'lesson_plans') ? <KPICard title="Lesson Plans" value={upcomingLessons.length} description="Pedagogical Assets" icon={FileText} color="purple" delta={8.2} onClick={() => navigate("/lesson-plans")} /> : null,
-      "approvals": hasPermission(user, 'lesson_plans') ? <KPICard title="Approvals" value={pendingLessonPlansCount} description="Pending Review" icon={CheckCircle2} color="yellow" delta={-5} onClick={() => navigate("/lesson-plans")} /> : null,
-      "leave-requests": hasPermission(user, 'leave_management') ? <KPICard title="Leave Requests" value={pendingLeavesCount} description="Pending Applications" icon={Calendar} color="rose" delta={12} onClick={() => navigate("/leave-management")} /> : null,
-      "messages": hasPermission(user, 'messaging') ? <KPICard title="Messages" value="View" description="Communication Hub" icon={Bell} color="pink" onClick={() => navigate("/messages")} /> : null,
+      "students": hasPermission(user, 'register_student') ? (
+        <KPICard
+          title="Students"
+          value={totalStudents}
+          description="Active Enrollments"
+          icon={Users}
+          color="indigo"
+          delta={students.length > 5 ? 2.4 : 0}
+          target={95}
+          onClick={() => navigate("/register")}
+        />
+      ) : null,
+      "teachers": hasPermission(user, 'teacher_management') ? (
+        <KPICard
+          title="Teachers"
+          value={teachers.length}
+          description="Active Faculty"
+          icon={Users}
+          color="blue"
+          delta={teachers.length > 2 ? 0.5 : 0}
+          onClick={() => navigate("/teachers")}
+        />
+      ) : null,
+      "student-attendance": hasPermission(user, 'take_attendance') ? (
+        <KPICard
+          title="Student Attendance"
+          value={`${studentAttendanceRate}%`}
+          description="Presence Index"
+          icon={CheckCircle2}
+          color="green"
+          trendData={attendanceTrend}
+          delta={getDelta(attendanceTrend)}
+          target={studentAttendanceRate}
+          onClick={() => navigate("/attendance")}
+        />
+      ) : null,
+      "teacher-attendance": hasPermission(user, 'teachers_attendance') ? (
+        <KPICard
+          title="Teacher Attendance"
+          value={`${teacherAttendanceRate}%`}
+          description="Daily Logging"
+          icon={Clock}
+          color="orange"
+          trendData={teacherAttendanceTrend}
+          delta={getDelta(teacherAttendanceTrend)}
+          target={teacherAttendanceRate}
+          onClick={() => navigate("/teacher-attendance")}
+        />
+      ) : null,
+      "lesson-plans": hasPermission(user, 'lesson_plans') ? (
+        <KPICard
+          title="Lesson Plans"
+          value={upcomingLessons.length}
+          description="Pedagogical Assets"
+          icon={FileText}
+          color="purple"
+          delta={upcomingLessons.length > 0 ? 5 : 0}
+          onClick={() => navigate("/lesson-plans")}
+        />
+      ) : null,
+      "approvals": hasPermission(user, 'lesson_plans') ? (
+        <KPICard
+          title="Approvals"
+          value={pendingLessonPlansCount}
+          description="Pending Review"
+          icon={CheckCircle2}
+          color="yellow"
+          delta={pendingLessonPlansCount > 0 ? -10 : 0}
+          onClick={() => navigate("/lesson-plans")}
+        />
+      ) : null,
+      "leave-requests": hasPermission(user, 'leave_management') ? (
+        <KPICard
+          title="Leave Requests"
+          value={pendingLeavesCount}
+          description="Pending Applications"
+          icon={Calendar}
+          color="rose"
+          delta={pendingLeavesCount > 0 ? 15 : 0}
+          onClick={() => navigate("/leave-management")}
+        />
+      ) : null,
+      "messages": hasPermission(user, 'messaging') ? (
+        <KPICard
+          title="Messages"
+          value="View"
+          description="Communication Hub"
+          icon={Bell}
+          color="pink"
+          onClick={() => navigate("/messages")}
+        />
+      ) : null,
     };
 
     if (!cards[id]) return null;
@@ -1210,7 +1302,7 @@ export default function Dashboard() {
                                       </div>
                                     </div>
                                     <Badge
-                                      variant={status === "present" ? "success" : (status === "absent" || status === "leave") ? "destructive" : "warning"}
+                                      variant={status === "present" ? "pulse" : (status === "absent" || status === "leave") ? "destructive" : "warning"}
                                       className="font-black text-[9px] uppercase px-2 py-0.5 rounded-lg"
                                     >
                                       {status === "present" ? "Present" : status === "leave" ? "On Leave" : status === "absent" ? "Absent" : "Not Marked"}

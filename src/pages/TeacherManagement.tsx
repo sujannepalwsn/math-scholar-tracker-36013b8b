@@ -54,6 +54,7 @@ export default function TeacherManagement() {
   const hasFullAccess = hasActionPermission(user, 'teacher_management', 'edit');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
 
   const [name, setName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
@@ -769,119 +770,165 @@ export default function TeacherManagement() {
       </div>
       </div>
 
-      <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
-        <CardHeader className="border-b border-border/10 bg-primary/5 py-6">
-          <CardTitle className="text-xl font-black flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-            Staff Roster
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
-            </div>
-          ) : teachers.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground font-medium italic">No active faculty profiles identified.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/5">
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Faculty Member</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Contact Protocol</TableHead>
-                    <TableHead className="hidden sm:table-cell font-black uppercase text-[10px] tracking-widest px-6 py-4">Payroll</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Responsibilities</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">System Status</TableHead>
-                    <TableHead className="hidden sm:table-cell font-black uppercase text-[10px] tracking-widest px-6 py-4">Identity</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4 text-right">Operations</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teachers.map((teacher: any) => {
-                    const ctGrades = getClassTeacherGrades(teacher.id);
-                    return (
-                      <TableRow key={teacher.id} className="group/row transition-all duration-300">
-                        <TableCell className="px-6 py-4">
-                          <div className="space-y-1">
-                            <p className="font-black text-slate-700 group-hover/row:text-primary transition-colors leading-none">{teacher.name}</p>
-                            <p className="text-[10px] font-medium text-slate-400 truncate max-w-[150px]">{teacher.email || 'No email registered'}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-6 py-4 font-bold text-primary text-xs">{teacher.contact_number || teacher.phone || '-'}</TableCell>
-                        <TableCell className="hidden sm:table-cell px-6 py-4">
-                          <span className="font-black text-slate-600 text-xs">{teacher.monthly_salary ? `₹${teacher.monthly_salary.toLocaleString()}` : '-'}</span>
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          {ctGrades.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
-                              {ctGrades.map((g: string) => (
-                                <Badge key={g} variant="secondary" className="bg-primary/5 text-primary border-none rounded-lg text-[9px] font-black uppercase tracking-tighter">
-                                  <GraduationCap className="h-2.5 w-2.5 mr-1" />
-                                  Class {g}
-                                </Badge>
-                              ))}
-                            </div>
-                          ) : <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Instructor</span>}
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <Badge
-                            variant={teacher.is_active ? "pulse" : "destructive"}
-                            className="cursor-pointer"
-                            onClick={() => toggleTeacherStatusMutation.mutate(teacher)}
+      <div className="flex flex-col lg:flex-row gap-8 min-h-[600px]">
+        <div className={cn("flex-1 transition-all duration-500", selectedTeacher ? "lg:w-1/2" : "w-full")}>
+          <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
+            <CardHeader className="border-b border-border/10 bg-primary/5 py-6">
+              <CardTitle className="text-xl font-black flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                Staff Roster
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+                </div>
+              ) : teachers.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground font-medium italic">No active faculty profiles identified.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/5">
+                        <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Faculty Member</TableHead>
+                        {!selectedTeacher && <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Contact Protocol</TableHead>}
+                        {!selectedTeacher && <TableHead className="hidden sm:table-cell font-black uppercase text-[10px] tracking-widest px-6 py-4">Payroll</TableHead>}
+                        <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">System Status</TableHead>
+                        <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4 text-right pr-6">Operations</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {teachers.map((teacher: any) => {
+                        return (
+                          <TableRow
+                            key={teacher.id}
+                            className={cn(
+                              "group/row transition-all duration-300 cursor-pointer",
+                              selectedTeacher?.id === teacher.id ? "bg-primary/5" : ""
+                            )}
+                            onClick={() => setSelectedTeacher(teacher)}
                           >
-                            {teacher.is_active ? 'Active' : 'Suspended'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell px-6 py-4">
-                          {teacher.users && teacher.users.length > 0 ? (
-                            <code className="bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-black">{teacher.users[0].username}</code>
-                          ) : (
-                            <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5" onClick={() => handleCreateLoginClick(teacher)}>
-                              <UserPlus className="h-3 w-3 mr-1" /> GENERATE
-                            </Button>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-1.5 opacity-0 group-hover/row:opacity-100 transition-all duration-300 -translate-x-2 group-hover/row:translate-x-0">
-                            {hasFullAccess && (
-                              <>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleEditClick(teacher)}>
+                            <TableCell className="px-6 py-4">
+                              <div className="space-y-1">
+                                <p className="font-black text-slate-700 group-hover/row:text-primary transition-colors leading-none">{teacher.name}</p>
+                                <p className="text-[10px] font-medium text-slate-400 truncate max-w-[150px]">{teacher.email || 'No email registered'}</p>
+                              </div>
+                            </TableCell>
+                            {!selectedTeacher && (
+                              <TableCell className="px-6 py-4 font-bold text-primary text-xs">{teacher.contact_number || teacher.phone || '-'}</TableCell>
+                            )}
+                            {!selectedTeacher && (
+                              <TableCell className="hidden sm:table-cell px-6 py-4">
+                                <span className="font-black text-slate-600 text-xs">{teacher.monthly_salary ? `₹${teacher.monthly_salary.toLocaleString()}` : '-'}</span>
+                              </TableCell>
+                            )}
+                            <TableCell className="px-6 py-4">
+                              <Badge
+                                variant={teacher.is_active ? "pulse" : "destructive"}
+                                className="cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); toggleTeacherStatusMutation.mutate(teacher); }}
+                              >
+                                {teacher.is_active ? 'Active' : 'Suspended'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 text-right pr-6">
+                              <div className="flex justify-end gap-1.5 opacity-0 group-hover/row:opacity-100 transition-all duration-300">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft">
                                   <Edit className="h-3.5 w-3.5 text-primary" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleClassTeacherClick(teacher)} title="Assign Grade Oversight">
-                                  <GraduationCap className="h-3.5 w-3.5 text-primary" />
-                                </Button>
-                              </>
-                            )}
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleHRClick(teacher)} title="HR & Documents">
-                              <FileText className="h-3.5 w-3.5 text-blue-600" />
-                            </Button>
-                            {hasFullAccess && (
-                              <>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleManagePermissionsClick(teacher)}>
-                                  <Settings className="h-3.5 w-3.5 text-slate-500" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft hover:bg-destructive/10" onClick={() => deleteTeacherMutation.mutate(teacher.id)}>
-                                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {selectedTeacher && (
+          <div className="lg:w-1/2 animate-in slide-in-from-right-8 duration-500">
+            <Card className="rounded-[2.5rem] border-none shadow-strong bg-white overflow-hidden sticky top-8">
+              <CardHeader className="bg-primary/5 border-b border-border/10 p-8 flex flex-row justify-between items-start">
+                <div>
+                  <Badge className="mb-4 bg-primary text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-lg">Faculty Detail Matrix</Badge>
+                  <CardTitle className="text-3xl font-black tracking-tight text-slate-800">{selectedTeacher.name}</CardTitle>
+                  <p className="text-slate-400 font-bold uppercase text-xs tracking-widest mt-1">{selectedTeacher.email}</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedTeacher(null)} className="rounded-full hover:bg-rose-50 text-rose-500">
+                  <X className="h-5 w-5" />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-8 space-y-8">
+                <div className="grid grid-cols-2 gap-6">
+                   <div className="space-y-1">
+                      <p className="label-caps">Contact Number</p>
+                      <p className="font-black text-slate-700">{selectedTeacher.contact_number || selectedTeacher.phone || 'N/A'}</p>
+                   </div>
+                   <div className="space-y-1">
+                      <p className="label-caps">Monthly Salary</p>
+                      <p className="font-black text-slate-700">₹{selectedTeacher.monthly_salary?.toLocaleString() || '0'}</p>
+                   </div>
+                   <div className="space-y-1">
+                      <p className="label-caps">Hire Date</p>
+                      <p className="font-black text-slate-700">{selectedTeacher.hire_date ? format(new Date(selectedTeacher.hire_date), "MMM d, yyyy") : 'N/A'}</p>
+                   </div>
+                   <div className="space-y-1">
+                      <p className="label-caps">Employee ID</p>
+                      <p className="font-black text-slate-700">{selectedTeacher.employee_id || 'N/A'}</p>
+                   </div>
+                </div>
+
+                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4">
+                  <p className="label-caps">Responsibilities</p>
+                  <div className="flex flex-wrap gap-2">
+                    {getClassTeacherGrades(selectedTeacher.id).length > 0 ? (
+                      getClassTeacherGrades(selectedTeacher.id).map((g: string) => (
+                        <Badge key={g} variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg px-3 py-1 text-[10px] font-black uppercase">
+                          Class {g} Teacher
+                        </Badge>
+                      ))
+                    ) : <span className="text-xs text-muted-foreground italic">No class assignments</span>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleEditClick(selectedTeacher)}>
+                    <Edit className="h-3.5 w-3.5 mr-2" /> Edit Profile
+                  </Button>
+                  <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleHRClick(selectedTeacher)}>
+                    <FileText className="h-3.5 w-3.5 mr-2" /> HR & Payroll
+                  </Button>
+                  <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleManagePermissionsClick(selectedTeacher)}>
+                    <Settings className="h-3.5 w-3.5 mr-2" /> Permissions
+                  </Button>
+                  <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleClassTeacherClick(selectedTeacher)}>
+                    <GraduationCap className="h-3.5 w-3.5 mr-2" /> Assign Grade
+                  </Button>
+                </div>
+
+                {hasFullAccess && (
+                  <Button
+                    variant="destructive"
+                    className="w-full h-12 rounded-xl font-black uppercase tracking-widest text-[10px]"
+                    onClick={() => { if (window.confirm("Delete this faculty record permanent?")) { deleteTeacherMutation.mutate(selectedTeacher.id); setSelectedTeacher(null); } }}
+                  >
+                    Delete Faculty Record
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
 
       {/* Class Teacher Assignment Dialog */}
       <Dialog open={showClassTeacherDialog} onOpenChange={setShowClassTeacherDialog}>
