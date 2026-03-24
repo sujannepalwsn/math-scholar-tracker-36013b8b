@@ -240,16 +240,16 @@ export default function DashboardHeader() {
       />
 
       <CardContent
-        className="p-5 md:p-12 relative z-10 space-y-6 md:space-y-12"
+        className="py-[15px] px-5 md:p-12 relative z-10 space-y-[19px] md:space-y-12"
         style={{
           fontFamily: center?.header_font_family || 'inherit',
           color: center?.header_font_color || 'inherit'
         }}
       >
         {/* Header Top Section: Branding & Modern KPIs */}
-        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center lg:justify-between gap-6 md:gap-8">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center lg:justify-between gap-5 md:gap-8">
           {/* School Branding Section */}
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 group/brand text-center md:text-left">
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6 group/brand text-center md:text-left">
              <div className="relative shrink-0">
                 <div className="relative h-20 w-20 md:h-28 md:w-28 rounded-full overflow-hidden flex items-center justify-center p-2 md:p-4 border-4 border-white/50 shadow-soft backdrop-blur-md bg-white/20 group-hover/brand:scale-105 transition-transform duration-500">
                   {formData.logo_url ? (
@@ -319,7 +319,7 @@ export default function DashboardHeader() {
         </div>
 
         {/* Detailed Information Row */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8 pt-6 md:pt-8 border-t border-black/5 dark:border-white/5">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-8 pt-[19px] md:pt-8 border-t border-black/5 dark:border-white/5">
               {(isEditMode || formData.header_principal_visible) && (
                 <CompactDetail
                   icon={User}
