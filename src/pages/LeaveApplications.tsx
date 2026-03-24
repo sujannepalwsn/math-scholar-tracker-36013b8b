@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
 import { Switch } from "@/components/ui/switch";
+import { hasActionPermission } from "@/utils/permissions";
 
 export default function LeaveApplications() {
   const { user } = useAuth();
@@ -64,6 +65,7 @@ export default function LeaveApplications() {
 
   const isParent = user?.role === 'parent';
   const isTeacher = user?.role === 'teacher';
+  const canApply = hasActionPermission(user, 'leave_management', 'edit');
 
   // Fetch leave categories
   const { data: categories = [] } = useQuery({
@@ -272,10 +274,12 @@ export default function LeaveApplications() {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-2xl h-12 px-6 font-bold shadow-soft hover:shadow-medium transition-all gap-2">
-              <Plus className="h-5 w-5" />
-              NEW APPLICATION
-            </Button>
+            {canApply && (
+              <Button className="rounded-2xl h-12 px-6 font-bold shadow-soft hover:shadow-medium transition-all gap-2">
+                <Plus className="h-5 w-5" />
+                NEW APPLICATION
+              </Button>
+            )}
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] rounded-3xl max-h-[95vh] overflow-y-auto">
             <DialogHeader>
@@ -456,13 +460,15 @@ export default function LeaveApplications() {
                 <p className="text-xl font-black text-foreground/70">No Leave History</p>
                 <p className="text-muted-foreground font-medium">You haven't submitted any leave applications yet.</p>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setIsDialogOpen(true)}
-                className="rounded-xl font-bold border-2"
-              >
-                Submit Your First Application
-              </Button>
+              {canApply && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(true)}
+                  className="rounded-xl font-bold border-2"
+                >
+                  Submit Your First Application
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (

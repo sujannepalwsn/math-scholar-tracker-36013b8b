@@ -52,7 +52,8 @@ export default function MeetingManagement() {
 
       if (isRestricted) {
         // Teachers in restricted mode see meetings they created OR meetings where they are an attendee
-        query = query.or(`created_by.eq.${user?.id},meeting_attendees.user_id.eq.${user?.id}`);
+        // Quoting user ID to ensure PostgREST handles it correctly in the OR filter
+        query = query.or(`created_by.eq."${user?.id}",meeting_attendees.user_id.eq."${user?.id}"`);
       }
 
       const { data, error } = await query;

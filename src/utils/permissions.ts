@@ -188,6 +188,14 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   }
 
   // Parents follow center global override
+  // Ensure self-service modules like leave management are allowed for parents if not globally disabled
+  if (user.role === 'parent') {
+    const allowedParent = ['leave_management', 'messaging', 'dashboard_access'];
+    if (allowedParent.includes(dbColumnName)) {
+      return true;
+    }
+  }
+
   return true;
 };
 
@@ -205,7 +213,7 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
     return hasPermission(user, featureKey);
   }
 
-  if (user.role !== 'teacher') return false;
+  if (user.role !== 'teacher' && user.role !== 'parent') return false;
 
   // Normalize feature key
   const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
@@ -218,6 +226,12 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
 
   if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
     const modulePerms = teacherPerms.permissions[dbColumnName];
+
+    // Parents can only 'edit' (create) for specific modules like leave_management or messaging
+    if (user.role === 'parent') {
+      const allowedActions = ['leave_management', 'messaging'];
+      return action === 'edit' && allowedActions.includes(dbColumnName);
+    }
 
     switch (action) {
       case 'edit':
