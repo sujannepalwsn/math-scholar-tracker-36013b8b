@@ -9,7 +9,8 @@ import {
   Calendar,
   ArrowRight,
   Command as CommandIcon,
-  UserPlus
+  UserPlus,
+  BarChart3
 } from "lucide-react";
 import {
   CommandDialog,
@@ -146,7 +147,7 @@ export function CommandCenter() {
                 <span>Homework Tracking</span>
               </CommandItem>
               <CommandItem onSelect={() => runCommand(() => navigate("/parent-student-report"))}>
-                <TrendingUp className="mr-2 h-4 w-4" />
+                <BarChart3 className="mr-2 h-4 w-4" />
                 <span>Academic Report</span>
               </CommandItem>
               <CommandItem onSelect={() => runCommand(() => navigate("/parent-finance"))}>

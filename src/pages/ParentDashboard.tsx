@@ -48,9 +48,9 @@ export default function ParentDashboard() {
     to: today
   });
 
-  const linkedStudents = user?.linked_students || [];
+  const linkedStudents = Array.isArray(user?.linked_students) ? user.linked_students : [];
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
-    user?.student_id || linkedStudents[0]?.id || null
+    user?.student_id || (linkedStudents.length > 0 ? linkedStudents[0].id : null)
   );
 
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<ChapterPerformanceGroup | null>(null);
@@ -261,14 +261,23 @@ export default function ParentDashboard() {
   }, [attendance, dateRange]);
 
   const performanceTrend = useMemo(() => {
+    if (!Array.isArray(testResults)) return [];
     return testResults.map(tr => ({
       date: format(new Date(tr.date_taken), "MMM d"),
       value: Math.round((tr.marks_obtained / (tr.tests?.total_marks || 100)) * 100)
     })).reverse().slice(-7);
   }, [testResults]);
 
-  const totalInvoiced = useMemo(() => invoices.reduce((acc, inv) => acc + inv.total_amount, 0), [invoices]);
-  const totalPaid = useMemo(() => invoices.reduce((acc, inv) => acc + (inv.paid_amount || 0), 0), [invoices]);
+  const totalInvoiced = useMemo(() => {
+    if (!Array.isArray(invoices)) return 0;
+    return invoices.reduce((acc, inv) => acc + (inv?.total_amount || 0), 0);
+  }, [invoices]);
+
+  const totalPaid = useMemo(() => {
+    if (!Array.isArray(invoices)) return 0;
+    return invoices.reduce((acc, inv) => acc + (inv?.paid_amount || 0), 0);
+  }, [invoices]);
+
   const outstandingDues = totalInvoiced - totalPaid;
   const attendanceRate = attendance.length > 0 ? Math.round((attendance.filter(a => a.status === 'present').length / attendance.length) * 100) : 0;
   const homeworkPendingCount = homeworkStatus.filter(hs => !['completed', 'checked'].includes(hs.status)).length;
@@ -276,16 +285,18 @@ export default function ParentDashboard() {
 
   const subjectPerformance = useMemo(() => {
     const subjectsMap = new Map<string, { total: number; count: number }>();
-    testResults.forEach((tr: any) => {
-      const subject = tr.tests?.subject;
-      if (subject) {
-        if (!subjectsMap.has(subject)) subjectsMap.set(subject, { total: 0, count: 0 });
-        const pct = (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100;
-        const entry = subjectsMap.get(subject)!;
-        entry.total += pct;
-        entry.count += 1;
-      }
-    });
+    if (Array.isArray(testResults)) {
+      testResults.forEach((tr: any) => {
+        const subject = tr.tests?.subject;
+        if (subject) {
+          if (!subjectsMap.has(subject)) subjectsMap.set(subject, { total: 0, count: 0 });
+          const pct = (tr.marks_obtained / (tr.tests?.total_marks || 1)) * 100;
+          const entry = subjectsMap.get(subject)!;
+          entry.total += pct;
+          entry.count += 1;
+        }
+      });
+    }
     return Array.from(subjectsMap.entries()).map(([name, { total, count }]) => ({
       name,
       percentage: Math.round(total / count)
@@ -300,6 +311,7 @@ export default function ParentDashboard() {
   }, [homeworkStatus]);
 
   const formattedRoutine = useMemo(() => {
+    if (!Array.isArray(studentRoutine)) return [];
     return studentRoutine.map((ps: any) => ({
       id: ps.id,
       time: ps.class_periods ? `${ps.class_periods.start_time?.slice(0, 5)} - ${ps.class_periods.end_time?.slice(0, 5)}` : "N/A",
@@ -334,13 +346,13 @@ export default function ParentDashboard() {
   };
 
   const parentAlerts = [
-    ...homeworkStatus.filter(hs => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && !['completed', 'checked'].includes(hs.status)).map(hs => ({
+    ...(Array.isArray(homeworkStatus) ? homeworkStatus : []).filter(hs => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && !['completed', 'checked'].includes(hs.status)).map(hs => ({
       id: `hw-${hs.id}`,
       title: `Overdue Homework: ${hs.homework?.title}`,
       type: "error" as const,
       timestamp: hs.homework?.due_date
     })),
-    ...attendance.filter(a => a.status === 'absent').slice(0, 2).map(a => ({
+    ...(Array.isArray(attendance) ? attendance : []).filter(a => a.status === 'absent').slice(0, 2).map(a => ({
       id: `att-${a.id}`,
       title: `Absence recorded for ${format(new Date(a.date), "MMM d")}`,
       type: "warning" as const,
@@ -351,25 +363,28 @@ export default function ParentDashboard() {
   const chapterPerformanceData: ChapterPerformanceGroup[] = useMemo(() => {
     const dataMap = new Map<string, ChapterPerformanceGroup>();
 
-    // Process student_chapters (lesson evaluations)
+  // Process student_chapters (lesson evaluations)
+  if (Array.isArray(lessonRecords)) {
     lessonRecords.forEach((sc: any) => {
       if (sc.lesson_plan_id && sc.lesson_plans) {
         if (!dataMap.has(sc.lesson_plan_id)) {
           dataMap.set(sc.lesson_plan_id, {
             lessonPlan: sc.lesson_plans,
-            studentChapters: [],
-            testResults: [],
-            homeworkRecords: [] });
-        }
+              studentChapters: [],
+              testResults: [],
+              homeworkRecords: [] });
+          }
         dataMap.get(sc.lesson_plan_id)?.studentChapters.push(sc);
-      }
+        }
     });
+  }
 
-    // Process test results
+  // Process test results
+  if (Array.isArray(testResults)) {
     testResults.forEach((tr: any) => {
       if (tr.tests?.lesson_plan_id) {
         if (!dataMap.has(tr.tests.lesson_plan_id)) {
-          const correspondingLessonPlan = allLessonPlans.find(lp => lp.id === tr.tests.lesson_plan_id);
+          const correspondingLessonPlan = (allLessonPlans as any[]).find(lp => lp.id === tr.tests.lesson_plan_id);
           if (correspondingLessonPlan) {
             dataMap.set(tr.tests.lesson_plan_id, {
               lessonPlan: correspondingLessonPlan as any,
@@ -383,17 +398,20 @@ export default function ParentDashboard() {
         dataMap.get(tr.tests.lesson_plan_id)?.testResults.push(tr);
       }
     });
+  }
 
     // Process homework records
+  if (Array.isArray(homeworkStatus)) {
     homeworkStatus.forEach((hs: any) => {
       const hwSubject = hs.homework?.subject;
       if (hwSubject) {
-        const matchingLessonPlan = allLessonPlans.find(lp => lp.subject === hwSubject);
+        const matchingLessonPlan = (allLessonPlans as any[]).find(lp => lp.subject === hwSubject);
         if (matchingLessonPlan && dataMap.has(matchingLessonPlan.id)) {
           dataMap.get(matchingLessonPlan.id)?.homeworkRecords.push(hs);
         }
-      }
+        }
     });
+  }
 
     // Sort by lesson plan date
     return Array.from(dataMap.values()).sort((a, b) =>
@@ -405,6 +423,8 @@ export default function ParentDashboard() {
     navigate('/login-parent');
     return null;
   }
+
+  console.log("Rendering Parent Dashboard, activeStudentId:", activeStudentId);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8 page-enter animate-in fade-in duration-1000">
