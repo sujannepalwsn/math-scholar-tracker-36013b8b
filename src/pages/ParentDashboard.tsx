@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Search, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
-import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient as useTanstackQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
@@ -23,13 +23,6 @@ import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
 import { Invoice, Payment } from "@/integrations/supabase/finance-types"
 
-// Initialize QueryClient
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60,
-      retry: 1 } } });
-
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentChapter = Tables<'student_chapters'>;
@@ -44,10 +37,10 @@ interface ChapterPerformanceGroup {
   homeworkRecords: (StudentHomeworkRecord & { homework: Pick<Homework, 'id' | 'title' | 'subject' | 'due_date'> })[];
 }
 
-const ParentDashboardContent = () => {
+export default function ParentDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useTanstackQueryClient();
+  const queryClient = useQueryClient();
   const today = new Date().toISOString().split("T")[0];
   
   const [dateRange, setDateRange] = useState({
@@ -1134,10 +1127,3 @@ const ParentDashboardContent = () => {
   );
 };
 
-const ParentDashboard = () => (
-  <QueryClientProvider client={queryClient}>
-    <ParentDashboardContent />
-  </QueryClientProvider>
-);
-
-export default ParentDashboard;
