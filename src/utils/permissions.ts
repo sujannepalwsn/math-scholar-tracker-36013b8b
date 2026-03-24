@@ -137,6 +137,29 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   }
 
   if (user.role === 'teacher') {
+    const isRestricted = user.teacher_scope_mode === 'restricted';
+
+    // In restricted mode, strictly block modules as per requirements
+    if (isRestricted) {
+       // Administrative block
+       if (ADMIN_MODULES.includes(dbColumnName)) {
+         const allowedAdmin = ['settings_access', 'teachers_attendance', 'leave_management', 'school_days'];
+         if (!allowedAdmin.includes(dbColumnName)) {
+           return false;
+         }
+       }
+
+       // Specific Academics block: Lesson Plan Management is not allowed
+       if (dbColumnName === 'lesson_plans' && (featureKey === 'lesson_plan_management' || route === '/lesson-plan-management')) {
+         return false;
+       }
+
+       // Block Center Settings for restricted teachers
+       if (dbColumnName === 'settings_access' && route === '/settings') {
+         return false;
+       }
+    }
+
     // Check granular JSONB permissions if available
     if (teacherPerms.permissions) {
       const modulePerms = teacherPerms.permissions[dbColumnName];
@@ -198,9 +221,20 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
 
     switch (action) {
       case 'edit':
-        // If in restricted mode, some administrative modules are forced to read-only
-        if (isRestricted && ADMIN_MODULES.includes(dbColumnName)) {
-          return false;
+        // If in restricted mode, administrative modules are strictly read-only
+        if (isRestricted) {
+           if (ADMIN_MODULES.includes(dbColumnName)) {
+             // Exception for leave_management and teachers_attendance where they can edit their OWN records (submit leave/mark attendance)
+             const allowEditInRestricted = ['leave_management', 'teachers_attendance'];
+             if (!allowEditInRestricted.includes(dbColumnName)) {
+               return false;
+             }
+           }
+
+           // Academic read-only requirements
+           if (dbColumnName === 'class_routine' || dbColumnName === 'school_days') {
+             return false;
+           }
         }
         return modulePerms.can_edit === true;
       case 'approve':

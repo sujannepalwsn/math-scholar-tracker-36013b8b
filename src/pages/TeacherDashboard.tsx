@@ -269,9 +269,12 @@ export default function TeacherDashboard() {
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', teacherId);
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
+        // Post-filter or separate conditions since 'students.grade' in .or() might cause issues
+        // with complex joins in PostgREST. Let's simplify and filter by reported_by OR grade list.
         const conditions = [`reported_by.eq.${user.id}`];
         if (myGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myGrades.join(',')})`);
+          // Note: using 'students(grade)' because we have 'students!inner(name, grade)' in select
+          conditions.push(`students.grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
         }
         query = query.or(conditions.join(','));
       }

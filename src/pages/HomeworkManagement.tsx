@@ -30,6 +30,7 @@ type LessonPlan = Tables<'lesson_plans'>;
 export default function HomeworkManagement() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>("all");
@@ -50,8 +51,6 @@ export default function HomeworkManagement() {
   const [bulkStatus, setBulkStatus] = useState<StudentHomeworkRecord['status']>("completed");
   const [bulkRemarks, setBulkRemarks] = useState("");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
-
   const { data: homeworkList = [], isLoading } = useQuery({
     queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id, isRestricted],
     queryFn: async () => {
@@ -60,10 +59,7 @@ export default function HomeworkManagement() {
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
-      // Full access for teachers if module is enabled
-      const hasFullAccess = hasPermission(user, 'homework_management');
-
-      if (user?.role === 'teacher' && (isRestricted || !hasFullAccess)) {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -79,10 +75,7 @@ export default function HomeworkManagement() {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
 
-      // Full access for teachers if module is enabled
-      const hasFullAccess = hasPermission(user, 'homework_management');
-
-      if (user?.role === 'teacher' && (isRestricted || !hasFullAccess)) {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -93,10 +86,24 @@ export default function HomeworkManagement() {
     enabled: !!user?.center_id });
 
   const { data: students = [] } = useQuery({
-    queryKey: ["students-for-homework", user?.center_id],
+    queryKey: ["students-for-homework", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("students").select("*").eq("center_id", user.center_id).order("name");
+      let query = supabase.from("students").select("*").eq("center_id", user.center_id).eq("is_active", true);
+
+      if (isRestricted && user?.teacher_id) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },

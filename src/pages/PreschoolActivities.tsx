@@ -29,6 +29,7 @@ type ActivityType = Tables<'activity_types'>;
 export default function PreschoolActivities() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<StudentActivity | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>("all");
@@ -46,14 +47,28 @@ export default function PreschoolActivities() {
 
   // Fetch students
   const { data: students = [] } = useQuery({
-    queryKey: ["students-for-activities", user?.center_id],
+    queryKey: ["students-for-activities", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("students")
         .select("id, name, grade")
         .eq("center_id", user.center_id)
-        .order("name");
+        .eq("is_active", true);
+
+      if (isRestricted && user?.teacher_id) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },
@@ -77,8 +92,6 @@ export default function PreschoolActivities() {
     },
     enabled: !!user?.center_id });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
-
   // Fetch activities - now properly filtered by center and teacher
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id, isRestricted],
@@ -100,7 +113,15 @@ export default function PreschoolActivities() {
         .in("student_id", studentIds);
 
       if (isRestricted) {
-        query = query.eq('activities.created_by', user?.id);
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        const conditions = [`activities.created_by.eq.${user?.id}`];
+        if (myGrades.length > 0) {
+          conditions.push(`students.grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
+        }
+        query = query.or(conditions.join(','));
       }
 
       const { data, error } = await query.order("created_at", { ascending: false });

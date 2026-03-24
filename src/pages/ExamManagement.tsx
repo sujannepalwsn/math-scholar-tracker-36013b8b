@@ -71,7 +71,7 @@ export default function ExamManagement() {
   const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
 
   const { data: exams = [], isLoading } = useQuery({
-    queryKey: ["exams", centerId, isRestricted, user?.teacher_id],
+    queryKey: ["exams", centerId, isRestricted, user?.teacher_id, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -88,12 +88,9 @@ export default function ExamManagement() {
 
         const conditions = [`created_by.eq.${user?.id}`];
         if (myGrades.length > 0) {
-          // Check if any of myGrades is in applicable_grades array OR matches grade column
-          // Using .or with complex conditions in Supabase can be tricky with arrays,
-          // but we can use grade column for simple cases.
           myGrades.forEach(g => {
-            conditions.push(`grade.eq.${g}`);
-            conditions.push(`applicable_grades.cs.{${g}}`);
+            conditions.push(`grade.eq."${g}"`);
+            conditions.push(`applicable_grades.cs.{"${g}"}`);
           });
         }
         query = query.or(conditions.join(','));
