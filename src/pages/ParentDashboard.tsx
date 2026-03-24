@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Search, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient as useTanstackQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"

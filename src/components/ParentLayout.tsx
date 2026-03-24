@@ -107,7 +107,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       />
 
       {/* Mobile Header - Optimized for narrow screens */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-b z-40 flex items-center justify-between px-2 sm:px-4 shadow-sm overflow-hidden">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-[46px] bg-white/90 backdrop-blur-xl border-b z-40 flex items-center justify-between px-2 sm:px-4 shadow-sm overflow-hidden">
         <div className="flex items-center shrink-0">
           <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-primary/5 text-primary">
             <Menu className="h-5 w-5" />
@@ -127,12 +127,15 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       <main className={cn(
         "flex-1 overflow-y-auto mesh-gradient transition-all duration-300",
         "md:h-screen",
-        "pt-16 md:pt-0",
+        "pt-14 md:pt-0",
         "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-24" : "md:ml-72"
       )}>
+        {/* Navigation spacer for mobile fixed header */}
+        <div className="md:hidden h-4" />
+
         {/* Desktop Header Overlay with Branding - Premium Glass Design */}
-        <div className="hidden md:flex sticky top-4 left-0 right-0 h-24 glass-surface z-30 items-center justify-between px-8 mb-8 rounded-[2.5rem] shadow-glass mx-auto max-w-7xl border border-white/40">
+        <div className="hidden md:flex sticky top-4 left-0 right-0 h-[76px] glass-surface z-30 items-center justify-between px-8 mb-8 rounded-[2.5rem] shadow-glass mx-auto max-w-7xl border border-white/40">
           <SchoolBranding />
           <div className="flex items-center gap-6 pr-4">
              <div className="h-10 w-[1px] bg-black/5" />
