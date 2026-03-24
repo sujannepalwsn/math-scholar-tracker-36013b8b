@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["'Plus Jakarta Sans'", "sans-serif"],
+        display: ["'Space Grotesk'", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -76,6 +80,8 @@ export default {
         medium: "0 4px 6px -1px hsl(var(--foreground) / 0.06), 0 2px 4px -2px hsl(var(--foreground) / 0.06)",
         strong: "0 10px 15px -3px hsl(var(--foreground) / 0.08), 0 4px 6px -4px hsl(var(--foreground) / 0.08)",
         elevated: "0 20px 25px -5px hsl(var(--foreground) / 0.08), 0 8px 10px -6px hsl(var(--foreground) / 0.06)",
+        glass: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        "glass-sm": "0 4px 16px 0 rgba(31, 38, 135, 0.05)",
       },
       keyframes: {
         "accordion-down": {

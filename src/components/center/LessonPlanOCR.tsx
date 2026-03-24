@@ -125,7 +125,7 @@ export default function LessonPlanOCR({ open, onOpenChange, onExtracted }: Lesso
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:max-w-xl rounded-[2.5rem] border-none shadow-2xl overflow-hidden p-0">
+      <DialogContent className="w-[95vw] sm:max-w-xl max-h-[98vh] overflow-y-auto rounded-t-none sm:rounded-[2.5rem] border-none shadow-2xl p-0 custom-scrollbar">
         <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white relative">
           <div className="absolute top-4 right-4">
              <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full text-slate-400 hover:text-white hover:bg-white/10">

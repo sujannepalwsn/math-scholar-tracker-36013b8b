@@ -13,7 +13,8 @@ const badgeVariants = cva(
         destructive: "border-transparent bg-destructive text-destructive-foreground",
         outline: "text-foreground",
         success: "border-transparent bg-success text-success-foreground",
-        warning: "border-transparent bg-warning text-warning-foreground" } },
+        warning: "border-transparent bg-warning text-warning-foreground",
+        pulse: "border-transparent bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-widest text-[10px] py-1 px-2.5 rounded-full relative overflow-hidden" } },
     defaultVariants: {
       variant: "default" } },
 );
@@ -21,6 +22,16 @@ const badgeVariants = cva(
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, ...props }: BadgeProps) {
+  if (variant === 'pulse') {
+    return (
+      <div className={cn(badgeVariants({ variant }), className)} {...props}>
+        <span className="mr-1.5 flex h-1.5 w-1.5 rounded-full bg-emerald-500">
+           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+        </span>
+        {props.children}
+      </div>
+    );
+  }
   return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
 

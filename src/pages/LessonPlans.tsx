@@ -376,18 +376,21 @@ export default function LessonPlans() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={cn(
-                          "text-[9px] font-black uppercase tracking-widest border-none px-2 py-1",
-                          lp.status === 'approved' ? "bg-emerald-100 text-emerald-700" :
-                          lp.status === 'pending' ? "bg-amber-100 text-amber-700 animate-pulse" :
-                          lp.status === 'rejected' ? "bg-rose-100 text-rose-700" :
-                          "bg-slate-100 text-slate-600"
-                        )}>
+                        <Badge
+                          variant={lp.status === 'approved' ? "pulse" : "outline"}
+                          className={cn(
+                            "text-[9px] font-black uppercase tracking-widest border-none px-2 py-1",
+                            lp.status === 'approved' ? "" :
+                            lp.status === 'pending' ? "bg-amber-100 text-amber-700 animate-pulse" :
+                            lp.status === 'rejected' ? "bg-rose-100 text-rose-700" :
+                            "bg-slate-100 text-slate-600"
+                          )}
+                        >
                           {lp.status || 'draft'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right pr-6">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/10" onClick={() => handleViewClick(lp)}>
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -421,7 +424,7 @@ export default function LessonPlans() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[98vw] sm:max-w-4xl md:max-w-5xl max-h-[95vh] overflow-y-auto rounded-3xl p-4 sm:p-6">
+        <DialogContent className="w-[98vw] sm:max-w-4xl md:max-w-5xl max-h-[98vh] overflow-y-auto rounded-t-none sm:rounded-3xl p-4 sm:p-6 custom-scrollbar">
           <DialogHeader>
             <div className="flex justify-between items-center pr-10">
               <div>
@@ -547,7 +550,7 @@ export default function LessonPlans() {
 
       {/* View/Approval Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="w-[98vw] sm:max-w-6xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-strong">
+        <DialogContent className="w-[98vw] sm:max-w-6xl max-h-[98vh] overflow-y-auto rounded-t-none sm:rounded-3xl p-0 border-none shadow-strong custom-scrollbar">
           <style>
             {`
               @media print {

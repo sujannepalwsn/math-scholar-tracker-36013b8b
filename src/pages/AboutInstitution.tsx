@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { Json, Tables } from "@/integrations/supabase/types";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 interface Facility {
   id: string;
@@ -325,10 +326,44 @@ export default function AboutInstitution() {
 
   const canView = hasPermission(user, 'about_institution');
 
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 500], [0, 200]);
+  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Hero Parallax Section */}
+      <div className="relative h-[400px] md:h-[600px] -mt-8 -mx-4 md:-mx-8 overflow-hidden rounded-b-[4rem] shadow-elevated">
+          <motion.div
+            style={{ y: y1 }}
+            className="absolute inset-0 z-0"
+          >
+              <img
+                src={center?.header_bg_url || "https://images.unsplash.com/photo-1523050853063-915894374ef7?q=80&w=2070&auto=format&fit=crop"}
+                className="w-full h-full object-cover"
+                alt="Institution Hero"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+          </motion.div>
+
+          <motion.div
+            style={{ opacity }}
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center p-6"
+          >
+             <Badge className="mb-6 bg-white/20 backdrop-blur-md text-white border-white/40 px-6 py-2 rounded-full font-black uppercase tracking-[0.3em] text-xs">
+                Premier Academic Hub
+             </Badge>
+             <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-4 drop-shadow-2xl">
+                {center?.name}
+             </h1>
+             <p className="text-white/80 max-w-2xl text-lg md:text-xl font-medium drop-shadow-lg">
+                Pioneering the future of education through innovation, character, and excellence.
+             </p>
+          </motion.div>
+      </div>
+
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-8">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
             About Institution
@@ -359,52 +394,71 @@ export default function AboutInstitution() {
         )}
       </div>
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-none shadow-soft rounded-3xl bg-primary/5 border border-primary/10">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-              <Users className="h-6 w-6" />
+      {/* Stats Section with Impact Counters */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative -mt-20 z-20 px-4 md:px-0">
+        <motion.div whileHover={{ y: -5 }} className="h-full">
+        <Card className="border-none shadow-strong rounded-[2.5rem] bg-white/90 backdrop-blur-xl border border-white/40 h-full">
+          <CardContent className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="p-4 rounded-[1.5rem] bg-primary text-white shadow-lg shadow-primary/30">
+              <Users className="h-8 w-8" />
             </div>
             <div className="space-y-1">
-              <p className="text-2xl font-black text-primary">{isStatsLoading ? "..." : stats?.totalStudents}</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Active Students</p>
+              <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                  {isStatsLoading ? "..." : `${stats?.totalStudents}+`}
+              </p>
+              <p className="label-caps">Scholars Enrolled</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-soft rounded-3xl bg-violet-500/5 border border-violet-500/10">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="p-3 rounded-2xl bg-violet-500/10 text-violet-500">
-              <User className="h-6 w-6" />
+        </motion.div>
+
+        <motion.div whileHover={{ y: -5 }} className="h-full">
+        <Card className="border-none shadow-strong rounded-[2.5rem] bg-white/90 backdrop-blur-xl border border-white/40 h-full">
+          <CardContent className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="p-4 rounded-[1.5rem] bg-violet-600 text-white shadow-lg shadow-violet-500/30">
+              <User className="h-8 w-8" />
             </div>
             <div className="space-y-1">
-              <p className="text-2xl font-black text-violet-500">{isStatsLoading ? "..." : stats?.totalTeachers}</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Active Teachers</p>
+              <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                  {isStatsLoading ? "..." : `${stats?.totalTeachers}+`}
+              </p>
+              <p className="label-caps">Expert Educators</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-soft rounded-3xl bg-amber-500/5 border border-amber-500/10">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500">
-              <School className="h-6 w-6" />
+        </motion.div>
+
+        <motion.div whileHover={{ y: -5 }} className="h-full">
+        <Card className="border-none shadow-strong rounded-[2.5rem] bg-white/90 backdrop-blur-xl border border-white/40 h-full">
+          <CardContent className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="p-4 rounded-[1.5rem] bg-amber-500 text-white shadow-lg shadow-amber-500/30">
+              <School className="h-8 w-8" />
             </div>
             <div className="space-y-1">
-              <p className="text-2xl font-black text-amber-500">{isStatsLoading ? "..." : stats?.totalClasses}</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total Classes</p>
+              <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                  {isStatsLoading ? "..." : stats?.totalClasses}
+              </p>
+              <p className="label-caps">Learning Classes</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-soft rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
-              <BookOpen className="h-6 w-6" />
+        </motion.div>
+
+        <motion.div whileHover={{ y: -5 }} className="h-full">
+        <Card className="border-none shadow-strong rounded-[2.5rem] bg-white/90 backdrop-blur-xl border border-white/40 h-full">
+          <CardContent className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="p-4 rounded-[1.5rem] bg-emerald-500 text-white shadow-lg shadow-emerald-500/30">
+              <Trophy className="h-8 w-8" />
             </div>
             <div className="space-y-1">
-              <p className="text-2xl font-black text-emerald-500">{isStatsLoading ? "..." : stats?.totalSections}</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total Sections</p>
+              <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                  100%
+              </p>
+              <p className="label-caps">Excellence Ratio</p>
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-8" value={activeTab} onValueChange={setActiveTab}>
