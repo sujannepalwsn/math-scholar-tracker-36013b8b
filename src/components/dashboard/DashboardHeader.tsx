@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
   User, Hash, Calendar, Loader2, Camera, Image as ImageIcon,
-  Eye, EyeOff, Search, Users, CheckCircle2, AlertCircle,
-  GraduationCap, TrendingUp, Sparkles
+  Eye, EyeOff, Sparkles
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,38 +73,6 @@ export default function DashboardHeader() {
         .maybeSingle();
       if (error) console.error("Error fetching academic year:", error);
       return data;
-    },
-    enabled: !!user?.center_id
-  });
-
-  // KPI Data
-  const { data: studentCount = 0 } = useQuery({
-    queryKey: ["header-student-count", user?.center_id],
-    queryFn: async () => {
-      const { count } = await supabase.from("students").select("*", { count: 'exact', head: true }).eq("center_id", user?.center_id).eq("is_active", true);
-      return count || 0;
-    },
-    enabled: !!user?.center_id
-  });
-
-  const { data: attendanceRate = 0 } = useQuery({
-    queryKey: ["header-attendance-rate", user?.center_id],
-    queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data: att } = await supabase.from("attendance").select("status").eq("center_id", user?.center_id).eq("date", today);
-      if (!att || att.length === 0) return 0;
-      const present = att.filter(a => a.status === 'present' || a.status === 'late').length;
-      return Math.round((present / att.length) * 100);
-    },
-    enabled: !!user?.center_id
-  });
-
-  const { data: pendingTasks = 0 } = useQuery({
-    queryKey: ["header-pending-tasks", user?.center_id],
-    queryFn: async () => {
-      const { count: leaves } = await supabase.from("leave_applications").select("*", { count: 'exact', head: true }).eq("center_id", user?.center_id).eq("status", "pending");
-      const { count: plans } = await supabase.from("lesson_plans").select("*", { count: 'exact', head: true }).eq("center_id", user?.center_id).eq("status", "pending");
-      return (leaves || 0) + (plans || 0);
     },
     enabled: !!user?.center_id
   });
@@ -311,7 +277,7 @@ export default function DashboardHeader() {
                         className="text-xl md:text-3xl font-black h-auto py-1 px-3 bg-white/50 border-primary/20 rounded-xl"
                         style={{
                           fontSize: center?.header_font_size === 'large' ? '2.5rem' : center?.header_font_size === 'small' ? '1.5rem' : '2rem',
-                          textTransform: center?.header_text_transform as any
+                          textTransform: (center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize") || 'none'
                         }}
                       />
                     ) : (
@@ -319,7 +285,7 @@ export default function DashboardHeader() {
                         className="text-2xl md:text-5xl font-black tracking-tight leading-none"
                         style={{
                           fontSize: center?.header_font_size === 'large' ? '3.5rem' : center?.header_font_size === 'small' ? '1.75rem' : '2.75rem',
-                          textTransform: center?.header_text_transform as any
+                          textTransform: (center?.header_text_transform as "none" | "uppercase" | "lowercase" | "capitalize") || 'none'
                         }}
                       >
                         {center?.name || "School Name"}
@@ -346,31 +312,6 @@ export default function DashboardHeader() {
              </div>
           </div>
 
-          {/* Modern Visual KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full lg:w-auto">
-             <ModernKPI
-                icon={Users}
-                label="Active Students"
-                value={studentCount}
-                subValue="Enrolled"
-                color="indigo"
-             />
-             <ModernKPI
-                icon={CheckCircle2}
-                label="Attendance"
-                value={`${attendanceRate}%`}
-                subValue="Present Today"
-                progress={attendanceRate}
-                color="emerald"
-             />
-             <ModernKPI
-                icon={AlertCircle}
-                label="Pending"
-                value={pendingTasks}
-                subValue="Action Items"
-                color="amber"
-             />
-          </div>
         </div>
 
         {/* Detailed Information Row */}
@@ -489,64 +430,18 @@ export default function DashboardHeader() {
   );
 }
 
-function ModernKPI({ icon: Icon, label, value, subValue, color, progress }: any) {
-  const colors: any = {
-    indigo: "from-indigo-500/20 to-indigo-500/5 text-indigo-600 border-indigo-200/50 dark:border-indigo-500/20",
-    emerald: "from-emerald-500/20 to-emerald-500/5 text-emerald-600 border-emerald-200/50 dark:border-emerald-500/20",
-    amber: "from-amber-500/20 to-amber-500/5 text-amber-600 border-amber-200/50 dark:border-amber-500/20"
-  };
-
-  const dotColors: any = {
-    indigo: "bg-indigo-500",
-    emerald: "bg-emerald-500",
-    amber: "bg-amber-500"
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "circOut" }}
-      className={cn(
-        "relative flex flex-col p-4 md:p-5 rounded-[2rem] border bg-gradient-to-br backdrop-blur-md min-w-[140px] md:min-w-[180px] group/kpi overflow-hidden shadow-soft transition-all duration-500 hover:shadow-elevated",
-        colors[color]
-      )}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className={cn("p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 shadow-sm", color === 'indigo' ? 'text-indigo-600' : color === 'emerald' ? 'text-emerald-600' : 'text-amber-600')}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className={cn("h-2 w-2 rounded-full animate-pulse", dotColors[color])} />
-      </div>
-
-      <div className="space-y-0.5">
-        <span className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none">{label}</span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl md:text-3xl font-black tracking-tighter leading-none">{value}</span>
-        </div>
-        <span className="text-[9px] font-bold opacity-50 uppercase tracking-tight">{subValue}</span>
-      </div>
-
-      {progress !== undefined && (
-        <div className="mt-4 h-1.5 w-full bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
-            className={cn("h-full rounded-full shadow-sm", dotColors[color])}
-          />
-        </div>
-      )}
-
-      {/* Subtle Icon in Background */}
-      <div className="absolute -bottom-2 -right-2 opacity-[0.05] group-hover/kpi:scale-110 transition-transform duration-700">
-         <Icon className="h-16 w-16" />
-      </div>
-    </motion.div>
-  );
+interface CompactDetailProps {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  isEdit: boolean;
+  name?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isVisible: boolean;
+  onToggleVisibility: () => void;
 }
 
-function CompactDetail({ icon: Icon, label, value, isEdit, name, onChange, isVisible, onToggleVisibility }: any) {
+function CompactDetail({ icon: Icon, label, value, isEdit, name, onChange, isVisible, onToggleVisibility }: CompactDetailProps) {
   return (
     <div className={cn(
       "flex flex-col gap-2 group/item relative",
