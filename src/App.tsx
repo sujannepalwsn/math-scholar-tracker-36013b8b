@@ -124,7 +124,6 @@ const App = () => (
           <Sonner />
 
           <BrowserRouter>
-            <CommandCenter />
             <BackButtonHandler />
 
             <Routes>

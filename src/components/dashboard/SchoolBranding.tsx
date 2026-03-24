@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 
 interface SchoolBrandingProps {
   className?: string;
+  isMobileCompact?: boolean;
 }
 
-export default function SchoolBranding({ className }: SchoolBrandingProps) {
+export default function SchoolBranding({ className, isMobileCompact }: SchoolBrandingProps) {
   const { user } = useAuth();
 
   const { data: center } = useQuery({
@@ -34,7 +35,7 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
   const header_address_visible = center?.header_address_visible !== false;
 
   return (
-    <div className={cn("flex flex-col items-center text-center px-2 py-1 rounded-xl relative overflow-hidden", className)}>
+    <div className={cn("flex flex-col items-center text-center px-2 py-1 rounded-xl relative overflow-hidden transition-all duration-300", className)}>
       {/* Optional Header Background Mini-Overlay if needed */}
       {center?.header_bg_url && (
         <div
@@ -43,8 +44,8 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
         />
       )}
 
-      <div className="flex items-center gap-3 relative z-10">
-        <div className="h-10 w-10 rounded-full overflow-hidden bg-white/80 backdrop-blur-sm flex items-center justify-center border border-primary/10 shrink-0 shadow-sm">
+      <div className={cn("flex items-center relative z-10", isMobileCompact ? "gap-2" : "gap-3")}>
+        <div className={cn("rounded-full overflow-hidden bg-white/80 backdrop-blur-sm flex items-center justify-center border border-primary/10 shrink-0 shadow-sm", isMobileCompact ? "h-8 w-8" : "h-10 w-10")}>
           {center?.logo_url ? (
             <img
               src={center.logo_url}
@@ -58,7 +59,7 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
         <div className="flex flex-col items-start min-w-0">
           {header_title_visible && (
             <h2
-              className="font-black truncate max-w-[200px] md:max-w-[300px] leading-tight"
+              className={cn("font-black truncate leading-tight", isMobileCompact ? "max-w-[120px] text-[10px]" : "max-w-[200px] md:max-w-[300px]")}
               style={{
                 fontFamily: center?.header_font_family || 'inherit',
                 color: center?.header_font_color || 'inherit',
@@ -69,7 +70,7 @@ export default function SchoolBranding({ className }: SchoolBrandingProps) {
               {center?.name || user?.center_name}
             </h2>
           )}
-          {header_address_visible && center?.address && (
+          {header_address_visible && center?.address && !isMobileCompact && (
             <div className="flex items-center gap-1 opacity-70">
               <MapPin className="h-2.5 w-2.5 shrink-0" />
               <p
