@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { hasPermission } from "@/utils/permissions";
+import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { Json, Tables } from "@/integrations/supabase/types";
 
 interface Facility {
@@ -76,6 +76,8 @@ export default function AboutInstitution() {
     short_code: "",
     header_bg_url: ""
   });
+
+  const canEdit = hasActionPermission(user, 'about_institution', 'edit');
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
     queryKey: ["center-about", user?.center_id],
@@ -152,26 +154,28 @@ export default function AboutInstitution() {
   const updateAboutMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
+      if (!canEdit) throw new Error("Access Denied: You do not have permission to update institution information.");
+
       const { data, error } = await supabase
         .from("centers")
         .update({
-          about_description: center?.about_description,
-          mission: center?.mission,
-          vision: center?.vision,
-          principal_message: center?.principal_message,
-          established_date: center?.established_date || null,
-          academic_info: center?.academic_info,
+          about_description: formData.about_description,
+          mission: formData.mission,
+          vision: formData.vision,
+          principal_message: formData.principal_message,
+          established_date: formData.established_date || null,
+          academic_info: formData.academic_info,
           facilities: formData.facilities as unknown as Json,
           achievements: formData.achievements as unknown as Json,
           gallery: formData.gallery as unknown as Json,
           social_links: formData.social_links as unknown as Json,
-          institution_type: center?.institution_type,
-          phone: center?.phone,
-          email: center?.email,
-          address: center?.address,
-          principal_name: center?.principal_name,
-          website_url: center?.website_url,
-          short_code: center?.short_code,
+          institution_type: formData.institution_type,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          principal_name: formData.principal_name,
+          website_url: formData.website_url,
+          short_code: formData.short_code,
           header_bg_url: formData.header_bg_url
         })
         .eq("id", user.center_id)
@@ -319,7 +323,7 @@ export default function AboutInstitution() {
     );
   }
 
-  const canEdit = hasPermission(user, 'about_institution');
+  const canView = hasPermission(user, 'about_institution');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -335,7 +339,7 @@ export default function AboutInstitution() {
           </div>
         </div>
 
-        {canEdit && (
+        {canView && canEdit && (
           <div className="flex gap-4">
             <Button
               onClick={() => setIsEditing(!isEditing)}

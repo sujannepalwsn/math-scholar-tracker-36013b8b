@@ -175,7 +175,9 @@ export default function RegisterStudent() {
   const createMutation = useMutation({
     mutationFn: async (student: typeof formData) => {
       if (!user?.center_id) throw new Error("Security Context: Center ID not verified. Registration aborted.");
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to register students.");
+      if (!hasActionPermission(user, 'register_student', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to register students.");
+      }
       let photo_url = student.photo_url;
 
       if (photoFile) {
@@ -253,7 +255,9 @@ export default function RegisterStudent() {
   const updateMutation = useMutation({
     mutationFn: async (student: any) => {
       if (!user?.center_id) throw new Error("Security Context: Center ID not verified. Update aborted.");
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to update student records.");
+      if (!hasActionPermission(user, 'register_student', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to update student records.");
+      }
       let photo_url = student.photo_url;
 
       if (photoFile) {
@@ -306,7 +310,9 @@ export default function RegisterStudent() {
   // Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to delete student records.");
+      if (!hasActionPermission(user, 'register_student', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to delete student records.");
+      }
       const { error } = await supabase.from("students").delete().eq("id", id);
       if (error) throw error;
     },
@@ -324,7 +330,9 @@ export default function RegisterStudent() {
       if (!selectedStudentForParent || !user?.center_id) {
         throw new Error("Student or Center ID not found.");
       }
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to create parent accounts.");
+      if (!hasActionPermission(user, 'register_student', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to create parent accounts.");
+      }
       const { data, error } = await supabase.functions.invoke('create-parent-account', {
         body: {
           username: parentUsername,
@@ -349,7 +357,9 @@ export default function RegisterStudent() {
   // Bulk insert
   const bulkInsertMutation = useMutation({
     mutationFn: async (rows: StudentInput[]) => {
-      if (!hasFullAccess) throw new Error("Access Denied: You do not have permission to perform bulk imports.");
+      if (!hasActionPermission(user, 'register_student', 'edit')) {
+        throw new Error("Access Denied: You do not have permission to perform bulk imports.");
+      }
       if (!rows.length) return;
       const rowsWithCenter = rows.map((r) => ({
         ...r,
