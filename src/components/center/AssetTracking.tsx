@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Package, Plus, Trash2, Search, MapPin, User, Settings, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function AssetTracking({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
