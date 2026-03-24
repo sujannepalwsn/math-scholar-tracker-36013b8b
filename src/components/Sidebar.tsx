@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X, Settings, GripVertical, Trash2, RefreshCcw, Edit2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -295,8 +296,9 @@ export default function Sidebar({
       const isItemActive = (item as any).is_active !== false;
 
       const link = isMobile ? (
-        <div
+        <motion.div
           key={item.to}
+          whileTap={{ scale: 0.98 }}
           className="flex items-center group/item"
           draggable={isEditMode && !!dItem}
           onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
@@ -317,8 +319,10 @@ export default function Sidebar({
             to={item.to}
             onClick={handleMobileClose}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors flex-1",
-              isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all flex-1 relative overflow-hidden",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "text-muted-foreground hover:bg-primary/5 hover:text-primary",
               !isItemActive && "opacity-50 grayscale"
             )}
           >
@@ -331,12 +335,21 @@ export default function Sidebar({
                 </Badge>
               )}
             </span>
+            {isActive && (
+              <motion.div
+                layoutId="active-pill-mobile"
+                className="absolute inset-0 bg-primary -z-10"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
           </Link>
-        </div>
+        </motion.div>
       ) : (
         <Tooltip key={item.to} delayDuration={0}>
           <TooltipTrigger asChild>
-            <div
+            <motion.div
+              whileHover={{ x: isCollapsed ? 0 : 4 }}
+              whileTap={{ scale: 0.98 }}
               className="flex items-center group/item"
               draggable={isEditMode && !!dItem}
               onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
@@ -356,15 +369,20 @@ export default function Sidebar({
               <Link
                 to={item.to}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex-1",
-                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all flex-1 relative overflow-hidden group/link",
+                  isActive
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground hover:text-primary",
                   isCollapsed ? "justify-center px-0" : "",
                   !isItemActive && "opacity-50 grayscale"
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className={cn(
+                  "h-4 w-4 shrink-0 transition-transform duration-300",
+                  isActive ? "scale-110" : "group-hover/link:scale-110"
+                )} />
                 {!isCollapsed && (
-                  <span className="flex items-center justify-between w-full truncate">
+                  <span className="flex items-center justify-between w-full truncate relative z-10">
                     {item.label}
                     {item.unreadCount && item.unreadCount > 0 && (
                       <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
@@ -373,12 +391,19 @@ export default function Sidebar({
                     )}
                   </span>
                 )}
+                {isActive && (
+                  <motion.div
+                    layoutId="active-pill"
+                    className="absolute inset-0 bg-primary shadow-lg shadow-primary/20 -z-0"
+                    transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
+                  />
+                )}
               </Link>
-            </div>
+            </motion.div>
           </TooltipTrigger>
           {isCollapsed && (
-            <TooltipContent side="right">
-              <span className="flex items-center gap-2">
+            <TooltipContent side="right" className="glass-overlay border-primary/20">
+              <span className="flex items-center gap-2 font-bold text-xs uppercase tracking-widest">
                 {item.label}
                 {item.unreadCount && item.unreadCount > 0 && (
                   <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
@@ -518,22 +543,22 @@ export default function Sidebar({
     <TooltipProvider>
       <div
         className={cn(
-          "fixed top-0 left-0 h-screen z-20 hidden md:flex flex-col border-r print:hidden",
-          "bg-card text-card-foreground",
-          mounted ? "transition-all duration-200" : "",
+          "fixed top-4 left-4 bottom-4 z-20 hidden md:flex flex-col print:hidden",
+          "glass-surface rounded-3xl overflow-hidden",
+          mounted ? "transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)" : "",
           isCollapsed ? "w-20" : "w-64"
         )}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b">
+        <div className="flex items-center justify-between h-20 px-4">
           {!isCollapsed && <div className="flex-1 min-w-0">{headerContent}</div>}
           <Button variant="ghost" size="icon" onClick={handleCollapseToggle} className="h-8 w-8 shrink-0">
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-1 custom-scrollbar">
           {renderNavLinks(filteredNavItems, false)}
         </nav>
-        <div className="mt-auto p-4 border-t space-y-4">
+        <div className="mt-auto p-4 space-y-4">
           {(user?.role === 'center' || (user?.role === 'teacher' && (hasPermission(user, 'settings_access') || hasPermission(user, 'test_management')))) && (
             <div className="space-y-2">
               <Button

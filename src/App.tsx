@@ -15,6 +15,7 @@ import AdminLayout from "./components/AdminLayout";
 import ParentLayout from "./components/ParentLayout";
 import TeacherLayout from "./components/TeacherLayout";
 import BackButtonHandler from "./components/BackButtonHandler";
+import { CommandCenter } from "./components/dashboard/CommandCenter";
 
 import Dashboard from "./pages/Dashboard";
 import RegisterStudent from "./pages/RegisterStudent";
@@ -123,6 +124,7 @@ const App = () => (
           <Sonner />
 
           <BrowserRouter>
+            <CommandCenter />
             <BackButtonHandler />
 
             <Routes>

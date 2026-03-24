@@ -868,13 +868,13 @@ export default function Dashboard() {
     if (!visibleWidgets[id] && !isCustomizeMode) return null;
 
     const cards: Record<string, React.ReactNode> = {
-      "students": hasPermission(user, 'register_student') ? <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" onClick={() => navigate("/register")} /> : null,
-      "teachers": hasPermission(user, 'teacher_management') ? <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" onClick={() => navigate("/teachers")} /> : null,
-      "student-attendance": hasPermission(user, 'take_attendance') ? <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} onClick={() => navigate("/attendance")} /> : null,
-      "teacher-attendance": hasPermission(user, 'teachers_attendance') ? <KPICard title="Teacher Attendance" value={`${teacherAttendanceRate}%`} description="Daily Logging" icon={Clock} color="orange" trendData={teacherAttendanceTrend} onClick={() => navigate("/teacher-attendance")} /> : null,
-      "lesson-plans": hasPermission(user, 'lesson_plans') ? <KPICard title="Lesson Plans" value={upcomingLessons.length} description="Pedagogical Assets" icon={FileText} color="purple" onClick={() => navigate("/lesson-plans")} /> : null,
-      "approvals": hasPermission(user, 'lesson_plans') ? <KPICard title="Approvals" value={pendingLessonPlansCount} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/lesson-plans")} /> : null,
-      "leave-requests": hasPermission(user, 'leave_management') ? <KPICard title="Leave Requests" value={pendingLeavesCount} description="Pending Applications" icon={Calendar} color="rose" onClick={() => navigate("/leave-management")} /> : null,
+      "students": hasPermission(user, 'register_student') ? <KPICard title="Students" value={totalStudents} description="Active Enrollments" icon={Users} color="indigo" delta={2.4} target={95} onClick={() => navigate("/register")} /> : null,
+      "teachers": hasPermission(user, 'teacher_management') ? <KPICard title="Teachers" value={teachers.length} description="Active Faculty" icon={Users} color="blue" delta={0.5} onClick={() => navigate("/teachers")} /> : null,
+      "student-attendance": hasPermission(user, 'take_attendance') ? <KPICard title="Student Attendance" value={`${studentAttendanceRate}%`} description="Presence Index" icon={CheckCircle2} color="green" trendData={attendanceTrend} delta={1.2} target={studentAttendanceRate} onClick={() => navigate("/attendance")} /> : null,
+      "teacher-attendance": hasPermission(user, 'teachers_attendance') ? <KPICard title="Teacher Attendance" value={`${teacherAttendanceRate}%`} description="Daily Logging" icon={Clock} color="orange" trendData={teacherAttendanceTrend} delta={-0.4} target={teacherAttendanceRate} onClick={() => navigate("/teacher-attendance")} /> : null,
+      "lesson-plans": hasPermission(user, 'lesson_plans') ? <KPICard title="Lesson Plans" value={upcomingLessons.length} description="Pedagogical Assets" icon={FileText} color="purple" delta={8.2} onClick={() => navigate("/lesson-plans")} /> : null,
+      "approvals": hasPermission(user, 'lesson_plans') ? <KPICard title="Approvals" value={pendingLessonPlansCount} description="Pending Review" icon={CheckCircle2} color="yellow" delta={-5} onClick={() => navigate("/lesson-plans")} /> : null,
+      "leave-requests": hasPermission(user, 'leave_management') ? <KPICard title="Leave Requests" value={pendingLeavesCount} description="Pending Applications" icon={Calendar} color="rose" delta={12} onClick={() => navigate("/leave-management")} /> : null,
       "messages": hasPermission(user, 'messaging') ? <KPICard title="Messages" value="View" description="Communication Hub" icon={Bell} color="pink" onClick={() => navigate("/messages")} /> : null,
     };
 

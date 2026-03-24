@@ -126,14 +126,14 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-y-auto bg-background transition-all duration-200",
+        "flex-1 overflow-y-auto mesh-gradient transition-all duration-300",
         "md:h-screen",
         "pt-16 md:pt-0",
         "px-4 pb-20 md:p-6 lg:p-8",
-        sidebarCollapsed ? "md:ml-20" : "md:ml-64"
+        sidebarCollapsed ? "md:ml-24" : "md:ml-72"
       )}>
         {/* Desktop Header Overlay with Branding */}
-        <div className="hidden md:flex sticky top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md z-30 items-center justify-center px-8 border-b border-border/10 mb-6 rounded-b-[2rem] shadow-sm">
+        <div className="hidden md:flex sticky top-4 left-0 right-0 h-20 glass-surface z-30 items-center justify-center px-8 mb-8 rounded-[2rem] shadow-glass mx-auto max-w-7xl">
           <SchoolBranding />
           <div className="absolute right-8 flex items-center gap-4">
             <NotificationBell />

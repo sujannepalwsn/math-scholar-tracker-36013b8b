@@ -132,6 +132,8 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
     }
   });
 
+  const [selectedBook, setSelectedBook] = useState<any>(null);
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="catalog">
@@ -140,89 +142,139 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
           <TabsTrigger value="loans" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Issue / Return</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="catalog" className="space-y-4 pt-4">
-          <div className="flex justify-between gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search books..."
-                className="pl-10 rounded-xl"
-                value={bookSearch}
-                onChange={(e) => setBookSearch(e.target.value)}
-              />
-            </div>
-            {canEdit && (
-              <Button onClick={() => setShowAddBook(!showAddBook)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
-                {showAddBook ? "Cancel" : "Add Book"}
-              </Button>
-            )}
-          </div>
-
-          {showAddBook && (
-            <Card className="rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Book Title</Label>
-                    <Input value={bookForm.title} onChange={(e) => setBookForm({...bookForm, title: e.target.value})} className="h-10 rounded-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Author</Label>
-                    <Input value={bookForm.author} onChange={(e) => setBookForm({...bookForm, author: e.target.value})} className="h-10 rounded-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">ISBN</Label>
-                    <Input value={bookForm.isbn} onChange={(e) => setBookForm({...bookForm, isbn: e.target.value})} className="h-10 rounded-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Category</Label>
-                    <Input value={bookForm.category} onChange={(e) => setBookForm({...bookForm, category: e.target.value})} className="h-10 rounded-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Copies</Label>
-                    <Input type="number" value={bookForm.copies} onChange={(e) => setBookForm({...bookForm, copies: e.target.value})} className="h-10 rounded-lg" />
-                  </div>
-                  <div className="flex items-end">
-                    <Button onClick={() => addBookMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20">Save Book</Button>
-                  </div>
+        <TabsContent value="catalog" className="pt-4">
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className={cn("flex-1 space-y-4", selectedBook ? "lg:w-1/2" : "w-full")}>
+              <div className="flex justify-between gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search books..."
+                    className="pl-10 rounded-xl"
+                    value={bookSearch}
+                    onChange={(e) => setBookSearch(e.target.value)}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                {canEdit && (
+                  <Button onClick={() => setShowAddBook(!showAddBook)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                    {showAddBook ? "Cancel" : "Add Book"}
+                  </Button>
+                )}
+              </div>
 
-          <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-            <div className="overflow-x-auto">
-  <Table>
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Title</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Author</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Category</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest">Availability</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {books?.map((b: any) => (
-                  <TableRow key={b.id}>
-                    <TableCell className="font-bold">{b.title}</TableCell>
-                    <TableCell className="text-sm">{b.author}</TableCell>
-                    <TableCell><Badge variant="outline" className="text-[9px] font-black uppercase">{b.category}</Badge></TableCell>
-                    <TableCell>
-                      <span className={cn("text-xs font-bold", b.available_copies > 0 ? "text-emerald-600" : "text-rose-600")}>
-                        {b.available_copies} / {b.total_copies} available
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {canEdit && (
-                        <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-</div>
+              {showAddBook && (
+                <Card className="rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5">
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Book Title</Label>
+                        <Input value={bookForm.title} onChange={(e) => setBookForm({...bookForm, title: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Author</Label>
+                        <Input value={bookForm.author} onChange={(e) => setBookForm({...bookForm, author: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">ISBN</Label>
+                        <Input value={bookForm.isbn} onChange={(e) => setBookForm({...bookForm, isbn: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Category</Label>
+                        <Input value={bookForm.category} onChange={(e) => setBookForm({...bookForm, category: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Copies</Label>
+                        <Input type="number" value={bookForm.copies} onChange={(e) => setBookForm({...bookForm, copies: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="flex items-end">
+                        <Button onClick={() => addBookMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20">Save Book</Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="border rounded-[2rem] overflow-hidden bg-white/50 backdrop-blur-md shadow-soft">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-primary/5">
+                      <TableRow>
+                        <TableHead className="px-6">Title</TableHead>
+                        {!selectedBook && <TableHead>Author</TableHead>}
+                        <TableHead>Availability</TableHead>
+                        <TableHead className="text-right px-6">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {books?.map((b: any) => (
+                        <TableRow
+                          key={b.id}
+                          className={cn(
+                            "group/row cursor-pointer transition-all",
+                            selectedBook?.id === b.id ? "bg-primary/5" : "hover:bg-primary/5"
+                          )}
+                          onClick={() => setSelectedBook(b)}
+                        >
+                          <TableCell className="px-6 py-4 font-black text-slate-700">{b.title}</TableCell>
+                          {!selectedBook && <TableCell className="text-sm">{b.author}</TableCell>}
+                          <TableCell>
+                            <Badge variant={b.available_copies > 0 ? "pulse" : "destructive"}>
+                              {b.available_copies} / {b.total_copies}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right px-6">
+                            <Button variant="ghost" size="icon" className="opacity-0 group-hover/row:opacity-100 transition-all"><BookOpen className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+
+            {selectedBook && (
+              <div className="lg:w-1/2 animate-in slide-in-from-right-8 duration-500">
+                <Card className="rounded-[2.5rem] border-none shadow-strong bg-white overflow-hidden sticky top-8">
+                  <CardHeader className="bg-primary/5 border-b border-border/10 p-8 flex flex-row justify-between items-start">
+                    <div>
+                      <Badge className="mb-4 bg-primary text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-lg">Catalog Index</Badge>
+                      <CardTitle className="text-3xl font-black tracking-tight text-slate-800">{selectedBook.title}</CardTitle>
+                      <p className="text-slate-400 font-bold uppercase text-xs tracking-widest mt-1">By {selectedBook.author}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedBook(null)} className="rounded-full hover:bg-rose-50 text-rose-500">
+                      <Plus className="h-5 w-5 rotate-45" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-8">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="space-y-1">
+                        <p className="label-caps">ISBN Reference</p>
+                        <p className="text-lg font-black text-slate-700">{selectedBook.isbn || 'N/A'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="label-caps">Category</p>
+                        <p className="text-lg font-black text-slate-700">{selectedBook.category || 'General'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="label-caps">Total Inventory</p>
+                        <p className="text-lg font-black text-slate-700">{selectedBook.total_copies} Units</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="label-caps">Currently Available</p>
+                        <p className="text-lg font-black text-emerald-600">{selectedBook.available_copies} Units</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-8 border-t">
+                      <Button className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20">
+                         Modify Catalog Entry
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </TabsContent>
 

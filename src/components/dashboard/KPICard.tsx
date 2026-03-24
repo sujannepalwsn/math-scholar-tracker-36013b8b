@@ -1,7 +1,9 @@
-import { type LucideIcon } from "lucide-react";
+import { type LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 
 interface KPICardProps {
   title: string;
@@ -14,6 +16,8 @@ interface KPICardProps {
   className?: string;
   secondaryIcon?: LucideIcon;
   secondaryIconColor?: string;
+  delta?: number;
+  target?: number;
 }
 
 export const KPICard = ({
@@ -26,7 +30,9 @@ export const KPICard = ({
   onClick,
   className,
   secondaryIcon: SecondaryIcon,
-  secondaryIconColor
+  secondaryIconColor,
+  delta,
+  target
 }: KPICardProps) => {
   const colorVariants: Record<string, string> = {
     indigo: "bg-primary/10 text-primary",
@@ -49,15 +55,20 @@ export const KPICard = ({
     pink: "#ec4899" };
 
   return (
+    <motion.div
+      whileHover={{ scale: 1.02, y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      className="h-full"
+    >
     <Card
       onClick={onClick}
       className={cn(
-        "group overflow-hidden border-none shadow-soft transition-all duration-300 hover:shadow-medium hover:-translate-y-1 bg-card/60 backdrop-blur-md rounded-2xl border border-border/20",
+        "group overflow-hidden border-none shadow-glass transition-all duration-500 bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-800/40 h-full flex flex-col justify-between",
         onClick && "cursor-pointer",
         className
       )}
     >
-      <CardContent className="p-5">
+      <CardContent className="p-6">
         <div className="flex justify-between items-start mb-2">
           <div className={cn("p-2 rounded-lg", colorVariants[color])}>
             <Icon className="h-5 w-5" />
@@ -70,12 +81,21 @@ export const KPICard = ({
         </div>
 
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-black tracking-tight text-foreground">{value}</h3>
+          <p className="label-caps mb-2">{title}</p>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="display-metric">{value}</h3>
+            {delta !== undefined && (
+              <div className={cn(
+                "flex items-center gap-1 text-[11px] font-black px-2 py-1 rounded-full",
+                delta >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+              )}>
+                {delta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {Math.abs(delta)}%
+              </div>
+            )}
           </div>
           {description && (
-            <p className="text-[10px] font-bold text-muted-foreground/70">{description}</p>
+            <p className="text-[10px] font-bold text-muted-foreground/60">{description}</p>
           )}
         </div>
 
@@ -108,12 +128,24 @@ export const KPICard = ({
                   strokeWidth={2}
                   fillOpacity={1}
                   fill={`url(#gradient-${color})`}
+                  animationDuration={1500}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
+
+        {target !== undefined && (
+           <div className="mt-6 space-y-2">
+             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter opacity-50">
+                <span>Goal Progress</span>
+                <span>{target}%</span>
+             </div>
+             <Progress value={target} className="h-1.5" />
+           </div>
+        )}
       </CardContent>
     </Card>
+    </motion.div>
   );
 };

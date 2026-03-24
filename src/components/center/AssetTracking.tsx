@@ -72,9 +72,16 @@ export default function AssetTracking({ centerId, canEdit }: { centerId: string,
     onError: (error: any) => toast.error(error.message)
   });
 
+  const [selectedAsset, setSelectedAsset] = useState<any>(null);
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="flex flex-col lg:flex-row gap-8 min-h-[600px]">
+      {/* Master List */}
+      <div className={cn(
+        "flex-1 space-y-6 transition-all duration-500",
+        selectedAsset ? "lg:w-1/2" : "w-full"
+      )}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card className="rounded-3xl border-none shadow-soft bg-blue-50 p-6">
            <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Total Assets</p>
            <p className="text-3xl font-black text-blue-700">{assets?.length || 0}</p>
@@ -155,23 +162,30 @@ export default function AssetTracking({ centerId, canEdit }: { centerId: string,
         </Card>
       )}
 
-      <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
+      <div className="border rounded-[2rem] overflow-hidden bg-white/50 backdrop-blur-md shadow-soft">
         <div className="overflow-x-auto">
   <Table>
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-primary/5">
             <TableRow>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Asset Details</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Identification</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Procurement</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Lifecycle</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-right px-6">Operations</TableHead>
+              <TableHead className="px-6">Asset Details</TableHead>
+              <TableHead>Status</TableHead>
+              {!selectedAsset && <TableHead>Identification</TableHead>}
+              {!selectedAsset && <TableHead>Procurement</TableHead>}
+              <TableHead className="text-right px-6">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-12">Loading inventory...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={selectedAsset ? 3 : 5} className="text-center py-12">Loading inventory...</TableCell></TableRow>
             ) : filteredAssets?.map((a: any) => (
-              <TableRow key={a.id} className="group hover:bg-slate-50/50 transition-colors">
+              <TableRow
+                key={a.id}
+                className={cn(
+                  "group/row cursor-pointer transition-all",
+                  selectedAsset?.id === a.id ? "bg-primary/5" : "hover:bg-primary/5"
+                )}
+                onClick={() => setSelectedAsset(a)}
+              >
                 <TableCell className="px-6 py-4">
                   <div className="flex flex-col">
                     <span className="font-black text-slate-700 leading-tight">{a.name}</span>
@@ -179,63 +193,33 @@ export default function AssetTracking({ centerId, canEdit }: { centerId: string,
                   </div>
                 </TableCell>
                 <TableCell>
-                   <div className="flex flex-col gap-1">
-                      <Badge variant="secondary" className="w-fit text-[9px] font-black tracking-widest bg-indigo-50 text-indigo-700 border-none">
-                        TAG: {a.asset_tag || "N/A"}
-                      </Badge>
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                         <MapPin className="h-3 w-3" /> {a.location || "UNASSIGNED"}
+                    <Badge variant={a.status === 'Active' ? 'pulse' : 'destructive'}>
+                        {a.status}
+                    </Badge>
+                </TableCell>
+                {!selectedAsset && (
+                  <>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                          <Badge variant="secondary" className="w-fit text-[9px] font-black tracking-widest bg-indigo-50 text-indigo-700 border-none">
+                            TAG: {a.asset_tag || "N/A"}
+                          </Badge>
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                            <MapPin className="h-3 w-3" /> {a.location || "UNASSIGNED"}
+                          </div>
                       </div>
-                   </div>
-                </TableCell>
-                <TableCell>
-                   <div className="flex flex-col">
-                      <span className="text-xs font-black text-slate-600">₹{a.purchase_price || "0.00"}</span>
-                      <span className="text-[9px] font-medium text-slate-400 uppercase">{a.purchase_date ? new Date(a.purchase_date).toLocaleDateString() : "DATE UNSET"}</span>
-                   </div>
-                </TableCell>
-                <TableCell>
-                   <div className="flex flex-col gap-1.5">
-                      <div className="flex gap-1">
-                        <Badge variant="outline" className={cn(
-                          "w-fit text-[9px] font-black uppercase px-2 py-0",
-                          a.condition === 'Excellent' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                          a.condition === 'Good' ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          "bg-amber-50 text-amber-700 border-amber-200"
-                        )}>{a.condition}</Badge>
-                        {a.status !== 'Active' && (
-                           <Badge className="bg-rose-500 text-white text-[9px] font-black uppercase px-2 py-0 border-none">{a.status}</Badge>
-                        )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                          <span className="text-xs font-black text-slate-600">₹{a.purchase_price || "0.00"}</span>
+                          <span className="text-[9px] font-medium text-slate-400 uppercase">{a.purchase_date ? new Date(a.purchase_date).toLocaleDateString() : "DATE UNSET"}</span>
                       </div>
-                      {a.warranty_expiry && (
-                         <span className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter">
-                            WARRANTY EXPIRES: {new Date(a.warranty_expiry).toLocaleDateString()}
-                         </span>
-                      )}
-                   </div>
-                </TableCell>
+                    </TableCell>
+                  </>
+                )}
                 <TableCell className="text-right px-6">
-                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {canEdit && a.status === 'Active' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 rounded-lg text-[9px] font-black uppercase text-rose-600 border-rose-200 hover:bg-rose-50"
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to dispose/dump this fixed asset? This action is recorded in history.")) {
-                              updateAssetStatusMutation.mutate({ id: a.id, status: 'Disposed' });
-                            }
-                          }}
-                        >
-                           Dump Asset
-                        </Button>
-                      )}
-                      {canEdit && (
-                        <>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100"><Settings className="h-3.5 w-3.5 text-slate-400" /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 text-rose-500"><Trash2 className="h-3.5 w-3.5" /></Button>
-                        </>
-                      )}
+                   <div className="flex justify-end gap-2 opacity-0 group-hover/row:opacity-100 transition-all">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft"><Settings className="h-3.5 w-3.5 text-slate-400" /></Button>
                    </div>
                 </TableCell>
               </TableRow>
@@ -247,6 +231,79 @@ export default function AssetTracking({ centerId, canEdit }: { centerId: string,
         </Table>
 </div>
       </div>
+      </div>
+
+      {/* Detail View */}
+      {selectedAsset && (
+        <div className="lg:w-1/2 animate-in slide-in-from-right-8 duration-500">
+           <Card className="rounded-[2.5rem] border-none shadow-strong bg-white overflow-hidden sticky top-8">
+              <CardHeader className="bg-primary/5 border-b border-border/10 p-8 flex flex-row justify-between items-start">
+                 <div>
+                    <Badge className="mb-4 bg-primary text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-lg">Asset Detail Matrix</Badge>
+                    <CardTitle className="text-3xl font-black tracking-tight text-slate-800">{selectedAsset.name}</CardTitle>
+                    <p className="text-slate-400 font-bold uppercase text-xs tracking-widest mt-1">{selectedAsset.category}</p>
+                 </div>
+                 <Button variant="ghost" size="icon" onClick={() => setSelectedAsset(null)} className="rounded-full hover:bg-rose-50 text-rose-500">
+                    <Trash2 className="h-5 w-5" />
+                 </Button>
+              </CardHeader>
+              <CardContent className="p-8 space-y-8">
+                 <div className="grid grid-cols-2 gap-8">
+                    <DetailBlock label="Procurement Cost" value={`₹${selectedAsset.purchase_price?.toLocaleString() || '0.00'}`} icon={DollarSign} />
+                    <DetailBlock label="Registry Tag" value={selectedAsset.asset_tag || 'N/A'} icon={Package} />
+                    <DetailBlock label="Current Location" value={selectedAsset.location || 'Unassigned'} icon={MapPin} />
+                    <DetailBlock label="Condition" value={selectedAsset.condition} icon={Settings} />
+                 </div>
+
+                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4">
+                    <p className="label-caps">Lifecycle Timeline</p>
+                    <div className="space-y-4">
+                       <TimelineItem label="Procured On" value={selectedAsset.purchase_date ? format(new Date(selectedAsset.purchase_date), "MMMM d, yyyy") : 'Date Unset'} />
+                       <TimelineItem label="Warranty Expiry" value={selectedAsset.warranty_expiry ? format(new Date(selectedAsset.warranty_expiry), "MMMM d, yyyy") : 'No Warranty Recorded'} color="rose" />
+                    </div>
+                 </div>
+
+                 {canEdit && selectedAsset.status === 'Active' && (
+                    <Button
+                        variant="destructive"
+                        className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-rose-500/20"
+                        onClick={() => {
+                            if (window.confirm("Are you sure you want to dispose/dump this fixed asset?")) {
+                                updateAssetStatusMutation.mutate({ id: selectedAsset.id, status: 'Disposed' });
+                                setSelectedAsset(null);
+                            }
+                        }}
+                    >
+                        Dump Fixed Asset Registry
+                    </Button>
+                 )}
+              </CardContent>
+           </Card>
+        </div>
+      )}
     </div>
   );
+}
+
+function DetailBlock({ label, value, icon: Icon }: any) {
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" />
+                </div>
+                <span className="label-caps">{label}</span>
+            </div>
+            <p className="text-xl font-black text-slate-700">{value}</p>
+        </div>
+    )
+}
+
+function TimelineItem({ label, value, color }: any) {
+    return (
+        <div className="flex justify-between items-center border-b border-slate-200/60 pb-3 last:border-0 last:pb-0">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+            <span className={cn("font-black text-sm", color === 'rose' ? "text-rose-500" : "text-slate-700")}>{value}</span>
+        </div>
+    )
 }

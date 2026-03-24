@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
   User, Hash, Calendar, Loader2, Camera, Image as ImageIcon,
-  Eye, EyeOff
+  Eye, EyeOff, Search, Users, CheckCircle2, AlertCircle
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -213,7 +214,7 @@ export default function DashboardHeader() {
   const canEdit = hasActionPermission(user, 'settings_access', 'edit');
 
   return (
-    <Card className="border-none shadow-elevated overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white mb-8 relative">
+    <Card className="border-none shadow-glass overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg mb-8 relative group/header">
       {/* Background Image */}
       {center?.header_bg_url && (
         <div
@@ -238,6 +239,27 @@ export default function DashboardHeader() {
           color: center?.header_font_color || 'inherit'
         }}
       >
+        {/* Command Center Trigger */}
+        <div className="absolute top-6 left-10 z-20 hidden md:block">
+           <Button
+            variant="ghost"
+            className="rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-slate-700/40 px-4 py-2 flex items-center gap-3 text-muted-foreground hover:text-primary transition-all group/search"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-center'))}
+           >
+             <Search className="h-4 w-4 group-hover/search:scale-110 transition-transform" />
+             <span className="text-xs font-bold uppercase tracking-widest">Command Center</span>
+             <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+               <span className="text-xs">⌘</span>K
+             </kbd>
+           </Button>
+        </div>
+
+        {/* Live Pulse Metrics Overlay */}
+        <div className="absolute top-6 right-20 z-20 hidden lg:flex items-center gap-4">
+           <PulseMetric icon={Users} label="Active Students" value="482" color="emerald" />
+           <PulseMetric icon={CheckCircle2} label="Present Today" value="94%" color="blue" />
+           <PulseMetric icon={AlertCircle} label="Pending Tasks" value="12" color="amber" />
+        </div>
         {/* Centered Name and Address */}
         <div className="flex flex-col items-center text-center space-y-2 relative">
           {(isEditMode || formData.header_title_visible) && (
@@ -588,6 +610,28 @@ interface DetailItemProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isVisible?: boolean;
   onToggleVisibility?: () => void;
+}
+
+function PulseMetric({ icon: Icon, label, value, color }: { icon: any, label: string, value: string, color: string }) {
+  const colors: any = {
+    emerald: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+    blue: "text-blue-500 bg-blue-500/10 border-blue-500/20",
+    amber: "text-amber-500 bg-amber-500/10 border-amber-500/20"
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn("px-4 py-2 rounded-2xl border backdrop-blur-md flex items-center gap-3", colors[color])}
+    >
+      <Icon className="h-4 w-4" />
+      <div className="flex flex-col">
+        <span className="text-[10px] font-black uppercase tracking-tighter opacity-70 leading-none mb-0.5">{label}</span>
+        <span className="text-sm font-display font-bold leading-none">{value}</span>
+      </div>
+    </motion.div>
+  );
 }
 
 function DetailItem({ icon: Icon, label, value, isEdit, name, onChange, isVisible, onToggleVisibility }: DetailItemProps) {

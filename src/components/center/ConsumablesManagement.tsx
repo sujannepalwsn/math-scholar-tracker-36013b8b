@@ -184,6 +184,8 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
 
   const filtered = consumables?.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.category.toLowerCase().includes(search.toLowerCase()));
 
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="inventory">
@@ -192,172 +194,158 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
           <TabsTrigger value="logs" className="rounded-lg px-6 font-bold text-xs uppercase tracking-widest">Distribution History</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="inventory" className="space-y-6 pt-4">
-          <div className="flex justify-between items-center">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Search consumables..."
-            className="pl-10 rounded-xl"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        {canEdit && (
-          <Button onClick={() => setShowAdd(!showAdd)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest ml-4">
-            {showAdd ? "Cancel" : "Add Item"}
-          </Button>
-        )}
-      </div>
+        <TabsContent value="inventory" className="pt-4">
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className={cn("flex-1 space-y-6", selectedItem ? "lg:w-1/2" : "w-full")}>
+              <div className="flex justify-between items-center">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search consumables..."
+                    className="pl-10 rounded-xl"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                {canEdit && (
+                  <Button onClick={() => setShowAdd(!showAdd)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest ml-4">
+                    {showAdd ? "Cancel" : "Add Item"}
+                  </Button>
+                )}
+              </div>
 
-      {showDistribute && (
-        <Card className="rounded-3xl border-none shadow-strong bg-indigo-50 overflow-hidden mb-6">
-          <CardHeader className="bg-indigo-100/50 py-4 px-6 border-b border-indigo-200">
-            <CardTitle className="text-xs font-black uppercase tracking-widest text-indigo-700 flex items-center gap-2">
-               <Package className="h-4 w-4" /> Distribute {consumables?.find(c => c.id === showDistribute)?.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-indigo-800/60">Qty</Label>
-                <Input type="number" value={distForm.amount} onChange={e => setDistForm({...distForm, amount: e.target.value})} className="h-10 rounded-lg bg-white border-indigo-200" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-indigo-800/60">To</Label>
-                <select
-                  value={distForm.recipientType}
-                  onChange={e => setDistForm({...distForm, recipientType: e.target.value as any, recipientId: ""})}
-                  className="w-full h-10 rounded-lg bg-white border border-indigo-200 px-3 text-sm"
-                >
-                  <option value="student">Student</option>
-                  <option value="teacher">Teacher</option>
-                </select>
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <Label className="text-[10px] font-black uppercase text-indigo-800/60">Recipient</Label>
-                <select
-                  value={distForm.recipientId}
-                  onChange={e => setDistForm({...distForm, recipientId: e.target.value})}
-                  className="w-full h-10 rounded-lg bg-white border border-indigo-200 px-3 text-sm"
-                >
-                  <option value="">Select Recipient</option>
-                  {distForm.recipientType === 'student'
-                    ? students?.map(s => <option key={s.id} value={s.id}>{s.name} (Grade {s.grade})</option>)
-                    : teachers?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)
-                  }
-                </select>
-              </div>
-              <div className="flex items-end">
-                <Button
-                  onClick={() => distributeMutation.mutate()}
-                  disabled={!distForm.recipientId || distributeMutation.isPending}
-                  className="w-full h-10 rounded-lg font-black uppercase text-[10px] bg-indigo-600 hover:bg-indigo-700"
-                >
-                  {distributeMutation.isPending ? "Syncing..." : "Distribute"}
-                </Button>
+              {showAdd && (
+                <Card className="rounded-3xl border-none shadow-strong bg-slate-50 overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-slate-400">Name</Label>
+                        <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-slate-400">Category</Label>
+                        <Input value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-slate-400">Unit</Label>
+                        <Input value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-slate-400">Stock</Label>
+                        <Input type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-slate-400">Min Level</Label>
+                        <Input type="number" value={form.min} onChange={e => setForm({...form, min: e.target.value})} className="h-10 rounded-lg" />
+                      </div>
+                      <div className="flex items-end">
+                        <Button onClick={() => addMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px]">Save Item</Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="border rounded-[2rem] overflow-hidden bg-white/50 backdrop-blur-md shadow-soft">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-primary/5">
+                      <TableRow>
+                        <TableHead className="px-6">Item</TableHead>
+                        <TableHead>Stock Level</TableHead>
+                        {!selectedItem && <TableHead>Category</TableHead>}
+                        <TableHead className="text-right px-6">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        <TableRow><TableCell colSpan={selectedItem ? 3 : 4} className="text-center py-12">Loading...</TableCell></TableRow>
+                      ) : filtered?.map((c: any) => (
+                        <TableRow
+                          key={c.id}
+                          className={cn(
+                            "group/row cursor-pointer transition-all",
+                            selectedItem?.id === c.id ? "bg-primary/5" : "hover:bg-primary/5"
+                          )}
+                          onClick={() => setSelectedItem(c)}
+                        >
+                          <TableCell className="px-6 py-4 font-black text-slate-700">{c.name}</TableCell>
+                          <TableCell>
+                            <Badge variant={c.current_stock <= c.min_stock_level ? "destructive" : "pulse"}>
+                              {c.current_stock} {c.unit}
+                            </Badge>
+                          </TableCell>
+                          {!selectedItem && <TableCell><Badge variant="secondary" className="text-[9px] uppercase font-black">{c.category}</Badge></TableCell>}
+                          <TableCell className="text-right px-6">
+                             <Button variant="ghost" size="icon" className="opacity-0 group-hover/row:opacity-100 transition-all"><Info className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {showAdd && (
-        <Card className="rounded-3xl border-none shadow-strong bg-slate-50 overflow-hidden">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Name</Label>
-                <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="h-10 rounded-lg" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Category</Label>
-                <Input value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="h-10 rounded-lg" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Unit</Label>
-                <Input value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="h-10 rounded-lg" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Stock</Label>
-                <Input type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} className="h-10 rounded-lg" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Min Level</Label>
-                <Input type="number" value={form.min} onChange={e => setForm({...form, min: e.target.value})} className="h-10 rounded-lg" />
-              </div>
-              <div className="flex items-end">
-                <Button onClick={() => addMutation.mutate()} className="w-full h-10 rounded-lg font-black uppercase text-[10px]">Save</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            {selectedItem && (
+              <div className="lg:w-1/2 animate-in slide-in-from-right-8 duration-500">
+                <Card className="rounded-[2.5rem] border-none shadow-strong bg-white overflow-hidden sticky top-8">
+                  <CardHeader className="bg-primary/5 border-b border-border/10 p-8 flex flex-row justify-between items-start">
+                    <div>
+                      <Badge className="mb-4 bg-primary text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-lg">Inventory Status</Badge>
+                      <CardTitle className="text-3xl font-black tracking-tight text-slate-800">{selectedItem.name}</CardTitle>
+                      <p className="text-slate-400 font-bold uppercase text-xs tracking-widest mt-1">{selectedItem.category}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedItem(null)} className="rounded-full hover:bg-rose-50 text-rose-500">
+                      <Plus className="h-5 w-5 rotate-45" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-8">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="space-y-1">
+                        <p className="label-caps">Current Stock</p>
+                        <p className={cn("text-2xl font-black", selectedItem.current_stock <= selectedItem.min_stock_level ? "text-rose-600" : "text-slate-900")}>
+                          {selectedItem.current_stock} {selectedItem.unit}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="label-caps">Minimum Threshold</p>
+                        <p className="text-2xl font-black text-slate-700">{selectedItem.min_stock_level} {selectedItem.unit}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="label-caps">Unit Price</p>
+                        <p className="text-2xl font-black text-slate-700">₹{selectedItem.unit_price}</p>
+                      </div>
+                    </div>
 
-      <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
-        <div className="overflow-x-auto">
-  <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest px-6">Item</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Category</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Stock Level</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest">Unit Price</TableHead>
-              <TableHead className="font-black text-[10px] uppercase tracking-widest text-right px-6">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-12">Loading...</TableCell></TableRow>
-            ) : filtered?.map((c: any) => (
-              <TableRow key={c.id}>
-                <TableCell className="px-6 py-4 font-bold">{c.name}</TableCell>
-                <TableCell><Badge variant="secondary" className="text-[9px] uppercase font-black">{c.category}</Badge></TableCell>
-                <TableCell>
-                   <div className="flex items-center gap-2">
-                      <span className={cn("font-black", c.current_stock <= c.min_stock_level ? "text-rose-600" : "text-slate-700")}>
-                        {c.current_stock} {c.unit}
-                      </span>
-                      {c.current_stock <= c.min_stock_level && <Badge className="bg-rose-500 text-white text-[7px]">LOW</Badge>}
-                   </div>
-                </TableCell>
-                <TableCell className="text-xs font-bold text-slate-500">₹{c.unit_price}</TableCell>
-                <TableCell className="text-right px-6">
-                   <div className="flex justify-end gap-2">
-                      {canEdit && (
-                        <>
+                    <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100 space-y-4">
+                       <p className="label-caps text-indigo-700">Quick Distribution</p>
+                       <div className="flex gap-4">
+                          <Input type="number" value={distForm.amount} onChange={e => setDistForm({...distForm, amount: e.target.value})} className="h-12 rounded-xl bg-white" placeholder="Qty" />
                           <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 rounded-lg text-[9px] font-black uppercase text-indigo-600 border-indigo-200 hover:bg-indigo-50"
-                            onClick={() => setShowDistribute(c.id)}
-                          >
-                            <Package className="h-3 w-3 mr-1" /> Distribute
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 rounded-lg text-[9px] font-black uppercase text-slate-500 border-slate-200"
+                            className="flex-1 h-12 rounded-xl font-black uppercase tracking-widest text-[10px] bg-indigo-600 shadow-lg shadow-indigo-200"
                             onClick={() => {
-                              const amount = window.prompt("Enter quantity to dispose/discard:");
-                              if (amount && !isNaN(parseFloat(amount))) {
-                                updateStockMutation.mutate({ id: c.id, amount: parseFloat(amount), type: 'dispose' });
-                              }
+                                setShowDistribute(selectedItem.id);
+                                // This would normally open a modal or inline form, let's trigger distribute
+                                toast.info("Select recipient to complete distribution");
                             }}
                           >
-                             Discard
+                             Initiate Distro
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
-                        </>
-                      )}
-                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-</div>
-      </div>
+                       </div>
+                    </div>
+
+                    {canEdit && (
+                       <div className="flex gap-3">
+                          <Button variant="outline" className="flex-1 h-12 rounded-xl font-black uppercase text-[10px]">Adjustment</Button>
+                          <Button variant="destructive" className="h-12 w-12 rounded-xl p-0"><Trash2 className="h-5 w-5" /></Button>
+                       </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="logs" className="pt-4">

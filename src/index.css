@@ -129,6 +129,33 @@
     @apply bg-slate-900/60 backdrop-blur-xl border border-border/10 shadow-strong;
   }
 
+  /* Premium Glassmorphism */
+  .glass-surface {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg border border-white/40 dark:border-slate-800/40 shadow-glass;
+  }
+
+  .glass-overlay {
+    @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/60 dark:border-slate-800/60 shadow-elevated;
+  }
+
+  .mesh-gradient {
+    background-color: hsla(var(--background));
+    background-image:
+      radial-gradient(at 0% 0%, hsla(var(--primary) / 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(var(--secondary) / 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(var(--primary) / 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(var(--secondary) / 0.05) 0px, transparent 50%);
+  }
+
+  /* Typography Hierarchy */
+  .label-caps {
+    @apply text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80;
+  }
+
+  .display-metric {
+    @apply font-display text-3xl font-bold tracking-tight;
+  }
+
   /* Custom Scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

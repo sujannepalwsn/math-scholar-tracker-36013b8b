@@ -805,10 +805,10 @@ export default function TeacherManagement() {
                   {teachers.map((teacher: any) => {
                     const ctGrades = getClassTeacherGrades(teacher.id);
                     return (
-                      <TableRow key={teacher.id} className="group transition-all duration-300 hover:bg-card/60">
+                      <TableRow key={teacher.id} className="group/row transition-all duration-300">
                         <TableCell className="px-6 py-4">
                           <div className="space-y-1">
-                            <p className="font-black text-slate-700 group-hover:text-primary transition-colors leading-none">{teacher.name}</p>
+                            <p className="font-black text-slate-700 group-hover/row:text-primary transition-colors leading-none">{teacher.name}</p>
                             <p className="text-[10px] font-medium text-slate-400 truncate max-w-[150px]">{teacher.email || 'No email registered'}</p>
                           </div>
                         </TableCell>
@@ -829,16 +829,13 @@ export default function TeacherManagement() {
                           ) : <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Instructor</span>}
                         </TableCell>
                         <TableCell className="px-6 py-4">
-                          <div
-                            className={cn(
-                              "inline-flex items-center gap-1.5 font-black uppercase text-[10px] tracking-tight cursor-pointer hover:opacity-70 transition-all px-2.5 py-1 rounded-lg",
-                              teacher.is_active ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"
-                            )}
+                          <Badge
+                            variant={teacher.is_active ? "pulse" : "destructive"}
+                            className="cursor-pointer"
                             onClick={() => toggleTeacherStatusMutation.mutate(teacher)}
                           >
-                            <div className={cn("h-1.5 w-1.5 rounded-full", teacher.is_active ? "bg-emerald-600" : "bg-rose-600")} />
                             {teacher.is_active ? 'Active' : 'Suspended'}
-                          </div>
+                          </Badge>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell px-6 py-4">
                           {teacher.users && teacher.users.length > 0 ? (
@@ -850,7 +847,7 @@ export default function TeacherManagement() {
                           )}
                         </TableCell>
                         <TableCell className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-1.5">
+                          <div className="flex justify-end gap-1.5 opacity-0 group-hover/row:opacity-100 transition-all duration-300 -translate-x-2 group-hover/row:translate-x-0">
                             {hasFullAccess && (
                               <>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft" onClick={() => handleEditClick(teacher)}>
