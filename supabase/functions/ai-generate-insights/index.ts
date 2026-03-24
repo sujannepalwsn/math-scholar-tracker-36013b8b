@@ -22,17 +22,64 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch all students with their data
-    const { data: students, error: studentsError } = await supabase
-      .from("students")
-      .select("*");
+    // Get user from auth header
+    const authHeader = req.headers.get('Authorization')!;
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
+    let targetStudentIds: string[] | null = null;
+    let centerId: string | null = null;
+
+    if (user) {
+      const { data: profile } = await supabase.from('users').select('center_id, role, teacher_id').eq('id', user.id).single();
+      if (profile) {
+        centerId = profile.center_id;
+        if (profile.role === 'teacher' && profile.teacher_id) {
+          const { data: perms } = await supabase.from('teacher_feature_permissions').select('teacher_scope_mode').eq('teacher_id', profile.teacher_id).single();
+          if (perms?.teacher_scope_mode === 'restricted') {
+            const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', profile.teacher_id);
+            const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', profile.teacher_id);
+            const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+            if (myGrades.length > 0) {
+              const { data: myStudents } = await supabase.from('students').select('id').in('grade', myGrades).eq('center_id', centerId);
+              targetStudentIds = myStudents?.map(s => s.id) || [];
+            } else {
+              targetStudentIds = [];
+            }
+          }
+        }
+      }
+    }
+
+    // Fetch students with their data
+    let studentsQuery = supabase.from("students").select("*");
+    if (targetStudentIds) {
+      studentsQuery = studentsQuery.in('id', targetStudentIds);
+    } else if (centerId) {
+      studentsQuery = studentsQuery.eq('center_id', centerId);
+    }
+
+    const { data: students, error: studentsError } = await studentsQuery;
     if (studentsError) throw studentsError;
+
+    if (!students || students.length === 0) {
+      return new Response(JSON.stringify({
+        overallInsights: "No student data available for analysis.",
+        studentsNeedingAttention: [],
+        highPerformers: [],
+        commonChallenges: [],
+        actionableRecommendations: ["Ensure student records and attendance are up to date."]
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const studentIds = students.map(s => s.id);
 
     // Fetch attendance data
     const { data: attendance, error: attendanceError } = await supabase
       .from("attendance")
       .select("*")
+      .in('student_id', studentIds)
       .gte("date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Last 30 days
 
     if (attendanceError) throw attendanceError;
@@ -40,14 +87,16 @@ serve(async (req) => {
     // Fetch test results
     const { data: testResults, error: testResultsError } = await supabase
       .from("test_results")
-      .select("*, tests(*)");
+      .select("*, tests(*)")
+      .in('student_id', studentIds);
 
     if (testResultsError) throw testResultsError;
 
     // Fetch chapter completion
     const { data: chapterProgress, error: chapterError } = await supabase
       .from("student_chapters")
-      .select("*, chapters(*)");
+      .select("*")
+      .in('student_id', studentIds);
 
     if (chapterError) throw chapterError;
 

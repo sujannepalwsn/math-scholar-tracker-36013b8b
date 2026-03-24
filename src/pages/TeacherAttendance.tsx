@@ -68,17 +68,24 @@ export default function TeacherAttendancePage() {
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const todayStr = format(today, "yyyy-MM-dd");
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch active teachers for the center
   const { data: teachers = [], isLoading: teachersLoading } = useQuery({
-    queryKey: ["active-teachers", user?.center_id],
+    queryKey: ["active-teachers", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("teachers")
         .select("*")
         .eq("center_id", user.center_id)
-        .eq("is_active", true)
-        .order("name");
+        .eq("is_active", true);
+
+      if (isRestricted) {
+        query = query.eq('id', user?.teacher_id);
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return data;
     },

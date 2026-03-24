@@ -90,6 +90,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
   });
 
   const permissions = rawPermissions?.permissions || {};
+  const scopeMode = rawPermissions?.teacher_scope_mode || 'full';
 
   const updatePermissionMutation = useMutation({
     mutationFn: async ({ updatedPermissions, legacyFields }: { updatedPermissions: any, legacyFields: any }) => {
@@ -107,6 +108,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
           .from('teacher_feature_permissions')
           .insert({
             teacher_id: teacherId,
+            teacher_scope_mode: 'full', // Default for new records
             permissions: updatedPermissions,
             ...legacyFields
           });
@@ -121,6 +123,21 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
       toast.error(error.message || 'Failed to update permissions');
     }
   });
+
+  const handleScopeToggle = async (isFull: boolean) => {
+    const newMode = isFull ? 'full' : 'restricted';
+    const { error } = await supabase
+      .from('teacher_feature_permissions')
+      .update({ teacher_scope_mode: newMode })
+      .eq('teacher_id', teacherId);
+
+    if (error) {
+      toast.error(error.message || 'Failed to update scope mode');
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['teacher-feature-permissions', teacherId] });
+      toast.success(`Teacher Scope Mode set to ${newMode.toUpperCase()}`);
+    }
+  };
 
   const handleToggle = (featureName: string, field: keyof ModulePermission, value: boolean) => {
     const currentModule = permissions[featureName] || {
@@ -181,10 +198,32 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
   return (
     <Card className="max-h-[80vh] overflow-hidden flex flex-col border-none shadow-none">
       <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-xl font-black uppercase tracking-tight">Access Control Matrix</CardTitle>
-        <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
-          Defining operational boundaries for {teacherName}
-        </DialogDescription>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+          <div>
+            <CardTitle className="text-xl font-black uppercase tracking-tight">Access Control Matrix</CardTitle>
+            <DialogDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+              Defining operational boundaries for {teacherName}
+            </DialogDescription>
+          </div>
+
+          <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-tighter text-primary">Teacher Scope Mode</span>
+              <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+                {scopeMode === 'full' ? 'Full Access' : 'Restricted Scope'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 ml-2">
+              <span className={cn("text-[10px] font-black uppercase", scopeMode === 'restricted' ? "text-primary" : "text-slate-400")}>Restricted</span>
+              <Switch
+                checked={scopeMode === 'full'}
+                onCheckedChange={(val) => handleScopeToggle(val)}
+                className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-slate-300"
+              />
+              <span className={cn("text-[10px] font-black uppercase", scopeMode === 'full' ? "text-primary" : "text-slate-400")}>Full</span>
+            </div>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="overflow-y-auto flex-1 px-0">
         <div className="overflow-x-auto border rounded-2xl">

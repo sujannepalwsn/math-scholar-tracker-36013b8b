@@ -15,8 +15,10 @@ export default function ResultsDashboard() {
   const centerId = user?.center_id;
   const [selectedExamId, setSelectedExamId] = useState<string>("");
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: exams = [] } = useQuery({
-    queryKey: ["exams-list-dashboard", centerId, user?.role, user?.teacher_id],
+    queryKey: ["exams-list-dashboard", centerId, user?.role, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -36,10 +38,12 @@ export default function ResultsDashboard() {
         const subjectGrades = subjectAssignments?.map(a => a.grade) || [];
         const allTeacherGrades = Array.from(new Set([...assignedGrades, ...subjectGrades]));
 
-        if (allTeacherGrades.length > 0) {
-          query = query.in('grade', allTeacherGrades);
-        } else {
-          return [];
+        if (isRestricted) {
+           if (allTeacherGrades.length > 0) {
+             query = query.in('grade', allTeacherGrades);
+           } else {
+             return [];
+           }
         }
       }
 

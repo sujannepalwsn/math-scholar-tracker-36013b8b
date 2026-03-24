@@ -191,20 +191,37 @@ export default function Messaging() {
     onError: (error: any) => toast.error(error.message || "Failed to send message"),
   });
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Students with parents
   const { data: studentsWithParents = [] } = useQuery({
-    queryKey: ["students-with-parents", user?.center_id],
+    queryKey: ["students-with-parents", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
       const { data: parentUsers, error: usersError } = await supabase.from("users").select("id, username, student_id").eq("role", "parent").not("student_id", "is", null);
       if (usersError) throw usersError;
-      const studentIds = parentUsers?.map((u) => u.student_id).filter(Boolean) || [];
-      if (studentIds.length === 0) return [];
-      const { data: students, error: studentsError } = await supabase.from("students").select("id, name, grade").eq("center_id", user.center_id).in("id", studentIds);
+      const allParentStudentIds = parentUsers?.map((u) => u.student_id).filter(Boolean) || [];
+      if (allParentStudentIds.length === 0) return [];
+
+      let query = supabase.from("students").select("id, name, grade").eq("center_id", user.center_id).in("id", allParentStudentIds);
+
+      if (isRestricted) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
+      const { data: students, error: studentsError } = await query;
       if (studentsError) throw studentsError;
       return students?.map((s) => ({ ...s, parentUser: parentUsers?.find((u) => u.student_id === s.id) })) || [];
     },
-    enabled: !!user?.center_id && user?.role === "center",
+    enabled: !!user?.center_id && (user?.role === "center" || user?.role === "teacher"),
   });
 
   const createConversationMutation = useMutation({

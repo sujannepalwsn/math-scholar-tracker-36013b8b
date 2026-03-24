@@ -85,8 +85,10 @@ export default function LessonTracking() {
   });
 
   // Fetch lesson plans for dropdown and listing
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject, user?.teacher_id],
+    queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject, user?.teacher_id, isRestricted],
     queryFn: async () => {
       let query = supabase
         .from("lesson_plans")
@@ -109,7 +111,7 @@ export default function LessonTracking() {
 
   // Fetch student_chapters (now linked to lesson_plans)
   const { data: studentLessonRecordsRaw = [] } = useQuery({
-    queryKey: ["student-lesson-records", user?.center_id, filterSubject, filterStudent, filterGrade, user?.teacher_id],
+    queryKey: ["student-lesson-records", user?.center_id, filterSubject, filterStudent, filterGrade, user?.teacher_id, isRestricted],
     queryFn: async () => {
       let query = supabase
         .from("student_chapters")

@@ -72,19 +72,36 @@ export default function TakeAttendance() {
 
   const isOperationalDay = schoolDay ? schoolDay.is_school_day : true;
 
-  // Fetch class teacher assignments if teacher role
+  // Fetch class teacher assignments if teacher role (from both assignments and schedules)
   const { data: classTeacherGrades = [] } = useQuery({
     queryKey: ["my-class-teacher-grades", user?.teacher_id],
     queryFn: async () => {
       if (!user?.teacher_id) return [];
-      const { data, error } = await supabase.from("class_teacher_assignments").select("grade").eq("teacher_id", user.teacher_id);
-      if (error) throw error;
-      return data.map(d => d.grade);
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from("class_teacher_assignments")
+        .select("grade")
+        .eq("teacher_id", user.teacher_id);
+
+      const { data: schedules, error: schedulesError } = await supabase
+        .from("period_schedules")
+        .select("grade")
+        .eq("teacher_id", user.teacher_id);
+
+      if (assignmentsError) throw assignmentsError;
+      if (schedulesError) throw schedulesError;
+
+      const grades = new Set([
+        ...(assignments?.map(a => a.grade) || []),
+        ...(schedules?.map(s => s.grade) || [])
+      ]);
+
+      return Array.from(grades).filter(Boolean);
     },
     enabled: !!user?.teacher_id && user?.role === 'teacher' });
 
   const isTeacher = user?.role === 'teacher';
   const isCenter = user?.role === 'center' || user?.role === 'admin';
+  const isRestricted = isTeacher && user?.teacher_scope_mode === 'restricted';
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
 
   const { data: students } = useQuery({
@@ -142,7 +159,7 @@ export default function TakeAttendance() {
 
   // For teachers, filter available grades to their assigned grades
   const availableGrades = students ? Array.from(new Set(students.map(s => s.grade))).sort() : [];
-  const allowedGrades = isTeacher && classTeacherGrades.length > 0 ? availableGrades.filter(g => classTeacherGrades.includes(g)) : availableGrades;
+  const allowedGrades = (isTeacher && (classTeacherGrades.length > 0 || isRestricted)) ? availableGrades.filter(g => classTeacherGrades.includes(g)) : availableGrades;
 
   // Auto-set grade filter for teachers with only one assigned grade
   useEffect(() => {
@@ -168,7 +185,7 @@ export default function TakeAttendance() {
 
   // Filter students by grade - for teachers, only show their assigned grades
   const filteredStudents = students?.filter(s => {
-    if (isTeacher && classTeacherGrades.length > 0) {
+    if (isTeacher && (classTeacherGrades.length > 0 || isRestricted)) {
       if (gradeFilter !== "all") return s.grade === gradeFilter;
       return classTeacherGrades.includes(s.grade);
     }

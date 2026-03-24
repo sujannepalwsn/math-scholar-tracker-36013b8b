@@ -76,9 +76,11 @@ export default function Tests() {
   const [resultDate, setResultDate] = useState(format(new Date(), "yyyy-MM-dd"));
   // Removed resultNotes state
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch tests
   const { data: tests = [] } = useQuery({
-    queryKey: ["tests", user?.center_id, user?.id],
+    queryKey: ["tests", user?.center_id, user?.id, isRestricted],
     queryFn: async () => {
       let query = supabase
         .from("tests")
@@ -86,7 +88,14 @@ export default function Tests() {
         .order("date", { ascending: false });
       
       if (user?.role === 'teacher') {
-        query = query.eq('created_by', user.id);
+        // Even in full mode, teachers might want to see their own first, but here we strictly follow the requirement
+        // "Full Mode (ON) -> same access as Center Admin"
+        // "Restricted Mode (OFF) -> only tests created by teacher"
+        if (isRestricted) {
+          query = query.eq('created_by', user.id);
+        } else {
+          query = query.eq('center_id', user.center_id);
+        }
       } else if (user?.role !== 'admin' && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }
@@ -98,14 +107,20 @@ export default function Tests() {
 
   // Fetch lesson plans for the dropdown
   const { data: lessonPlans = [] } = useQuery({
-    queryKey: ["lesson-plans-for-tests", user?.center_id],
+    queryKey: ["lesson-plans-for-tests", user?.center_id, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("lesson_plans")
         .select("id, subject, chapter, topic, grade")
         .eq("center_id", user.center_id)
         .order("lesson_date", { ascending: false });
+
+      if (isRestricted) {
+        query = query.eq('teacher_id', user?.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as LessonPlan[];
     },

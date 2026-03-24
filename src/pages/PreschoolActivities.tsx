@@ -77,9 +77,11 @@ export default function PreschoolActivities() {
     },
     enabled: !!user?.center_id });
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch activities - now properly filtered by center and teacher
   const { data: activities = [], isLoading } = useQuery({
-    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id],
+    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       // First get student IDs for this center
@@ -97,8 +99,9 @@ export default function PreschoolActivities() {
         .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
         .in("student_id", studentIds);
 
-      // Empowered teachers see all activities in the center if they have view permission
-      // Edit buttons are hidden separately based on hasActionPermission
+      if (isRestricted) {
+        query = query.eq('activities.created_by', user?.id);
+      }
 
       const { data, error } = await query.order("created_at", { ascending: false });
 

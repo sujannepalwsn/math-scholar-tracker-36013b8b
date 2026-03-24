@@ -84,14 +84,16 @@ export default function DisciplineIssues() {
     },
     enabled: !!user?.center_id });
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch discipline issues
   const { data: issues = [], isLoading: issuesLoading } = useQuery({ // Destructure isLoading here
-    queryKey: ["discipline-issues", user?.center_id, gradeFilter, user?.id],
+    queryKey: ["discipline-issues", user?.center_id, gradeFilter, user?.id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
         .from("discipline_issues")
-        .select("*, students(name, grade), discipline_categories(name)")
+        .select("*, students!inner(name, grade), discipline_categories(name)")
         .eq("center_id", user.center_id)
         .order("issue_date", { ascending: false });
       
@@ -100,7 +102,18 @@ export default function DisciplineIssues() {
       }
 
       if (user?.role === 'teacher') {
-        query = query.eq('reported_by', user.id);
+        if (isRestricted) {
+          // Fetch assigned grades for the OR condition
+          const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
+          const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
+          const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+          const conditions = [`reported_by.eq.${user.id}`];
+          if (myGrades.length > 0) {
+            conditions.push(`students.grade.in.(${myGrades.join(',')})`);
+          }
+          query = query.or(conditions.join(','));
+        }
       }
 
       const { data, error } = await query;

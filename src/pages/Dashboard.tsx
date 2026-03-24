@@ -162,11 +162,32 @@ export default function Dashboard() {
   }, [attendanceRange, today]);
 
   // Data Fetching
+  const { data: myAssignedGrades = [] } = useQuery({
+    queryKey: ["my-assigned-grades", user?.teacher_id],
+    queryFn: async () => {
+      if (!user?.teacher_id || user?.role !== 'teacher') return [];
+      const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
+      const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
+      const combined = [...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])];
+      return Array.from(new Set(combined));
+    },
+    enabled: !!user?.teacher_id && user?.role === 'teacher'
+  });
+
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: students = [], isLoading: isStudentsLoading } = useQuery({
-    queryKey: ["students", centerId],
+    queryKey: ["students", centerId, isRestricted, myAssignedGrades],
     queryFn: async () => {
       let query = supabase.from("students").select("*").eq("is_active", true).order("name");
       if (role !== "admin" && centerId) query = query.eq("center_id", centerId);
+
+      if (isRestricted && myAssignedGrades.length > 0) {
+        query = query.in('grade', myAssignedGrades);
+      } else if (isRestricted) {
+        return []; // No assignments, no students in restricted mode
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -202,10 +223,18 @@ export default function Dashboard() {
   });
 
   const { data: allAttendance = [] } = useQuery({
-    queryKey: ["attendance-dashboard", centerId, today],
+    queryKey: ["attendance-dashboard", centerId, today, isRestricted, myAssignedGrades],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("attendance").select("student_id, status, date").eq("center_id", centerId).eq("date", today);
+      let query = supabase.from("attendance").select("student_id, status, date, students!inner(grade)").eq("center_id", centerId).eq("date", today);
+
+      if (isRestricted && myAssignedGrades.length > 0) {
+        query = query.in('students.grade', myAssignedGrades);
+      } else if (isRestricted) {
+        return [];
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -243,15 +272,21 @@ export default function Dashboard() {
   });
 
   const { data: homeworkStats = [] } = useQuery({
-    queryKey: ["homework-stats-dashboard", centerId, dateRange.from, dateRange.to],
+    queryKey: ["homework-stats-dashboard", centerId, dateRange.from, dateRange.to, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("student_homework_records")
-        .select("status, created_at, homework!inner(center_id)")
+        .select("status, created_at, homework!inner(center_id, teacher_id)")
         .eq("homework.center_id", centerId)
         .gte("created_at", `${dateRange.from}T00:00:00`)
         .lte("created_at", `${dateRange.to}T23:59:59`);
+
+      if (isRestricted) {
+        query = query.eq('homework.teacher_id', user?.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -260,15 +295,21 @@ export default function Dashboard() {
   });
 
   const { data: evaluationStats = [] } = useQuery({
-    queryKey: ["evaluation-stats-dashboard", centerId, dateRange.from, dateRange.to],
+    queryKey: ["evaluation-stats-dashboard", centerId, dateRange.from, dateRange.to, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("student_chapters")
-        .select("completed, completed_at, evaluation_rating, lesson_plans!inner(center_id)")
+        .select("completed, completed_at, evaluation_rating, lesson_plans!inner(center_id, teacher_id)")
         .eq("lesson_plans.center_id", centerId)
         .gte("completed_at", `${dateRange.from}T00:00:00`)
         .lte("completed_at", `${dateRange.to}T23:59:59`);
+
+      if (isRestricted) {
+        query = query.eq('lesson_plans.teacher_id', user?.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -292,15 +333,21 @@ export default function Dashboard() {
 
   // Recent activities for preview card
   const { data: recentActivities = [] } = useQuery({
-    queryKey: ["recent-activities-dashboard", centerId],
+    queryKey: ["recent-activities-dashboard", centerId, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("activities")
         .select("id, name, title, grade, activity_date")
         .eq("center_id", centerId)
         .order("activity_date", { ascending: false })
         .limit(5);
+
+      if (isRestricted) {
+        query = query.eq('teacher_id', user?.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -309,16 +356,27 @@ export default function Dashboard() {
 
   // Recent discipline issues for preview card
   const { data: recentDiscipline = [] } = useQuery({
-    queryKey: ["recent-discipline-dashboard", centerId],
+    queryKey: ["recent-discipline-dashboard", centerId, isRestricted, myAssignedGrades],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("discipline_issues")
-        .select("id, description, severity, issue_date, students(name, grade)")
+        .select("id, description, severity, issue_date, reported_by, students!inner(name, grade)")
         .eq("center_id", centerId)
         .eq("status", "open")
         .order("issue_date", { ascending: false })
         .limit(5);
+
+      if (isRestricted) {
+        // Teacher sees their own reports OR reports for their assigned grades
+        const conditions = [`reported_by.eq.${user?.id}`];
+        if (myAssignedGrades.length > 0) {
+          conditions.push(`students.grade.in.(${myAssignedGrades.join(',')})`);
+        }
+        query = query.or(conditions.join(','));
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -326,10 +384,16 @@ export default function Dashboard() {
   });
 
   const { data: upcomingLessons = [] } = useQuery({
-    queryKey: ["upcoming-lessons-dashboard", centerId, today],
+    queryKey: ["upcoming-lessons-dashboard", centerId, today, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.from("lesson_plans").select("*").eq("center_id", centerId).gte("lesson_date", today).order("lesson_date").limit(8);
+      let query = supabase.from("lesson_plans").select("*").eq("center_id", centerId).gte("lesson_date", today).order("lesson_date").limit(8);
+
+      if (isRestricted) {
+        query = query.eq('teacher_id', user?.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -337,15 +401,21 @@ export default function Dashboard() {
   });
 
   const { data: recentTestResults = [] } = useQuery({
-    queryKey: ["recent-test-results-dashboard", centerId, dateRange.from, dateRange.to],
+    queryKey: ["recent-test-results-dashboard", centerId, dateRange.from, dateRange.to, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("test_results")
-        .select("*, students(name, grade), tests(name, total_marks, subject)")
+        .select("*, students(name, grade), tests!inner(name, total_marks, subject, created_by)")
         .gte("date_taken", dateRange.from)
         .lte("date_taken", dateRange.to)
         .order("date_taken", { ascending: false });
+
+      if (isRestricted) {
+        query = query.eq('tests.created_by', user?.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -420,7 +490,7 @@ export default function Dashboard() {
 
   // Today's class schedule - connected to period_schedules
   const { data: periodSchedules = [] } = useQuery({
-    queryKey: ["period-schedules-dashboard", centerId],
+    queryKey: ["period-schedules-dashboard", centerId, isRestricted],
     queryFn: async () => {
       if (!centerId) return [];
       const dayOfWeek = new Date().getDay();
@@ -436,6 +506,10 @@ export default function Dashboard() {
 
       if (role !== 'admin' && role !== 'center' && role !== 'super_admin') {
         query = query.eq("class_periods.is_published", true);
+      }
+
+      if (isRestricted) {
+        query = query.eq('teacher_id', user?.teacher_id);
       }
 
       const { data, error } = await query.order('class_period_id', { ascending: true });

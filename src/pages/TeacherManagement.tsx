@@ -95,15 +95,22 @@ export default function TeacherManagement() {
   const [selectedTeacherForClassAssign, setSelectedTeacherForClassAssign] = useState<Teacher | null>(null);
   const [classTeacherGrade, setClassTeacherGrade] = useState("select-grade");
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: teachers = [], isLoading } = useQuery({
-    queryKey: ["teachers", user?.center_id],
+    queryKey: ["teachers", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("teachers")
         .select("*, users!teachers_user_id_fkey(id, username, is_active)")
-        .eq("center_id", user.center_id)
-        .order("name");
+        .eq("center_id", user.center_id);
+
+      if (isRestricted) {
+        query = query.eq('id', user?.teacher_id);
+      }
+
+      const { data, error } = await query.order("name");
       if (error) {
         console.error("Error fetching teachers:", error);
         throw error;

@@ -98,8 +98,10 @@ export default function ClassRoutine() {
     },
     enabled: !!user?.center_id });
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
-    queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id],
+    queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
@@ -117,10 +119,16 @@ export default function ClassRoutine() {
     enabled: !!user?.center_id });
 
   const { data: allSchedules = [] } = useQuery({
-    queryKey: ["all-period-schedules", user?.center_id],
+    queryKey: ["all-period-schedules", user?.center_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
+
+      if (isRestricted) {
+        query = query.eq('teacher_id', user?.teacher_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -781,6 +789,9 @@ export default function ClassRoutine() {
                           <div className="text-[10px] text-muted-foreground">{p.start_time} - {p.end_time}</div>
                         </TableCell>
                         {allGrades.map(g => {
+                          // In restricted mode, teachers can only see their own classes.
+                          // However, we still show the grade columns.
+                          // If there's no entry found because of the filter in allSchedules, it will show as vacant.
                           const entry = allSchedules.find((s: any) => {
                             const pid = typeof s.class_period_id === 'object' ? s.class_period_id?.id : s.class_period_id;
                             return (pid === p.id || s.class_periods?.id === p.id) &&

@@ -51,15 +51,30 @@ export default function ViewRecords() {
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<StudentDetail | null>(null);
   const [detailMonthFilter, setDetailMonthFilter] = useState<Date>(new Date());
 
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+
   // Fetch students for this center
   const { data: students = [] } = useQuery({
-    queryKey: ['students', user?.center_id],
+    queryKey: ['students', user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       let query = supabase
         .from('students')
         .select('id, name, grade')
         .eq('center_id', user?.center_id!)
         .order('name');
+
+      if (isRestricted) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          query = query.in('grade', myGrades);
+        } else {
+          return [];
+        }
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -70,7 +85,7 @@ export default function ViewRecords() {
 
   // Fetch attendance records for selected date & filtered students
   const { data: records, isLoading } = useQuery({
-    queryKey: ["attendance-records", dateStr, gradeFilter, user?.center_id, user?.role, user?.id],
+    queryKey: ["attendance-records", dateStr, gradeFilter, user?.center_id, user?.role, user?.id, isRestricted],
     queryFn: async () => {
       const studentIds = filteredStudents.map(s => s.id);
       if (studentIds.length === 0) return [];
@@ -91,7 +106,7 @@ export default function ViewRecords() {
         .in("student_id", studentIds)
         .eq("date", dateStr);
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 
@@ -108,7 +123,7 @@ export default function ViewRecords() {
 
   // Fetch all attendance for a specific student for the detail dialog
   const { data: studentDetailAttendance = [], refetch: refetchStudentDetailAttendance } = useQuery({
-    queryKey: ["student-detail-attendance", selectedStudentDetail?.id, detailMonthFilter, user?.role, user?.id],
+    queryKey: ["student-detail-attendance", selectedStudentDetail?.id, detailMonthFilter, user?.role, user?.id, isRestricted],
     queryFn: async () => {
       if (!selectedStudentDetail?.id) return [];
       const start = startOfMonth(detailMonthFilter);
@@ -120,7 +135,7 @@ export default function ViewRecords() {
         .gte("date", format(start, "yyyy-MM-dd")) // Corrected format string
         .lte("date", format(end, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 
