@@ -523,7 +523,7 @@ export default function TeacherDashboard() {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <KPICard title="Daily Check-In" value="Attendance" description="Mark Presence" icon={User} color="green" onClick={() => navigate("/teacher/my-attendance")} />
-        {hasPermission(user, 'take_attendance') && <KPICard title="Class Attendance" value={`${attendanceRate}%`} description="Presence Index" icon={Users} color="indigo" onClick={() => scrollToSection("attendance-section")} />}
+        {hasPermission(user, 'take_attendance') && <KPICard title="Class Attendance" value={`${attendanceRate}%`} description="Take/View Attendance" icon={Users} color="indigo" onClick={() => navigate("/teacher/take-attendance")} />}
         {hasPermission(user, 'class_routine') && <KPICard title="Today's Classes" value={todayClasses.length} description="Instruction Units" icon={Clock} color="blue" onClick={() => navigate("/teacher/class-routine")} />}
         {hasPermission(user, 'homework_management') && <KPICard title="Pending Homework" value={homeworkToGrade.length} description="Active Submissions" icon={Book} color="orange" onClick={() => navigate("/teacher/homework-management")} />}
         {hasPermission(user, 'lesson_plans') && <KPICard title="Lesson Plans" value={allLessonPlans.length} description="Instructional Assets" icon={FileText} color="purple" onClick={() => navigate("/teacher/lesson-plans")} />}

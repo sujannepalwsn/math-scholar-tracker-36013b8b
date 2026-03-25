@@ -916,7 +916,7 @@ export default function Dashboard() {
           trendData={attendanceTrend}
           delta={getDelta(attendanceTrend)}
           target={studentAttendanceRate}
-          onClick={() => navigate("/attendance")}
+          onClick={() => navigate(user?.role === 'teacher' ? "/teacher/take-attendance" : "/attendance")}
         />
       ) : null,
       "teacher-attendance": hasPermission(user, 'teachers_attendance') ? (

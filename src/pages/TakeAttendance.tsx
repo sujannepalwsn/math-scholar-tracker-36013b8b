@@ -102,24 +102,28 @@ export default function TakeAttendance() {
   const isTeacher = user?.role === 'teacher';
   const isCenter = user?.role === 'center' || user?.role === 'admin';
 
-  // Robust restriction check: Only center/admin are NOT restricted.
-  // Teachers are restricted unless explicitly set to 'full'.
+  // Restricted by default for teachers. ONLY explicitly 'full' bypasses.
   const isRestricted = React.useMemo(() => {
     if (isCenter) return false;
+    // For teachers, treat as restricted if mode is 'restricted', null, undefined, or anything not 'full'
     if (isTeacher) return user?.teacher_scope_mode !== 'full';
+    // Any other role is restricted by default on this page
     return true;
   }, [isTeacher, isCenter, user?.teacher_scope_mode]);
 
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
 
-  // Debug logging for troubleshooting
+  // Debug logging for troubleshooting - will be visible in browser console
   useEffect(() => {
     if (user) {
-      console.log("TakeAttendance Scope Check:", {
+      console.log("TakeAttendance [Security Audit]:", {
+        userId: user.id,
         role: user.role,
-        scopeMode: user.teacher_scope_mode,
+        teacherId: user.teacher_id,
+        teacherScopeMode: user.teacher_scope_mode,
         isRestricted,
-        assignedGrades: classTeacherGrades
+        classTeacherGrades,
+        canMarkAttendance: hasActionPermission(user, 'take_attendance', 'edit')
       });
     }
   }, [user, isRestricted, classTeacherGrades]);
@@ -208,10 +212,24 @@ export default function TakeAttendance() {
   const canMarkAttendance = hasEditPermission;
 
   // For teachers, filter available grades to their assigned grades
-  const availableGrades = students ? Array.from(new Set(students.map(s => s.grade))).sort() : [];
-  const allowedGrades = (isTeacher && isRestricted)
-    ? classTeacherGrades.sort() // Directly use the assigned grades source
-    : availableGrades;
+  const availableGrades = React.useMemo(() => {
+    if (!students) return [];
+    return Array.from(new Set(students.map(s => s.grade))).filter(Boolean).sort();
+  }, [students]);
+
+  const allowedGrades = React.useMemo(() => {
+    if (isCenter) return availableGrades;
+    if (isTeacher) {
+      if (isRestricted) {
+        // STRICT: Use assigned grades source directly but intersect with center's existing grades if possible
+        // If students query is still loading, classTeacherGrades is our fallback source of truth.
+        const assigned = Array.from(new Set(classTeacherGrades)).filter(Boolean);
+        return assigned.length > 0 ? assigned.sort() : availableGrades.filter(g => classTeacherGrades.includes(g));
+      }
+      return availableGrades;
+    }
+    return availableGrades;
+  }, [isTeacher, isCenter, isRestricted, classTeacherGrades, availableGrades]);
 
   // Auto-set grade filter for restricted teachers
   useEffect(() => {
@@ -393,9 +411,15 @@ export default function TakeAttendance() {
               <div className="flex items-center gap-2 mt-1">
                  <div className="h-2 w-2 rounded-full bg-primary" />
                  <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Daily Roll Call Portal</p>
-                 {isRestricted && (
-                   <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200 font-black text-[9px] uppercase tracking-tighter">
-                     Restricted Scope
+                 {isTeacher && (
+                   <Badge
+                     variant={isRestricted ? "outline" : "destructive"}
+                     className={cn(
+                       "ml-2 font-black text-[9px] uppercase tracking-tighter",
+                       isRestricted ? "bg-amber-50 text-amber-700 border-amber-200" : "animate-pulse"
+                     )}
+                   >
+                     {isRestricted ? "Restricted Scope" : "Full Center Scope"}
                    </Badge>
                  )}
               </div>
@@ -455,7 +479,10 @@ export default function TakeAttendance() {
                   <SelectValue placeholder="Select Grade" />
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-                  {(!isTeacher || !isRestricted) && <SelectItem value="all">All Grades</SelectItem>}
+                  {(!isRestricted || isCenter) && <SelectItem value="all">All Grades</SelectItem>}
+                  {allowedGrades.length === 0 && isRestricted && (
+                    <SelectItem value="none" disabled>No assigned grades</SelectItem>
+                  )}
                   {allowedGrades.map((g) => (
                     <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
                   ))}

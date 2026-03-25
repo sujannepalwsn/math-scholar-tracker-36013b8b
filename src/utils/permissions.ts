@@ -83,6 +83,7 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/teacher/published-results': 'published_results',
   '/student-report': 'student_report',
   '/teacher/student-report': 'student_report',
+  '/teacher/take-attendance': 'take_attendance',
   '/teacher-performance': 'teacher_reports',
   '/chapter-performance-overview': 'chapter_performance',
   '/teacher/chapter-performance': 'chapter_performance',
@@ -159,10 +160,6 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
     }
     // Block Center Leave Management (restricted to personal leave)
     if (dbColumnName === 'leave_management' && (route === '/leave-management' || featureKey === '/leave-management')) {
-      return false;
-    }
-    // Block Central Attendance (restricted to teacher attendance)
-    if (dbColumnName === 'take_attendance' && route === '/attendance') {
       return false;
     }
 
