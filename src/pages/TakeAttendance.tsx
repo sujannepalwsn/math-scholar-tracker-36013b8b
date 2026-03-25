@@ -218,16 +218,18 @@ export default function TakeAttendance() {
   }, [students]);
 
   const allowedGrades = React.useMemo(() => {
+    // Center Admin sees all grades found in students
     if (isCenter) return availableGrades;
-    if (isTeacher) {
-      if (isRestricted) {
-        // STRICT: Use assigned grades source directly but intersect with center's existing grades if possible
-        // If students query is still loading, classTeacherGrades is our fallback source of truth.
-        const assigned = Array.from(new Set(classTeacherGrades)).filter(Boolean);
-        return assigned.length > 0 ? assigned.sort() : availableGrades.filter(g => classTeacherGrades.includes(g));
-      }
-      return availableGrades;
+
+    // Teachers in Full Scope see all grades found in students
+    if (isTeacher && !isRestricted) return availableGrades;
+
+    // Restricted Teachers ONLY see their assigned grades
+    if (isTeacher && isRestricted) {
+      return Array.from(new Set(classTeacherGrades)).filter(Boolean).sort();
     }
+
+    // Fallback: Default to whatever grades are found in students
     return availableGrades;
   }, [isTeacher, isCenter, isRestricted, classTeacherGrades, availableGrades]);
 
@@ -440,6 +442,17 @@ export default function TakeAttendance() {
           <AlertTitle className="font-black uppercase text-xs tracking-widest">Attendance Disabled</AlertTitle>
           <AlertDescription className="text-sm font-bold">
             Not a school day. Reason: {schoolDay?.reason || "Institutional Closure"}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isTeacher && isRestricted && (
+        <Alert className="rounded-2xl border-2 bg-blue-50/50 border-blue-200 animate-in slide-in-from-top-2">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="font-black uppercase text-xs tracking-widest text-blue-800">Security Audit: Assigned Scope</AlertTitle>
+          <AlertDescription className="text-sm font-bold text-blue-700">
+            You are in RESTRICTED mode. Your assigned grades are: <span className="underline decoration-2">{classTeacherGrades.length > 0 ? classTeacherGrades.join(", ") : "None Detected"}</span>.
+            The dropdown and student list are strictly filtered to these grades.
           </AlertDescription>
         </Alert>
       )}
