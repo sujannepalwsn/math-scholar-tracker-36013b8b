@@ -48,6 +48,7 @@ interface QuestionMark {
 export default function Tests() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
   const canEdit = hasActionPermission(user, 'test_management', 'edit');
   const [isAddingTest, setIsAddingTest] = useState(false);
   const [selectedTest, setSelectedTest] = useState<string>("");
@@ -75,8 +76,6 @@ export default function Tests() {
   const [studentAnswer, setStudentAnswer] = useState(""); // For AI grading
   const [resultDate, setResultDate] = useState(format(new Date(), "yyyy-MM-dd"));
   // Removed resultNotes state
-
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
 
   // Fetch tests
   const { data: tests = [] } = useQuery({
@@ -128,15 +127,29 @@ export default function Tests() {
 
   // Fetch students
   const { data: students = [] } = useQuery({
-    queryKey: ["students", user?.center_id],
+    queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       let query = supabase
         .from("students")
         .select("*")
+        .eq("is_active", true)
         .order("name");
       
       if (user?.role !== 'admin' && user?.center_id) {
         query = query.eq('center_id', user.center_id);
+      }
+
+      if (isRestricted && user?.teacher_id) {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          // Properly quote non-numeric grades like "Nursery" for PostgREST
+          query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
+        } else {
+          return [];
+        }
       }
       
       const { data, error } = await query;

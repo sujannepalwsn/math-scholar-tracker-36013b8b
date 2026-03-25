@@ -269,9 +269,12 @@ export default function TeacherDashboard() {
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', teacherId);
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
+        // Post-filter or separate conditions since 'students.grade' in .or() might cause issues
+        // with complex joins in PostgREST. Let's simplify and filter by reported_by OR grade list.
         const conditions = [`reported_by.eq.${user.id}`];
         if (myGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myGrades.join(',')})`);
+          // Note: using 'students(grade)' because we have 'students!inner(name, grade)' in select
+          conditions.push(`students.grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
         }
         query = query.or(conditions.join(','));
       }
@@ -520,6 +523,7 @@ export default function TeacherDashboard() {
         {hasPermission(user, 'lesson_plans') && <KPICard title="Lesson Plans" value={allLessonPlans.length} description="Instructional Assets" icon={FileText} color="purple" onClick={() => navigate("/teacher/lesson-plans")} />}
         {hasPermission(user, 'lesson_plans') && <KPICard title="Approvals" value={allLessonPlans.filter(lp => lp.status === 'pending').length} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/teacher/lesson-plans")} />}
         {hasPermission(user, 'test_management') && <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Score Synthesis" icon={TrendingUp} color="purple" trendData={attendanceTrend} onClick={() => scrollToSection("tests-section")} />}
+        {hasPermission(user, 'leave_management') && <KPICard title="Apply Leave" value="Requests" description="Absence Portal" icon={CalendarIcon} color="orange" onClick={() => navigate("/teacher/leave")} />}
         {hasPermission(user, 'messaging') && <KPICard title="Messages" value="View" description="Admin Liaison" icon={MessageSquare} color="pink" onClick={() => navigate("/teacher-messages")} />}
       </div>
 

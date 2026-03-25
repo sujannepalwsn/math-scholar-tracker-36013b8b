@@ -161,7 +161,7 @@ export default function Sidebar({
     if ((item as any).is_active === false && !isEditMode) return false;
 
     const featureKey = item.featureName || (item as any).feature_name;
-    // Always pass route to help with identification
+    // Sidebar relies on the centralized hasPermission logic for visibility filtering.
     return hasPermission(user, featureKey || 'unknown', item.to);
   });
 
@@ -559,7 +559,7 @@ export default function Sidebar({
           {renderNavLinks(filteredNavItems, false)}
         </nav>
         <div className="mt-auto p-4 space-y-4">
-          {(user?.role === 'center' || (user?.role === 'teacher' && (hasPermission(user, 'settings_access') || hasPermission(user, 'test_management')))) && (
+          {(user?.role === 'center' || (user?.role === 'teacher' && user.teacher_scope_mode !== 'restricted' && (hasPermission(user, 'settings_access') || hasPermission(user, 'test_management')))) && (
             <div className="space-y-2">
               <Button
                 variant="ghost"

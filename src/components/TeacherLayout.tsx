@@ -66,32 +66,45 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     }
   }, [user?.center_id, dynamicItems.length]);
 
-  let updatedNavItems = teacherDynamicItems.length > 0
-    ? teacherDynamicItems.map(it => {
-        const cat = dynamicCategories.find(c => c.id === it.category_id);
-        return {
-          to: it.route,
-          label: it.name,
-          icon: getIcon(it.icon),
-          role: it.role as any,
-          featureName: it.feature_name,
-          feature_name: it.feature_name,
-          category: cat?.name,
-          unreadCount: (it.route === "/teacher-messages" || it.route === "/messages") ? unreadMessageCount : undefined,
-          is_active: it.is_active
-        };
-      })
-    : teacherStaticItems.map(item => ({
-        to: item.route,
-        label: item.name,
-        icon: getIcon(item.icon),
-        role: item.role as any,
-        featureName: item.feature_name,
-        feature_name: item.feature_name,
-        category: item.category as any,
-        unreadCount: (item.route === "/teacher-messages" || item.route === "/messages") ? unreadMessageCount : undefined,
-        is_active: true
-      }));
+  // Combine dynamic items and missing static items
+  const combinedItems = React.useMemo(() => {
+    const items = [...teacherDynamicItems];
+
+    teacherStaticItems.forEach(staticItem => {
+      if (!items.some(it => it.route === staticItem.route)) {
+        items.push({
+          id: `static-${staticItem.route}`,
+          route: staticItem.route,
+          name: staticItem.name,
+          icon: staticItem.icon,
+          role: staticItem.role,
+          feature_name: staticItem.feature_name,
+          is_active: true,
+          category_id: null,
+          category_name: staticItem.category // Temporary for mapping
+        } as any);
+      }
+    });
+
+    return items;
+  }, [teacherDynamicItems, teacherStaticItems]);
+
+  const updatedNavItems = combinedItems.map(it => {
+    const cat = dynamicCategories.find(c => c.id === it.category_id) ||
+                dynamicCategories.find(c => c.name === (it as any).category_name);
+
+    return {
+      to: it.route,
+      label: it.name,
+      icon: getIcon(it.icon),
+      role: it.role as any,
+      featureName: it.feature_name,
+      feature_name: it.feature_name,
+      category: cat?.name,
+      unreadCount: (it.route === "/teacher-messages" || it.route === "/messages") ? unreadMessageCount : undefined,
+      is_active: it.is_active
+    };
+  });
 
   // Ensure mandatory items from defaults are always present (fixing issue for existing customized navigation)
   React.useEffect(() => {
@@ -105,27 +118,6 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       }
     }
   }, [teacherDynamicItems.length, teacherStaticItems.length]);
-
-  if (teacherDynamicItems.length > 0) {
-    const missingItems = teacherStaticItems.filter(
-      staticItem => !teacherDynamicItems.some(it => it.route === staticItem.route)
-    );
-
-    if (missingItems.length > 0) {
-      const additionalItems = missingItems.map(item => ({
-        to: item.route,
-        label: item.name,
-        icon: getIcon(item.icon),
-        role: item.role as any,
-        featureName: item.feature_name,
-        feature_name: item.feature_name,
-        category: item.category as any,
-        unreadCount: (item.route === "/teacher-messages" || item.route === "/messages") ? unreadMessageCount : undefined,
-        is_active: true
-      }));
-      updatedNavItems = [...updatedNavItems, ...additionalItems];
-    }
-  }
 
   const headerContent = (
     <SchoolBranding />

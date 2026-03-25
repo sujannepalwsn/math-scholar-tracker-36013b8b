@@ -89,12 +89,10 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/teacher/settings': 'settings_access',
 };
 
-export const ADMIN_MODULES = [
-  'register_student', 'teacher_management', 'finance', 'settings_access',
-  'hr_management', 'inventory_assets', 'transport_tracking', 'school_days',
-  'teachers_attendance', 'about_institution', 'exams_results', 'published_results',
-  'student_report', 'teacher_reports', 'chapter_performance', 'leave_management',
-  'student_id_cards'
+// Administrative modules strictly blocked for restricted teachers
+export const ADMIN_BLOCKED_IN_RESTRICTED = [
+  'register_student', 'teacher_management', 'hr_management',
+  'student_id_cards', 'inventory_assets', 'transport_tracking', 'finance'
 ];
 
 /**
@@ -137,34 +135,55 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   }
 
   if (user.role === 'teacher') {
-    // Check granular JSONB permissions if available
-    if (teacherPerms.permissions) {
-      const modulePerms = teacherPerms.permissions[dbColumnName];
+    const isRestricted = user.teacher_scope_mode === 'restricted';
 
-      // If the specific module is defined in the JSONB, use it as the source of truth
-      if (modulePerms) {
-        // A module is accessible only if enabled AND can_view is true
-        return modulePerms.enabled === true && modulePerms.can_view === true;
-      }
-
-      // If JSONB exists but doesn't have this key, it might be an administrative module
-      // not yet granted or a newly added module.
-      if (ADMIN_MODULES.includes(dbColumnName)) {
-        return false;
-      }
+    // FULL SCOPE MODE: Equivalent to Center Admin
+    if (!isRestricted) {
+      return true;
     }
 
-    // Fallback to legacy boolean columns if JSONB is not yet loaded or migrated
+    // RESTRICTED SCOPE MODE: Apply strict restrictions
+    // 1. Strictly block administrative modules
+    if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) {
+      return false;
+    }
+
+    // 2. Specific route-based blocks for restricted mode
+    // Restricted teachers cannot access Lesson Plan Management (Review portal)
+    if (dbColumnName === 'lesson_plans' && (featureKey === 'lesson_plan_management' || route === '/lesson-plan-management')) {
+      return false;
+    }
+    // Block Center Settings (restricted to personal settings)
+    if (dbColumnName === 'settings_access' && route === '/settings') {
+      return false;
+    }
+    // Block Center Leave Management (restricted to personal leave)
+    if (dbColumnName === 'leave_management' && route === '/leave-management') {
+      return false;
+    }
+
+    // 3. Check granular JSONB permissions
+    if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
+      const modulePerms = teacherPerms.permissions[dbColumnName];
+      return modulePerms.enabled === true && modulePerms.can_view === true;
+    }
+
+    // 4. Fallback to legacy boolean columns
     if (teacherPerms[dbColumnName] === true) return true;
     if (teacherPerms[dbColumnName] === false) return false;
 
-    // Default behavior for undefined teacher permissions:
-    // - Academic/Communication features: True (unless globally disabled at center level)
-    // - Administrative features: False
-    return !ADMIN_MODULES.includes(dbColumnName);
+    // 5. Default for restricted: allow non-admin modules if globally enabled
+    return true;
   }
 
   // Parents follow center global override
+  if (user.role === 'parent') {
+    const allowedParent = ['leave_management', 'messaging', 'dashboard_access', 'homework_management', 'exams_results', 'discipline_issues', 'preschool_activities'];
+    if (allowedParent.includes(dbColumnName)) {
+      return true;
+    }
+  }
+
   return true;
 };
 
@@ -182,45 +201,65 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
     return hasPermission(user, featureKey);
   }
 
+  // Parents can only 'edit' (create) for specific modules
+  if (user.role === 'parent') {
+    const allowedActions = ['leave_management', 'messaging'];
+    const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
+    return action === 'edit' && allowedActions.includes(dbColumnName);
+  }
+
   if (user.role !== 'teacher') return false;
 
-  // Normalize feature key
   const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
-
-  // Basic access check first (must be enabled and can_view)
-  if (!hasPermission(user, featureKey)) return false;
-
-  const teacherPerms = user.teacherPermissions || {};
   const isRestricted = user.teacher_scope_mode === 'restricted';
+  const teacherPerms = user.teacherPermissions || {};
 
+  // FULL SCOPE MODE: Bypasses action checks
+  if (!isRestricted) {
+    return true;
+  }
+
+  // RESTRICTED SCOPE MODE
   if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {
     const modulePerms = teacherPerms.permissions[dbColumnName];
 
     switch (action) {
       case 'edit':
-        // If in restricted mode, some administrative modules are forced to read-only
-        if (isRestricted && ADMIN_MODULES.includes(dbColumnName)) {
+        // Block editing for admin modules except self-service
+        if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) {
           return false;
         }
+
+        // Self-service allow
+        if (dbColumnName === 'leave_management' || dbColumnName === 'teachers_attendance') {
+           return true;
+        }
+
+        // Academic read-only modules in restricted mode
+        const readOnlyInRestricted = ['class_routine', 'school_days', 'published_results'];
+        if (readOnlyInRestricted.includes(dbColumnName)) {
+          return false;
+        }
+
         return modulePerms.can_edit === true;
+
       case 'approve':
+        // Restricted teachers cannot approve lesson plans
+        if (dbColumnName === 'lesson_plans') return false;
         return modulePerms.can_approve === true;
+
       case 'publish':
         return modulePerms.can_publish === true;
+
       default:
         return false;
     }
   }
 
-  // Fallback for legacy mode: if the module is enabled, allow editing by default
-  // EXCEPT for administrative modules which are strictly guarded
+  // Fallback for missing JSONB keys
   if (action === 'edit') {
-    if (ADMIN_MODULES.includes(dbColumnName)) {
-       // For admin modules in legacy mode, check if the legacy boolean is explicitly true
-       return teacherPerms[dbColumnName] === true;
-    }
-
-    // For academic modules, if we don't have JSONB yet, we assume edit is allowed if view is allowed
+    if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) return false;
+    if (dbColumnName === 'leave_management' || dbColumnName === 'teachers_attendance') return true;
     return hasPermission(user, featureKey);
   }
 

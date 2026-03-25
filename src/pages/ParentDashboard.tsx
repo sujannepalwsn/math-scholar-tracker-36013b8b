@@ -495,6 +495,7 @@ export default function ParentDashboard() {
         <KPICard title="Attendance Rate" value={`${attendanceRate}%`} description="Presence Index" icon={Clock} color="green" trendData={attendanceTrend} onClick={() => scrollToSection("attendance-section")} />
         <KPICard title="Avg Performance" value={`${avgPerformance}%`} description="Evaluation Synthesis" icon={TrendingUp} color="purple" trendData={performanceTrend} onClick={() => scrollToSection("tests-section")} />
         <KPICard title="Homework Pending" value={homeworkPendingCount} description="Active Assignments" icon={Book} color="orange" onClick={() => scrollToSection("overdue-homework-section")} />
+        <KPICard title="Apply Leave" value="Request" description="Absence Portal" icon={CalendarIcon} color="blue" onClick={() => navigate("/parent-leave")} />
         <KPICard title="Fees Payable" value={`₹${outstandingDues}`} description="Outstanding Liability" icon={Wallet} color="rose" onClick={() => scrollToSection("finance-section")} />
       </div>
 

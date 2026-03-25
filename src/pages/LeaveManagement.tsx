@@ -58,9 +58,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LeaveCategoryManager from "@/components/LeaveCategoryManager";
 import { hasActionPermission } from "@/utils/permissions";
+import { useNavigate } from "react-router-dom";
 
 export default function LeaveManagement() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -69,36 +71,21 @@ export default function LeaveManagement() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
-
   // Fetch all leave applications for the center
   const { data: applications = [], isLoading } = useQuery({
-    queryKey: ["center-leave-applications", user?.center_id, isRestricted, user?.id],
+    queryKey: ["center-leave-applications", user?.center_id],
     queryFn: async () => {
       let query = supabase
         .from("leave_applications")
         .select(`
           *,
           leave_categories(name),
-          students!inner(id, name, grade, center_id),
+          students(id, name, grade, center_id),
           users!leave_applications_user_id_fkey(username),
           teachers(id, name)
         `)
         .eq("center_id", user?.center_id!)
         .order("created_at", { ascending: false });
-
-      if (isRestricted) {
-        // Restricted teachers see their own applications OR applications for their assigned students
-        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
-        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
-        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
-
-        const conditions = [`user_id.eq.${user?.id}`];
-        if (myGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myGrades.join(',')})`);
-        }
-        query = query.or(conditions.join(','));
-      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -193,6 +180,11 @@ export default function LeaveManagement() {
     }
   };
 
+  const handleApplyClick = () => {
+    if (user?.role === 'teacher') navigate('/teacher/leave');
+    else if (user?.role === 'parent') navigate('/parent-leave');
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -220,6 +212,15 @@ export default function LeaveManagement() {
           <Settings className="h-5 w-5" />
           LEAVE CATEGORIES
         </Button>
+        {(user?.role === 'teacher' || user?.role === 'parent') && (
+          <Button
+            onClick={handleApplyClick}
+            className="rounded-2xl h-12 px-6 font-bold shadow-soft gap-2 bg-gradient-to-r from-primary to-violet-600"
+          >
+            <Plus className="h-5 w-5" />
+            APPLY FOR LEAVE
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-4 items-center">

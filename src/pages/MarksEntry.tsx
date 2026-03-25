@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/page-header";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
+import { cn } from "@/lib/utils";
 
 function getGrade(percentage: number): string {
   if (percentage >= 90) return "A+";
@@ -31,6 +32,7 @@ export default function MarksEntry() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const centerId = user?.center_id;
+  const teacherId = user?.teacher_id;
 
   const [selectedExamId, setSelectedExamId] = useState<string>(searchParams.get("examId") || "");
   const [marksData, setMarksData] = useState<Record<string, Record<string, string>>>({});
@@ -58,8 +60,8 @@ export default function MarksEntry() {
         const conditions = [`created_by.eq.${user?.id}`];
         if (myGrades.length > 0) {
           myGrades.forEach(g => {
-            conditions.push(`grade.eq.${g}`);
-            conditions.push(`applicable_grades.cs.{${g}}`);
+            conditions.push(`grade.eq."${g}"`);
+            conditions.push(`applicable_grades.cs.{"${g}"}`);
           });
         }
         query = query.or(conditions.join(','));
@@ -92,14 +94,31 @@ export default function MarksEntry() {
   }, [selectedExam]);
 
   const { data: subjects = [] } = useQuery({
-    queryKey: ["exam-subjects-entry", selectedExamId],
+    queryKey: ["exam-subjects-entry", selectedExamId, isRestricted, teacherId],
     queryFn: async () => {
       if (!selectedExamId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("exam_subjects")
         .select("*")
         .eq("exam_id", selectedExamId)
         .order("subject_name");
+
+      if (isRestricted && teacherId) {
+        // Only subjects the teacher is assigned to in period_schedules
+        const { data: scheduledSubjects } = await supabase
+          .from('period_schedules')
+          .select('subject')
+          .eq('teacher_id', teacherId);
+
+        const mySubjects = Array.from(new Set(scheduledSubjects?.map(s => s.subject) || []));
+        if (mySubjects.length > 0) {
+          query = query.in('subject_name', mySubjects);
+        } else {
+          return []; // No assigned subjects, so no exam subjects
+        }
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
