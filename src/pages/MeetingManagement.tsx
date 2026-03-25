@@ -44,19 +44,40 @@ export default function MeetingManagement() {
     queryKey: ["meetings", user?.center_id, isRestricted, user?.id],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase
-        .from("meetings")
-        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees!inner(student_id, user_id, teacher_id), related_meeting:related_meeting_id(id, title, meeting_date)")
-        .eq("center_id", user.center_id)
-        .order("meeting_date", { ascending: false });
 
       if (isRestricted) {
         // Teachers in restricted mode see meetings they created OR meetings where they are an attendee
-        // Quoting user ID to ensure PostgREST handles it correctly in the OR filter
-        query = query.or(`created_by.eq."${user?.id}",meeting_attendees.user_id.eq."${user?.id}"`);
+        // We pre-fetch meeting IDs where the teacher is an attendee to avoid cross-table .or() which fails with 400
+        const { data: attendedMeetings } = await supabase
+          .from("meeting_attendees")
+          .select("meeting_id")
+          .eq("user_id", user.id);
+
+        const meetingIds = attendedMeetings?.map(m => m.meeting_id) || [];
+
+        let query = supabase
+          .from("meetings")
+          .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees(student_id, user_id, teacher_id), related_meeting:related_meeting_id(id, title, meeting_date)")
+          .eq("center_id", user.center_id);
+
+        if (meetingIds.length > 0) {
+          query = query.or(`created_by.eq."${user.id}",id.in.("${meetingIds.join('","')}")`);
+        } else {
+          query = query.eq("created_by", user.id);
+        }
+
+        const { data, error } = await query.order("meeting_date", { ascending: false });
+        if (error) throw error;
+        return data;
       }
 
-      const { data, error } = await query;
+      // Center Admin or Full Scope Teachers see everything for the center
+      const { data, error } = await supabase
+        .from("meetings")
+        .select("*, meeting_conclusions(conclusion_notes, recorded_at), meeting_attendees(student_id, user_id, teacher_id), related_meeting:related_meeting_id(id, title, meeting_date)")
+        .eq("center_id", user.center_id)
+        .order("meeting_date", { ascending: false });
+
       if (error) throw error;
       return data;
     },

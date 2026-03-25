@@ -34,9 +34,9 @@ Deno.serve(async (req: Request) => {
 
     let recipientUsers: Array<{ id: string; student_id?: string; teacher_id?: string }> = [];
 
-    if (targetAudience === 'all_parents' || targetAudience.startsWith('grade_')) {
+    if (targetAudience === 'all_parents' || targetAudience === 'grade_parents') {
       let studentsQuery = supabase.from('students').select('id, name, grade').eq('center_id', centerId);
-      if (targetAudience.startsWith('grade_') && targetGrade) studentsQuery = studentsQuery.eq('grade', targetGrade);
+      if (targetAudience === 'grade_parents' && targetGrade) studentsQuery = studentsQuery.eq('grade', targetGrade);
       const { data: students, error: studentsError } = await studentsQuery;
       if (studentsError) throw studentsError;
 
@@ -66,7 +66,25 @@ Deno.serve(async (req: Request) => {
           conversationId = newConv?.id || null;
         }
       } else if (recipient.teacher_id) {
-        continue;
+        // Find or create conversation for the teacher with the center
+        const { data: existingConversation } = await supabase
+          .from('chat_conversations')
+          .select('id')
+          .eq('center_id', centerId)
+          .eq('parent_user_id', recipient.id)
+          .is('student_id', null)
+          .maybeSingle();
+
+        if (existingConversation) {
+          conversationId = existingConversation.id;
+        } else {
+          const { data: newConv } = await supabase
+            .from('chat_conversations')
+            .insert({ center_id: centerId, parent_user_id: recipient.id })
+            .select('id')
+            .single();
+          conversationId = newConv?.id || null;
+        }
       }
       if (conversationId) {
         messagesToInsert.push({ conversation_id: conversationId, sender_user_id: senderUserId, message_text: messageText, is_read: false });

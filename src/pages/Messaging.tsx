@@ -248,8 +248,23 @@ export default function Messaging() {
     mutationFn: async () => {
       if (!user?.id || !user?.center_id || !broadcastMessageText.trim()) throw new Error("Required fields missing");
       if (!canEdit) throw new Error("Access Denied: You do not have permission to send broadcasts.");
+
+      let finalTargetGrade = broadcastTargetGrade;
+      let finalTargetAudience = broadcastTargetAudience;
+
+      if (broadcastTargetAudience.startsWith('grade_')) {
+        finalTargetGrade = broadcastTargetAudience.replace('grade_', '');
+        finalTargetAudience = 'grade_parents';
+      }
+
       const { data, error } = await supabase.functions.invoke("send-broadcast-message", {
-        body: { senderUserId: user.id, centerId: user.center_id, messageText: broadcastMessageText.trim(), targetAudience: broadcastTargetAudience, targetGrade: broadcastTargetGrade === "all" ? null : broadcastTargetGrade },
+        body: {
+          senderUserId: user.id,
+          centerId: user.center_id,
+          messageText: broadcastMessageText.trim(),
+          targetAudience: finalTargetAudience,
+          targetGrade: finalTargetGrade === "all" ? null : finalTargetGrade
+        },
       });
       if (error) throw error;
       if (!data.success) throw new Error(data.error || "Failed");
