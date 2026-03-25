@@ -529,7 +529,7 @@ export default function TeacherDashboard() {
         {hasPermission(user, 'lesson_plans') && <KPICard title="Lesson Plans" value={allLessonPlans.length} description="Instructional Assets" icon={FileText} color="purple" onClick={() => navigate("/teacher/lesson-plans")} />}
         {hasPermission(user, 'lesson_plans') && <KPICard title="Approvals" value={allLessonPlans.filter(lp => lp.status === 'pending').length} description="Pending Review" icon={CheckCircle2} color="yellow" onClick={() => navigate("/teacher/lesson-plans")} />}
         {hasPermission(user, 'test_management') && <KPICard title="Class Proficiency" value={`${avgPerformance}%`} description="Score Synthesis" icon={TrendingUp} color="purple" trendData={attendanceTrend} onClick={() => scrollToSection("tests-section")} />}
-        {hasPermission(user, 'leave_management', '/teacher/leave') && <KPICard title="Apply Leave" value="Requests" description="Absence Portal" icon={CalendarIcon} color="orange" onClick={() => navigate("/teacher/leave")} />}
+        {hasPermission(user, 'leave_management', '/teacher/leave') && <KPICard title="Leave Applications" value="Requests" description="Absence Portal" icon={CalendarIcon} color="orange" onClick={() => navigate("/teacher/leave")} />}
         {hasPermission(user, 'messaging') && <KPICard title="Messages" value="View" description="Admin Liaison" icon={MessageSquare} color="pink" onClick={() => navigate("/teacher-messages")} />}
       </div>
 

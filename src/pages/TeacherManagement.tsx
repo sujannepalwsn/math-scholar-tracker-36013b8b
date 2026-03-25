@@ -868,20 +868,20 @@ export default function TeacherManagement() {
                               <div className="flex justify-end gap-2 items-center">
                                 {!teacher.user_id ? (
                                   <Button
-                                    variant="outline"
+                                    variant="default"
                                     size="sm"
-                                    className="h-8 rounded-lg font-black uppercase text-[9px] tracking-tighter border-green-200 text-green-600 hover:bg-green-50 animate-pulse"
+                                    className="h-8 rounded-lg font-black uppercase text-[9px] tracking-tighter bg-emerald-600 hover:bg-emerald-700 shadow-md animate-pulse"
                                     onClick={(e) => { e.stopPropagation(); handleCreateLoginClick(teacher); }}
                                   >
                                     <UserPlus className="h-3 w-3 mr-1" />
                                     CREATE LOGIN
                                   </Button>
                                 ) : (
-                                  <div className="flex items-center gap-1 text-[9px] font-black text-slate-300 uppercase italic">
+                                  <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 uppercase italic bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
                                     <ShieldCheck className="h-3 w-3" /> System Access
                                   </div>
                                 )}
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft opacity-0 group-hover/row:opacity-100 transition-all" onClick={(e) => { e.stopPropagation(); handleEditClick(teacher); }}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft border border-slate-100 hover:bg-primary/5 transition-all" onClick={(e) => { e.stopPropagation(); handleEditClick(teacher); }}>
                                   <Edit className="h-3.5 w-3.5 text-primary" />
                                 </Button>
                               </div>
@@ -970,10 +970,10 @@ export default function TeacherManagement() {
                   {!selectedTeacher.user_id && (
                     <Button
                       variant="default"
-                      className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11 bg-gradient-to-r from-green-600 to-emerald-600 shadow-lg shadow-green-100 border-none"
+                      className="rounded-xl font-black uppercase text-[10px] tracking-widest h-12 bg-gradient-to-r from-emerald-600 to-green-600 shadow-xl shadow-emerald-200 border-none hover:scale-[1.02] transition-all"
                       onClick={() => handleCreateLoginClick(selectedTeacher)}
                     >
-                      <UserPlus className="h-3.5 w-3.5 mr-2" /> INITIALIZE LOGIN ACCESS
+                      <UserPlus className="h-4 w-4 mr-2" /> INITIALIZE LOGIN ACCESS
                     </Button>
                   )}
                 </div>

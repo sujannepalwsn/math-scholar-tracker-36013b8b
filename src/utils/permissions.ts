@@ -163,8 +163,12 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
     if (dbColumnName === 'settings_access' && route === '/settings') {
       return false;
     }
+    // Ensure '/teacher/leave' is ALWAYS accessible if leave_management is enabled globally.
+    if (route === '/teacher/leave') {
+      return centerPerms['leave_management'] !== false;
+    }
+
     // Block ONLY the Center Admin Leave Management page for restricted teachers.
-    // They should still have access to the 'leave_management' feature globally for their own 'Leaves' portal.
     if (dbColumnName === 'leave_management' && route === '/leave-management') {
       return false;
     }
