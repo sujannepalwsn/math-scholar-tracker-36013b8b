@@ -69,36 +69,21 @@ export default function LeaveManagement() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
-
   // Fetch all leave applications for the center
   const { data: applications = [], isLoading } = useQuery({
-    queryKey: ["center-leave-applications", user?.center_id, isRestricted, user?.id],
+    queryKey: ["center-leave-applications", user?.center_id],
     queryFn: async () => {
       let query = supabase
         .from("leave_applications")
         .select(`
           *,
           leave_categories(name),
-          students!inner(id, name, grade, center_id),
+          students(id, name, grade, center_id),
           users!leave_applications_user_id_fkey(username),
           teachers(id, name)
         `)
         .eq("center_id", user?.center_id!)
         .order("created_at", { ascending: false });
-
-      if (isRestricted) {
-        // Restricted teachers see their own applications OR applications for their assigned students
-        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
-        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
-        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
-
-        const conditions = [`user_id.eq.${user?.id}`];
-        if (myGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myGrades.join(',')})`);
-        }
-        query = query.or(conditions.join(','));
-      }
 
       const { data, error } = await query;
       if (error) throw error;

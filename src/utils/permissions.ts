@@ -158,6 +158,11 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
        if (dbColumnName === 'settings_access' && route === '/settings') {
          return false;
        }
+
+       // Block Center Leave Management for restricted teachers
+       if (dbColumnName === 'leave_management' && route === '/leave-management') {
+         return false;
+       }
     }
 
     // Check granular JSONB permissions if available
