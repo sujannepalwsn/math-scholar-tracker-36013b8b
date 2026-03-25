@@ -22,7 +22,7 @@ const FEATURES = [
   { name: 'teacher_management', label: 'Teachers Registration' },
   { name: 'teachers_attendance', label: 'Teachers Attendance' },
   { name: 'hr_management', label: 'HR Management' },
-  { name: 'leave_management', label: 'Leave Management' },
+  { name: 'leave_management', label: 'Leave Applications' },
   { name: 'student_id_cards', label: 'Student ID Cards' },
   { name: 'inventory_assets', label: 'Inventory & Assets' },
   { name: 'transport_tracking', label: 'Transport & Tracking' },
@@ -43,8 +43,10 @@ const FEATURES = [
 ];
 
 const TEACHER_FEATURES = [
+  { name: 'dashboard_access', label: 'Dashboard' },
   { name: 'take_attendance', label: 'Take Attendance' },
-  { name: 'lesson_plans', label: 'Lesson Plans' },
+  { name: 'class_routine', label: 'Class Routine' },
+  { name: 'lesson_plans', label: 'Lesson Plan Management' },
   { name: 'lesson_tracking', label: 'Lesson Tracking' },
   { name: 'homework_management', label: 'Homework' },
   { name: 'test_management', label: 'Tests' },
@@ -57,9 +59,23 @@ const TEACHER_FEATURES = [
   { name: 'attendance_summary', label: 'Attendance Summary' },
   { name: 'summary', label: 'Summary' },
   { name: 'chapter_performance', label: 'Chapter Performance' },
+  { name: 'teacher_reports', label: 'Teacher Reports' },
   { name: 'view_records', label: 'View Records' },
-  { name: 'finance', label: 'Finance' },
+  { name: 'finance', label: 'Finance Access' },
   { name: 'ai_insights', label: 'AI Insights' },
+  { name: 'about_institution', label: 'About Institution' },
+  { name: 'settings_access', label: 'Settings Access' },
+  { name: 'register_student', label: 'Students Registration' },
+  { name: 'teacher_management', label: 'Teachers Registration' },
+  { name: 'teachers_attendance', label: 'Teachers Attendance' },
+  { name: 'hr_management', label: 'HR Management' },
+  { name: 'leave_management', label: 'Leave Applications' },
+  { name: 'student_id_cards', label: 'Student ID Cards' },
+  { name: 'inventory_assets', label: 'Inventory & Assets' },
+  { name: 'transport_tracking', label: 'Transport & Tracking' },
+  { name: 'school_days', label: 'School Days' },
+  { name: 'exams_results', label: 'Exams & Results' },
+  { name: 'published_results', label: 'Published Results' },
 ];
 
 export default function CenterFeaturePermissions() {
