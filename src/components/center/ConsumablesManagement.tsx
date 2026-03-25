@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Package, Plus, Trash2, Search, Filter, MinusCircle, Info } from "lucide-react";
+import { Package, Plus, Trash2, Search, Filter, MinusCircle, Info, Printer, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,6 +186,64 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
+  const handlePrintReport = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const reportHtml = `
+      <html>
+        <head>
+          <title>Consumables Consumption Report</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            h1 { color: #4f46e5; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 12px; }
+            th { background-color: #f8fafc; font-weight: bold; text-transform: uppercase; }
+            .date { font-size: 10px; color: #64748b; }
+            .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+            .distributed { background-color: #dcfce7; color: #166534; }
+            .disposed { background-color: #fee2e2; color: #991b1b; }
+          </style>
+        </head>
+        <body>
+          <h1>Consumables Consumption Report</h1>
+          <p>Generated on: ${new Date().toLocaleString()}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Item</th>
+                <th>Recipient</th>
+                <th>Qty</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs?.map((log: any) => `
+                <tr>
+                  <td class="date">${new Date(log.created_at).toLocaleString()}</td>
+                  <td><b>${log.consumables?.name}</b></td>
+                  <td>${log.students ? `${log.students.name} (Student)` : log.teachers ? `${log.teachers.name} (Teacher)` : 'Internal'}</td>
+                  <td>${log.quantity}</td>
+                  <td><span class="badge ${log.action_type}">${log.action_type}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(reportHtml);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="inventory">
@@ -319,18 +377,54 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
                     </div>
 
                     <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100 space-y-4">
-                       <p className="label-caps text-indigo-700">Quick Distribution</p>
-                       <div className="flex gap-4">
-                          <Input type="number" value={distForm.amount} onChange={e => setDistForm({...distForm, amount: e.target.value})} className="h-12 rounded-xl bg-white" placeholder="Qty" />
+                       <p className="label-caps text-indigo-700">Distribution Protocol</p>
+                       <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <Label className="text-[10px] font-black uppercase text-indigo-700/60">Recipient Type</Label>
+                              <select
+                                value={distForm.recipientType}
+                                onChange={e => setDistForm({...distForm, recipientType: e.target.value, recipientId: ""})}
+                                className="w-full h-10 rounded-xl bg-white border-none shadow-soft text-sm px-3"
+                              >
+                                <option value="student">Student</option>
+                                <option value="teacher">Staff/Teacher</option>
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px] font-black uppercase text-indigo-700/60">Quantity</Label>
+                              <Input type="number" value={distForm.amount} onChange={e => setDistForm({...distForm, amount: e.target.value})} className="h-10 rounded-xl bg-white border-none shadow-soft" placeholder="Qty" />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-black uppercase text-indigo-700/60">Select {distForm.recipientType === 'student' ? 'Student' : 'Teacher'}</Label>
+                            <select
+                              value={distForm.recipientId}
+                              onChange={e => setDistForm({...distForm, recipientId: e.target.value})}
+                              className="w-full h-10 rounded-xl bg-white border-none shadow-soft text-sm px-3"
+                            >
+                              <option value="">Choose {distForm.recipientType === 'student' ? 'Student' : 'Teacher'}...</option>
+                              {distForm.recipientType === 'student' ?
+                                students?.map((s: any) => (
+                                  <option key={s.id} value={s.id}>{s.name} (Grade {s.grade})</option>
+                                )) :
+                                teachers?.map((t: any) => (
+                                  <option key={t.id} value={t.id}>{t.name}</option>
+                                ))
+                              }
+                            </select>
+                          </div>
+
                           <Button
-                            className="flex-1 h-12 rounded-xl font-black uppercase tracking-widest text-[10px] bg-indigo-600 shadow-lg shadow-indigo-200"
+                            className="w-full h-12 rounded-xl font-black uppercase tracking-widest text-[10px] bg-indigo-600 shadow-lg shadow-indigo-200"
+                            disabled={!distForm.recipientId || !distForm.amount || distributeMutation.isPending}
                             onClick={() => {
                                 setShowDistribute(selectedItem.id);
-                                // This would normally open a modal or inline form, let's trigger distribute
-                                toast.info("Select recipient to complete distribution");
+                                distributeMutation.mutate();
                             }}
                           >
-                             Initiate Distro
+                             {distributeMutation.isPending ? "PROCESSING..." : "CONFIRM DISTRIBUTION"}
                           </Button>
                        </div>
                     </div>
@@ -348,7 +442,15 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
           </div>
         </TabsContent>
 
-        <TabsContent value="logs" className="pt-4">
+        <TabsContent value="logs" className="pt-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" /> Consumption Ledger
+            </h3>
+            <Button variant="outline" size="sm" onClick={handlePrintReport} className="rounded-xl font-bold gap-2">
+              <Printer className="h-4 w-4" /> GENERATE REPORT
+            </Button>
+          </div>
           <div className="border rounded-2xl overflow-hidden bg-white shadow-soft">
             <div className="overflow-x-auto">
   <Table>

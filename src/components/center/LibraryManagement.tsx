@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Book, Plus, Trash2, Search, BookOpen, RotateCcw } from "lucide-react";
+import { Book, Plus, Trash2, Search, BookOpen, RotateCcw, History, Printer } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -133,6 +133,63 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
   });
 
   const [selectedBook, setSelectedBook] = useState<any>(null);
+
+  const handlePrintHistory = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const historyHtml = `
+      <html>
+        <head>
+          <title>Library Issue/Return History</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            h1 { color: #4f46e5; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 12px; }
+            th { background-color: #f8fafc; font-weight: bold; text-transform: uppercase; }
+            .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+            .issued { background-color: #dbeafe; color: #1e40af; }
+            .returned { background-color: #f1f5f9; color: #475569; }
+          </style>
+        </head>
+        <body>
+          <h1>Library Issue/Return History</h1>
+          <p>Generated on: ${new Date().toLocaleString()}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Book</th>
+                <th>Issued To</th>
+                <th>Issue Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${loans?.map((l: any) => `
+                <tr>
+                  <td><b>${l.books?.title}</b></td>
+                  <td>${l.students?.name || l.users?.username || 'N/A'}</td>
+                  <td>${l.issue_date}</td>
+                  <td>${l.return_date || '-'}</td>
+                  <td><span class="badge ${l.status.toLowerCase()}">${l.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(historyHtml);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
 
   return (
     <div className="space-y-6">
@@ -279,13 +336,21 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
         </TabsContent>
 
         <TabsContent value="loans" className="space-y-4 pt-4">
-          {canEdit && (
-            <div className="flex justify-end">
-              <Button onClick={() => setShowIssueForm(!showIssueForm)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
-                {showIssueForm ? "Cancel" : "New Issue"}
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" /> Circulation Log
+            </h3>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrintHistory} className="rounded-xl font-bold gap-2">
+                <Printer className="h-4 w-4" /> PRINT LOG
               </Button>
+              {canEdit && (
+                <Button onClick={() => setShowIssueForm(!showIssueForm)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+                  {showIssueForm ? "Cancel" : "New Issue"}
+                </Button>
+              )}
             </div>
-          )}
+          </div>
 
           {showIssueForm && (
             <Card className="rounded-2xl border-none shadow-soft bg-emerald-50">

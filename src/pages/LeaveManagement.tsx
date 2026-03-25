@@ -57,7 +57,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LeaveCategoryManager from "@/components/LeaveCategoryManager";
-import { hasActionPermission } from "@/utils/permissions";
+import { hasActionPermission, hasPermission } from "@/utils/permissions";
 import { useNavigate } from "react-router-dom";
 
 export default function LeaveManagement() {

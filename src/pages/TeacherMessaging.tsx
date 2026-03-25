@@ -66,6 +66,23 @@ export default function TeacherMessaging() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Real-time subscription
+  useEffect(() => {
+    if (!conversation?.id) return;
+    const channel = supabase
+      .channel(`teacher-chat-${conversation.id}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "chat_messages",
+        filter: `conversation_id=eq.${conversation.id}`
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-chat-messages", conversation.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [conversation?.id, queryClient]);
+
   // Mark messages as read
   useEffect(() => {
     const markAsRead = async () => {
@@ -74,14 +91,18 @@ export default function TeacherMessaging() {
         (m: any) => !m.is_read && m.sender_user_id !== user.id
       );
       if (unreadMessages.length > 0) {
-        await supabase
+        const { error } = await supabase
           .from("chat_messages")
           .update({ is_read: true, read_at: new Date().toISOString() })
           .in("id", unreadMessages.map((m: any) => m.id));
+
+        if (!error) {
+           queryClient.invalidateQueries({ queryKey: ["unread-messages-teacher"] });
+        }
       }
     };
     markAsRead();
-  }, [messages, conversation?.id, user?.id]);
+  }, [messages, conversation?.id, user?.id, queryClient]);
 
   // Send message
   const sendMessageMutation = useMutation({
