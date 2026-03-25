@@ -680,7 +680,7 @@ export default function TeacherDashboard() {
                       <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground">Total Students</th>
                       <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground text-green-600">Present</th>
                       <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground text-rose-600">Absent</th>
-                      <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground">Ratio</th>
+                      <th className="border-b px-4 py-2 text-center">Ratio</th>
                     </tr>
                   </thead>
                   <tbody>

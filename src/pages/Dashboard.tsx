@@ -332,7 +332,7 @@ export default function Dashboard() {
 
   // Recent activities for preview card
   const { data: recentActivities = [] } = useQuery({
-    queryKey: ["recent-activities-dashboard", centerId, isRestricted],
+    queryKey: ["recent-activities-dashboard", centerId, isRestricted, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -342,8 +342,8 @@ export default function Dashboard() {
         .order("activity_date", { ascending: false })
         .limit(5);
 
-      if (isRestricted) {
-        query = query.eq('teacher_id', user?.teacher_id);
+      if (isRestricted && user?.id) {
+        query = query.eq('created_by', user.id);
       }
 
       const { data, error } = await query;
@@ -366,11 +366,11 @@ export default function Dashboard() {
         .order("issue_date", { ascending: false })
         .limit(5);
 
-      if (isRestricted) {
+      if (isRestricted && user?.id) {
         // Teacher sees their own reports OR reports for their assigned grades
-        const conditions = [`reported_by.eq.${user?.id}`];
+        const conditions = [`reported_by.eq.${user.id}`];
         if (myAssignedGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myAssignedGrades.join(',')})`);
+          conditions.push(`students.grade.in.(${myAssignedGrades.map(g => `"${g}"`).join(',')})`);
         }
         query = query.or(conditions.join(','));
       }

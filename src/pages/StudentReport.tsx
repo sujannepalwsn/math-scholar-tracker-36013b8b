@@ -298,7 +298,7 @@ export default function StudentReport() {
 
           const conditions = [`reported_by.eq.${user.id}`];
           if (myGrades.length > 0) {
-            conditions.push(`students.grade.in.(${myGrades.join(',')})`);
+            conditions.push(`students.grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
           }
           query = query.or(conditions.join(','));
         }

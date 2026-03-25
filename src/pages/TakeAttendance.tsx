@@ -161,10 +161,15 @@ export default function TakeAttendance() {
   const availableGrades = students ? Array.from(new Set(students.map(s => s.grade))).sort() : [];
   const allowedGrades = (isTeacher && isRestricted) ? availableGrades.filter(g => classTeacherGrades.includes(g)) : availableGrades;
 
-  // Auto-set grade filter for restricted teachers with only one assigned grade
+  // Auto-set grade filter for restricted teachers
   useEffect(() => {
-    if (isTeacher && isRestricted && classTeacherGrades.length === 1 && gradeFilter === "all") {
-      setGradeFilter(classTeacherGrades[0]);
+    if (isTeacher && isRestricted && gradeFilter === "all") {
+      if (classTeacherGrades.length === 1) {
+        setGradeFilter(classTeacherGrades[0]);
+      } else if (classTeacherGrades.length > 1) {
+        // Default to first assigned grade if multiple
+        setGradeFilter(classTeacherGrades[0]);
+      }
     }
   }, [isTeacher, isRestricted, classTeacherGrades, gradeFilter]);
 
@@ -238,12 +243,23 @@ export default function TakeAttendance() {
     mutationFn: async () => {
       if (!filteredStudents || !user?.center_id) return;
       if (!hasEditPermission) throw new Error("Access Denied: You do not have permission to mark attendance.");
-      // Delete existing records for these students on this date
-      const { error: deleteError } = await supabase.from("attendance").delete().eq("date", dateStr).in("student_id", filteredStudents.map((s) => s.id));
+      // 1. Security Guard for Restricted Teachers
+      const studentsToProcess = filteredStudents || [];
+      if (isRestricted) {
+        const unauthorizedStudents = studentsToProcess.filter(s => !classTeacherGrades.includes(s.grade));
+        if (unauthorizedStudents.length > 0) {
+          throw new Error("Access Denied: You are attempting to mark attendance for grades not assigned to you.");
+        }
+      }
+
+      if (!user.center_id) throw new Error("Missing center context");
+
+      // 2. Delete existing records for these students on this date
+      const { error: deleteError } = await supabase.from("attendance").delete().eq("date", dateStr).in("student_id", studentsToProcess.map((s) => s.id));
       if (deleteError) throw deleteError;
 
-      // Insert ALL filtered students
-      const records = filteredStudents.map((student) => ({
+      // 3. Insert ALL filtered students
+      const records = studentsToProcess.map((student) => ({
         student_id: student.id,
         center_id: user.center_id!,
         date: dateStr,
@@ -383,10 +399,10 @@ export default function TakeAttendance() {
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Filter Grade</label>
               <Select value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
-                  <SelectValue placeholder="All Grades" />
+                  <SelectValue placeholder="Select Grade" />
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-                  {isTeacher && classTeacherGrades.length > 0 ? null : <SelectItem value="all">All Grades</SelectItem>}
+                  {(!isTeacher || !isRestricted) && <SelectItem value="all">All Grades</SelectItem>}
                   {allowedGrades.map((g) => (
                     <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
                   ))}
