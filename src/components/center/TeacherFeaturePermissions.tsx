@@ -91,7 +91,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
   });
 
   const permissions = rawPermissions?.permissions || {};
-  const scopeMode = rawPermissions?.teacher_scope_mode || 'full';
+  const scopeMode = rawPermissions?.teacher_scope_mode || 'restricted';
 
   const updatePermissionMutation = useMutation({
     mutationFn: async ({ updatedPermissions, legacyFields }: { updatedPermissions: any, legacyFields: any }) => {
@@ -109,7 +109,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
           .from('teacher_feature_permissions')
           .insert({
             teacher_id: teacherId,
-            teacher_scope_mode: 'full', // Default for new records
+            teacher_scope_mode: 'restricted', // Default for new records
             permissions: updatedPermissions,
             ...legacyFields
           });
@@ -215,7 +215,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
               </span>
             </div>
             <div className="flex items-center gap-2 ml-2">
-              <span className={cn("text-[10px] font-black uppercase", scopeMode === 'restricted' ? "text-primary" : "text-slate-400")}>Restricted</span>
+              <span className={cn("text-[10px] font-black uppercase", scopeMode !== 'full' ? "text-primary" : "text-slate-400")}>Restricted</span>
               <Switch
                 checked={scopeMode === 'full'}
                 onCheckedChange={(val) => handleScopeToggle(val)}

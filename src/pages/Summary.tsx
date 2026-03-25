@@ -27,7 +27,7 @@ export default function Summary() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>(format(new Date(), "yyyy-MM"));
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch students
   const { data: students } = useQuery({

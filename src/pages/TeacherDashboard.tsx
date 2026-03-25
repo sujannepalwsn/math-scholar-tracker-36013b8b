@@ -58,7 +58,7 @@ export default function TeacherDashboard() {
   const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan | null>(null);
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Data Fetching
   const { data: teacherStudents = [], isLoading: isStudentsLoading } = useQuery({

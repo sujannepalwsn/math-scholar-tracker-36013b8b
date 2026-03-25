@@ -57,7 +57,7 @@ export default function CalendarEvents() {
   // Determine center_id: use user's center_id for center/teacher/admin, or student's center_id for parents
   const centerId = isParent ? student?.center_id : user?.center_id;
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch events
   const { data: events = [], isLoading } = useQuery({

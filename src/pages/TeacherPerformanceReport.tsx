@@ -30,7 +30,7 @@ export default function TeacherPerformanceReport() {
   };
   const range = getDateRange();
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: teachers = [] } = useQuery({
     queryKey: ["teachers-for-report", user?.center_id, user?.role, user?.teacher_id, isRestricted],

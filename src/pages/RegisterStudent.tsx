@@ -95,7 +95,7 @@ export default function RegisterStudent() {
   const [showLinkChildDialog, setShowLinkChildDialog] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch students
   const { data: students, isLoading } = useQuery({

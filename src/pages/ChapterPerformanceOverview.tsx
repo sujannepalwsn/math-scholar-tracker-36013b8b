@@ -42,7 +42,7 @@ export default function ChapterPerformanceOverview() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [studentFilter, setStudentFilter] = useState<string>("all"); // NEW: Student filter state
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch all students for grade and student filters
   const { data: allStudents = [] } = useQuery({

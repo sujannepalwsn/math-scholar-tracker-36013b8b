@@ -57,7 +57,7 @@ export default function StudentReport() {
   const [selectedPublishedExamId, setSelectedPublishedExamId] = useState<string>("none");
   const [selectedAttendanceDetail, setSelectedAttendanceDetail] = useState<any>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch students
   const { data: students = [] } = useQuery({

@@ -135,10 +135,10 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   }
 
   if (user.role === 'teacher') {
-    const isRestricted = user.teacher_scope_mode === 'restricted';
+    const isFullScope = user.teacher_scope_mode === 'full';
 
     // FULL SCOPE MODE: Equivalent to Center Admin
-    if (!isRestricted) {
+    if (isFullScope) {
       return true;
     }
 
@@ -211,11 +211,11 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
   if (user.role !== 'teacher') return false;
 
   const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
-  const isRestricted = user.teacher_scope_mode === 'restricted';
+  const isFullScope = user.teacher_scope_mode === 'full';
   const teacherPerms = user.teacherPermissions || {};
 
   // FULL SCOPE MODE: Bypasses action checks
-  if (!isRestricted) {
+  if (isFullScope) {
     return true;
   }
 

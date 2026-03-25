@@ -15,7 +15,7 @@ export default function ResultsDashboard() {
   const centerId = user?.center_id;
   const [selectedExamId, setSelectedExamId] = useState<string>("");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: exams = [] } = useQuery({
     queryKey: ["exams-list-dashboard", centerId, user?.role, user?.teacher_id, isRestricted],

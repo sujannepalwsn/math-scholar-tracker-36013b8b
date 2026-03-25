@@ -37,7 +37,7 @@ export default function MeetingManagement() {
   const [showConclusionDialog, setShowConclusionDialog] = useState(false);
   const [selectedMeetingForConclusion, setSelectedMeetingForConclusion] = useState<Meeting & { meeting_conclusions: MeetingConclusion[] } | null>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch meetings for the current center
   const { data: meetings = [], isLoading } = useQuery({

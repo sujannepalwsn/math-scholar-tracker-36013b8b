@@ -101,7 +101,8 @@ export default function TakeAttendance() {
 
   const isTeacher = user?.role === 'teacher';
   const isCenter = user?.role === 'center' || user?.role === 'admin';
-  const isRestricted = isTeacher && user?.teacher_scope_mode === 'restricted';
+  // Treat as restricted unless explicitly set to 'full'
+  const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
 
   const { data: students } = useQuery({

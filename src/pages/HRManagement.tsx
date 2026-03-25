@@ -19,7 +19,7 @@ export default function HRManagement() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: teachers = [], isLoading } = useQuery({
     queryKey: ["teachers-hr", centerId, isRestricted, user?.teacher_id],

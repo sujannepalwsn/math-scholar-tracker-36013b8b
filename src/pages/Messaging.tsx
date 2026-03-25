@@ -191,7 +191,7 @@ export default function Messaging() {
     onError: (error: any) => toast.error(error.message || "Failed to send message"),
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Students with parents
   const { data: studentsWithParents = [] } = useQuery({

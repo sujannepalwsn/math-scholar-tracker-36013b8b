@@ -173,7 +173,7 @@ export default function Dashboard() {
     enabled: !!user?.teacher_id && user?.role === 'teacher'
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: students = [], isLoading: isStudentsLoading } = useQuery({
     queryKey: ["students", centerId, isRestricted, myAssignedGrades],

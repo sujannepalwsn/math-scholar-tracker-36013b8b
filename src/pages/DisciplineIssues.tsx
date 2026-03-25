@@ -36,7 +36,7 @@ const severityLevels = [
 export default function DisciplineIssues() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<DisciplineIssue | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>("all");

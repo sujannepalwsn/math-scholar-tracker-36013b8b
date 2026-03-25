@@ -85,7 +85,7 @@ export default function LessonTracking() {
   });
 
   // Fetch lesson plans for dropdown and listing
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: lessonPlans = [] } = useQuery({
     queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject, user?.teacher_id, isRestricted],

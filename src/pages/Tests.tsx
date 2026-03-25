@@ -48,7 +48,7 @@ interface QuestionMark {
 export default function Tests() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
   const canEdit = hasActionPermission(user, 'test_management', 'edit');
   const [isAddingTest, setIsAddingTest] = useState(false);
   const [selectedTest, setSelectedTest] = useState<string>("");
