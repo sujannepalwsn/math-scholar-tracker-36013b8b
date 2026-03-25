@@ -355,7 +355,7 @@ export default function Dashboard() {
 
   // Recent discipline issues for preview card
   const { data: recentDiscipline = [] } = useQuery({
-    queryKey: ["recent-discipline-dashboard", centerId, isRestricted, myAssignedGrades],
+    queryKey: ["recent-discipline-dashboard", centerId, isRestricted, myAssignedGrades, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -367,10 +367,18 @@ export default function Dashboard() {
         .limit(5);
 
       if (isRestricted && user?.id) {
-        // Teacher sees their own reports OR reports for their assigned grades
+        // To avoid complex cross-table OR filters in PostgREST, we first get student IDs for the assigned grades
+        const { data: assignedStudents } = await supabase
+          .from('students')
+          .select('id')
+          .in('grade', myAssignedGrades);
+
+        const studentIds = assignedStudents?.map(s => s.id) || [];
+
+        // Teacher sees their own reports OR reports for their assigned students
         const conditions = [`reported_by.eq.${user.id}`];
-        if (myAssignedGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myAssignedGrades.map(g => `"${g}"`).join(',')})`);
+        if (studentIds.length > 0) {
+          conditions.push(`student_id.in.(${studentIds.join(',')})`);
         }
         query = query.or(conditions.join(','));
       }

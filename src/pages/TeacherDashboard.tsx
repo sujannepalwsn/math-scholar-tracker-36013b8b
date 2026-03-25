@@ -269,12 +269,18 @@ export default function TeacherDashboard() {
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', teacherId);
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
-        // Post-filter or separate conditions since 'students.grade' in .or() might cause issues
-        // with complex joins in PostgREST. Let's simplify and filter by reported_by OR grade list.
+        // To avoid complex cross-table OR filters in PostgREST, we first get student IDs for the assigned grades
+        const { data: assignedStudents } = await supabase
+          .from('students')
+          .select('id')
+          .in('grade', myGrades);
+
+        const studentIds = assignedStudents?.map(s => s.id) || [];
+
+        // Teacher sees their own reports OR reports for their assigned students
         const conditions = [`reported_by.eq.${user.id}`];
-        if (myGrades.length > 0) {
-          // Note: using 'students(grade)' because we have 'students!inner(name, grade)' in select
-          conditions.push(`students.grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
+        if (studentIds.length > 0) {
+          conditions.push(`student_id.in.(${studentIds.join(',')})`);
         }
         query = query.or(conditions.join(','));
       }
@@ -680,7 +686,7 @@ export default function TeacherDashboard() {
                       <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground">Total Students</th>
                       <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground text-green-600">Present</th>
                       <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground text-rose-600">Absent</th>
-                      <th className="border-b px-4 py-2 text-center">Ratio</th>
+                      <th className="border-b px-4 py-2 text-center font-bold uppercase text-[10px] text-muted-foreground">Ratio</th>
                     </tr>
                   </thead>
                   <tbody>

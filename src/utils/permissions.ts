@@ -158,7 +158,7 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
       return false;
     }
     // Block Center Leave Management (restricted to personal leave)
-    if (dbColumnName === 'leave_management' && route === '/leave-management') {
+    if (dbColumnName === 'leave_management' && (route === '/leave-management' || featureKey === '/leave-management')) {
       return false;
     }
 
@@ -244,8 +244,8 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
         return modulePerms.can_edit === true;
 
       case 'approve':
-        // Restricted teachers cannot approve lesson plans
-        if (dbColumnName === 'lesson_plans') return false;
+        // Restricted teachers cannot approve lesson plans or leave applications
+        if (dbColumnName === 'lesson_plans' || dbColumnName === 'leave_management') return false;
         return modulePerms.can_approve === true;
 
       case 'publish':

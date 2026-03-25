@@ -296,9 +296,18 @@ export default function StudentReport() {
           const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
           const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
+          // To avoid complex cross-table OR filters in PostgREST, we first get student IDs for the assigned grades
+          const { data: assignedStudents } = await supabase
+            .from('students')
+            .select('id')
+            .in('grade', myGrades);
+
+          const assignedStudentIds = assignedStudents?.map(s => s.id) || [];
+
+          // Teacher sees their own reports OR reports for their assigned students
           const conditions = [`reported_by.eq.${user.id}`];
-          if (myGrades.length > 0) {
-            conditions.push(`students.grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
+          if (assignedStudentIds.length > 0) {
+            conditions.push(`student_id.in.(${assignedStudentIds.join(',')})`);
           }
           query = query.or(conditions.join(','));
         }

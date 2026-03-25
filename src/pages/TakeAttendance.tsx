@@ -163,13 +163,8 @@ export default function TakeAttendance() {
 
   // Auto-set grade filter for restricted teachers
   useEffect(() => {
-    if (isTeacher && isRestricted && gradeFilter === "all") {
-      if (classTeacherGrades.length === 1) {
-        setGradeFilter(classTeacherGrades[0]);
-      } else if (classTeacherGrades.length > 1) {
-        // Default to first assigned grade if multiple
-        setGradeFilter(classTeacherGrades[0]);
-      }
+    if (isTeacher && isRestricted && gradeFilter === "all" && classTeacherGrades.length > 0) {
+      setGradeFilter(classTeacherGrades[0]);
     }
   }, [isTeacher, isRestricted, classTeacherGrades, gradeFilter]);
 
