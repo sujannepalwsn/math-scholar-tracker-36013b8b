@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
+import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, ShieldCheck, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -865,19 +865,23 @@ export default function TeacherManagement() {
                               </Badge>
                             </TableCell>
                             <TableCell className="px-6 py-4 text-right pr-6">
-                              <div className="flex justify-end gap-1.5 opacity-0 group-hover/row:opacity-100 transition-all duration-300">
-                                {!teacher.user_id && (
+                              <div className="flex justify-end gap-2 items-center">
+                                {!teacher.user_id ? (
                                   <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-xl bg-white shadow-soft"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 rounded-lg font-black uppercase text-[9px] tracking-tighter border-green-200 text-green-600 hover:bg-green-50 animate-pulse"
                                     onClick={(e) => { e.stopPropagation(); handleCreateLoginClick(teacher); }}
-                                    title="Create User Account"
                                   >
-                                    <UserPlus className="h-3.5 w-3.5 text-green-600" />
+                                    <UserPlus className="h-3 w-3 mr-1" />
+                                    CREATE LOGIN
                                   </Button>
+                                ) : (
+                                  <div className="flex items-center gap-1 text-[9px] font-black text-slate-300 uppercase italic">
+                                    <ShieldCheck className="h-3 w-3" /> System Access
+                                  </div>
                                 )}
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft opacity-0 group-hover/row:opacity-100 transition-all" onClick={(e) => { e.stopPropagation(); handleEditClick(teacher); }}>
                                   <Edit className="h-3.5 w-3.5 text-primary" />
                                 </Button>
                               </div>
@@ -964,8 +968,12 @@ export default function TeacherManagement() {
                     <GraduationCap className="h-3.5 w-3.5 mr-2" /> Assign Grade
                   </Button>
                   {!selectedTeacher.user_id && (
-                    <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11 border-green-200 text-green-700 hover:bg-green-50" onClick={() => handleCreateLoginClick(selectedTeacher)}>
-                      <UserPlus className="h-3.5 w-3.5 mr-2" /> Create Account
+                    <Button
+                      variant="default"
+                      className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11 bg-gradient-to-r from-green-600 to-emerald-600 shadow-lg shadow-green-100 border-none"
+                      onClick={() => handleCreateLoginClick(selectedTeacher)}
+                    >
+                      <UserPlus className="h-3.5 w-3.5 mr-2" /> INITIALIZE LOGIN ACCESS
                     </Button>
                   )}
                 </div>
