@@ -72,7 +72,7 @@ export default function TakeAttendance() {
 
   const isOperationalDay = schoolDay ? schoolDay.is_school_day : true;
 
-  // Fetch class teacher assignments if teacher role (from both assignments and schedules)
+  // Fetch class teacher assignments if teacher role (ONLY from official assignments)
   const { data: classTeacherGrades = [] } = useQuery({
     queryKey: ["my-class-teacher-grades", user?.teacher_id],
     queryFn: async () => {
@@ -82,17 +82,10 @@ export default function TakeAttendance() {
         .select("grade")
         .eq("teacher_id", user.teacher_id);
 
-      const { data: schedules, error: schedulesError } = await supabase
-        .from("period_schedules")
-        .select("grade")
-        .eq("teacher_id", user.teacher_id);
-
       if (assignmentsError) throw assignmentsError;
-      if (schedulesError) throw schedulesError;
 
       const grades = new Set([
-        ...(assignments?.map(a => a.grade) || []),
-        ...(schedules?.map(s => s.grade) || [])
+        ...(assignments?.map(a => a.grade) || [])
       ]);
 
       return Array.from(grades).filter(Boolean);
