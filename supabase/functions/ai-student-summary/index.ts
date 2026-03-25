@@ -60,7 +60,7 @@ serve(async (req) => {
         .eq("teacher_id", profile.teacher_id)
         .single();
 
-      if (teacherPerms?.teacher_scope_mode === 'restricted') {
+      if (teacherPerms?.teacher_scope_mode !== 'full') {
         // Check if student is in assigned grades
         const { data: assignments } = await supabase
           .from("class_teacher_assignments")
