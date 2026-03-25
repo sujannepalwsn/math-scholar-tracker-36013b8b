@@ -63,6 +63,13 @@ import { useNavigate } from "react-router-dom";
 export default function LeaveManagement() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Strict permission guard
+  if (user && !hasPermission(user, 'leave_management', '/leave-management')) {
+    navigate(user.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+    return null;
+  }
+
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");

@@ -332,7 +332,7 @@ export default function Dashboard() {
 
   // Recent activities for preview card
   const { data: recentActivities = [] } = useQuery({
-    queryKey: ["recent-activities-dashboard", centerId, isRestricted],
+    queryKey: ["recent-activities-dashboard", centerId, isRestricted, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -342,8 +342,8 @@ export default function Dashboard() {
         .order("activity_date", { ascending: false })
         .limit(5);
 
-      if (isRestricted) {
-        query = query.eq('teacher_id', user?.teacher_id);
+      if (isRestricted && user?.id) {
+        query = query.eq('created_by', user.id);
       }
 
       const { data, error } = await query;
@@ -355,7 +355,7 @@ export default function Dashboard() {
 
   // Recent discipline issues for preview card
   const { data: recentDiscipline = [] } = useQuery({
-    queryKey: ["recent-discipline-dashboard", centerId, isRestricted, myAssignedGrades],
+    queryKey: ["recent-discipline-dashboard", centerId, isRestricted, myAssignedGrades, user?.id],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
@@ -366,11 +366,19 @@ export default function Dashboard() {
         .order("issue_date", { ascending: false })
         .limit(5);
 
-      if (isRestricted) {
-        // Teacher sees their own reports OR reports for their assigned grades
-        const conditions = [`reported_by.eq.${user?.id}`];
-        if (myAssignedGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myAssignedGrades.join(',')})`);
+      if (isRestricted && user?.id) {
+        // To avoid complex cross-table OR filters in PostgREST, we first get student IDs for the assigned grades
+        const { data: assignedStudents } = await supabase
+          .from('students')
+          .select('id')
+          .in('grade', myAssignedGrades);
+
+        const studentIds = assignedStudents?.map(s => s.id) || [];
+
+        // Teacher sees their own reports OR reports for their assigned students
+        const conditions = [`reported_by.eq.${user.id}`];
+        if (studentIds.length > 0) {
+          conditions.push(`student_id.in.(${studentIds.join(',')})`);
         }
         query = query.or(conditions.join(','));
       }
