@@ -145,7 +145,8 @@ export default function Tests() {
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
         if (myGrades.length > 0) {
-          query = query.in('grade', myGrades);
+          // Properly quote non-numeric grades like "Nursery" for PostgREST
+          query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
         } else {
           return [];
         }

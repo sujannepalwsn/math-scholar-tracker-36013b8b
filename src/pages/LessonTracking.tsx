@@ -98,7 +98,7 @@ export default function LessonTracking() {
 
       if (filterSubject !== "all") query = query.eq("subject", filterSubject);
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -127,7 +127,7 @@ export default function LessonTracking() {
       if (filterGrade !== "all") query = query.eq("students.grade", filterGrade);
       if (filterSubject !== "all") query = query.eq("lesson_plans.subject", filterSubject); // Filter by lesson plan subject
 
-      if (user?.role === 'teacher') {
+      if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('recorded_by_teacher_id', user.teacher_id);
       }
 

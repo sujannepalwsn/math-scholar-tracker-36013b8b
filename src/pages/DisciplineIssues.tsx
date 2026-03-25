@@ -68,7 +68,8 @@ export default function DisciplineIssues() {
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
         if (myGrades.length > 0) {
-          query = query.in('grade', myGrades);
+          // Fix: Proper quoting for PostgREST
+          query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
         } else {
           return [];
         }
@@ -114,10 +115,8 @@ export default function DisciplineIssues() {
         query = query.eq("students.grade", gradeFilter);
       }
 
-      if (user?.role === 'teacher') {
-        if (isRestricted) {
-          query = query.eq('reported_by', user.id);
-        }
+      if (user?.role === 'teacher' && isRestricted) {
+        query = query.eq('reported_by', user.id);
       }
 
       const { data, error } = await query;

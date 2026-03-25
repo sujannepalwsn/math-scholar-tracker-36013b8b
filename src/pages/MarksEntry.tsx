@@ -60,8 +60,8 @@ export default function MarksEntry() {
         const conditions = [`created_by.eq.${user?.id}`];
         if (myGrades.length > 0) {
           myGrades.forEach(g => {
-            conditions.push(`grade.eq.${g}`);
-            conditions.push(`applicable_grades.cs.{${g}}`);
+            conditions.push(`grade.eq."${g}"`);
+            conditions.push(`applicable_grades.cs.{"${g}"}`);
           });
         }
         query = query.or(conditions.join(','));

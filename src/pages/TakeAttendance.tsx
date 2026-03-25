@@ -159,14 +159,14 @@ export default function TakeAttendance() {
 
   // For teachers, filter available grades to their assigned grades
   const availableGrades = students ? Array.from(new Set(students.map(s => s.grade))).sort() : [];
-  const allowedGrades = (isTeacher && (classTeacherGrades.length > 0 || isRestricted)) ? availableGrades.filter(g => classTeacherGrades.includes(g)) : availableGrades;
+  const allowedGrades = (isTeacher && isRestricted) ? availableGrades.filter(g => classTeacherGrades.includes(g)) : availableGrades;
 
-  // Auto-set grade filter for teachers with only one assigned grade
+  // Auto-set grade filter for restricted teachers with only one assigned grade
   useEffect(() => {
-    if (isTeacher && classTeacherGrades.length === 1 && gradeFilter === "all") {
+    if (isTeacher && isRestricted && classTeacherGrades.length === 1 && gradeFilter === "all") {
       setGradeFilter(classTeacherGrades[0]);
     }
-  }, [isTeacher, classTeacherGrades, gradeFilter]);
+  }, [isTeacher, isRestricted, classTeacherGrades, gradeFilter]);
 
   useEffect(() => {
     if (students) {
@@ -183,9 +183,9 @@ export default function TakeAttendance() {
     }
   }, [students, existingAttendance]);
 
-  // Filter students by grade - for teachers, only show their assigned grades
+  // Filter students by grade - for restricted teachers, only show their assigned grades
   const filteredStudents = students?.filter(s => {
-    if (isTeacher && (classTeacherGrades.length > 0 || isRestricted)) {
+    if (isTeacher && isRestricted) {
       if (gradeFilter !== "all") return s.grade === gradeFilter;
       return classTeacherGrades.includes(s.grade);
     }

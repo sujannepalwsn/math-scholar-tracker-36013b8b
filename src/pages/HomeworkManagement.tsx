@@ -56,12 +56,13 @@ export default function HomeworkManagement() {
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase.from("homework").select("*, lesson_plans(*)").eq("center_id", user.center_id).order("due_date", { ascending: false });
-      if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
-      if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
       if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       }
+
+      if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
+      if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -97,7 +98,7 @@ export default function HomeworkManagement() {
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
         if (myGrades.length > 0) {
-          query = query.in('grade', myGrades);
+          query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
         } else {
           return [];
         }

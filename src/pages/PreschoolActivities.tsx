@@ -62,7 +62,8 @@ export default function PreschoolActivities() {
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
         if (myGrades.length > 0) {
-          query = query.in('grade', myGrades);
+          // Fix: Wrap grades in quotes for PostgREST
+          query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
         } else {
           return [];
         }
@@ -113,15 +114,7 @@ export default function PreschoolActivities() {
         .in("student_id", studentIds);
 
       if (isRestricted) {
-        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
-        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
-        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
-
-        const conditions = [`activities.created_by.eq.${user?.id}`];
-        if (myGrades.length > 0) {
-          conditions.push(`students.grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
-        }
-        query = query.or(conditions.join(','));
+        query = query.eq('activities.created_by', user?.id);
       }
 
       const { data, error } = await query.order("created_at", { ascending: false });
