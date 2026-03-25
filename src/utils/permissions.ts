@@ -83,6 +83,7 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/teacher/published-results': 'published_results',
   '/student-report': 'student_report',
   '/teacher/student-report': 'student_report',
+  '/teacher/take-attendance': 'take_attendance',
   '/teacher-performance': 'teacher_reports',
   '/chapter-performance-overview': 'chapter_performance',
   '/teacher/chapter-performance': 'chapter_performance',

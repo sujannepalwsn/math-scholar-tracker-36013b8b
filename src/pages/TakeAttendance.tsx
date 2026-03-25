@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CalendarIcon, Calendar as CalendarIconLucide, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, Calendar as CalendarIconLucide, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock, CheckCircle2, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
@@ -72,7 +72,7 @@ export default function TakeAttendance() {
 
   const isOperationalDay = schoolDay ? schoolDay.is_school_day : true;
 
-  // Fetch class teacher assignments if teacher role (from both assignments and schedules)
+  // Fetch class teacher assignments if teacher role (ONLY from official assignments)
   const { data: classTeacherGrades = [] } = useQuery({
     queryKey: ["my-class-teacher-grades", user?.teacher_id],
     queryFn: async () => {
@@ -82,17 +82,10 @@ export default function TakeAttendance() {
         .select("grade")
         .eq("teacher_id", user.teacher_id);
 
-      const { data: schedules, error: schedulesError } = await supabase
-        .from("period_schedules")
-        .select("grade")
-        .eq("teacher_id", user.teacher_id);
-
       if (assignmentsError) throw assignmentsError;
-      if (schedulesError) throw schedulesError;
 
       const grades = new Set([
-        ...(assignments?.map(a => a.grade) || []),
-        ...(schedules?.map(s => s.grade) || [])
+        ...(assignments?.map(a => a.grade) || [])
       ]);
 
       return Array.from(grades).filter(Boolean);
@@ -101,9 +94,32 @@ export default function TakeAttendance() {
 
   const isTeacher = user?.role === 'teacher';
   const isCenter = user?.role === 'center' || user?.role === 'admin';
-  // Treat as restricted unless explicitly set to 'full'
-  const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
+
+  // Restricted by default for teachers. ONLY explicitly 'full' bypasses.
+  const isRestricted = React.useMemo(() => {
+    if (isCenter) return false;
+    // For teachers, treat as restricted if mode is 'restricted', null, undefined, or anything not 'full'
+    if (isTeacher) return user?.teacher_scope_mode !== 'full';
+    // Any other role is restricted by default on this page
+    return true;
+  }, [isTeacher, isCenter, user?.teacher_scope_mode]);
+
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
+
+  // Debug logging for troubleshooting - will be visible in browser console
+  useEffect(() => {
+    if (user) {
+      console.log("TakeAttendance [Security Audit]:", {
+        userId: user.id,
+        role: user.role,
+        teacherId: user.teacher_id,
+        teacherScopeMode: user.teacher_scope_mode,
+        isRestricted,
+        classTeacherGrades,
+        canMarkAttendance: hasActionPermission(user, 'take_attendance', 'edit')
+      });
+    }
+  }, [user, isRestricted, classTeacherGrades]);
 
   const { data: students } = useQuery({
     queryKey: ["students", user?.center_id, isRestricted, classTeacherGrades],
@@ -189,10 +205,26 @@ export default function TakeAttendance() {
   const canMarkAttendance = hasEditPermission;
 
   // For teachers, filter available grades to their assigned grades
-  const availableGrades = students ? Array.from(new Set(students.map(s => s.grade))).sort() : [];
-  const allowedGrades = (isTeacher && isRestricted)
-    ? classTeacherGrades.sort() // Directly use the assigned grades source
-    : availableGrades;
+  const availableGrades = React.useMemo(() => {
+    if (!students) return [];
+    return Array.from(new Set(students.map(s => s.grade))).filter(Boolean).sort();
+  }, [students]);
+
+  const allowedGrades = React.useMemo(() => {
+    // Center Admin sees all grades found in students
+    if (isCenter) return availableGrades;
+
+    // Teachers in Full Scope see all grades found in students
+    if (isTeacher && !isRestricted) return availableGrades;
+
+    // Restricted Teachers ONLY see their assigned grades
+    if (isTeacher && isRestricted) {
+      return Array.from(new Set(classTeacherGrades)).filter(Boolean).sort();
+    }
+
+    // Fallback: Default to whatever grades are found in students
+    return availableGrades;
+  }, [isTeacher, isCenter, isRestricted, classTeacherGrades, availableGrades]);
 
   // Auto-set grade filter for restricted teachers
   useEffect(() => {
@@ -374,6 +406,17 @@ export default function TakeAttendance() {
               <div className="flex items-center gap-2 mt-1">
                  <div className="h-2 w-2 rounded-full bg-primary" />
                  <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Daily Roll Call Portal</p>
+                 {isTeacher && (
+                   <Badge
+                     variant={isRestricted ? "outline" : "destructive"}
+                     className={cn(
+                       "ml-2 font-black text-[9px] uppercase tracking-tighter",
+                       isRestricted ? "bg-amber-50 text-amber-700 border-amber-200" : "animate-pulse"
+                     )}
+                   >
+                     {isRestricted ? "Restricted Scope" : "Full Center Scope"}
+                   </Badge>
+                 )}
               </div>
             </div>
           </div>
@@ -392,6 +435,17 @@ export default function TakeAttendance() {
           <AlertTitle className="font-black uppercase text-xs tracking-widest">Attendance Disabled</AlertTitle>
           <AlertDescription className="text-sm font-bold">
             Not a school day. Reason: {schoolDay?.reason || "Institutional Closure"}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isTeacher && isRestricted && (
+        <Alert className="rounded-2xl border-2 bg-blue-50/50 border-blue-200 animate-in slide-in-from-top-2">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="font-black uppercase text-xs tracking-widest text-blue-800">Security Audit: Assigned Scope</AlertTitle>
+          <AlertDescription className="text-sm font-bold text-blue-700">
+            You are in RESTRICTED mode. Your assigned grades are: <span className="underline decoration-2">{classTeacherGrades.length > 0 ? classTeacherGrades.join(", ") : "None Detected"}</span>.
+            The dropdown and student list are strictly filtered to these grades.
           </AlertDescription>
         </Alert>
       )}
@@ -431,7 +485,10 @@ export default function TakeAttendance() {
                   <SelectValue placeholder="Select Grade" />
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-                  {(!isTeacher || !isRestricted) && <SelectItem value="all">All Grades</SelectItem>}
+                  {(!isRestricted || isCenter) && <SelectItem value="all">All Grades</SelectItem>}
+                  {allowedGrades.length === 0 && isRestricted && (
+                    <SelectItem value="none" disabled>No assigned grades</SelectItem>
+                  )}
                   {allowedGrades.map((g) => (
                     <SelectItem key={g} value={g || "unassigned"}>{g}</SelectItem>
                   ))}
