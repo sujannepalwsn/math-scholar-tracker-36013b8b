@@ -161,18 +161,7 @@ export default function Sidebar({
     if ((item as any).is_active === false && !isEditMode) return false;
 
     const featureKey = item.featureName || (item as any).feature_name;
-
-    // Custom logic for teacher restricted mode to hide administration items
-    // This is a secondary check to ensure Sidebar correctly responds to scope mode
-    const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
-    if (isRestricted && item.category === 'Administration') {
-      const allowedAdmin = ['/teacher/settings', '/teacher/leave', '/teacher/my-attendance', '/school-days'];
-      if (!allowedAdmin.some(route => item.to.startsWith(route))) {
-         return false;
-      }
-    }
-
-    // Always pass route to help with identification
+    // Sidebar relies on the centralized hasPermission logic for visibility filtering.
     return hasPermission(user, featureKey || 'unknown', item.to);
   });
 

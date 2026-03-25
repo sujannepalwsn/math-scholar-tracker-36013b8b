@@ -173,7 +173,8 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
       // If JSONB exists but doesn't have this key, it might be an administrative module
       // not yet granted or a newly added module.
       if (ADMIN_MODULES.includes(dbColumnName)) {
-        return false;
+        // In full scope mode, teachers have admin rights by default
+        return !isRestricted;
       }
     }
 
@@ -183,8 +184,8 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
 
     // Default behavior for undefined teacher permissions:
     // - Academic/Communication features: True (unless globally disabled at center level)
-    // - Administrative features: False
-    return !ADMIN_MODULES.includes(dbColumnName);
+    // - Administrative features: False (unless in Full Scope Mode)
+    return !ADMIN_MODULES.includes(dbColumnName) || !isRestricted;
   }
 
   // Parents follow center global override
@@ -260,11 +261,12 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
     }
   }
 
-  // Fallback for legacy mode: if the module is enabled, allow editing by default
-  // EXCEPT for administrative modules which are strictly guarded
+  // Fallback for legacy mode or missing JSONB keys
   if (action === 'edit') {
     if (ADMIN_MODULES.includes(dbColumnName)) {
-       // For admin modules in legacy mode, check if the legacy boolean is explicitly true
+       // If in full scope mode, teachers have admin rights by default
+       if (!isRestricted) return true;
+       // For restricted mode or legacy mode, check if the legacy boolean is explicitly true
        return teacherPerms[dbColumnName] === true;
     }
 
