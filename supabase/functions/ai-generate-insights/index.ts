@@ -36,7 +36,7 @@ serve(async (req) => {
         centerId = profile.center_id;
         if (profile.role === 'teacher' && profile.teacher_id) {
           const { data: perms } = await supabase.from('teacher_feature_permissions').select('teacher_scope_mode').eq('teacher_id', profile.teacher_id).single();
-          if (perms?.teacher_scope_mode === 'restricted') {
+          if (perms?.teacher_scope_mode !== 'full') {
             const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', profile.teacher_id);
             const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', profile.teacher_id);
             const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));

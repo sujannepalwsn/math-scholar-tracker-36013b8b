@@ -131,40 +131,57 @@ export default function TakeAttendance() {
   });
 
   const { data: approvedLeaves = [] } = useQuery({
-    queryKey: ["approved-leaves", dateStr, user?.center_id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leave_applications")
-        .select("student_id, category_id, leave_categories(name)")
-        .eq("center_id", user?.center_id!)
-        .eq("status", "approved")
-        .lte("start_date", dateStr)
-        .gte("end_date", dateStr);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!dateStr && !!user?.center_id
-  });
-
-  const { data: existingAttendance } = useQuery({
-    queryKey: ["attendance", dateStr, user?.center_id, user?.id],
+    queryKey: ["approved-leaves", dateStr, user?.center_id, isRestricted, classTeacherGrades],
     queryFn: async () => {
       if (!user?.center_id) return [];
       let query = supabase
-        .from("attendance")
-        .select("student_id, status, time_in, time_out, is_locked")
-        .eq("date", dateStr)
-        .eq("center_id", user.center_id);
+        .from("leave_applications")
+        .select("student_id, category_id, leave_categories(name), students!inner(grade)")
+        .eq("center_id", user.center_id)
+        .eq("status", "approved")
+        .lte("start_date", dateStr)
+        .gte("end_date", dateStr);
 
-      if (user?.role === 'teacher' && !isCenter) {
-        query = query.eq('marked_by', user.id);
+      if (isRestricted) {
+        if (classTeacherGrades.length > 0) {
+          query = query.in('students.grade', classTeacherGrades);
+        } else {
+          return [];
+        }
       }
 
       const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!dateStr && !!user?.center_id });
+    enabled: !!dateStr && !!user?.center_id && (!isRestricted || !!classTeacherGrades)
+  });
+
+  const { data: existingAttendance } = useQuery({
+    queryKey: ["attendance", dateStr, user?.center_id, isRestricted, classTeacherGrades],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      let query = supabase
+        .from("attendance")
+        .select("student_id, status, time_in, time_out, is_locked, students!inner(grade)")
+        .eq("date", dateStr)
+        .eq("center_id", user.center_id);
+
+      // Hardening: Restricted teachers should only see attendance for their assigned grades
+      if (isRestricted) {
+        if (classTeacherGrades.length > 0) {
+          query = query.in('students.grade', classTeacherGrades);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!dateStr && !!user?.center_id && (!isRestricted || !!classTeacherGrades)
+  });
 
   // Check if attendance is locked for this date
   const isLocked = existingAttendance?.some((a: any) => a.is_locked) || false;

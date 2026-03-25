@@ -142,7 +142,7 @@ serve(async (req) => {
       
       if (permissionsData) {
         user.teacherPermissions = permissionsData;
-        user.teacher_scope_mode = permissionsData.teacher_scope_mode || 'full';
+        user.teacher_scope_mode = permissionsData.teacher_scope_mode || 'restricted';
       } else {
         user.teacherPermissions = {};
       }
