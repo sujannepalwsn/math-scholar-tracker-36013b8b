@@ -55,8 +55,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher' || it.role === 'center');
-  const teacherStaticItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher' || it.role === 'center');
+  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher' || it.route.startsWith('/teacher'));
+  const teacherStaticItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher' || it.route.startsWith('/teacher'));
 
   // Auto-sync defaults if no teacher items exist for this center
   React.useEffect(() => {
