@@ -461,11 +461,39 @@ export default function TeacherManagement() {
       const { data: existingUser, error: existingUserError } = await supabase.from('users').select('id').eq('username', teacherUsername).single();
       if (existingUserError && existingUserError.code !== 'PGRST116') throw existingUserError;
       if (existingUser) throw new Error('Username already exists.');
+
       const hashedPassword = await bcrypt.hash(teacherPassword, 12);
-      const { error } = await supabase.from("users").insert({ username: teacherUsername, password_hash: hashedPassword, role: 'teacher', center_id: user.center_id, teacher_id: selectedTeacherForLogin.id, is_active: true });
-      if (error) throw error;
+      const { data: newUser, error: userError } = await supabase
+        .from("users")
+        .insert({
+          username: teacherUsername,
+          password_hash: hashedPassword,
+          role: 'teacher',
+          center_id: user.center_id,
+          teacher_id: selectedTeacherForLogin.id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (userError) throw userError;
+
+      // Link user to teacher
+      const { error: teacherUpdateError } = await supabase
+        .from("teachers")
+        .update({ user_id: newUser.id })
+        .eq("id", selectedTeacherForLogin.id);
+
+      if (teacherUpdateError) throw teacherUpdateError;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Login created!"); setIsCreatingTeacherLogin(false); setSelectedTeacherForLogin(null); setTeacherUsername(""); setTeacherPassword(""); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teachers"] });
+      toast.success("Login created!");
+      setIsCreatingTeacherLogin(false);
+      setSelectedTeacherForLogin(null);
+      setTeacherUsername("");
+      setTeacherPassword("");
+    },
     onError: (error: any) => toast.error(error.message) });
 
   // Class teacher assignment mutation
@@ -838,6 +866,17 @@ export default function TeacherManagement() {
                             </TableCell>
                             <TableCell className="px-6 py-4 text-right pr-6">
                               <div className="flex justify-end gap-1.5 opacity-0 group-hover/row:opacity-100 transition-all duration-300">
+                                {!teacher.user_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-xl bg-white shadow-soft"
+                                    onClick={(e) => { e.stopPropagation(); handleCreateLoginClick(teacher); }}
+                                    title="Create User Account"
+                                  >
+                                    <UserPlus className="h-3.5 w-3.5 text-green-600" />
+                                  </Button>
+                                )}
                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft">
                                   <Edit className="h-3.5 w-3.5 text-primary" />
                                 </Button>
@@ -859,7 +898,18 @@ export default function TeacherManagement() {
             <Card className="rounded-[2.5rem] border-none shadow-strong bg-white overflow-hidden sticky top-8">
               <CardHeader className="bg-primary/5 border-b border-border/10 p-8 flex flex-row justify-between items-start">
                 <div>
-                  <Badge className="mb-4 bg-primary text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-lg">Faculty Detail Matrix</Badge>
+                  <div className="flex gap-2 mb-4">
+                    <Badge className="bg-primary text-white font-black uppercase text-[10px] tracking-[0.2em] rounded-lg">Faculty Detail Matrix</Badge>
+                    {selectedTeacher.users ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-black uppercase text-[10px] tracking-tighter">
+                        Login Active: {selectedTeacher.users.username}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 font-black uppercase text-[10px] tracking-tighter">
+                        No Login Account
+                      </Badge>
+                    )}
+                  </div>
                   <CardTitle className="text-3xl font-black tracking-tight text-slate-800">{selectedTeacher.name}</CardTitle>
                   <p className="text-slate-400 font-bold uppercase text-xs tracking-widest mt-1">{selectedTeacher.email}</p>
                 </div>
@@ -913,6 +963,11 @@ export default function TeacherManagement() {
                   <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleClassTeacherClick(selectedTeacher)}>
                     <GraduationCap className="h-3.5 w-3.5 mr-2" /> Assign Grade
                   </Button>
+                  {!selectedTeacher.user_id && (
+                    <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11 border-green-200 text-green-700 hover:bg-green-50" onClick={() => handleCreateLoginClick(selectedTeacher)}>
+                      <UserPlus className="h-3.5 w-3.5 mr-2" /> Create Account
+                    </Button>
+                  )}
                 </div>
 
                 {hasFullAccess && (
