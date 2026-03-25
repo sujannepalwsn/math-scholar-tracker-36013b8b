@@ -65,7 +65,7 @@ export default function LessonPlans() {
     enabled: !!user?.center_id });
   const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
 
-  const isRestricted = isTeacher && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
 
   const { data: lessonPlans = [], isLoading } = useQuery({
     queryKey: ["lesson-plans-all", user?.center_id, subjectFilter, gradeFilter, user?.teacher_id, isRestricted],

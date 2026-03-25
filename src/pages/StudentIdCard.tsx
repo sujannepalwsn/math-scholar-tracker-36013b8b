@@ -36,7 +36,7 @@ export default function StudentIdCard() {
     enabled: !!centerId,
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-idcard", centerId, isRestricted, user?.teacher_id],

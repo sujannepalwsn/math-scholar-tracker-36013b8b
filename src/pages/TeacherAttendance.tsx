@@ -68,7 +68,7 @@ export default function TeacherAttendancePage() {
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const todayStr = format(today, "yyyy-MM-dd");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch active teachers for the center
   const { data: teachers = [], isLoading: teachersLoading } = useQuery({

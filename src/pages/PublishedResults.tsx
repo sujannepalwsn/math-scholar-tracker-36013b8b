@@ -43,7 +43,7 @@ export default function PublishedResults() {
         query = query.in("status", ["published", "results_published"]);
       }
 
-      const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+      const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
       if (user?.role === 'teacher' && user?.teacher_id) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
@@ -103,7 +103,7 @@ export default function PublishedResults() {
         query = query.eq("grade", selectedExam.grade);
       } else {
         // If no exam selected, and user is teacher, filter students by teacher's assigned grades
-        const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+        const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
         if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
            const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
            const assignedGrades = assignments?.map(a => a.grade) || [];

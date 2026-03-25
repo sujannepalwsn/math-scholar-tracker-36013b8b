@@ -38,7 +38,7 @@ export default function MarksEntry() {
   const [marksData, setMarksData] = useState<Record<string, Record<string, string>>>({});
   const [filterGrade, setFilterGrade] = useState<string>("all");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: exams = [] } = useQuery({
     queryKey: ["exams-entry-list", centerId, isRestricted, user?.id],

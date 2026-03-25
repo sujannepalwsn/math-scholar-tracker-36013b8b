@@ -68,7 +68,7 @@ export default function ExamManagement() {
     enabled: !!centerId,
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: exams = [], isLoading } = useQuery({
     queryKey: ["exams", centerId, isRestricted, user?.teacher_id, user?.id],

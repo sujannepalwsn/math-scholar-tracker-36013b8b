@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                   if (teacherPerms) {
                     updatedUser.teacherPermissions = teacherPerms;
-                    updatedUser.teacher_scope_mode = teacherPerms.teacher_scope_mode || 'full';
+                    updatedUser.teacher_scope_mode = teacherPerms.teacher_scope_mode || 'restricted';
                     hasChanges = true;
                   }
                 }

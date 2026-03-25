@@ -101,20 +101,34 @@ export default function TakeAttendance() {
 
   const isTeacher = user?.role === 'teacher';
   const isCenter = user?.role === 'center' || user?.role === 'admin';
-  const isRestricted = isTeacher && user?.teacher_scope_mode === 'restricted';
+  // Treat as restricted unless explicitly set to 'full'
+  const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
 
   const { data: students } = useQuery({
-    queryKey: ["students", user?.center_id],
+    queryKey: ["students", user?.center_id, isRestricted, classTeacherGrades],
     queryFn: async () => {
       let query = supabase.from("students").select("id, name, grade").eq("is_active", true).order("name");
       if (user?.role !== "admin" && user?.center_id) {
         query = query.eq("center_id", user.center_id);
       }
+
+      // Hardening: Restricted teachers should only fetch students from their assigned grades
+      if (isRestricted) {
+        if (classTeacherGrades.length > 0) {
+          query = query.in('grade', classTeacherGrades);
+        } else {
+          // If restricted but no grades assigned, return empty list immediately
+          return [] as Student[];
+        }
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data as Student[];
-    } });
+    },
+    enabled: !!user?.center_id && (!isRestricted || !!classTeacherGrades)
+  });
 
   const { data: approvedLeaves = [] } = useQuery({
     queryKey: ["approved-leaves", dateStr, user?.center_id],
@@ -159,7 +173,9 @@ export default function TakeAttendance() {
 
   // For teachers, filter available grades to their assigned grades
   const availableGrades = students ? Array.from(new Set(students.map(s => s.grade))).sort() : [];
-  const allowedGrades = (isTeacher && isRestricted) ? availableGrades.filter(g => classTeacherGrades.includes(g)) : availableGrades;
+  const allowedGrades = (isTeacher && isRestricted)
+    ? classTeacherGrades.sort() // Directly use the assigned grades source
+    : availableGrades;
 
   // Auto-set grade filter for restricted teachers
   useEffect(() => {
@@ -183,11 +199,12 @@ export default function TakeAttendance() {
     }
   }, [students, existingAttendance]);
 
-  // Filter students by grade - for restricted teachers, only show their assigned grades
+  // Filter students by grade - for restricted teachers, always enforce assigned grades
   const filteredStudents = students?.filter(s => {
     if (isTeacher && isRestricted) {
-      if (gradeFilter !== "all") return s.grade === gradeFilter;
-      return classTeacherGrades.includes(s.grade);
+      const isAssigned = classTeacherGrades.includes(s.grade);
+      if (!isAssigned) return false;
+      return gradeFilter === "all" || s.grade === gradeFilter;
     }
     return gradeFilter === "all" || s.grade === gradeFilter;
   });

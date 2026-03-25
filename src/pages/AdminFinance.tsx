@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 const AdminFinance = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
   const canEdit = hasActionPermission(user, 'finance', 'edit');
 
   // Fetch invoices summary

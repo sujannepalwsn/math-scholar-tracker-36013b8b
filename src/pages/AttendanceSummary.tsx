@@ -35,7 +35,7 @@ export default function AttendanceSummary() {
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState('all');
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', user?.center_id, isRestricted, user?.teacher_id],

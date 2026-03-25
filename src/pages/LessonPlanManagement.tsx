@@ -64,7 +64,7 @@ export default function LessonPlanManagement() {
     enabled: !!user?.center_id
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: lessonPlans = [], isLoading } = useQuery({
     queryKey: ["lesson-plans-mgmt", user?.center_id, statusFilter, subjectFilter, gradeFilter, teacherFilter, isRestricted],

@@ -51,7 +51,7 @@ export default function ViewRecords() {
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<StudentDetail | null>(null);
   const [detailMonthFilter, setDetailMonthFilter] = useState<Date>(new Date());
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   // Fetch students for this center
   const { data: students = [] } = useQuery({

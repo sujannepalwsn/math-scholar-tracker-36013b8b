@@ -98,7 +98,7 @@ export default function ClassRoutine() {
     },
     enabled: !!user?.center_id });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
     queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id, isRestricted],

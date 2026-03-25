@@ -96,7 +96,7 @@ export default function TeacherManagement() {
   const [selectedTeacherForClassAssign, setSelectedTeacherForClassAssign] = useState<Teacher | null>(null);
   const [classTeacherGrade, setClassTeacherGrade] = useState("select-grade");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
 
   const { data: teachers = [], isLoading } = useQuery({
     queryKey: ["teachers", user?.center_id, isRestricted, user?.teacher_id],

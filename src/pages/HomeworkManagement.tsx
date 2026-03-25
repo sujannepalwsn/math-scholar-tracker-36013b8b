@@ -30,7 +30,7 @@ type LessonPlan = Tables<'lesson_plans'>;
 export default function HomeworkManagement() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode === 'restricted';
+  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>("all");
