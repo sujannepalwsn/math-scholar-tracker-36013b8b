@@ -161,6 +161,10 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
     if (dbColumnName === 'leave_management' && (route === '/leave-management' || featureKey === '/leave-management')) {
       return false;
     }
+    // Block Central Attendance (restricted to teacher attendance)
+    if (dbColumnName === 'take_attendance' && route === '/attendance') {
+      return false;
+    }
 
     // 3. Check granular JSONB permissions
     if (teacherPerms.permissions && teacherPerms.permissions[dbColumnName]) {

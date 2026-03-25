@@ -101,9 +101,28 @@ export default function TakeAttendance() {
 
   const isTeacher = user?.role === 'teacher';
   const isCenter = user?.role === 'center' || user?.role === 'admin';
-  // Treat as restricted unless explicitly set to 'full'
-  const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
+
+  // Robust restriction check: Only center/admin are NOT restricted.
+  // Teachers are restricted unless explicitly set to 'full'.
+  const isRestricted = React.useMemo(() => {
+    if (isCenter) return false;
+    if (isTeacher) return user?.teacher_scope_mode !== 'full';
+    return true;
+  }, [isTeacher, isCenter, user?.teacher_scope_mode]);
+
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
+
+  // Debug logging for troubleshooting
+  useEffect(() => {
+    if (user) {
+      console.log("TakeAttendance Scope Check:", {
+        role: user.role,
+        scopeMode: user.teacher_scope_mode,
+        isRestricted,
+        assignedGrades: classTeacherGrades
+      });
+    }
+  }, [user, isRestricted, classTeacherGrades]);
 
   const { data: students } = useQuery({
     queryKey: ["students", user?.center_id, isRestricted, classTeacherGrades],
@@ -374,6 +393,11 @@ export default function TakeAttendance() {
               <div className="flex items-center gap-2 mt-1">
                  <div className="h-2 w-2 rounded-full bg-primary" />
                  <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Daily Roll Call Portal</p>
+                 {isRestricted && (
+                   <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200 font-black text-[9px] uppercase tracking-tighter">
+                     Restricted Scope
+                   </Badge>
+                 )}
               </div>
             </div>
           </div>
