@@ -58,9 +58,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LeaveCategoryManager from "@/components/LeaveCategoryManager";
 import { hasActionPermission } from "@/utils/permissions";
+import { useNavigate } from "react-router-dom";
 
 export default function LeaveManagement() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -178,6 +180,11 @@ export default function LeaveManagement() {
     }
   };
 
+  const handleApplyClick = () => {
+    if (user?.role === 'teacher') navigate('/teacher/leave');
+    else if (user?.role === 'parent') navigate('/parent-leave');
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -205,6 +212,15 @@ export default function LeaveManagement() {
           <Settings className="h-5 w-5" />
           LEAVE CATEGORIES
         </Button>
+        {(user?.role === 'teacher' || user?.role === 'parent') && (
+          <Button
+            onClick={handleApplyClick}
+            className="rounded-2xl h-12 px-6 font-bold shadow-soft gap-2 bg-gradient-to-r from-primary to-violet-600"
+          >
+            <Plus className="h-5 w-5" />
+            APPLY FOR LEAVE
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-4 items-center">

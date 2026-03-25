@@ -53,7 +53,7 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Teachers Registration", route: "/teachers", icon: "Users", role: "teacher", feature_name: "teacher_management", category: 'Administration', order: 12 },
   { name: "Teachers' Attendance", route: "/teacher-attendance", icon: "UserCheck", role: "teacher", feature_name: "teachers_attendance", category: 'Administration', order: 13 },
   { name: "HR Management", route: "/hr-management", icon: "Award", role: "teacher", feature_name: "hr_management", category: 'Administration', order: 14 },
-  { name: "Leave Management", route: "/teacher/leave", icon: "Plane", role: "teacher", feature_name: "leave_management", category: 'Administration', order: 15 },
+  { name: "Leave Applications", route: "/teacher/leave", icon: "Plane", role: "teacher", feature_name: "leave_management", category: 'Administration', order: 15 },
   { name: "Student ID Cards", route: "/student-id-cards", icon: "IdCard", role: "teacher", feature_name: "student_id_cards", category: 'Administration', order: 16 },
   { name: "Inventory & Assets", route: "/inventory", icon: "Archive", role: "teacher", feature_name: "inventory_assets", category: 'Administration', order: 17 },
   { name: "Transport & Tracking", route: "/transport", icon: "Bus", role: "teacher", feature_name: "transport_tracking", category: 'Administration', order: 18 },
