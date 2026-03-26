@@ -40,6 +40,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         .select('id')
         .eq('parent_user_id', user.id)
         .eq('center_id', user.center_id)
+        .is('student_id', null)
         .maybeSingle();
       if (convError || !conversation) return 0;
 
@@ -93,8 +94,14 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     const cat = dynamicCategories.find(c => c.id === it.category_id) ||
                 dynamicCategories.find(c => c.name === (it as any).category_name);
 
+    // Force specific routes for teachers to prevent navigating to center-admin pages
+    let route = it.route;
+    if (it.feature_name === 'leave_management') {
+      route = '/teacher/leave';
+    }
+
     return {
-      to: it.route,
+      to: route,
       label: it.name,
       icon: getIcon(it.icon),
       role: it.role as any,

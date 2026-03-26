@@ -77,7 +77,7 @@ export default function LeaveApplications() {
         .eq("is_active", true);
 
       if (user?.center_id) {
-        // Correct way to handle OR with NULL and UUID in PostgREST
+        // Correct way to handle OR with NULL and UUID in PostgREST - ensuring the UUID is quoted
         query = query.or(`center_id.is.null,center_id.eq."${user.center_id}"`);
       } else {
         query = query.is("center_id", null);

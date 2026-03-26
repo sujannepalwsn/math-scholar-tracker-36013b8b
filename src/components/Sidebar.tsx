@@ -158,11 +158,16 @@ export default function Sidebar({
   };
 
   const filteredNavItems = navItems.filter(item => {
-    if ((item as any).is_active === false && !isEditMode) return false;
+    try {
+      if ((item as any).is_active === false && !isEditMode) return false;
 
-    const featureKey = item.featureName || (item as any).feature_name;
-    // Sidebar relies on the centralized hasPermission logic for visibility filtering.
-    return hasPermission(user, featureKey || 'unknown', item.to);
+      const featureKey = item.featureName || (item as any).feature_name;
+      // Sidebar relies on the centralized hasPermission logic for visibility filtering.
+      return hasPermission(user, featureKey || 'unknown', item.to);
+    } catch (err) {
+      console.error("Error filtering nav item:", item, err);
+      return false;
+    }
   });
 
   const renderNavLinks = (items: NavItem[], isMobile: boolean) => {
