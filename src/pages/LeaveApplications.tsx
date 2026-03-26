@@ -77,6 +77,7 @@ export default function LeaveApplications() {
         .eq("is_active", true);
 
       if (user?.center_id) {
+        // Correct way to handle OR with NULL and UUID in PostgREST
         query = query.or(`center_id.is.null,center_id.eq."${user.center_id}"`);
       } else {
         query = query.is("center_id", null);
@@ -110,13 +111,14 @@ export default function LeaveApplications() {
   });
 
   // Fetch user's leave applications
-  const { data: applications = [], isLoading } = useQuery({
+  const { data: applications = [], isLoading, error: queryError } = useQuery({
     queryKey: ["my-leave-applications", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
       const { data, error } = await supabase
         .from("leave_applications")
         .select("*, leave_categories(name), students(name)")
-        .eq("user_id", user?.id!)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -251,6 +253,17 @@ export default function LeaveApplications() {
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
     }
   };
+
+  if (queryError) {
+    return (
+      <div className="p-12 text-center space-y-4">
+        <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
+        <h2 className="text-xl font-bold">Failed to load applications</h2>
+        <p className="text-muted-foreground">{(queryError as any).message || "An unexpected error occurred."}</p>
+        <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["my-leave-applications"] })}>Retry</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
