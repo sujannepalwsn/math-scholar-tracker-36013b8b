@@ -1,4 +1,3 @@
-
 /**
  * PERMISSION_MAPPING aligns navigation/feature names or routes with database column names.
  * The keys are the 'featureName' or 'route' used in navigation items or UI checks.
@@ -70,6 +69,7 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/hr-management': 'hr_management',
   '/leave-management': 'leave_management',
   '/teacher/leave': 'leave_management',
+  '/parent-leave': 'leave_management',
   'leave-applications': 'leave_management',
   'leave-management': 'leave_management',
   'leaves': 'leave_management',
@@ -88,11 +88,28 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/student-report': 'student_report',
   '/teacher/student-report': 'student_report',
   '/teacher/take-attendance': 'take_attendance',
-  '/teacher/leave': 'leave_management',
+  '/teacher/attendance-summary': 'attendance_summary',
+  '/teacher/lesson-plans': 'lesson_plans',
+  '/teacher/lesson-tracking': 'lesson_tracking',
+  '/teacher/homework-management': 'homework_management',
+  '/teacher/activities': 'preschool_activities',
+  '/teacher/preschool-activities': 'preschool_activities',
+  '/teacher/discipline-issues': 'discipline_issues',
+  '/teacher/test-management': 'test_management',
+  '/teacher/chapter-performance': 'chapter_performance',
+  '/teacher/ai-insights': 'ai_insights',
+  '/teacher/view-records': 'view_records',
+  '/teacher/summary': 'summary',
+  '/teacher/finance': 'finance',
+  '/teacher/my-attendance': 'teachers_attendance',
+  '/teacher-meetings': 'meetings_management',
+  '/teacher-messages': 'messaging',
+  '/teacher/class-routine': 'class_routine',
+  '/teacher/calendar': 'calendar_events',
+  '/teacher/settings': 'settings_access',
+  '/teacher-dashboard': 'dashboard_access',
   '/teacher-performance': 'teacher_reports',
   '/chapter-performance-overview': 'chapter_performance',
-  '/teacher/chapter-performance': 'chapter_performance',
-  '/teacher/settings': 'settings_access',
 };
 
 // Administrative modules strictly blocked for restricted teachers
@@ -115,7 +132,7 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   let dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
 
   // 2. If it's still not a known column, and we have a route, try route mapping
-  if (route && !PERMISSION_MAPPING[featureKey]) {
+  if (route && (!dbColumnName || !PERMISSION_MAPPING[dbColumnName])) {
     dbColumnName = PERMISSION_MAPPING[route] || dbColumnName;
   }
 
@@ -149,26 +166,23 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
     }
 
     // RESTRICTED SCOPE MODE: Apply strict restrictions
+    // Ensure '/teacher/leave' is ALWAYS accessible if leave_management is enabled globally.
+    if (route === '/teacher/leave' || featureKey === 'leave_management') {
+      return centerPerms['leave_management'] !== false;
+    }
+
     // 1. Strictly block administrative modules
     if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) {
       return false;
     }
 
     // 2. Specific route-based blocks for restricted mode
-    // Restricted teachers cannot access Lesson Plan Management (Review portal)
     if (dbColumnName === 'lesson_plans' && (featureKey === 'lesson_plan_management' || route === '/lesson-plan-management')) {
       return false;
     }
-    // Block Center Settings (restricted to personal settings)
     if (dbColumnName === 'settings_access' && route === '/settings') {
       return false;
     }
-    // Ensure '/teacher/leave' is ALWAYS accessible if leave_management is enabled globally.
-    if (route === '/teacher/leave') {
-      return centerPerms['leave_management'] !== false;
-    }
-
-    // Block ONLY the Center Admin Leave Management page for restricted teachers.
     if (dbColumnName === 'leave_management' && route === '/leave-management') {
       return false;
     }
@@ -236,26 +250,15 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
 
     switch (action) {
       case 'edit':
-        // Block editing for admin modules except self-service
-        if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) {
-          return false;
-        }
+        if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) return false;
+        if (dbColumnName === 'leave_management' || dbColumnName === 'teachers_attendance') return true;
 
-        // Self-service allow
-        if (dbColumnName === 'leave_management' || dbColumnName === 'teachers_attendance') {
-           return true;
-        }
-
-        // Academic read-only modules in restricted mode
         const readOnlyInRestricted = ['class_routine', 'school_days', 'published_results'];
-        if (readOnlyInRestricted.includes(dbColumnName)) {
-          return false;
-        }
+        if (readOnlyInRestricted.includes(dbColumnName)) return false;
 
         return modulePerms.can_edit === true;
 
       case 'approve':
-        // Restricted teachers cannot approve lesson plans or leave applications
         if (dbColumnName === 'lesson_plans' || dbColumnName === 'leave_management') return false;
         return modulePerms.can_approve === true;
 
