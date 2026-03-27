@@ -40,6 +40,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         .select('id')
         .eq('parent_user_id', user.id)
         .eq('center_id', user.center_id)
+        .is('student_id', null)
         .maybeSingle();
       if (convError || !conversation) return 0;
 
@@ -55,8 +56,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     enabled: !!user?.id && !!user?.center_id,
     refetchInterval: 10000 });
 
-  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher' || it.role === 'center');
-  const teacherStaticItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher' || it.role === 'center');
+  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher' || it.route === '/teacher/leave');
+  const teacherStaticItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher' || it.route === '/teacher/leave');
 
   // Auto-sync defaults if no teacher items exist for this center
   React.useEffect(() => {
@@ -93,8 +94,14 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     const cat = dynamicCategories.find(c => c.id === it.category_id) ||
                 dynamicCategories.find(c => c.name === (it as any).category_name);
 
+    // Force specific routes for teachers to prevent navigating to center-admin pages
+    let route = it.route;
+    if (it.feature_name === 'leave_management') {
+      route = '/teacher/leave';
+    }
+
     return {
-      to: it.route,
+      to: route,
       label: it.name,
       icon: getIcon(it.icon),
       role: it.role as any,

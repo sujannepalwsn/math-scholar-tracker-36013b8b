@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 
 const FEATURES = [
+  { name: 'leave_management', label: 'Leave Applications' },
   { name: 'dashboard_access', label: 'Dashboard' },
   { name: 'take_attendance', label: 'Take Attendance' },
   { name: 'class_routine', label: 'Class Routine' },
@@ -22,7 +23,6 @@ const FEATURES = [
   { name: 'teacher_management', label: 'Teachers Registration' },
   { name: 'teachers_attendance', label: 'Teachers Attendance' },
   { name: 'hr_management', label: 'HR Management' },
-  { name: 'leave_management', label: 'Leave Applications' },
   { name: 'student_id_cards', label: 'Student ID Cards' },
   { name: 'inventory_assets', label: 'Inventory & Assets' },
   { name: 'transport_tracking', label: 'Transport & Tracking' },
@@ -43,6 +43,7 @@ const FEATURES = [
 ];
 
 const TEACHER_FEATURES = [
+  { name: 'leave_management', label: 'Leave Applications' },
   { name: 'dashboard_access', label: 'Dashboard' },
   { name: 'take_attendance', label: 'Take Attendance' },
   { name: 'class_routine', label: 'Class Routine' },
@@ -69,7 +70,6 @@ const TEACHER_FEATURES = [
   { name: 'teacher_management', label: 'Teachers Registration' },
   { name: 'teachers_attendance', label: 'Teachers Attendance' },
   { name: 'hr_management', label: 'HR Management' },
-  { name: 'leave_management', label: 'Leave Applications' },
   { name: 'student_id_cards', label: 'Student ID Cards' },
   { name: 'inventory_assets', label: 'Inventory & Assets' },
   { name: 'transport_tracking', label: 'Transport & Tracking' },
