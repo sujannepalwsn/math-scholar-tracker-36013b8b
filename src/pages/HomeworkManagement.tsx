@@ -74,7 +74,12 @@ export default function HomeworkManagement() {
     queryKey: ["lesson-plans-for-homework", user?.center_id, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
+      let query = supabase
+        .from("lesson_plans")
+        .select("*")
+        .eq("center_id", user.center_id)
+        .neq("status", "rejected")
+        .order("lesson_date", { ascending: false });
 
       if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);

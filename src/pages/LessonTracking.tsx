@@ -92,8 +92,9 @@ export default function LessonTracking() {
     queryFn: async () => {
       let query = supabase
         .from("lesson_plans")
-        .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url")
+        .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url, status")
         .eq("center_id", user?.center_id!)
+        .neq("status", "rejected")
         .order("lesson_date", { ascending: false });
 
       if (filterSubject !== "all") query = query.eq("subject", filterSubject);
@@ -258,6 +259,11 @@ export default function LessonTracking() {
       // which is fine for the nullable recorded_by_teacher_id foreign key.
       // No explicit check for user.role === 'teacher' is needed here.
 
+      const lessonPlan = lessonPlans.find(lp => lp.id === selectedLessonPlanId);
+      if (lessonPlan?.status === 'rejected') {
+        throw new Error("Cannot track a rejected lesson plan. Please update and resubmit for approval.");
+      }
+
       const studentLessonRecordsToInsert = selectedStudentIds.map((studentId) => ({
         student_id: studentId,
         lesson_plan_id: selectedLessonPlanId,
@@ -338,10 +344,12 @@ export default function LessonTracking() {
   };
 
   const filteredStudentsForModal = useMemo(() => {
+    if (selectedLessonPlanId === "none") return [];
     return (students || []).filter((s: any) => (filterGrade === "all" ? true : s.grade === filterGrade));
-  }, [students, filterGrade]);
+  }, [students, filterGrade, selectedLessonPlanId]);
 
   const selectAllStudents = () => {
+    if (selectedLessonPlanId === "none") return;
     setSelectedStudentIds(filteredStudentsForModal.map((s: any) => s.id));
   };
 

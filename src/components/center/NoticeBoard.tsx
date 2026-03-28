@@ -15,12 +15,15 @@ export default function DigitalNoticeBoard({ centerId }: { centerId: string }) {
   const { data: notices = [] } = useQuery({
     queryKey: ["digital-board-notices", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("notices")
         .select("*")
-        .eq("center_id", centerId)
+        .eq("center_id", centerId);
+
+      // Fetch all notices for the center to ensure coverage
+      const { data, error } = await query
         .order("created_at", { ascending: false })
-        .limit(15);
+        .limit(20);
       if (error) throw error;
       return data;
     },

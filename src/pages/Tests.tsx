@@ -113,6 +113,7 @@ export default function Tests() {
         .from("lesson_plans")
         .select("id, subject, chapter, topic, grade")
         .eq("center_id", user.center_id)
+        .neq("status", "rejected")
         .order("lesson_date", { ascending: false });
 
       if (isRestricted) {
