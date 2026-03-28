@@ -314,10 +314,10 @@ export default function HomeworkManagement() {
                 </Button>
               </DialogTrigger>
             )}
-            <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="homework-dialog-title" aria-describedby="homework-dialog-description">
               <DialogHeader>
-                <DialogTitle>{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle>
-                <DialogDescription>Enter details below.</DialogDescription>
+                <DialogTitle id="homework-dialog-title">{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle>
+                <DialogDescription id="homework-dialog-description">Enter details below.</DialogDescription>
               </DialogHeader>
             <div className="space-y-4 py-4">
               <Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} />
@@ -476,10 +476,10 @@ export default function HomeworkManagement() {
         </CardContent>
       </Card>
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto" aria-labelledby="status-dialog-title" aria-describedby="status-dialog-description">
           <DialogHeader>
-            <DialogTitle>Submission Track: {selectedHomeworkForStatus?.title}</DialogTitle>
-            <DialogDescription>Manage individual or bulk submission statuses.</DialogDescription>
+            <DialogTitle id="status-dialog-title">Submission Track: {selectedHomeworkForStatus?.title}</DialogTitle>
+            <DialogDescription id="status-dialog-description">Manage individual or bulk submission statuses.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             {studentStatuses.length > 0 && (

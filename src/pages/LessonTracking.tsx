@@ -420,10 +420,10 @@ export default function LessonTracking() {
               </Button>
             )}
           </DialogTrigger>
-          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto" aria-labelledby="record-lesson-title" aria-describedby="record-lesson-description">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="record-lesson-title" aria-describedby="record-lesson-description">
             <DialogHeader>
               <DialogTitle id="record-lesson-title">Record Lesson Taught</DialogTitle>
-              <DialogDescription id="record-lesson-description">Select a lesson plan and students who attended</DialogDescription>
+            <DialogDescription id="record-lesson-description">Select an approved lesson plan and students who attended</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
@@ -821,10 +821,10 @@ export default function LessonTracking() {
 
       {/* View Lesson Dialog */}
       <Dialog open={showViewLessonDialog} onOpenChange={setShowViewLessonDialog}>
-        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto" aria-labelledby="view-lesson-title" aria-describedby="view-lesson-description">
           <DialogHeader>
-            <DialogTitle>Lesson Tracking Details</DialogTitle>
-            <DialogDescription>Complete log of student performance for this session.</DialogDescription>
+            <DialogTitle id="view-lesson-title">Lesson Tracking Details</DialogTitle>
+            <DialogDescription id="view-lesson-description">Complete log of student performance for this session.</DialogDescription>
           </DialogHeader>
           {viewingLessonGroup && (
             <div className="space-y-6 py-4">
