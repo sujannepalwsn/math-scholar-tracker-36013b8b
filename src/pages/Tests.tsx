@@ -111,9 +111,9 @@ export default function Tests() {
       if (!user?.center_id) return [];
       let query = supabase
         .from("lesson_plans")
-        .select("id, subject, chapter, topic, grade")
+        .select("id, subject, chapter, topic, grade, status")
         .eq("center_id", user.center_id)
-        .neq("status", "rejected")
+        .eq("status", "approved")
         .order("lesson_date", { ascending: false });
 
       if (isRestricted) {
@@ -219,6 +219,11 @@ export default function Tests() {
       }
       
       console.log("DEBUG: Attempting to create test with lessonPlanId:", selectedLessonPlanId);
+
+      if (selectedLessonPlanId) {
+        const lp = lessonPlans.find(l => l.id === selectedLessonPlanId);
+        if (lp?.status !== 'approved') throw new Error("Only approved lesson plans can be linked to tests.");
+      }
 
       const { data, error } = await supabase.from("tests").insert({
         name: testName || 'Unnamed Test',

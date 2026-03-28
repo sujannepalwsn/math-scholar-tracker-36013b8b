@@ -60,7 +60,7 @@ export default function LessonPlans() {
       if (!user?.center_id || !user?.teacher_id || !isTeacher) return [];
       const { data, error } = await supabase
         .from("period_schedules")
-        .select("grade, subject")
+        .select("grade, subject, day_of_week, class_periods(period_number)")
         .eq("teacher_id", user.teacher_id)
         .eq("center_id", user.center_id);
       if (error) throw error;
@@ -86,6 +86,27 @@ export default function LessonPlans() {
   const assignedSubjectsForSelectedGrade = isTeacher && selectedGrade !== "all"
     ? Array.from(new Set(assignedSchedules.filter(s => s.grade === selectedGrade).map(s => s.subject).filter(Boolean))).sort()
     : [];
+
+  // Auto-generate Period logic
+  useEffect(() => {
+    if (isTeacher && selectedGrade !== "all" && subject && lessonDate) {
+      const [year, month, day] = lessonDate.split('-').map(Number);
+      const dayOfWeek = new Date(year, month - 1, day).getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+      const match = (assignedSchedules as any[]).find(s =>
+        s.grade === selectedGrade &&
+        s.subject === subject &&
+        s.day_of_week === dayOfWeek
+      );
+      if (match && match.class_periods) {
+        // Handle both single object and array cases for safety
+        const classPeriod = Array.isArray(match.class_periods) ? match.class_periods[0] : match.class_periods;
+        if (classPeriod?.period_number) {
+          setPeriod(classPeriod.period_number.toString());
+        }
+      }
+    }
+  }, [selectedGrade, subject, lessonDate, assignedSchedules, isTeacher]);
 
   const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
 

@@ -10,6 +10,7 @@ import { KPICard } from "@/components/dashboard/KPICard"
 import { AlertList } from "@/components/dashboard/AlertList"
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DigitalNoticeBoard from "@/components/center/NoticeBoard";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -538,7 +539,9 @@ export default function ParentDashboard() {
 
       {/* Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20 overflow-hidden">
+        <div className="lg:col-span-2 space-y-6">
+           <DigitalNoticeBoard centerId={user?.center_id || ""} role="parent" grade={student?.grade || undefined} />
+           <Card className="border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20 overflow-hidden">
             <CardHeader className="bg-primary/5 border-b border-slate-100 p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <CardTitle className="text-lg font-black flex items-center gap-3">
@@ -621,6 +624,7 @@ export default function ParentDashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
         <AlertList alerts={parentAlerts} onViewAll={() => navigate("/parent-messages")} />
       </div>
 

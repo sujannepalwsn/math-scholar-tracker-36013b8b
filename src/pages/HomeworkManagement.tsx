@@ -78,7 +78,7 @@ export default function HomeworkManagement() {
         .from("lesson_plans")
         .select("*")
         .eq("center_id", user.center_id)
-        .neq("status", "rejected")
+        .eq("status", "approved")
         .order("lesson_date", { ascending: false });
 
       if (user?.role === 'teacher' && isRestricted) {
@@ -162,6 +162,11 @@ export default function HomeworkManagement() {
       let imageUrl: string | null = null;
       if (file) fileUrl = await uploadFile(file, "homework-files");
       if (image) imageUrl = await uploadFile(image, "homework-images");
+      if (lessonPlanId) {
+        const lp = lessonPlans.find(l => l.id === lessonPlanId);
+        if (lp?.status !== 'approved') throw new Error("Only approved lesson plans can be linked to homework.");
+      }
+
       const { data: newHomework, error } = await supabase.from("homework").insert({
         center_id: user.center_id, title, subject, class: grade, grade, description: description || null,
         due_date: dueDate, attachment_url: fileUrl || imageUrl, attachment_name: file?.name || image?.name || null,

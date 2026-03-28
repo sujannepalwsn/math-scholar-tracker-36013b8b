@@ -9,18 +9,27 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-export default function DigitalNoticeBoard({ centerId }: { centerId: string }) {
+export default function DigitalNoticeBoard({ centerId, role, grade }: { centerId: string, role?: string, grade?: string }) {
   const navigate = useNavigate();
 
   const { data: notices = [] } = useQuery({
-    queryKey: ["digital-board-notices", centerId],
+    queryKey: ["digital-board-notices", centerId, role, grade],
     queryFn: async () => {
       let query = supabase
         .from("notices")
         .select("*")
         .eq("center_id", centerId);
 
-      // Fetch all notices for the center to ensure coverage
+      if (role === 'teacher') {
+        query = query.or('target_audience.eq.Teachers,target_audience.eq.All,target_audience.eq.Center');
+      } else if (role === 'parent') {
+        let conditions = 'target_audience.eq.Parents,target_audience.eq.All';
+        if (grade) {
+          conditions += `,and(target_audience.eq.Grade,target_grade.eq."${grade}")`;
+        }
+        query = query.or(conditions);
+      }
+
       const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(20);

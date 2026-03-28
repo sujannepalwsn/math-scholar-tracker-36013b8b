@@ -50,6 +50,7 @@ Deno.serve(async (req: Request) => {
           targetAudience === 'all_teachers' ? 'Teachers' :
           targetAudience === 'all_parents' ? 'Parents' :
           targetAudience === 'grade_parents' ? 'Grade' :
+          targetAudience === 'center' ? 'Center' :
           'All',
         target_grade: targetGrade || null,
         created_by: senderUserId

@@ -94,7 +94,7 @@ export default function LessonTracking() {
         .from("lesson_plans")
         .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url, status")
         .eq("center_id", user?.center_id!)
-        .neq("status", "rejected")
+        .eq("status", "approved")
         .order("lesson_date", { ascending: false });
 
       if (filterSubject !== "all") query = query.eq("subject", filterSubject);
@@ -260,8 +260,8 @@ export default function LessonTracking() {
       // No explicit check for user.role === 'teacher' is needed here.
 
       const lessonPlan = lessonPlans.find(lp => lp.id === selectedLessonPlanId);
-      if (lessonPlan?.status === 'rejected') {
-        throw new Error("Cannot track a rejected lesson plan. Please update and resubmit for approval.");
+      if (lessonPlan?.status !== 'approved') {
+        throw new Error("Only approved lesson plans can be tracked. Please wait for admin approval.");
       }
 
       const studentLessonRecordsToInsert = selectedStudentIds.map((studentId) => ({
