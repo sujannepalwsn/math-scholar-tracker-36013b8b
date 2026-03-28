@@ -12,7 +12,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { senderUserId, centerId, messageText, targetAudience, targetGrade } = await req.json();
+    const { senderUserId, centerId, messageText, targetAudience, targetGrade, title } = await req.json();
 
     if (!senderUserId || !centerId || !messageText || !targetAudience) {
       return new Response(
@@ -27,10 +27,35 @@ Deno.serve(async (req: Request) => {
 
     const { data: broadcastMessage, error: broadcastError } = await supabase
       .from('broadcast_messages')
-      .insert({ center_id: centerId, sender_user_id: senderUserId, message_text: messageText, target_audience: targetAudience, target_grade: targetGrade || null })
+      .insert({
+        center_id: centerId,
+        sender_user_id: senderUserId,
+        message_text: messageText,
+        target_audience: targetAudience,
+        target_grade: targetGrade || null,
+        title: title || 'Broadcast Message'
+      })
       .select().single();
 
     if (broadcastError) throw broadcastError;
+
+    // Also insert into notices table
+    const { error: noticeError } = await supabase
+      .from('notices')
+      .insert({
+        center_id: centerId,
+        title: title || 'Broadcast Message',
+        content: messageText,
+        target_audience:
+          targetAudience === 'all_teachers' ? 'Teachers' :
+          targetAudience === 'all_parents' ? 'Parents' :
+          targetAudience === 'grade_parents' ? 'Grade' :
+          'All',
+        target_grade: targetGrade || null,
+        created_by: senderUserId
+      });
+
+    if (noticeError) console.error('Error inserting into notices:', noticeError);
 
     let recipientUsers: Array<{ id: string; student_id?: string; teacher_id?: string }> = [];
 
@@ -50,6 +75,10 @@ Deno.serve(async (req: Request) => {
       const { data: teachers, error: teachersError } = await supabase.from('users').select('id, teacher_id').eq('role', 'teacher').eq('center_id', centerId);
       if (teachersError) throw teachersError;
       recipientUsers = teachers || [];
+    } else if (targetAudience === 'center') {
+      const { data: admins, error: adminsError } = await supabase.from('users').select('id').eq('role', 'center').eq('center_id', centerId);
+      if (adminsError) throw adminsError;
+      recipientUsers = admins || [];
     }
 
     const messagesToInsert: Array<{ conversation_id: string; sender_user_id: string; message_text: string; is_read: boolean }> = [];

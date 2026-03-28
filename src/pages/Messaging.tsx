@@ -30,6 +30,7 @@ export default function Messaging() {
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [broadcastTitle, setBroadcastTitle] = useState("");
   const [broadcastMessageText, setBroadcastMessageText] = useState("");
   const [broadcastTargetAudience, setBroadcastTargetAudience] = useState("all_parents");
   const [broadcastTargetGrade, setBroadcastTargetGrade] = useState("all");
@@ -261,6 +262,7 @@ export default function Messaging() {
         body: {
           senderUserId: user.id,
           centerId: user.center_id,
+          title: broadcastTitle.trim() || 'Broadcast Message',
           messageText: broadcastMessageText.trim(),
           targetAudience: finalTargetAudience,
           targetGrade: finalTargetGrade === "all" ? null : finalTargetGrade
@@ -272,6 +274,7 @@ export default function Messaging() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Broadcast sent!");
+      setBroadcastTitle("");
       setBroadcastMessageText("");
       setBroadcastTargetAudience("all_parents");
       setBroadcastTargetGrade("all");
@@ -518,6 +521,10 @@ export default function Messaging() {
                 {canEdit ? (
                   <form onSubmit={(e) => { e.preventDefault(); if (broadcastMessageText.trim()) sendBroadcastMessageMutation.mutate(); }} className="space-y-6 max-w-2xl mx-auto">
                     <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Broadcast Title</label>
+                      <Input value={broadcastTitle} onChange={(e) => setBroadcastTitle(e.target.value)} placeholder="Emergency Notice / Holiday Announcement" className="rounded-2xl border-none shadow-soft bg-white/50 backdrop-blur-sm focus:ring-primary/20 h-12 px-6 text-sm font-bold" />
+                    </div>
+                    <div className="space-y-2">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Message Payload</label>
                       <Textarea value={broadcastMessageText} onChange={(e) => setBroadcastMessageText(e.target.value)} rows={5} placeholder="Type your broadcast message..." required className="rounded-2xl border-none shadow-soft bg-white/50 backdrop-blur-sm focus:ring-primary/20 p-6 text-sm font-medium" />
                     </div>
@@ -526,9 +533,14 @@ export default function Messaging() {
                       <Select value={broadcastTargetAudience} onValueChange={setBroadcastTargetAudience}>
                         <SelectTrigger className="h-12 bg-white/50 border-none shadow-soft rounded-2xl focus:ring-primary/20 font-bold"><SelectValue placeholder="Select audience" /></SelectTrigger>
                         <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
-                          <SelectItem value="all_parents">All Parents</SelectItem>
+                          {(user?.role === 'center' || (user?.role === 'teacher' && user?.teacher_scope_mode === 'full')) && (
+                            <SelectItem value="all_parents">All Parents</SelectItem>
+                          )}
                           <SelectItem value="all_teachers">All Teachers</SelectItem>
-                          {uniqueGrades.map((g) => (<SelectItem key={`grade_${g}`} value={`grade_${g}`}>Parents of Grade {g}</SelectItem>))}
+                          <SelectItem value="center">Center (Internal Notice)</SelectItem>
+                          {(user?.role === 'center' || (user?.role === 'teacher' && user?.teacher_scope_mode === 'full')) && (
+                            uniqueGrades.map((g) => (<SelectItem key={`grade_${g}`} value={`grade_${g}`}>Parents of Grade {g}</SelectItem>))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>

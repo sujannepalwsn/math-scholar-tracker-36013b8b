@@ -428,7 +428,16 @@ export default function LessonTracking() {
               {/* SELECT LESSON PLAN */}
               <div className="space-y-3 border rounded-lg p-4">
                 <Label className="text-base font-semibold">Select Lesson Plan *</Label>
-                <Select value={selectedLessonPlanId} onValueChange={setSelectedLessonPlanId}>
+                <Select value={selectedLessonPlanId} onValueChange={(val) => {
+                  setSelectedLessonPlanId(val);
+                  if (val !== "none") {
+                    const lp = lessonPlans.find(l => l.id === val);
+                    if (lp) {
+                      setFilterGrade(lp.grade || "all");
+                      setFilterSubject(lp.subject || "all");
+                    }
+                  }
+                }}>
                   <SelectTrigger><SelectValue placeholder="Choose a lesson plan..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Choose a lesson plan...</SelectItem>
@@ -439,6 +448,19 @@ export default function LessonTracking() {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {selectedLessonPlanId !== "none" && (
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Grade (Linked)</Label>
+                      <Input value={lessonPlans.find(lp => lp.id === selectedLessonPlanId)?.grade || "General"} disabled className="bg-muted h-9 text-xs font-bold" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Subject (Linked)</Label>
+                      <Input value={lessonPlans.find(lp => lp.id === selectedLessonPlanId)?.subject || "N/A"} disabled className="bg-muted h-9 text-xs font-bold" />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* GENERAL NOTES */}
@@ -460,7 +482,7 @@ export default function LessonTracking() {
                 {/* Grade Filter */}
                 <div className="mt-2">
                   <Label>Filter by Grade</Label>
-                  <Select value={filterGrade} onValueChange={setFilterGrade}>
+                  <Select value={filterGrade} onValueChange={setFilterGrade} disabled={selectedLessonPlanId !== "none"}>
                     <SelectTrigger><SelectValue placeholder="All Grades" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Grades</SelectItem>

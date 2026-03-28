@@ -311,11 +311,46 @@ export default function HomeworkManagement() {
               </DialogHeader>
             <div className="space-y-4 py-4">
               <Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} />
+              <Label>Link Lesson Plan</Label>
+              <Select
+                value={lessonPlanId || "none"}
+                onValueChange={v => {
+                  const val = v === "none" ? null : v;
+                  setLessonPlanId(val);
+                  if (val) {
+                    const lp = lessonPlans.find(l => l.id === val);
+                    if (lp) {
+                      setGrade(lp.grade || "select-grade");
+                      setSubject(lp.subject || "");
+                    }
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Lesson Plan</SelectItem>
+                  {lessonPlans.map(lp => (
+                    <SelectItem key={lp.id} value={lp.id}>{lp.subject}: {lp.chapter}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Subject *</Label><Input value={subject} onChange={e => setSubject(e.target.value)} /></div>
-                <div><Label>Grade *</Label><Select value={grade} onValueChange={setGrade}><SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger><SelectContent><SelectItem value="select-grade" disabled>Select Grade</SelectItem>{uniqueGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select></div>
+                <div>
+                  <Label>Subject *</Label>
+                  <Input value={subject} onChange={e => setSubject(e.target.value)} disabled={!!lessonPlanId} />
+                </div>
+                <div>
+                  <Label>Grade *</Label>
+                  <Select value={grade} onValueChange={setGrade} disabled={!!lessonPlanId}>
+                    <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="select-grade" disabled>Select Grade</SelectItem>
+                      {uniqueGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <Label>Link Lesson Plan</Label><Select value={lessonPlanId || "none"} onValueChange={v => setLessonPlanId(v === "none" ? null : v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No Lesson Plan</SelectItem>{lessonPlans.map(lp => <SelectItem key={lp.id} value={lp.id}>{lp.subject}: {lp.chapter}</SelectItem>)}</SelectContent></Select>
               <Label>Description</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} />
               <div className="space-y-1.5">
                 <Label>Attachment (PDF, Image)</Label>
