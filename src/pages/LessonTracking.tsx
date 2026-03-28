@@ -92,8 +92,9 @@ export default function LessonTracking() {
     queryFn: async () => {
       let query = supabase
         .from("lesson_plans")
-        .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url")
+        .select("id, subject, chapter, topic, grade, lesson_date, notes, lesson_file_url, status")
         .eq("center_id", user?.center_id!)
+        .eq("status", "approved")
         .order("lesson_date", { ascending: false });
 
       if (filterSubject !== "all") query = query.eq("subject", filterSubject);
@@ -258,6 +259,11 @@ export default function LessonTracking() {
       // which is fine for the nullable recorded_by_teacher_id foreign key.
       // No explicit check for user.role === 'teacher' is needed here.
 
+      const lessonPlan = lessonPlans.find(lp => lp.id === selectedLessonPlanId);
+      if (lessonPlan?.status !== 'approved') {
+        throw new Error("Only approved lesson plans can be tracked. Please wait for admin approval.");
+      }
+
       const studentLessonRecordsToInsert = selectedStudentIds.map((studentId) => ({
         student_id: studentId,
         lesson_plan_id: selectedLessonPlanId,
@@ -338,10 +344,12 @@ export default function LessonTracking() {
   };
 
   const filteredStudentsForModal = useMemo(() => {
+    if (selectedLessonPlanId === "none") return [];
     return (students || []).filter((s: any) => (filterGrade === "all" ? true : s.grade === filterGrade));
-  }, [students, filterGrade]);
+  }, [students, filterGrade, selectedLessonPlanId]);
 
   const selectAllStudents = () => {
+    if (selectedLessonPlanId === "none") return;
     setSelectedStudentIds(filteredStudentsForModal.map((s: any) => s.id));
   };
 
@@ -412,10 +420,10 @@ export default function LessonTracking() {
               </Button>
             )}
           </DialogTrigger>
-          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto" aria-labelledby="record-lesson-title" aria-describedby="record-lesson-description">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="record-lesson-title" aria-describedby="record-lesson-description">
             <DialogHeader>
               <DialogTitle id="record-lesson-title">Record Lesson Taught</DialogTitle>
-              <DialogDescription id="record-lesson-description">Select a lesson plan and students who attended</DialogDescription>
+            <DialogDescription id="record-lesson-description">Select an approved lesson plan and students who attended</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
@@ -428,7 +436,16 @@ export default function LessonTracking() {
               {/* SELECT LESSON PLAN */}
               <div className="space-y-3 border rounded-lg p-4">
                 <Label className="text-base font-semibold">Select Lesson Plan *</Label>
-                <Select value={selectedLessonPlanId} onValueChange={setSelectedLessonPlanId}>
+                <Select value={selectedLessonPlanId} onValueChange={(val) => {
+                  setSelectedLessonPlanId(val);
+                  if (val !== "none") {
+                    const lp = lessonPlans.find(l => l.id === val);
+                    if (lp) {
+                      setFilterGrade(lp.grade || "all");
+                      setFilterSubject(lp.subject || "all");
+                    }
+                  }
+                }}>
                   <SelectTrigger><SelectValue placeholder="Choose a lesson plan..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Choose a lesson plan...</SelectItem>
@@ -439,6 +456,19 @@ export default function LessonTracking() {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {selectedLessonPlanId !== "none" && (
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Grade (Linked)</Label>
+                      <Input value={lessonPlans.find(lp => lp.id === selectedLessonPlanId)?.grade || "General"} disabled className="bg-muted h-9 text-xs font-bold" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Subject (Linked)</Label>
+                      <Input value={lessonPlans.find(lp => lp.id === selectedLessonPlanId)?.subject || "N/A"} disabled className="bg-muted h-9 text-xs font-bold" />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* GENERAL NOTES */}
@@ -460,7 +490,7 @@ export default function LessonTracking() {
                 {/* Grade Filter */}
                 <div className="mt-2">
                   <Label>Filter by Grade</Label>
-                  <Select value={filterGrade} onValueChange={setFilterGrade}>
+                  <Select value={filterGrade} onValueChange={setFilterGrade} disabled={selectedLessonPlanId !== "none"}>
                     <SelectTrigger><SelectValue placeholder="All Grades" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Grades</SelectItem>
@@ -791,10 +821,10 @@ export default function LessonTracking() {
 
       {/* View Lesson Dialog */}
       <Dialog open={showViewLessonDialog} onOpenChange={setShowViewLessonDialog}>
-        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto" aria-labelledby="view-lesson-title" aria-describedby="view-lesson-description">
           <DialogHeader>
-            <DialogTitle>Lesson Tracking Details</DialogTitle>
-            <DialogDescription>Complete log of student performance for this session.</DialogDescription>
+            <DialogTitle id="view-lesson-title">Lesson Tracking Details</DialogTitle>
+            <DialogDescription id="view-lesson-description">Complete log of student performance for this session.</DialogDescription>
           </DialogHeader>
           {viewingLessonGroup && (
             <div className="space-y-6 py-4">

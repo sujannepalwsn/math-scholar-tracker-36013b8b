@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2, PlusCircle, MinusCircle, Printer, Send, CheckCircle2, XCircle, User, Loader2, Scan } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -54,6 +54,21 @@ export default function LessonPlans() {
 
   const isTeacher = user?.role === 'teacher';
 
+  const { data: assignedSchedules = [] } = useQuery({
+    queryKey: ["teacher-assigned-schedules", user?.teacher_id, user?.center_id, isTeacher],
+    queryFn: async () => {
+      if (!user?.center_id || !user?.teacher_id || !isTeacher) return [];
+      const { data, error } = await supabase
+        .from("period_schedules")
+        .select("grade, subject, day_of_week, class_periods(period_number)")
+        .eq("teacher_id", user.teacher_id)
+        .eq("center_id", user.center_id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id && !!user?.teacher_id && isTeacher,
+  });
+
   const { data: students = [] } = useQuery({
     queryKey: ["students-for-grades", user?.center_id],
     queryFn: async () => {
@@ -63,7 +78,35 @@ export default function LessonPlans() {
       return data;
     },
     enabled: !!user?.center_id });
-  const uniqueGrades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
+
+  const uniqueGrades = isTeacher
+    ? Array.from(new Set(assignedSchedules.map(s => s.grade).filter(Boolean))).sort()
+    : Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
+
+  const assignedSubjectsForSelectedGrade = isTeacher && selectedGrade !== "all"
+    ? Array.from(new Set(assignedSchedules.filter(s => s.grade === selectedGrade).map(s => s.subject).filter(Boolean))).sort()
+    : [];
+
+  // Auto-generate Period logic
+  useEffect(() => {
+    if (isTeacher && selectedGrade !== "all" && subject && lessonDate) {
+      const [year, month, day] = lessonDate.split('-').map(Number);
+      const dayOfWeek = new Date(year, month - 1, day).getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+      const match = (assignedSchedules as any[]).find(s =>
+        s.grade === selectedGrade &&
+        s.subject === subject &&
+        s.day_of_week === dayOfWeek
+      );
+      if (match && match.class_periods) {
+        // Handle both single object and array cases for safety
+        const classPeriod = Array.isArray(match.class_periods) ? match.class_periods[0] : match.class_periods;
+        if (classPeriod?.period_number) {
+          setPeriod(classPeriod.period_number.toString());
+        }
+      }
+    }
+  }, [selectedGrade, subject, lessonDate, assignedSchedules, isTeacher]);
 
   const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
 
@@ -128,6 +171,15 @@ export default function LessonPlans() {
       if (!user?.center_id) throw new Error("Center ID not found");
       let fileUrl: string | null = editingLessonPlan?.lesson_file_url || null;
       if (file) fileUrl = await uploadFile(file, "lesson-files");
+
+      const isRestrictedTeacher = isTeacher && user?.teacher_scope_mode !== 'full';
+      if (isRestrictedTeacher) {
+        const isGradeAssigned = assignedSchedules.some(s => s.grade === selectedGrade);
+        const isSubjectAssigned = assignedSchedules.some(s => s.grade === selectedGrade && s.subject === subject);
+
+        if (!isGradeAssigned) throw new Error(`Access Denied: Grade ${selectedGrade} is not in your assigned routine.`);
+        if (!isSubjectAssigned) throw new Error(`Access Denied: Subject ${subject} for Grade ${selectedGrade} is not in your assigned routine.`);
+      }
 
       const payload: Partial<Tables<"lesson_plans">> = {
         center_id: user.center_id,
@@ -447,7 +499,18 @@ export default function LessonPlans() {
                 <div className="divide-y-2 divide-slate-900">
                   <div className="p-4 flex items-center gap-3">
                     <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Subject:</Label>
-                    <Input value={subject} onChange={(e) => setSubject(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                    {isTeacher ? (
+                      <Select value={subject} onValueChange={setSubject} disabled={selectedGrade === "all"}>
+                        <SelectTrigger className="h-9 border-0 border-b border-slate-400 rounded-none focus:ring-0 px-0 bg-transparent font-bold">
+                          <SelectValue placeholder={selectedGrade === "all" ? "Select Grade First" : "Select Subject"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assignedSubjectsForSelectedGrade.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input value={subject} onChange={(e) => setSubject(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                    )}
                   </div>
                   <div className="p-4 flex items-center gap-3">
                     <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Unit:</Label>

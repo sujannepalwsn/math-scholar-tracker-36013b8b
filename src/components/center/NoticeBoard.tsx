@@ -9,44 +9,37 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-export default function DigitalNoticeBoard({ centerId }: { centerId: string }) {
+export default function DigitalNoticeBoard({ centerId, role, grade }: { centerId: string, role?: string, grade?: string }) {
   const navigate = useNavigate();
 
-  const { data: notifications = [] } = useQuery({
-    queryKey: ["center-notifications-board", centerId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("center_id", centerId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!centerId,
-  });
-
   const { data: notices = [] } = useQuery({
-    queryKey: ["digital-board-notices", centerId],
+    queryKey: ["digital-board-notices", centerId, role, grade],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("notices")
         .select("*")
-        .eq("center_id", centerId)
+        .eq("center_id", centerId);
+
+      if (role === 'teacher') {
+        query = query.or('target_audience.eq.Teachers,target_audience.eq.All,target_audience.eq.Center');
+      } else if (role === 'parent') {
+        let conditions = 'target_audience.eq.Parents,target_audience.eq.All';
+        if (grade) {
+          conditions += `,and(target_audience.eq.Grade,target_grade.eq."${grade}")`;
+        }
+        query = query.or(conditions);
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(20);
       if (error) throw error;
       return data;
     },
     enabled: !!centerId,
   });
 
-  const combinedEvents = [
-    ...notices.map(n => ({ ...n, itemType: 'notice' })),
-    ...notifications.map(n => ({ ...n, itemType: 'notification' }))
-  ].sort((a, b) => new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime())
-   .slice(0, 15);
+  const combinedEvents = notices.map(n => ({ ...n, itemType: 'notice' }));
 
   return (
     <Card className="rounded-[2.5rem] border-none shadow-strong bg-indigo-900 text-white overflow-hidden h-fit">

@@ -74,7 +74,12 @@ export default function HomeworkManagement() {
     queryKey: ["lesson-plans-for-homework", user?.center_id, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
+      let query = supabase
+        .from("lesson_plans")
+        .select("*")
+        .eq("center_id", user.center_id)
+        .eq("status", "approved")
+        .order("lesson_date", { ascending: false });
 
       if (user?.role === 'teacher' && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
@@ -157,6 +162,11 @@ export default function HomeworkManagement() {
       let imageUrl: string | null = null;
       if (file) fileUrl = await uploadFile(file, "homework-files");
       if (image) imageUrl = await uploadFile(image, "homework-images");
+      if (lessonPlanId) {
+        const lp = lessonPlans.find(l => l.id === lessonPlanId);
+        if (lp?.status !== 'approved') throw new Error("Only approved lesson plans can be linked to homework.");
+      }
+
       const { data: newHomework, error } = await supabase.from("homework").insert({
         center_id: user.center_id, title, subject, class: grade, grade, description: description || null,
         due_date: dueDate, attachment_url: fileUrl || imageUrl, attachment_name: file?.name || image?.name || null,
@@ -304,18 +314,53 @@ export default function HomeworkManagement() {
                 </Button>
               </DialogTrigger>
             )}
-            <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto" aria-labelledby="homework-dialog-title" aria-describedby="homework-dialog-description">
               <DialogHeader>
-                <DialogTitle>{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle>
-                <DialogDescription>Enter details below.</DialogDescription>
+                <DialogTitle id="homework-dialog-title">{editingHomework ? "Edit Homework" : "New Homework"}</DialogTitle>
+                <DialogDescription id="homework-dialog-description">Enter details below.</DialogDescription>
               </DialogHeader>
             <div className="space-y-4 py-4">
               <Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} />
+              <Label>Link Lesson Plan</Label>
+              <Select
+                value={lessonPlanId || "none"}
+                onValueChange={v => {
+                  const val = v === "none" ? null : v;
+                  setLessonPlanId(val);
+                  if (val) {
+                    const lp = lessonPlans.find(l => l.id === val);
+                    if (lp) {
+                      setGrade(lp.grade || "select-grade");
+                      setSubject(lp.subject || "");
+                    }
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Lesson Plan</SelectItem>
+                  {lessonPlans.map(lp => (
+                    <SelectItem key={lp.id} value={lp.id}>{lp.subject}: {lp.chapter}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Subject *</Label><Input value={subject} onChange={e => setSubject(e.target.value)} /></div>
-                <div><Label>Grade *</Label><Select value={grade} onValueChange={setGrade}><SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger><SelectContent><SelectItem value="select-grade" disabled>Select Grade</SelectItem>{uniqueGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select></div>
+                <div>
+                  <Label>Subject *</Label>
+                  <Input value={subject} onChange={e => setSubject(e.target.value)} disabled={!!lessonPlanId} />
+                </div>
+                <div>
+                  <Label>Grade *</Label>
+                  <Select value={grade} onValueChange={setGrade} disabled={!!lessonPlanId}>
+                    <SelectTrigger><SelectValue placeholder="Grade" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="select-grade" disabled>Select Grade</SelectItem>
+                      {uniqueGrades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <Label>Link Lesson Plan</Label><Select value={lessonPlanId || "none"} onValueChange={v => setLessonPlanId(v === "none" ? null : v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No Lesson Plan</SelectItem>{lessonPlans.map(lp => <SelectItem key={lp.id} value={lp.id}>{lp.subject}: {lp.chapter}</SelectItem>)}</SelectContent></Select>
               <Label>Description</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} />
               <div className="space-y-1.5">
                 <Label>Attachment (PDF, Image)</Label>
@@ -431,10 +476,10 @@ export default function HomeworkManagement() {
         </CardContent>
       </Card>
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto" aria-labelledby="status-dialog-title" aria-describedby="status-dialog-description">
           <DialogHeader>
-            <DialogTitle>Submission Track: {selectedHomeworkForStatus?.title}</DialogTitle>
-            <DialogDescription>Manage individual or bulk submission statuses.</DialogDescription>
+            <DialogTitle id="status-dialog-title">Submission Track: {selectedHomeworkForStatus?.title}</DialogTitle>
+            <DialogDescription id="status-dialog-description">Manage individual or bulk submission statuses.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             {studentStatuses.length > 0 && (

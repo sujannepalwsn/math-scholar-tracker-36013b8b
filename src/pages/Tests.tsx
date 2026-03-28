@@ -65,7 +65,7 @@ export default function Tests() {
   const [testDate, setTestDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [totalMarks, setTotalMarks] = useState("");
   const [grade, setGrade] = useState("");
-  const [selectedLessonPlanIds, setSelectedLessonPlanIds] = useState<string[]>([]); // Multi-select lesson plans
+  const [selectedLessonPlanId, setSelectedLessonPlanId] = useState<string | null>(null);
   const [chapterSubjectFilter, setChapterSubjectFilter] = useState<string>("all"); // Filter for chapter selection
   const [questions, setQuestions] = useState<Question[]>([]); // For question-wise entry
 
@@ -111,8 +111,9 @@ export default function Tests() {
       if (!user?.center_id) return [];
       let query = supabase
         .from("lesson_plans")
-        .select("id, subject, chapter, topic, grade")
+        .select("id, subject, chapter, topic, grade, status")
         .eq("center_id", user.center_id)
+        .eq("status", "approved")
         .order("lesson_date", { ascending: false });
 
       if (isRestricted) {
@@ -217,10 +218,12 @@ export default function Tests() {
         uploadedFileUrl = fileName;
       }
       
-      console.log("DEBUG: Attempting to create test with lessonPlanIds:", selectedLessonPlanIds);
+      console.log("DEBUG: Attempting to create test with lessonPlanId:", selectedLessonPlanId);
 
-      // Use the first selected lesson plan ID for the test (primary link)
-      const primaryLessonPlanId = selectedLessonPlanIds.length > 0 ? selectedLessonPlanIds[0] : null;
+      if (selectedLessonPlanId) {
+        const lp = lessonPlans.find(l => l.id === selectedLessonPlanId);
+        if (lp?.status !== 'approved') throw new Error("Only approved lesson plans can be linked to tests.");
+      }
 
       const { data, error } = await supabase.from("tests").insert({
         name: testName || 'Unnamed Test',
@@ -230,7 +233,7 @@ export default function Tests() {
         total_marks: parseInt(totalMarks),
         center_id: user?.center_id!,
         questions: questions.length > 0 ? (questions as any) : null,
-        lesson_plan_id: primaryLessonPlanId, // Save the primary lesson plan ID
+        lesson_plan_id: selectedLessonPlanId, // Save the lesson plan ID
         created_by: user?.id,
       }).select().single();
 
@@ -245,7 +248,7 @@ export default function Tests() {
       setTestSubject("");
       setTotalMarks("");
       setGrade("");
-      setSelectedLessonPlanIds([]); // Reset lesson plan IDs
+      setSelectedLessonPlanId(null); // Reset lesson plan ID
       setChapterSubjectFilter("all");
       setQuestions([]);
       setUploadedFile(null);
@@ -593,6 +596,7 @@ export default function Tests() {
                   value={testSubject}
                   onChange={(e) => setTestSubject(e.target.value)}
                   placeholder="e.g., Mathematics"
+                  disabled={!!selectedLessonPlanId}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -620,11 +624,12 @@ export default function Tests() {
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
                   placeholder="e.g., 10th"
+                  disabled={!!selectedLessonPlanId}
                 />
               </div>
-              {/* Multi-select Lesson Plans/Chapters */}
+              {/* Single-select Lesson Plans/Chapters */}
               <div className="space-y-3 border p-4 rounded-lg">
-                <Label className="text-base font-semibold">Link to Chapters (Optional - Multi-select)</Label>
+                <Label className="text-base font-semibold">Link to Chapter (Optional)</Label>
                 
                 {/* Subject filter for chapters */}
                 <div className="flex gap-2 items-center">
@@ -642,41 +647,34 @@ export default function Tests() {
                   </Select>
                 </div>
 
-                {/* Chapter checkboxes */}
-                <div className="max-h-48 overflow-y-auto border rounded p-2 space-y-2">
-                  {lessonPlans
-                    .filter(lp => chapterSubjectFilter === "all" || lp.subject === chapterSubjectFilter)
-                    .map((lp) => {
-                      const isSelected = selectedLessonPlanIds.includes(lp.id);
-                      return (
-                        <div key={lp.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            id={`lp-${lp.id}`}
-                            checked={isSelected}
-                            onChange={() => {
-                              if (isSelected) {
-                                setSelectedLessonPlanIds(prev => prev.filter(id => id !== lp.id));
-                              } else {
-                                setSelectedLessonPlanIds(prev => [...prev, lp.id]);
-                              }
-                            }}
-                            className="h-4 w-4"
-                          />
-                          <label htmlFor={`lp-${lp.id}`} className="text-sm cursor-pointer">
-                            <span className="font-medium">{lp.subject}:</span> {lp.chapter} - {lp.topic} 
-                            {lp.grade && <span className="text-muted-foreground"> ({lp.grade})</span>}
-                          </label>
-                        </div>
-                      );
-                    })}
-                  {lessonPlans.filter(lp => chapterSubjectFilter === "all" || lp.subject === chapterSubjectFilter).length === 0 && (
-                    <p className="text-sm text-muted-foreground">No lesson plans found.</p>
-                  )}
-                </div>
-                {selectedLessonPlanIds.length > 0 && (
-                  <p className="text-sm text-muted-foreground">{selectedLessonPlanIds.length} chapter(s) selected</p>
-                )}
+                <Select
+                  value={selectedLessonPlanId || "none"}
+                  onValueChange={(val) => {
+                    const v = val === "none" ? null : val;
+                    setSelectedLessonPlanId(v);
+                    if (v) {
+                      const lp = lessonPlans.find(l => l.id === v);
+                      if (lp) {
+                        setGrade(lp.grade || "");
+                        setTestSubject(lp.subject || "");
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a lesson plan..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Lesson Plan</SelectItem>
+                    {lessonPlans
+                      .filter(lp => chapterSubjectFilter === "all" || lp.subject === chapterSubjectFilter)
+                      .map((lp) => (
+                        <SelectItem key={lp.id} value={lp.id}>
+                          {lp.subject}: {lp.chapter} - {lp.topic} ({lp.grade || 'General'})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Upload Test File (Optional)</Label>
