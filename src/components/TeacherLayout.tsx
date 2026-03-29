@@ -53,8 +53,32 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       if (error) return 0;
       return count || 0;
     },
-    enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000 });
+    enabled: !!user?.id && !!user?.center_id
+  });
+
+  // Supabase Realtime for unread messages
+  React.useEffect(() => {
+    if (!user?.id || !user?.center_id) return;
+
+    const channel = supabase
+      .channel('teacher-messages-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["unread-messages-teacher", user?.id, user?.center_id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.center_id, queryClient]);
 
   const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher' || it.route === '/teacher/leave');
   const teacherStaticItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher' || it.route === '/teacher/leave');

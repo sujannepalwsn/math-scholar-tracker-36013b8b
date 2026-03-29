@@ -11,27 +11,20 @@ export default function CenterAnalytics() {
   const { data: analytics, isLoading } = useQuery({
     queryKey: ["admin-center-analytics"],
     queryFn: async () => {
-      const { data: centers, error: centersError } = await supabase.from("centers").select("*").order("name");
-      if (centersError) throw centersError;
+      const { data, error } = await supabase
+        .from("center_analytics_view")
+        .select("*")
+        .order("name");
 
-      const results = await Promise.all(centers.map(async (center) => {
-        const [{ count: students }, { count: teachers }, { count: parents }, { data: activeUsers }] = await Promise.all([
-          supabase.from("students").select("*", { count: "exact", head: true }).eq("center_id", center.id),
-          supabase.from("teachers").select("*", { count: "exact", head: true }).eq("center_id", center.id),
-          supabase.from("users").select("*", { count: "exact", head: true }).eq("center_id", center.id).eq("role", "parent"),
-          supabase.from("users").select("id").eq("center_id", center.id).gte("last_active_at", new Date(Date.now() - 15 * 60 * 1000).toISOString())
-        ]);
+      if (error) throw error;
 
-        return {
-          ...center,
-          students: students || 0,
-          teachers: teachers || 0,
-          parents: parents || 0,
-          activeNow: activeUsers?.length || 0
-        };
+      return data.map(center => ({
+        ...center,
+        students: center.students_count || 0,
+        teachers: center.teachers_count || 0,
+        parents: center.parents_count || 0,
+        activeNow: center.active_now_count || 0
       }));
-
-      return results;
     },
   });
 

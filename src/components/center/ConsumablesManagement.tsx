@@ -66,10 +66,15 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
       if (!canEdit) throw new Error("Access Denied: You do not have permission to distribute consumables.");
       if (!showDistribute) return;
       const amount = parseFloat(distForm.amount);
-      const { data: current } = await supabase.from('consumables').select('current_stock').eq('id', showDistribute).single();
-      if (!current || current.current_stock < amount) throw new Error("Insufficient stock");
 
-      // 1. Record Log
+      // 1. Update Stock using atomic RPC to prevent race conditions
+      const { error: updateError } = await supabase.rpc('decrement_consumable_stock', {
+        item_id: showDistribute,
+        amount: amount
+      });
+      if (updateError) throw updateError;
+
+      // 2. Record Log
       const { error: logError } = await supabase.from('consumable_logs').insert({
         center_id: centerId,
         consumable_id: showDistribute,
@@ -79,14 +84,14 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
         action_type: 'distributed',
         notes: distForm.notes
       });
-      if (logError) throw logError;
-
-      // 2. Update Stock
-      const { error: updateError } = await supabase.from('consumables').update({
-        current_stock: current.current_stock - amount,
-        updated_at: new Date().toISOString()
-      }).eq('id', showDistribute);
-      if (updateError) throw updateError;
+      if (logError) {
+        // Rollback stock if log fails
+        await supabase.rpc('increment_consumable_stock', {
+          item_id: showDistribute,
+          amount: amount
+        });
+        throw logError;
+      }
 
       // 3. Finance Integration: Create Invoice for Students
       if (distForm.recipientType === 'student') {
@@ -131,14 +136,11 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
   const updateStockMutation = useMutation({
     mutationFn: async ({ id, amount, type }: { id: string, amount: number, type: 'consume' | 'dispose' }) => {
       if (!canEdit) throw new Error("Access Denied: You do not have permission to adjust inventory stock.");
-      const { data: current } = await supabase.from('consumables').select('current_stock').eq('id', id).single();
-      if (!current) throw new Error("Item not found");
 
-      const newStock = Math.max(0, current.current_stock - amount);
-      const { error } = await supabase.from('consumables').update({
-        current_stock: newStock,
-        updated_at: new Date().toISOString()
-      }).eq('id', id);
+      const { error } = await supabase.rpc('decrement_consumable_stock', {
+        item_id: id,
+        amount: amount
+      });
       if (error) throw error;
 
       // Record disposition log

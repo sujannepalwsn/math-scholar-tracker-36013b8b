@@ -9,7 +9,7 @@ import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
 import NotificationBell from "./NotificationBell";
 import SchoolBranding from "./dashboard/SchoolBranding";
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
@@ -30,6 +30,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     navigate('/login');
   };
 
+  const queryClient = useQueryClient();
   const { data: unreadMessageCount = 0 } = useQuery({
     queryKey: ["unread-messages-center", user?.id, user?.center_id],
     queryFn: async () => {
@@ -51,8 +52,32 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
       if (error) return 0;
       return count || 0;
     },
-    enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000 });
+    enabled: !!user?.id && !!user?.center_id
+  });
+
+  // Supabase Realtime for unread messages
+  React.useEffect(() => {
+    if (!user?.id || !user?.center_id) return;
+
+    const channel = supabase
+      .channel('center-messages-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["unread-messages-center", user?.id, user?.center_id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.center_id, queryClient]);
 
   const centerDynamicItems = dynamicItems.filter(it => it.role === 'center');
   let updatedNavItems = centerDynamicItems.length > 1
