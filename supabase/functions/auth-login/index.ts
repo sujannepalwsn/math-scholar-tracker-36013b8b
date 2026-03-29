@@ -36,7 +36,7 @@ serve(async (req) => {
       .single();
 
     if (userError || !userData) {
-      console.error('User not found:', userError);
+      console.error(JSON.stringify({ event: 'error', message: 'User not found:', details: userError }));
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid username or password' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
@@ -132,7 +132,7 @@ serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    console.error('Login error:', error);
+    console.error(JSON.stringify({ event: 'error', message: 'Login error:', details: error }));
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),

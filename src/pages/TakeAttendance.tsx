@@ -1,4 +1,6 @@
+import { logger } from "@/utils/logger";
 import React, { useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { CalendarIcon, Calendar as CalendarIconLucide, ChevronDown, Lock, Users, ShieldAlert, Check, X, Clock, CheckCircle2, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -90,10 +92,10 @@ export default function TakeAttendance() {
 
       return Array.from(grades).filter(Boolean);
     },
-    enabled: !!user?.teacher_id && user?.role === 'teacher' });
+    enabled: !!user?.teacher_id && user?.role === UserRole.TEACHER });
 
-  const isTeacher = user?.role === 'teacher';
-  const isCenter = user?.role === 'center' || user?.role === 'admin';
+  const isTeacher = user?.role === UserRole.TEACHER;
+  const isCenter = user?.role === UserRole.CENTER || user?.role === UserRole.ADMIN;
 
   // Restricted by default for teachers. ONLY explicitly 'full' bypasses.
   const isRestricted = React.useMemo(() => {
@@ -109,7 +111,7 @@ export default function TakeAttendance() {
   // Debug logging for troubleshooting - will be visible in browser console
   useEffect(() => {
     if (user) {
-      console.log("TakeAttendance [Security Audit]:", {
+      logger.info("TakeAttendance [Security Audit]:", {
         userId: user.id,
         role: user.role,
         teacherId: user.teacher_id,
@@ -125,7 +127,7 @@ export default function TakeAttendance() {
     queryKey: ["students", user?.center_id, isRestricted, classTeacherGrades],
     queryFn: async () => {
       let query = supabase.from("students").select("id, name, grade").eq("is_active", true).order("name");
-      if (user?.role !== "admin" && user?.center_id) {
+      if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq("center_id", user.center_id);
       }
 
@@ -349,7 +351,7 @@ export default function TakeAttendance() {
             link: "/parent-dashboard"
           }));
           const { error: notifError } = await supabase.from('notifications').insert(notifications);
-          if (notifError) console.error("Error sending notifications:", notifError);
+          if (notifError) logger.error("Error sending notifications:", notifError);
         }
       }
     },

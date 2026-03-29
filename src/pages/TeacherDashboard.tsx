@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, MessageSquare, Paintbrush, Plane, Printer, Search, Star, Target, TrendingUp, User, Users, XCircle } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -22,6 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { toast } from "sonner"
 import { Tables } from "@/integrations/supabase/types"
 import { hasPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -58,7 +60,7 @@ export default function TeacherDashboard() {
   const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan | null>(null);
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Data Fetching
   const { data: teacherStudents = [], isLoading: isStudentsLoading } = useQuery({
@@ -67,7 +69,7 @@ export default function TeacherDashboard() {
       if (!teacherId) return [];
       let query = supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
 
-      if (user?.role === 'teacher') {
+      if (user?.role === UserRole.TEACHER) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', teacherId);
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', teacherId);
         const grades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
@@ -99,7 +101,7 @@ export default function TeacherDashboard() {
         .lte("date_taken", dateRange.to);
 
       if (error) {
-        console.error("Error in classResults query:", error);
+        logger.error("Error in classResults query:", error);
         return [];
       }
       return data || [];

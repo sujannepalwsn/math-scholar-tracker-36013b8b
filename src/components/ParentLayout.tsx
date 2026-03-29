@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, Archive, Award, BarChart3, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, Star, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -14,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 
-const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'parent');
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === UserRole.PARENT);
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -79,7 +80,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     };
   }, [user?.id, user?.center_id, queryClient]);
 
-  const parentDynamicItems = dynamicItems.filter(it => it.role === 'parent');
+  const parentDynamicItems = dynamicItems.filter(it => it.role === UserRole.PARENT);
   const updatedNavItems = parentDynamicItems.length > 1
     ? parentDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);

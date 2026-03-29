@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X, ChevronRight, ChevronLeft, Check, Camera } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -97,8 +98,13 @@ export default function RegisterStudent() {
   const [showLinkChildDialog, setShowLinkChildDialog] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
   const { currentPage, pageSize, setPage, getRange } = usePagination(10);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [gradeFilter, searchFilter, setPage]);
 
   // Fetch students with pagination
   const { data: studentsData, isLoading } = useQuery({
@@ -110,7 +116,7 @@ export default function RegisterStudent() {
         .select("*", { count: 'exact' })
         .order("created_at", { ascending: false });
 
-      if (user?.role !== "admin" && user?.center_id) {
+      if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq("center_id", user.center_id);
       }
 

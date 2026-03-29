@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Database, HardDrive, Cpu, Activity } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 export default function UsageMonitoring() {
   const { data: usage = [], isLoading } = useQuery({
@@ -16,7 +17,7 @@ export default function UsageMonitoring() {
         // Mocking some metrics as per requirement for demonstration,
         // in production these would come from real system metrics.
         const { count: rows, error: rowsError } = await supabase.from("attendance").select("*", { count: "exact", head: true }).eq("center_id", c.id);
-        if (rowsError) console.error(`Error fetching rows for center ${c.id}:`, rowsError);
+        if (rowsError) logger.error(`Error fetching rows for center ${c.id}:`, rowsError);
 
         return {
           centerName: c.name,

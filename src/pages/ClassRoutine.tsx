@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo } from "react";
+import { UserRole } from "@/types/roles";
 import {
   CalendarIcon, Calendar, Clock, Edit, Plus, Trash2, Download,
   FileSpreadsheet, FileText, Printer, CheckCircle, XCircle,
@@ -25,6 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import TimetableAutomation from "@/components/center/TimetableAutomation";
 import { hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 
 // Sunday(0) to Friday(5) only
 const DAYS_OF_WEEK = [
@@ -98,7 +100,7 @@ export default function ClassRoutine() {
     },
     enabled: !!user?.center_id });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
     queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id, isRestricted],
@@ -106,7 +108,7 @@ export default function ClassRoutine() {
       if (!user?.center_id) return [];
       let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
 
-      if (user?.role === 'teacher' && user?.teacher_id) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         query = query.eq('teacher_id', user.teacher_id);
       } else {
         query = query.eq("grade", selectedGrade);
@@ -389,7 +391,7 @@ export default function ClassRoutine() {
           type: 'info',
           link: '/teacher/class-routine'
         });
-        if (notifError) console.error("Notification error:", notifError);
+        if (notifError) logger.error("Notification error:", notifError);
       }
     },
     onSuccess: () => {

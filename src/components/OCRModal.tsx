@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Loader2, Upload } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -104,7 +105,7 @@ export default function OCRModal({ open, onOpenChange, onSave }: OCRModalProps) 
       setExtractedText(text);
       toast.success("Text extracted successfully");
     } catch (error) {
-      console.error("OCR Error:", error);
+      logger.error("OCR Error:", error);
       toast.error("Failed to extract text");
     } finally {
       setIsExtracting(false);

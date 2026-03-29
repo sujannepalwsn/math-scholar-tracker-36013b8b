@@ -1,4 +1,5 @@
 import React from "react";
+import { UserRole } from "@/types/roles";
 import { Bell, CheckCheck, Trash2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +28,7 @@ export default function Notifications() {
         .order("created_at", { ascending: false })
         .limit(100);
 
-      if (user.role === 'admin') {
+      if (user.role === UserRole.ADMIN) {
         // Super admin sees all
       } else {
         // Center admin, Teachers and Parents see their own and center-wide broadcasts

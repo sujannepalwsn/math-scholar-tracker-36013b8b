@@ -1,3 +1,4 @@
+import { logger } from "@/utils/logger";
 import React, { useState } from "react";
 import { AlertCircle, Brain, Loader2, ShieldCheck, Target, TrendingUp, Users, Zap } from "lucide-react";
 import { useMutation } from "@tanstack/react-query"
@@ -23,7 +24,7 @@ export default function AIInsights() {
       toast.success("AI insights generated successfully");
     },
     onError: (error: any) => {
-      console.error("Error generating insights:", error);
+      logger.error("Error generating insights:", error);
       if (error.message?.includes("429")) {
         toast.error("Rate limit exceeded. Please try again in a few moments.");
       } else if (error.message?.includes("402")) {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Calendar, TrendingUp, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query"
@@ -35,13 +36,13 @@ export default function AttendanceSummary() {
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState('all');
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       let query = supabase.from('students').select('id, name, grade').order('name');
-      if (user?.role !== 'admin' && user?.center_id) {
+      if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }
 
@@ -79,7 +80,7 @@ export default function AttendanceSummary() {
         .gte('date', startDate)
         .lte('date', endDate);
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, BarChart3, Book, BookOpen, Calendar, CheckCircle, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Paintbrush, Printer, Star, User, Users, XCircle, TrendingUp, PieChart as PieChartIcon } from "lucide-react";
 import { cn } from "@/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
@@ -21,6 +22,7 @@ import { Invoice, Payment } from "@/integrations/supabase/finance-types"
 import { formatCurrency, safeFormatDate, getGradeFormal } from "@/lib/utils" // Import safeFormatDate, formatCurrency, getGradeFormal
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
+import { logger } from "@/utils/logger";
 
 type LessonPlan = Tables<'lesson_plans'>;
 type StudentHomeworkRecord = Tables<'student_homework_records'>;
@@ -57,14 +59,14 @@ export default function StudentReport() {
   const [selectedPublishedExamId, setSelectedPublishedExamId] = useState<string>("none");
   const [selectedAttendanceDetail, setSelectedAttendanceDetail] = useState<any>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch students
   const { data: students = [] } = useQuery({
     queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       let query = supabase.from("students").select("*").order("name");
-      if (user?.role !== "admin" && user?.center_id) query = query.eq("center_id", user.center_id);
+      if (user?.role !== UserRole.ADMIN && user?.center_id) query = query.eq("center_id", user.center_id);
 
       if (isRestricted) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
@@ -103,7 +105,7 @@ export default function StudentReport() {
         .gte("date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 
@@ -146,7 +148,7 @@ export default function StudentReport() {
         .gte("completed_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("completed_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher' && user?.teacher_id) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         query = query.eq('recorded_by_teacher_id', user.teacher_id);
       }
 
@@ -177,7 +179,7 @@ export default function StudentReport() {
         .gte("date_taken", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("date_taken", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher') {
+      if (user?.role === UserRole.TEACHER) {
         query = query.eq('tests.created_by', user.id);
       }
 
@@ -207,7 +209,7 @@ export default function StudentReport() {
         .gte("homework.due_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("homework.due_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher' && user?.teacher_id) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         query = query.eq('homework.teacher_id', user.teacher_id);
       }
 
@@ -262,7 +264,7 @@ export default function StudentReport() {
         .gte("created_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("created_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher') {
+      if (user?.role === UserRole.TEACHER) {
         query = query.eq('activities.created_by', user.id);
       }
 
@@ -290,7 +292,7 @@ export default function StudentReport() {
         .gte("issue_date", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("issue_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher') {
+      if (user?.role === UserRole.TEACHER) {
         if (isRestricted) {
           const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
           const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user?.teacher_id);
@@ -343,7 +345,7 @@ export default function StudentReport() {
         .lte("exam_date", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
 
       // Parents only see published routines or results
-      if (user?.role === 'parent') {
+      if (user?.role === UserRole.PARENT) {
         query = query.in("status", ["published", "results_published"]);
       }
 
@@ -616,7 +618,7 @@ export default function StudentReport() {
       toast.success("AI summary generated successfully");
     },
     onError: (error: any) => {
-      console.error("Error generating summary:", error);
+      logger.error("Error generating summary:", error);
       toast.error("Failed to generate AI summary");
     } });
 

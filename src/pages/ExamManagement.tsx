@@ -1,9 +1,12 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, Calendar, Edit, GraduationCap, Plus, Trash2, ListChecks, CheckCircle2, ChevronDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +23,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ExamSettings from "@/components/center/ExamSettings";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 
 const grades = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
@@ -68,15 +72,17 @@ export default function ExamManagement() {
     enabled: !!centerId,
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10);
 
-  const { data: exams = [], isLoading } = useQuery({
-    queryKey: ["exams", centerId, isRestricted, user?.teacher_id, user?.id],
+  const { data: examsData, isLoading } = useQuery({
+    queryKey: ["exams", centerId, isRestricted, user?.teacher_id, user?.id, currentPage, pageSize],
     queryFn: async () => {
-      if (!centerId) return [];
+      if (!centerId) return { data: [], count: 0 };
+      const { from, to } = getRange();
       let query = supabase
         .from("exams")
-        .select("*")
+        .select("*", { count: 'exact' })
         .eq("center_id", centerId)
         .order("created_at", { ascending: false });
 
@@ -96,12 +102,15 @@ export default function ExamManagement() {
         query = query.or(conditions.join(','));
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!centerId,
   });
+
+  const exams = examsData?.data || [];
+  const totalCount = examsData?.count || 0;
 
   const { data: subjects = [] } = useQuery({
     queryKey: ["exam-subjects", selectedExamId],
@@ -228,7 +237,7 @@ export default function ExamManagement() {
             link: "/parent-results"
           }));
           const { error: notifError } = await supabase.from("notifications").insert(notifications);
-          if (notifError) console.error("Notification error:", notifError);
+          if (notifError) logger.error("Notification error:", notifError);
         }
       }
     },
@@ -588,6 +597,16 @@ export default function ExamManagement() {
               </CardContent>
             </Card>
           ))
+        )}
+        {totalCount > pageSize && (
+          <div className="p-4 bg-card/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-soft">
+            <ServerPagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={setPage}
+            />
+          </div>
         )}
       </div>
         </TabsContent>

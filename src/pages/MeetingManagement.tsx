@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { CalendarDays, CheckCircle2, Edit, Eye, FileText, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ import MeetingConclusionForm from "@/components/meetings/MeetingConclusionForm";
 import MeetingConclusionViewer from "@/components/meetings/MeetingConclusionViewer";
 import MeetingAttendeesViewer from "@/components/meetings/MeetingAttendeesViewer";
 import { hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 "use client";
 
 type Meeting = Tables<'meetings'>;
@@ -35,7 +37,7 @@ export default function MeetingManagement() {
   const [showConclusionDialog, setShowConclusionDialog] = useState(false);
   const [selectedMeetingForConclusion, setSelectedMeetingForConclusion] = useState<Meeting & { meeting_conclusions: MeetingConclusion[] } | null>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch meetings for the current center
   const { data: meetings = [], isLoading } = useQuery({
@@ -103,7 +105,7 @@ export default function MeetingManagement() {
 
     if (attendeesToInsert.length > 0) {
       const { error: attendeeInsertError } = await supabase.from('meeting_attendees').insert(attendeesToInsert);
-      if (attendeeInsertError) console.error("Error inserting meeting attendees:", attendeeInsertError);
+      if (attendeeInsertError) logger.error("Error inserting meeting attendees:", attendeeInsertError);
 
       const notifications = attendeesToInsert.map(att => ({
         user_id: att.user_id,

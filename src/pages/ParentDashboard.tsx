@@ -1,4 +1,6 @@
+import { logger } from "@/utils/logger";
 import React, { useEffect, useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Search, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -420,12 +422,12 @@ export default function ParentDashboard() {
     );
   }, [lessonRecords, testResults, homeworkStatus, allLessonPlans]);
 
-  if (!user || user.role !== 'parent') {
+  if (!user || user.role !== UserRole.PARENT) {
     navigate('/login-parent');
     return null;
   }
 
-  console.log("Rendering Parent Dashboard, activeStudentId:", activeStudentId);
+  logger.info("Rendering Parent Dashboard, activeStudentId:", activeStudentId);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8 page-enter animate-in fade-in duration-1000">

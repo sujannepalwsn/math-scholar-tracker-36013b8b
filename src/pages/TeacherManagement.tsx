@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, ShieldCheck, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -22,6 +23,7 @@ import { Tables } from "@/integrations/supabase/types"
 import * as bcrypt from 'bcryptjs';
 import TeacherFeaturePermissions from '@/components/center/TeacherFeaturePermissions';
 import StaffHRModule from '@/components/center/StaffHRModule';
+import { logger } from "@/utils/logger";
 
 type Teacher = Tables<'teachers'>;
 
@@ -98,7 +100,7 @@ export default function TeacherManagement() {
   const [selectedTeacherForClassAssign, setSelectedTeacherForClassAssign] = useState<Teacher | null>(null);
   const [classTeacherGrade, setClassTeacherGrade] = useState("select-grade");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
   const { currentPage, pageSize, setPage, getRange } = usePagination(10);
 
   const { data: teachersData, isLoading } = useQuery({
@@ -121,7 +123,7 @@ export default function TeacherManagement() {
         .range(from, to);
 
       if (error) {
-        console.error("Error fetching teachers:", error);
+        logger.error("Error fetching teachers:", error);
         throw error;
       }
       return { data: data || [], count: count || 0 };
@@ -343,7 +345,7 @@ export default function TeacherManagement() {
         ...legacyObj,
         permissions: permissionsObj
       });
-      if (permError) console.error('Error seeding default permissions:', permError);
+      if (permError) logger.error('Error seeding default permissions:', permError);
       return newTeacher;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher added successfully!"); setIsDialogOpen(false); resetForm(); },

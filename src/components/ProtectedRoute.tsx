@@ -21,8 +21,8 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
 
   if (!user) {
     let loginPath = '/login';
-    if (role === 'admin') loginPath = '/login-admin';
-    if (role === 'parent') loginPath = '/login-parent';
+    if (role === UserRole.ADMIN) loginPath = '/login-admin';
+    if (role === UserRole.PARENT) loginPath = '/login-parent';
     return <Navigate to={loginPath} replace />;
   }
 

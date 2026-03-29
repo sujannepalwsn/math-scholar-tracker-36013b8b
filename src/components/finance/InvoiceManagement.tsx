@@ -1,3 +1,4 @@
+import { logger } from "@/utils/logger";
 import React, { useState } from "react";
 import { DollarSign, Eye, FilePlus, Plus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -112,7 +113,7 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
     onError: (error: any) => {
-      console.error("Bulk invoice generation error:", error);
+      logger.error("Bulk invoice generation error:", error);
       toast.error(error.message || 'Failed to generate bulk invoices');
     }
   });

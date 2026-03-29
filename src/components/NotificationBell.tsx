@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Bell, CheckCheck, ExternalLink } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +22,7 @@ export default function NotificationBell() {
   useEffect(() => {
     if (!user?.id) return;
 
-    const channelName = user.role === 'admin' ? 'global-notifications' : `notifications-${user.id}`;
+    const channelName = user.role === UserRole.ADMIN ? 'global-notifications' : `notifications-${user.id}`;
     const channel = supabase.channel(channelName);
 
     channel.on('broadcast', { event: 'new-notification' }, (payload) => {
@@ -35,7 +36,7 @@ export default function NotificationBell() {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
-        filter: user.role === 'admin' ? undefined : `user_id=eq.${user.id}`
+        filter: user.role === UserRole.ADMIN ? undefined : `user_id=eq.${user.id}`
       }, () => {
         queryClient.invalidateQueries({ queryKey: ["notifications"] });
       })
@@ -58,7 +59,7 @@ export default function NotificationBell() {
         .order("created_at", { ascending: false })
         .limit(20);
 
-      if (user.role === 'admin') {
+      if (user.role === UserRole.ADMIN) {
         // Super admin sees all
       } else {
         // Center admin, Teachers and Parents see their own and center-wide broadcasts
@@ -70,7 +71,6 @@ export default function NotificationBell() {
       return data || [];
     },
     enabled: !!user?.id,
-    refetchInterval: 30000,
   });
 
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
@@ -103,8 +103,8 @@ export default function NotificationBell() {
   };
 
   const getNotificationsRoute = () => {
-    if (user?.role === 'parent') return '/parent-notifications';
-    if (user?.role === 'teacher') return '/teacher/notifications';
+    if (user?.role === UserRole.PARENT) return '/parent-notifications';
+    if (user?.role === UserRole.TEACHER) return '/teacher/notifications';
     return '/notifications';
   };
 

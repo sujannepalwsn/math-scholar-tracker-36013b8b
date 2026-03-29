@@ -1,4 +1,6 @@
+import { logger } from "@/utils/logger";
 import React, { useEffect, useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import {
   CalendarIcon, Calendar as CalendarIconLucide, CheckCircle2, Clock, Download, Eye,
   MinusCircle, Printer, TrendingUp, User, X, XCircle,
@@ -52,7 +54,7 @@ export default function TeacherAttendancePage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const isTeacher = user?.role === 'teacher';
+  const isTeacher = user?.role === UserRole.TEACHER;
   const isCenter = hasPermission(user, 'teachers_attendance');
   const canEdit = hasActionPermission(user, 'teachers_attendance', 'edit');
 
@@ -68,7 +70,7 @@ export default function TeacherAttendancePage() {
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const todayStr = format(today, "yyyy-MM-dd");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch active teachers for the center
   const { data: teachers = [], isLoading: teachersLoading } = useQuery({
@@ -526,7 +528,7 @@ export default function TeacherAttendancePage() {
           
           totalMinutesIn += (hours * 60) + minutes;
         } catch (e) {
-          console.error("Error parsing time_in:", record.time_in, e);
+          logger.error("Error parsing time_in:", record.time_in, e);
         }
       } else if (record.status === 'absent') {
         absentDaysList.push(record.date);

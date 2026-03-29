@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { BookOpen, Calendar, Download, FileText, GraduationCap, Info, User } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useQuery } from "@tanstack/react-query"
@@ -15,7 +16,7 @@ export default function ParentLessonTracking() {
   const { user } = useAuth();
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
 
-  if (!user || user.role !== 'parent' || !user.student_id) {
+  if (!user || user.role !== UserRole.PARENT || !user.student_id) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="p-4 rounded-full bg-slate-100/50 backdrop-blur-sm border border-slate-200">

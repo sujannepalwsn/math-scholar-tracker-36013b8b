@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Book, BookOpen, CheckCircle, ChevronDown, ChevronUp, Clock, Edit, Eye, FileText, Plus, Star, Trash2, User, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils"
 "use client";
@@ -19,7 +20,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
-import EditStudentLessonRecord from "@/components/center/EditStudentLessonRecord"; // Import the new component
+import EditStudentLessonRecord from "@/components/center/EditStudentLessonRecord";
+import { logger } from "@/utils/logger"; // Import the new component
 import { hasActionPermission } from "@/utils/permissions";
 
 type LessonPlan = Tables<'lesson_plans'>;
@@ -74,7 +76,7 @@ export default function LessonTracking() {
     queryKey: ["students", user?.center_id],
     queryFn: async () => {
       let query = supabase.from("students").select("id, name, grade").order("name");
-      if (user?.role !== "admin" && user?.center_id) {
+      if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq("center_id", user.center_id);
       }
       const { data, error } = await query;
@@ -85,7 +87,7 @@ export default function LessonTracking() {
   });
 
   // Fetch lesson plans for dropdown and listing
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: lessonPlans = [] } = useQuery({
     queryKey: ["lesson-plans-for-tracking", user?.center_id, filterSubject, user?.teacher_id, isRestricted],
@@ -99,7 +101,7 @@ export default function LessonTracking() {
 
       if (filterSubject !== "all") query = query.eq("subject", filterSubject);
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -128,7 +130,7 @@ export default function LessonTracking() {
       if (filterGrade !== "all") query = query.eq("students.grade", filterGrade);
       if (filterSubject !== "all") query = query.eq("lesson_plans.subject", filterSubject); // Filter by lesson plan subject
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('recorded_by_teacher_id', user.teacher_id);
       }
 
@@ -204,7 +206,7 @@ export default function LessonTracking() {
         const isStudentMatch = recordStudentId && tr.student_id === recordStudentId;
         const isLessonPlanMatch = recordLessonPlanId && testLessonPlanId === recordLessonPlanId;
 
-        // console.log(`DEBUG: Checking test result ${tr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Test's LP ID: ${testLessonPlanId}`);
+        // logger.info(`DEBUG: Checking test result ${tr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Test's LP ID: ${testLessonPlanId}`);
         return isStudentMatch && isLessonPlanMatch;
       });
 
@@ -217,11 +219,11 @@ export default function LessonTracking() {
         const isStudentMatch = recordStudentId && hr.student_id === recordStudentId;
         const isLessonPlanMatch = recordLessonPlanId && homeworkLessonPlanId === recordLessonPlanId;
 
-        // console.log(`DEBUG: Checking homework record ${hr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Homework's LP ID: ${homeworkLessonPlanId}`);
+        // logger.info(`DEBUG: Checking homework record ${hr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Homework's LP ID: ${homeworkLessonPlanId}`);
         return isStudentMatch && isLessonPlanMatch;
       });
 
-      // console.log(`DEBUG: For lesson plan ${lessonPlan.id}, student ${record.students?.name}: Found ${linkedTestResults.length} linked tests and ${linkedHomeworkRecords.length} linked homeworks.`);
+      // logger.info(`DEBUG: For lesson plan ${lessonPlan.id}, student ${record.students?.name}: Found ${linkedTestResults.length} linked tests and ${linkedHomeworkRecords.length} linked homeworks.`);
 
       groups.get(lessonPlan.id)?.students.push({
         ...record,
@@ -257,7 +259,7 @@ export default function LessonTracking() {
       }
       // Allow center users to record. If user.role is 'center', user.teacher_id will be null,
       // which is fine for the nullable recorded_by_teacher_id foreign key.
-      // No explicit check for user.role === 'teacher' is needed here.
+      // No explicit check for user.role === UserRole.TEACHER is needed here.
 
       const lessonPlan = lessonPlans.find(lp => lp.id === selectedLessonPlanId);
       if (lessonPlan?.status !== 'approved') {

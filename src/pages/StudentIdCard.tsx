@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Download, Printer, Search, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +37,7 @@ export default function StudentIdCard() {
     enabled: !!centerId,
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-idcard", centerId, isRestricted, user?.teacher_id],

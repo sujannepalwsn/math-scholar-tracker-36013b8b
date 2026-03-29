@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Edit, Plus, Power, PowerOff, Users } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -20,6 +21,7 @@ import UsageMonitoring from '@/components/admin/UsageMonitoring';
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { logger } from "@/utils/logger";
 
 
 const AdminDashboard = () => {
@@ -33,7 +35,7 @@ const AdminDashboard = () => {
   const [editedCenterData, setEditedCenterData] = useState({ centerName: '', address: '' });
   const [newCenter, setNewCenter] = useState({ centerName: '', address: '', phone: '', username: '', password: '' });
 
-  if (user?.role !== 'admin') {
+  if (user?.role !== UserRole.ADMIN) {
     navigate('/');
     return null;
   }
@@ -81,7 +83,7 @@ const AdminDashboard = () => {
       // Create default permissions
       const { error: permError } = await supabase.from('center_feature_permissions').insert({
         center_id: centerData.id });
-      if (permError) console.error('Error seeding permissions:', permError);
+      if (permError) logger.error('Error seeding permissions:', permError);
 
       return centerData;
     },

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Download, Users, TrendingUp } from "lucide-react";
 import { cn, safeFormatDate } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
@@ -27,14 +28,14 @@ export default function Summary() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [monthFilter, setMonthFilter] = useState<string>(format(new Date(), "yyyy-MM"));
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch students
   const { data: students } = useQuery({
     queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id],
     queryFn: async () => {
       let query = supabase.from("students").select("*").order("name");
-      if (user?.role !== "admin" && user?.center_id) query = query.eq("center_id", user.center_id);
+      if (user?.role !== UserRole.ADMIN && user?.center_id) query = query.eq("center_id", user.center_id);
 
       if (isRestricted) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
@@ -64,7 +65,7 @@ export default function Summary() {
         .select("*")
         .in("student_id", studentIds);
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 

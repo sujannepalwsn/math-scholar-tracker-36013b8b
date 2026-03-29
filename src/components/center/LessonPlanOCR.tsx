@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-utils";
 import { cn } from "@/lib/utils";
+import { logger } from "@/utils/logger";
 
 interface LessonPlanOCRProps {
   open: boolean;
@@ -57,14 +58,14 @@ export default function LessonPlanOCR({ open, onOpenChange, onExtracted }: Lesso
 
       // 2. Network/Invocation Phase
       setStep("analyzing");
-      console.log("Invoking lesson-plan-ocr Edge Function...");
+      logger.info("Invoking lesson-plan-ocr Edge Function...");
 
       const { data, error } = await supabase.functions.invoke("lesson-plan-ocr", {
         body: { image: base64 }
       });
 
       if (error) {
-        console.error("Supabase function invocation error:", error);
+        logger.error("Supabase function invocation error:", error);
         throw error;
       }
 
@@ -83,7 +84,7 @@ export default function LessonPlanOCR({ open, onOpenChange, onExtracted }: Lesso
       }, 800);
 
     } catch (error: any) {
-      console.error("OCR Processing Error:", error);
+      logger.error("OCR Processing Error:", error);
       setStep("error");
 
       let friendlyMessage = "Failed to process image with AI";

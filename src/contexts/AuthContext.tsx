@@ -1,4 +1,6 @@
+import { logger } from "@/utils/logger";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client"
 import { Tables } from "@/integrations/supabase/types"
@@ -83,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 // Fetch teacher permissions if user is a teacher
-                if (userToUpdate.role === 'teacher' && userToUpdate.teacher_id) {
+                if (userToUpdate.role === UserRole.TEACHER && userToUpdate.teacher_id) {
                   const { data: teacherPerms } = await supabase
                     .from('teacher_feature_permissions')
                     .select('*')
@@ -104,14 +106,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   localStorage.setItem('auth_user', JSON.stringify(updatedUser));
                 }
               } catch (err) {
-                console.error("Error fetching fresh permissions:", err);
+                logger.error("Error fetching fresh permissions:", err);
               }
             };
 
             fetchFreshData(parsedUser);
           }
         } catch (e) {
-          console.error("Failed to parse auth_user", e);
+          logger.error("Failed to parse auth_user", e);
         }
       }
       setLoading(false);
@@ -123,27 +125,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     username: string,
     password: string,
   ) => {
-    console.log('AuthContext: login function called');
+    logger.info('AuthContext: login function called');
     try {
-      console.log('AuthContext: Preparing to invoke auth-login Edge Function...'); // Added this line
+      logger.info('AuthContext: Preparing to invoke auth-login Edge Function...'); // Added this line
       const { data, error: invokeError } = await supabase.functions.invoke('auth-login', {
         body: { username, password } });
-      console.log('AuthContext: Edge Function invocation completed.');
+      logger.info('AuthContext: Edge Function invocation completed.');
 
       if (invokeError) {
-        console.error('AuthContext: Edge Function invocation error:', invokeError);
+        logger.error('AuthContext: Edge Function invocation error:', invokeError);
         // Log the full error object for more details
-        console.error('AuthContext: Full invokeError object:', JSON.stringify(invokeError, null, 2));
+        logger.error('AuthContext: Full invokeError object:', JSON.stringify(invokeError, null, 2));
         return { success: false, error: invokeError.message || 'Login failed' };
       }
 
       if (!data.success) {
-        console.error('AuthContext: Login failed from Edge Function:', data.error);
+        logger.error('AuthContext: Login failed from Edge Function:', data.error);
         return { success: false, error: data.error || 'Login failed' };
       }
 
       const loggedInUser: User = data.user;
-      console.log('AuthContext: User logged in successfully:', loggedInUser.username);
+      logger.info('AuthContext: User logged in successfully:', loggedInUser.username);
 
       // The role check is now handled by ProtectedRoute after successful authentication
       // This allows any valid user to log in via the main login page and then be redirected
@@ -164,7 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updatedUser.centerPermissions = centerPerms;
         }
 
-        if (loggedInUser.role === 'teacher' && loggedInUser.teacher_id) {
+        if (loggedInUser.role === UserRole.TEACHER && loggedInUser.teacher_id) {
           const { data: teacherPerms } = await supabase
             .from('teacher_feature_permissions')
             .select('*')
@@ -180,12 +182,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(updatedUser);
       localStorage.setItem('auth_user', JSON.stringify(updatedUser));
-      console.log('AuthContext: User state (with permissions) updated and stored in localStorage.');
+      logger.info('AuthContext: User state (with permissions) updated and stored in localStorage.');
       return { success: true };
     } catch (error) {
-      console.error('AuthContext: Login error caught in client-side:', error);
+      logger.error('AuthContext: Login error caught in client-side:', error);
       // Log the full error object for more details
-      console.error('AuthContext: Full client-side error object:', JSON.stringify(error, null, 2));
+      logger.error('AuthContext: Full client-side error object:', JSON.stringify(error, null, 2));
       return { success: false, error: error.message || 'Login failed' };
     }
   };

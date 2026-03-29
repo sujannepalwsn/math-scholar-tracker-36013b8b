@@ -1,3 +1,4 @@
+import { logger } from "@/utils/logger";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -145,7 +146,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setLogoUrl(logo || null);
       }
     } catch (error) {
-      console.error('Error fetching theme/preferences:', error);
+      logger.error('Error fetching theme/preferences:', error);
       setTheme(defaultTheme);
     } finally {
       setLoading(false);

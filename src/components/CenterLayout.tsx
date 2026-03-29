@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, Archive, Award, BarChart3, Bell, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, CreditCard, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, Star, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -13,8 +14,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
+import { logger } from "@/utils/logger";
 
-const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'center');
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === UserRole.CENTER);
 
 export default function CenterLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -79,7 +81,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
     };
   }, [user?.id, user?.center_id, queryClient]);
 
-  const centerDynamicItems = dynamicItems.filter(it => it.role === 'center');
+  const centerDynamicItems = dynamicItems.filter(it => it.role === UserRole.CENTER);
   let updatedNavItems = centerDynamicItems.length > 1
     ? centerDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);
@@ -113,7 +115,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         staticItem => !centerDynamicItems.some(it => it.route === staticItem.route)
       );
       if (hasMissing) {
-        console.log("CenterLayout: Detected missing navigation items, syncing...");
+        logger.info("CenterLayout: Detected missing navigation items, syncing...");
         syncMissingItems.mutate();
       }
     }

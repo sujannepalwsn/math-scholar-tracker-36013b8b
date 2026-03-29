@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -72,7 +73,7 @@ export default function DashboardHeader() {
         .eq("center_id", user.center_id)
         .eq("is_current", true)
         .maybeSingle();
-      if (error) console.error("Error fetching academic year:", error);
+      if (error) logger.error("Error fetching academic year:", error);
       return data;
     },
     enabled: !!user?.center_id

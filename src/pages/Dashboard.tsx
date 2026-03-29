@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, ArrowRight, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle2, ChevronDown, Clock, FileText, Home, Package, Search, TrendingUp, Users, Wallet, GripVertical, Settings2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ import LibraryManagement from "@/components/center/LibraryManagement";
 import TransportManagement from "@/components/center/TransportManagement";
 import AssetTracking from "@/components/center/AssetTracking";
 import DigitalNoticeBoard from "@/components/center/NoticeBoard";
+import { logger } from "@/utils/logger";
 
 type AttendanceRange = "weekly" | "monthly" | "yearly" | "overall";
 
@@ -138,7 +140,7 @@ export default function Dashboard() {
         toast.success("Widget layout updated", { duration: 1000 });
       }
     } catch (err) {
-      console.error("Drop error:", err);
+      logger.error("Drop error:", err);
     }
   };
 
@@ -164,22 +166,22 @@ export default function Dashboard() {
   const { data: myAssignedGrades = [] } = useQuery({
     queryKey: ["my-assigned-grades", user?.teacher_id],
     queryFn: async () => {
-      if (!user?.teacher_id || user?.role !== 'teacher') return [];
+      if (!user?.teacher_id || user?.role !== UserRole.TEACHER) return [];
       const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
       const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
       const combined = [...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])];
       return Array.from(new Set(combined));
     },
-    enabled: !!user?.teacher_id && user?.role === 'teacher'
+    enabled: !!user?.teacher_id && user?.role === UserRole.TEACHER
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: students = [], isLoading: isStudentsLoading } = useQuery({
     queryKey: ["students", centerId, isRestricted, myAssignedGrades],
     queryFn: async () => {
       let query = supabase.from("students").select("*").eq("is_active", true).order("name");
-      if (role !== "admin" && centerId) query = query.eq("center_id", centerId);
+      if (role !== UserRole.ADMIN && centerId) query = query.eq("center_id", centerId);
 
       if (isRestricted && myAssignedGrades.length > 0) {
         query = query.in('grade', myAssignedGrades);
@@ -511,7 +513,7 @@ export default function Dashboard() {
         .eq("center_id", centerId)
         .eq("day_of_week", dayOfWeek);
 
-      if (role !== 'admin' && role !== 'center' && role !== 'super_admin') {
+      if (role !== UserRole.ADMIN && role !== UserRole.CENTER && role !== 'super_admin') {
         query = query.eq("class_periods.is_published", true);
       }
 
@@ -855,7 +857,7 @@ export default function Dashboard() {
           type: 'info',
           link: '/teacher/class-routine'
         });
-        if (notifError) console.error("Error sending substitution notification:", notifError);
+        if (notifError) logger.error("Error sending substitution notification:", notifError);
       }
     },
     onSuccess: () => {
@@ -864,7 +866,7 @@ export default function Dashboard() {
       setSelectedVacantClass(null);
     },
     onError: (err: any) => {
-      console.error("Substitution assignment error:", err);
+      logger.error("Substitution assignment error:", err);
       toast.error(err.message || "Failed to assign substitution");
     }
   });
@@ -916,7 +918,7 @@ export default function Dashboard() {
           trendData={attendanceTrend}
           delta={getDelta(attendanceTrend)}
           target={studentAttendanceRate}
-          onClick={() => navigate(user?.role === 'teacher' ? "/teacher/take-attendance" : "/attendance")}
+          onClick={() => navigate(user?.role === UserRole.TEACHER ? "/teacher/take-attendance" : "/attendance")}
         />
       ) : null,
       "teacher-attendance": hasPermission(user, 'teachers_attendance') ? (

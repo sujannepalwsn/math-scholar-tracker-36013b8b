@@ -1,4 +1,6 @@
+import { logger } from "@/utils/logger";
 import React, { useEffect, useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { CalendarIcon, Calendar as CalendarIconLucide, Clock, Download, Printer, TrendingUp, User, X, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -54,7 +56,7 @@ export default function ViewRecords() {
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<StudentDetail | null>(null);
   const [detailMonthFilter, setDetailMonthFilter] = useState<Date>(new Date());
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch students for this center
   const { data: students = [] } = useQuery({
@@ -111,7 +113,7 @@ export default function ViewRecords() {
         .in("student_id", studentIds)
         .eq("date", dateStr);
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 
@@ -142,7 +144,7 @@ export default function ViewRecords() {
         .gte("date", format(start, "yyyy-MM-dd")) // Corrected format string
         .lte("date", format(end, "yyyy-MM-dd"));
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('marked_by', user.id);
       }
 
@@ -222,7 +224,7 @@ export default function ViewRecords() {
           
           totalMinutesIn += (hours * 60) + minutes;
         } catch (e) {
-          console.error("Error parsing time_in:", record.time_in, e);
+          logger.error("Error parsing time_in:", record.time_in, e);
         }
       } else if (record.status === 'absent') {
         absentDaysList.push(record.date);

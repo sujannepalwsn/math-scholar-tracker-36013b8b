@@ -55,8 +55,24 @@ export default function ParentMessaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!conversation?.id,
-    refetchInterval: 5000 });
+    enabled: !!conversation?.id });
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!conversation?.id) return;
+    const channel = supabase
+      .channel(`parent-chat-${conversation.id}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "chat_messages",
+        filter: `conversation_id=eq.${conversation.id}`
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ["parent-chat-messages", conversation.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [conversation?.id, queryClient]);
 
   // Scroll to bottom
   useEffect(() => {

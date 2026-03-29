@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import {
   CalendarIcon, CheckCircle2, Download, Eye, FileText,
   Filter, Loader2, Search, User, XCircle, AlertCircle,
@@ -64,7 +65,7 @@ export default function LessonPlanManagement() {
     enabled: !!user?.center_id
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: lessonPlans = [], isLoading } = useQuery({
     queryKey: ["lesson-plans-mgmt", user?.center_id, statusFilter, subjectFilter, gradeFilter, teacherFilter, isRestricted],

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, Clock, Edit, Plus, Settings, Trash2, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,7 +18,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
-import DisciplineCategoryManagement from "@/components/center/DisciplineCategoryManagement"; // Import the new component
+import DisciplineCategoryManagement from "@/components/center/DisciplineCategoryManagement";
+import { logger } from "@/utils/logger"; // Import the new component
 import { cn } from "@/lib/utils"
 import { hasActionPermission } from "@/utils/permissions";
 
@@ -36,7 +38,7 @@ const severityLevels = [
 export default function DisciplineIssues() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<DisciplineIssue | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>("all");
@@ -115,7 +117,7 @@ export default function DisciplineIssues() {
         query = query.eq("students.grade", gradeFilter);
       }
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('reported_by', user.id);
       }
 
@@ -168,7 +170,7 @@ export default function DisciplineIssues() {
           link: "/parent-discipline"
         }));
         const { error: notifError } = await supabase.from('notifications').insert(notifications);
-        if (notifError) console.error("Notification error:", notifError);
+        if (notifError) logger.error("Notification error:", notifError);
       }
     },
     onSuccess: () => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { BookOpen, Bot, CalendarIcon, ClipboardCheck, Edit, Eye, FileText, FileUp, Plus, SquarePen, Trash2, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import OCRModal from "@/components/OCRModal";
@@ -21,6 +24,7 @@ import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
 import { hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 "use client";
 
 
@@ -48,7 +52,8 @@ interface QuestionMark {
 export default function Tests() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10);
   const canEdit = hasActionPermission(user, 'test_management', 'edit');
   const [isAddingTest, setIsAddingTest] = useState(false);
   const [selectedTest, setSelectedTest] = useState<string>("");
@@ -77,32 +82,33 @@ export default function Tests() {
   const [resultDate, setResultDate] = useState(format(new Date(), "yyyy-MM-dd"));
   // Removed resultNotes state
 
-  // Fetch tests
-  const { data: tests = [] } = useQuery({
-    queryKey: ["tests", user?.center_id, user?.id, isRestricted],
+  // Fetch tests with pagination
+  const { data: testsData } = useQuery({
+    queryKey: ["tests", user?.center_id, user?.id, isRestricted, currentPage, pageSize],
     queryFn: async () => {
+      const { from, to } = getRange();
       let query = supabase
         .from("tests")
-        .select("*, lesson_plans(id, subject, chapter, topic, grade)") // Fetch lesson_plans details
+        .select("*, lesson_plans(id, subject, chapter, topic, grade)", { count: 'exact' })
         .order("date", { ascending: false });
       
-      if (user?.role === 'teacher') {
-        // Even in full mode, teachers might want to see their own first, but here we strictly follow the requirement
-        // "Full Mode (ON) -> same access as Center Admin"
-        // "Restricted Mode (OFF) -> only tests created by teacher"
+      if (user?.role === UserRole.TEACHER) {
         if (isRestricted) {
           query = query.eq('created_by', user.id);
         } else {
           query = query.eq('center_id', user.center_id);
         }
-      } else if (user?.role !== 'admin' && user?.center_id) {
+      } else if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }
       
-      const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     } });
+
+  const tests = testsData?.data || [];
+  const totalCount = testsData?.count || 0;
 
   // Fetch lesson plans for the dropdown
   const { data: lessonPlans = [] } = useQuery({
@@ -136,7 +142,7 @@ export default function Tests() {
         .eq("is_active", true)
         .order("name");
       
-      if (user?.role !== 'admin' && user?.center_id) {
+      if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq('center_id', user.center_id);
       }
 
@@ -218,7 +224,7 @@ export default function Tests() {
         uploadedFileUrl = fileName;
       }
       
-      console.log("DEBUG: Attempting to create test with lessonPlanId:", selectedLessonPlanId);
+      logger.info("DEBUG: Attempting to create test with lessonPlanId:", selectedLessonPlanId);
 
       if (selectedLessonPlanId) {
         const lp = lessonPlans.find(l => l.id === selectedLessonPlanId);
@@ -254,7 +260,7 @@ export default function Tests() {
       setUploadedFile(null);
     },
     onError: (error: any) => {
-      console.error("Error creating test:", error);
+      logger.error("Error creating test:", error);
       toast.error("Failed to create test");
     } });
 
@@ -273,11 +279,11 @@ export default function Tests() {
         question_marks: questions.length > 0 ? (questionMarks as any) : null, // Save question-wise marks as Json
       };
 
-      console.log("Attempting to save test result with data:", resultData);
+      logger.info("Attempting to save test result with data:", resultData);
 
       const { data, error } = await supabase.from("test_results").insert(resultData);
       if (error) {
-        console.error("Supabase error saving test result:", error);
+        logger.error("Supabase error saving test result:", error);
         throw error;
       }
 
@@ -292,10 +298,10 @@ export default function Tests() {
           type: 'marks',
           link: '/parent-results'
         });
-        if (notifError) console.error("Notification error:", notifError);
+        if (notifError) logger.error("Notification error:", notifError);
       }
 
-      console.log("Test result saved successfully:", data);
+      logger.info("Test result saved successfully:", data);
       return data;
     },
     onSuccess: () => {
@@ -308,7 +314,7 @@ export default function Tests() {
       // Removed resultNotes reset
     },
     onError: (error: any) => {
-      console.error("Error in addResultMutation:", error);
+      logger.error("Error in addResultMutation:", error);
       if (error.code === "23505") {
         toast.error("Marks already recorded for this student for this test.");
       } else {
@@ -320,7 +326,7 @@ export default function Tests() {
   const bulkMarksMutation = useMutation({
     mutationFn: async (marks: Array<{ studentId: string; marks: number }>) => {
       if (!canEdit) throw new Error("Access Denied: You do not have permission to perform bulk marks entry.");
-      console.log("Attempting bulk marks save for test:", selectedTest, "with marks:", marks);
+      logger.info("Attempting bulk marks save for test:", selectedTest, "with marks:", marks);
 
       // Delete existing records for these students in this test to prevent unique constraint errors
       const studentIdsInBatch = marks.map((m) => m.studentId);
@@ -331,10 +337,10 @@ export default function Tests() {
         .in("student_id", studentIdsInBatch);
 
       if (deleteError) {
-        console.error("Supabase error deleting existing bulk marks:", deleteError);
+        logger.error("Supabase error deleting existing bulk marks:", deleteError);
         throw deleteError;
       }
-      console.log("Existing bulk marks deleted for selected students.");
+      logger.info("Existing bulk marks deleted for selected students.");
 
       const records = marks.map((m) => ({
         test_id: selectedTest,
@@ -344,10 +350,10 @@ export default function Tests() {
         question_marks: null, // Bulk entry doesn't support question-wise for now
       }));
 
-      console.log("Inserting new bulk marks records:", records);
+      logger.info("Inserting new bulk marks records:", records);
       const { error } = await supabase.from("test_results").insert(records);
       if (error) {
-        console.error("Supabase error inserting bulk marks:", error);
+        logger.error("Supabase error inserting bulk marks:", error);
         throw error;
       }
 
@@ -366,17 +372,17 @@ export default function Tests() {
           };
         });
         const { error: notifError } = await supabase.from('notifications').insert(notifications);
-        if (notifError) console.error("Notification error:", notifError);
+        if (notifError) logger.error("Notification error:", notifError);
       }
 
-      console.log("Bulk marks saved successfully.");
+      logger.info("Bulk marks saved successfully.");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-results"] });
       toast.success("Bulk marks saved successfully");
     },
     onError: (error: any) => {
-      console.error("Error in bulkMarksMutation:", error);
+      logger.error("Error in bulkMarksMutation:", error);
       toast.error(error.message || "Failed to save bulk marks");
     } });
 
@@ -395,7 +401,7 @@ export default function Tests() {
       toast.success("Result deleted");
     },
     onError: (error: any) => {
-      console.error("Error deleting test result:", error);
+      logger.error("Error deleting test result:", error);
       toast.error(error.message || "Failed to delete result");
     } });
 
@@ -406,7 +412,7 @@ export default function Tests() {
       const test = tests.find(t => t.id === testId);
       if (!test) throw new Error("Test not found");
       
-      if (user?.role !== 'admin' && test.center_id !== user?.center_id) {
+      if (user?.role !== UserRole.ADMIN && test.center_id !== user?.center_id) {
         throw new Error("You don't have permission to delete this test");
       }
 
@@ -454,7 +460,7 @@ export default function Tests() {
       ));
     },
     onError: (error: any) => {
-      console.error("AI grading error:", error);
+      logger.error("AI grading error:", error);
       toast.error(error.message || "Failed to get AI grade");
     } });
 
@@ -465,10 +471,10 @@ export default function Tests() {
   };
 
   const addQuestion = () => {
-    console.log("Attempting to add new question. Current questions length:", questions.length);
+    logger.info("Attempting to add new question. Current questions length:", questions.length);
     setQuestions(prev => {
       const newQuestions = [...prev, { id: crypto.randomUUID(), questionText: '', maxMarks: 0, correctAnswer: '' }];
-      console.log("Questions after adding:", newQuestions.length, newQuestions);
+      logger.info("Questions after adding:", newQuestions.length, newQuestions);
       return newQuestions;
     });
   };
@@ -832,6 +838,16 @@ export default function Tests() {
                 No assessments in catalog
               </p>
             )}
+              {totalCount > pageSize && (
+                <div className="p-4 border-t">
+                  <ServerPagination
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    totalCount={totalCount}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
           </CardContent>
         </Card>
 

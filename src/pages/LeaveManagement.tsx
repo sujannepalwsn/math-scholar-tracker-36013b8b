@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +60,7 @@ import { cn } from "@/lib/utils";
 import LeaveCategoryManager from "@/components/LeaveCategoryManager";
 import { hasActionPermission, hasPermission } from "@/utils/permissions";
 import { useNavigate } from "react-router-dom";
+import { logger } from "@/utils/logger";
 
 export default function LeaveManagement() {
   const { user } = useAuth();
@@ -66,7 +68,7 @@ export default function LeaveManagement() {
 
   // Strict permission guard
   if (user && !hasPermission(user, 'leave_management', '/leave-management')) {
-    navigate(user.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+    navigate(user.role === UserRole.TEACHER ? '/teacher-dashboard' : '/dashboard');
     return null;
   }
 
@@ -115,7 +117,7 @@ export default function LeaveManagement() {
       });
 
       if (error) {
-        console.error("Failed to send notification:", error);
+        logger.error("Failed to send notification:", error);
       }
     }
   });
@@ -188,8 +190,8 @@ export default function LeaveManagement() {
   };
 
   const handleApplyClick = () => {
-    if (user?.role === 'teacher') navigate('/teacher/leave');
-    else if (user?.role === 'parent') navigate('/parent-leave');
+    if (user?.role === UserRole.TEACHER) navigate('/teacher/leave');
+    else if (user?.role === UserRole.PARENT) navigate('/parent-leave');
   };
 
   return (
@@ -219,7 +221,7 @@ export default function LeaveManagement() {
           <Settings className="h-5 w-5" />
           LEAVE CATEGORIES
         </Button>
-        {(user?.role === 'teacher' || user?.role === 'parent') && (
+        {(user?.role === UserRole.TEACHER || user?.role === UserRole.PARENT) && (
           <Button
             onClick={handleApplyClick}
             className="rounded-2xl h-12 px-6 font-bold shadow-soft gap-2 bg-gradient-to-r from-primary to-violet-600"

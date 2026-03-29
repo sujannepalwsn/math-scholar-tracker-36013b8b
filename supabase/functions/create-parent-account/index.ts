@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 import * as bcrypt from "https://esm.sh/bcryptjs"; // Import bcryptjs
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -17,7 +17,7 @@ serve(async (req) => {
     console.log('Create parent account request:', { username, studentId, centerId });
 
     if (!username || !password || !studentId || !centerId) {
-      console.error('Missing required fields:', { username: !!username, password: !!password, studentId: !!studentId, centerId: !!centerId });
+      console.error(JSON.stringify({ event: 'error', message: 'Missing required fields:', details: { username: !!username, password: !!password, studentId: !!studentId, centerId: !!centerId } }));
       return new Response(
         JSON.stringify({ success: false, error: 'All fields are required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -36,7 +36,7 @@ serve(async (req) => {
       .single();
 
     if (existingUser) {
-      console.error('Username already exists:', username);
+      console.error(JSON.stringify({ event: 'error', message: 'Username already exists:', details: username }));
       return new Response(
         JSON.stringify({ success: false, error: 'Username already exists' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -51,7 +51,7 @@ serve(async (req) => {
       .single();
 
     if (studentError || !student) {
-      console.error('Student not found:', studentId, studentError);
+      console.error(JSON.stringify({ event: 'error', message: 'Student not found:', details: studentId, studentError }));
       return new Response(
         JSON.stringify({ success: false, error: 'Student not found' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
@@ -69,13 +69,13 @@ serve(async (req) => {
         .eq('id', studentId);
 
       if (updateError) {
-        console.error('Failed to update student center_id:', updateError);
+        console.error(JSON.stringify({ event: 'error', message: 'Failed to update student center_id:', details: updateError }));
         throw new Error('Failed to assign student to center');
       }
       console.log('Student center_id updated successfully');
     } else if (student.center_id !== centerId) {
       // If student belongs to a different center, deny access
-      console.error('Student belongs to different center:', { student_center: student.center_id, requested_center: centerId });
+      console.error(JSON.stringify({ event: 'error', message: 'Student belongs to different center:', details: { student_center: student.center_id, requested_center: centerId } }));
       return new Response(
         JSON.stringify({ success: false, error: 'Student belongs to a different tuition center' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
@@ -101,7 +101,7 @@ serve(async (req) => {
       .single();
 
     if (error) {
-      console.error('Failed to create parent user:', error);
+      console.error(JSON.stringify({ event: 'error', message: 'Failed to create parent user:', details: error }));
       throw error;
     }
 
@@ -114,7 +114,7 @@ serve(async (req) => {
       });
 
     if (junctionError) {
-      console.error('Failed to create parent-student link:', junctionError);
+      console.error(JSON.stringify({ event: 'error', message: 'Failed to create parent-student link:', details: junctionError }));
       // Don't fail the whole operation, just log
     }
 
@@ -133,7 +133,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {
-    console.error('Create parent account error:', error);
+    console.error(JSON.stringify({ event: 'error', message: 'Create parent account error:', details: error }));
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),

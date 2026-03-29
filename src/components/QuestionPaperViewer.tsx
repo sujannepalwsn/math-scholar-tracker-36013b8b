@@ -1,3 +1,4 @@
+import { logger } from "@/utils/logger";
 import React, { useEffect, useState } from "react";
 import { AlertCircle, Download, Eye, FileText, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -56,7 +57,7 @@ export default function QuestionPaperViewer({
       }
     } catch (err) {
       setError('Failed to load file. Please try again.');
-      console.error('Error loading file:', err);
+      logger.error('Error loading file:', err);
     } finally {
       setIsLoading(false);
     }

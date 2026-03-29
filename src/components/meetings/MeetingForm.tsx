@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { User, Users } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -116,7 +117,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
 
   // Effect to initialize form fields and selections when 'meeting' prop changes
   useEffect(() => {
-    console.log("MeetingForm useEffect triggered. Meeting prop:", meeting);
+    logger.info("MeetingForm useEffect triggered. Meeting prop:", meeting);
     if (meeting) {
       // Editing existing meeting
       setTitle(meeting.title);
@@ -140,16 +141,16 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         });
         setSelectedStudentIds(initialSelectedStudentIds);
         setSelectedTeacherIds(initialSelectedTeacherIds);
-        console.log("Pre-selected Student IDs:", initialSelectedStudentIds);
-        console.log("Pre-selected Teacher IDs:", initialSelectedTeacherIds);
+        logger.info("Pre-selected Student IDs:", initialSelectedStudentIds);
+        logger.info("Pre-selected Teacher IDs:", initialSelectedTeacherIds);
       } else {
         setSelectedStudentIds([]);
         setSelectedTeacherIds([]);
-        console.log("No attendees found for existing meeting, clearing selections.");
+        logger.info("No attendees found for existing meeting, clearing selections.");
       }
     } else {
       // Creating new meeting - reset all form states
-      console.log("Creating new meeting, resetting form states.");
+      logger.info("Creating new meeting, resetting form states.");
       setTitle("");
       setDescription("");
       setMeetingDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
