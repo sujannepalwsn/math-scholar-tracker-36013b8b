@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination";
+import { ServerPagination } from "@/components/ui/ServerPagination";
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
@@ -97,28 +99,37 @@ export default function TeacherManagement() {
   const [classTeacherGrade, setClassTeacherGrade] = useState("select-grade");
 
   const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10);
 
-  const { data: teachers = [], isLoading } = useQuery({
-    queryKey: ["teachers", user?.center_id, isRestricted, user?.teacher_id],
+  const { data: teachersData, isLoading } = useQuery({
+    queryKey: ["teachers", user?.center_id, isRestricted, user?.teacher_id, currentPage, pageSize],
     queryFn: async () => {
-      if (!user?.center_id) return [];
+      if (!user?.center_id) return { data: [], count: 0 };
+      const { from, to } = getRange();
+
       let query = supabase
         .from("teachers")
-        .select("*, users!teachers_user_id_fkey(id, username, is_active)")
+        .select("*, users!teachers_user_id_fkey(id, username, is_active)", { count: 'exact' })
         .eq("center_id", user.center_id);
 
       if (isRestricted) {
         query = query.eq('id', user?.teacher_id);
       }
 
-      const { data, error } = await query.order("name");
+      const { data, error, count } = await query
+        .order("name")
+        .range(from, to);
+
       if (error) {
         console.error("Error fetching teachers:", error);
         throw error;
       }
-      return data || [];
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!user?.center_id });
+
+  const teachers = teachersData?.data || [];
+  const totalCount = teachersData?.count || 0;
 
   // Fetch students for unique grades
   const { data: students = [] } = useQuery({
@@ -891,6 +902,12 @@ export default function TeacherManagement() {
                       })}
                     </TableBody>
                   </Table>
+                  <ServerPagination
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    totalCount={totalCount}
+                    onPageChange={setPage}
+                  />
                 </div>
               )}
             </CardContent>

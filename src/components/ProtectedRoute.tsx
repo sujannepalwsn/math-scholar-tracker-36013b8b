@@ -1,10 +1,11 @@
 import React from "react";
 import { Navigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
+import { UserRole, RoleString } from "@/types/roles";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  role?: 'admin' | 'center' | 'parent' | 'teacher';
+  role?: RoleString;
 }
 
 const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
@@ -26,15 +27,13 @@ const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
   }
 
   if (role && user.role !== role) {
-    // Special case: teachers can access center (admin) routes if they have the right permissions
-    if (role === 'center' && user.role === 'teacher') {
-      return <>{children}</>;
-    }
+    // SECURITY: Removed the teacher bypass to ensure strict role-based frontend routing.
+    // Teachers requiring admin-level features should be managed via granular permissions within their own layout.
 
     let dashboardPath = '/';
-    if (user.role === 'admin') dashboardPath = '/admin-dashboard';
-    if (user.role === 'parent') dashboardPath = '/parent-dashboard';
-    if (user.role === 'teacher') dashboardPath = '/teacher-dashboard';
+    if (user.role === UserRole.ADMIN) dashboardPath = '/admin-dashboard';
+    if (user.role === UserRole.PARENT) dashboardPath = '/parent-dashboard';
+    if (user.role === UserRole.TEACHER) dashboardPath = '/teacher-dashboard';
     return <Navigate to={dashboardPath} replace />;
   }
 

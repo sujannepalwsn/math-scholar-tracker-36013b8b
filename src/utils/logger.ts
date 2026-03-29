@@ -7,7 +7,7 @@
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
@@ -22,7 +22,7 @@ class Logger {
     return Logger.instance;
   }
 
-  private formatMessage(level: LogLevel, message: string, context?: LogContext): string {
+  private formatMessage(level: LogLevel, message: string): string {
     const timestamp = new Date().toISOString();
     return `[${timestamp}] [${level.toUpperCase()}] ${message}`;
   }
@@ -35,7 +35,7 @@ class Logger {
     console.warn(this.formatMessage('warn', message), context || '');
   }
 
-  public error(message: string, error?: any, context?: LogContext) {
+  public error(message: string, error?: unknown, context?: LogContext) {
     const formattedMessage = this.formatMessage('error', message);
 
     // In production, we would send this to Sentry/LogRocket here
@@ -43,7 +43,7 @@ class Logger {
       error: error instanceof Error ? {
         message: error.message,
         stack: error.stack,
-        ...error
+        ...(error as any)
       } : error,
       ...context
     });

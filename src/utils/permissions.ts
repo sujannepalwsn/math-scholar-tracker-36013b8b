@@ -1,4 +1,8 @@
 /**
+ * SECURITY WARNING: This utility is for FRONTEND UI/UX purposes only.
+ * It determines whether to hide or show buttons, menu items, or views.
+ * TRUE authorization is enforced solely by Supabase Row Level Security (RLS) on the backend.
+ *
  * PERMISSION_MAPPING aligns navigation/feature names or routes with database column names.
  * The keys are the 'featureName' or 'route' used in navigation items or UI checks.
  * The values are the corresponding column names in 'center_feature_permissions' and 'teacher_feature_permissions'.
@@ -207,9 +211,10 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
     if (allowedParent.includes(dbColumnName)) {
       return true;
     }
+    return false; // Fail-closed for parents
   }
 
-  return true;
+  return false; // Fail-closed by default for any unhandled roles or scenarios
 };
 
 /**

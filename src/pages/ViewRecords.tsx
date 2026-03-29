@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { addMonths, endOfMonth, format, startOfMonth, subMonths } from "date-fns"
 import { cn } from "@/lib/utils"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 
 interface StudentAttendanceRecord {
   id: string;
@@ -46,6 +48,7 @@ export default function ViewRecords() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const { currentPage, pageSize, setPage, getRange } = usePagination(20);
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const [showStudentDetailDialog, setShowStudentDetailDialog] = useState(false);
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<StudentDetail | null>(null);
@@ -60,7 +63,7 @@ export default function ViewRecords() {
       let query = supabase
         .from('students')
         .select('id, name, grade')
-        .eq('center_id', user?.center_id!)
+        .eq('center_id', user?.center_id as string)
         .order('name');
 
       if (isRestricted) {
@@ -83,12 +86,14 @@ export default function ViewRecords() {
 
   const filteredStudents = students.filter(s => gradeFilter === "all" || s.grade === gradeFilter);
 
-  // Fetch attendance records for selected date & filtered students
-  const { data: records, isLoading } = useQuery({
-    queryKey: ["attendance-records", dateStr, gradeFilter, user?.center_id, user?.role, user?.id, isRestricted],
+  // Fetch attendance records for selected date & filtered students with pagination
+  const { data: recordsData, isLoading } = useQuery({
+    queryKey: ["attendance-records", dateStr, gradeFilter, user?.center_id, user?.role, user?.id, isRestricted, currentPage, pageSize],
     queryFn: async () => {
+      const { from, to } = getRange();
       const studentIds = filteredStudents.map(s => s.id);
-      if (studentIds.length === 0) return [];
+      if (studentIds.length === 0) return { data: [], count: 0 };
+
       let query = supabase
         .from("attendance")
         .select(`
@@ -98,11 +103,11 @@ export default function ViewRecords() {
           date,
           time_in,
           time_out,
-          students (
+          students!inner (
             name,
             grade
           )
-        `)
+        `, { count: 'exact' })
         .in("student_id", studentIds)
         .eq("date", dateStr);
 
@@ -110,16 +115,18 @@ export default function ViewRecords() {
         query = query.eq('marked_by', user.id);
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query
+        .order('students(name)')
+        .range(from, to);
+
       if (error) throw error;
 
-      // Sort by student name in JavaScript after fetching
-      const sortedData = (data as StudentAttendanceRecord[]).sort((a, b) =>
-        a.students.name.localeCompare(b.students.name)
-      );
-      return sortedData;
+      return { data: data as StudentAttendanceRecord[], count: count || 0 };
     },
     enabled: filteredStudents.length > 0 });
+
+  const records = recordsData?.data || [];
+  const totalCount = recordsData?.count || 0;
 
   // Fetch all attendance for a specific student for the detail dialog
   const { data: studentDetailAttendance = [], refetch: refetchStudentDetailAttendance } = useQuery({
@@ -195,7 +202,7 @@ export default function ViewRecords() {
     let punctualCount = 0;
     let totalPresentDays = 0;
     let totalMinutesIn = 0;
-    let absentDaysList: string[] = [];
+    const absentDaysList: string[] = [];
 
     studentDetailAttendance.forEach(record => {
       if (record.status === 'present' && record.time_in) {
@@ -346,11 +353,11 @@ export default function ViewRecords() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p>Loading records...</p>
-          ) : records && records.length > 0 ? (
-            <div className="overflow-x-auto max-h-96 border rounded">
+            <p className="text-center py-10">Loading records...</p>
+          ) : records.length > 0 ? (
+            <div className="overflow-x-auto border rounded-xl">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-slate-50">
                   <TableRow>
                     <TableHead>Student Name</TableHead>
                     <TableHead>Grade</TableHead>
@@ -389,6 +396,12 @@ export default function ViewRecords() {
                   ))}
                 </TableBody>
               </Table>
+              <ServerPagination
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+              />
             </div>
           ) : (
             <p className="text-center text-muted-foreground">

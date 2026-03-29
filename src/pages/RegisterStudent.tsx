@@ -3,6 +3,8 @@ import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -96,12 +98,18 @@ export default function RegisterStudent() {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10);
 
-  // Fetch students
-  const { data: students, isLoading } = useQuery({
-    queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id],
+  // Fetch students with pagination
+  const { data: studentsData, isLoading } = useQuery({
+    queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id, gradeFilter, searchFilter, currentPage, pageSize],
     queryFn: async () => {
-      let query = supabase.from("students").select("*").order("created_at", { ascending: false });
+      const { from, to } = getRange();
+      let query = supabase
+        .from("students")
+        .select("*", { count: 'exact' })
+        .order("created_at", { ascending: false });
+
       if (user?.role !== "admin" && user?.center_id) {
         query = query.eq("center_id", user.center_id);
       }
@@ -114,25 +122,39 @@ export default function RegisterStudent() {
         if (myGrades.length > 0) {
           query = query.in('grade', myGrades);
         } else {
-          return [];
+          return { data: [], count: 0 };
         }
       }
 
-      const { data, error } = await query;
+      if (gradeFilter !== "all") {
+        query = query.eq("grade", gradeFilter);
+      }
+
+      if (searchFilter) {
+        query = query.or(`name.ilike.%${searchFilter}%,parent_name.ilike.%${searchFilter}%,contact_number.ilike.%${searchFilter}%`);
+      }
+
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data as Student[];
+      return { data: data as Student[], count: count || 0 };
     } });
 
-  // Filter students based on grade and search
-  const filteredStudents = students?.filter(s => 
-    (gradeFilter === "all" || s.grade === gradeFilter) &&
-    (searchFilter === "" || 
-      s.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      s.parent_name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      s.contact_number.includes(searchFilter))
-  );
+  const students = studentsData?.data || [];
+  const totalCount = studentsData?.count || 0;
 
-  const uniqueGrades = Array.from(new Set(students?.map(s => s.grade) || [])).sort();
+  // For unique grades dropdown, we still need a global fetch or a separate query
+  const { data: allGrades = [] } = useQuery({
+    queryKey: ["all-student-grades", user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase.from('students').select('grade').eq('center_id', user.center_id);
+      if (error) return [];
+      return Array.from(new Set(data.map(s => s.grade))).filter(Boolean).sort();
+    },
+    enabled: !!user?.center_id
+  });
+
+  const uniqueGrades = allGrades;
 
   const handlePhotoChange = (file: File | null) => {
     setPhotoFile(file);
@@ -956,8 +978,8 @@ export default function RegisterStudent() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-20"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></TableCell>
                   </TableRow>
-                ) : filteredStudents && filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
+                ) : students.length > 0 ? (
+                  students.map((student) => (
                     <TableRow key={student.id} className="group transition-all duration-300 hover:bg-card/60">
                       <TableCell className="px-8 py-5">
                         <div className="flex items-center gap-3">
@@ -1021,6 +1043,12 @@ export default function RegisterStudent() {
                 )}
               </TableBody>
             </Table>
+            <ServerPagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={setPage}
+            />
           </div>
         </CardContent>
       </Card>

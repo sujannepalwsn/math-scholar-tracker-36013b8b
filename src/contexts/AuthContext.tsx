@@ -149,9 +149,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // This allows any valid user to log in via the main login page and then be redirected
       // to their specific dashboard by the router.
 
-      setUser(loggedInUser);
-      localStorage.setItem('auth_user', JSON.stringify(loggedInUser));
-      console.log('AuthContext: User state updated and stored in localStorage.');
+      // SECURITY: Permissions were removed from auth-login response.
+      // Fetch them now after successful login.
+      let updatedUser = { ...loggedInUser };
+
+      if (loggedInUser.center_id) {
+        const { data: centerPerms } = await supabase
+          .from('center_feature_permissions')
+          .select('*')
+          .eq('center_id', loggedInUser.center_id)
+          .maybeSingle();
+
+        if (centerPerms) {
+          updatedUser.centerPermissions = centerPerms;
+        }
+
+        if (loggedInUser.role === 'teacher' && loggedInUser.teacher_id) {
+          const { data: teacherPerms } = await supabase
+            .from('teacher_feature_permissions')
+            .select('*')
+            .eq('teacher_id', loggedInUser.teacher_id)
+            .maybeSingle();
+
+          if (teacherPerms) {
+            updatedUser.teacherPermissions = teacherPerms;
+            updatedUser.teacher_scope_mode = teacherPerms.teacher_scope_mode || 'restricted';
+          }
+        }
+      }
+
+      setUser(updatedUser);
+      localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+      console.log('AuthContext: User state (with permissions) updated and stored in localStorage.');
       return { success: true };
     } catch (error) {
       console.error('AuthContext: Login error caught in client-side:', error);
