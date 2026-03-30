@@ -535,7 +535,7 @@ export default function Dashboard() {
 
       let query = supabase
         .from("period_schedules")
-        .select("*, teachers(*), class_periods!inner(*)")
+        .select("*, teachers:teachers(*), class_periods:class_periods!inner(*)")
         .eq("center_id", centerId)
         .eq("day_of_week", dayOfWeek);
 
@@ -560,7 +560,7 @@ export default function Dashboard() {
       if (!centerId) return [];
       const { data, error } = await supabase
         .from("class_substitutions")
-        .select("*, substitute_teacher:substitute_teacher_id(name)")
+        .select("*, substitute_teacher:teachers!substitute_teacher_id(name)")
         .eq("center_id", centerId)
         .eq("date", today);
       if (error) throw error;

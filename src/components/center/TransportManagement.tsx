@@ -58,9 +58,9 @@ export default function TransportManagement({ centerId, canEdit }: { centerId: s
         .from("transport_assignments")
         .select(`
           *,
-          students:student_id(name, grade),
-          bus_routes:route_id(route_name),
-          vehicles:vehicle_id(vehicle_number)
+          students:students!student_id(name, grade),
+          bus_routes:bus_routes!route_id(route_name),
+          vehicles:vehicles!vehicle_id(vehicle_number)
         `)
         .eq("center_id", centerId);
       if (error) throw error;

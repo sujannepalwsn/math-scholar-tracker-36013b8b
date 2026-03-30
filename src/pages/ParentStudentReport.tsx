@@ -122,7 +122,7 @@ export default function ParentStudentReport() {
       let query = supabase.from("student_chapters").select(`
         *,
         lesson_plans!inner(id, subject, chapter, topic, lesson_date, lesson_file_url),
-        recorded_by_teacher:recorded_by_teacher_id(name)
+        recorded_by_teacher:teachers!recorded_by_teacher_id(name)
       `)
         .gte("completed_at", safeFormatDate(dateRange.from, "yyyy-MM-dd"))
         .lte("completed_at", safeFormatDate(dateRange.to, "yyyy-MM-dd"));
