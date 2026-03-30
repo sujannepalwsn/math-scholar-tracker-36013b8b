@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { DollarSign, Home, KeyRound, LogOut, Settings, Shield, User } from "lucide-react";
+import { Activity, DollarSign, Home, KeyRound, LogOut, Settings, Shield, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -16,6 +16,7 @@ const navItems: Array<{
 }> = [
   { to: "/admin-dashboard", label: "Dashboard", icon: Home, role: 'admin' as const },
   { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const, category: 'Reports and Communication' },
+  { to: "/admin/errors", label: "Error Tracking", icon: Activity, role: 'admin' as const, category: 'Administration' },
   { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const, category: 'Administration' },
   { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'admin' as const, category: 'Administration' },
 ];

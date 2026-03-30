@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter as BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import GlobalErrorBoundary from "@/components/error-tracking/GlobalErrorBoundary";
+import { ErrorTrackingProvider } from "@/components/error-tracking/ErrorTrackingProvider";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
@@ -77,6 +79,7 @@ import InitAdmin from "./pages/InitAdmin";
 import NotFound from "./pages/NotFound";
 
 import AdminSettings from "./pages/admin/Settings";
+import ErrorTracking from "./pages/admin/ErrorTracking";
 import CenterSettings from "./pages/CenterSettings";
 import GeneralSettings from "./pages/GeneralSettings";
 import ChangePassword from "./pages/ChangePassword";
@@ -132,6 +135,8 @@ const App = () => (
     <AuthProvider>
       <ActivityTracker />
       <ThemeProvider>
+        <GlobalErrorBoundary>
+        <ErrorTrackingProvider moduleName="Global" componentName="AppRoot">
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -257,6 +262,7 @@ const App = () => (
               <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminLayout><AdminFinance /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/errors" element={<ProtectedRoute role="admin"><AdminLayout><ErrorTracking /></AdminLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
 
@@ -264,6 +270,8 @@ const App = () => (
           </BrowserRouter>
 
         </TooltipProvider>
+        </ErrorTrackingProvider>
+        </GlobalErrorBoundary>
       </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>
