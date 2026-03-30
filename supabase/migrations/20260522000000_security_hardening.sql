@@ -10,17 +10,21 @@ FROM public.users;
 REVOKE ALL ON security.users_private_lookup FROM public, anon, authenticated;
 
 -- Update SECURITY DEFINER functions to reference the new private view
-CREATE OR REPLACE FUNCTION get_user_role()
+-- We explicitly target the public schema to ensure we overwrite the existing functions
+CREATE OR REPLACE FUNCTION public.get_user_role()
 RETURNS TEXT AS $$
   SELECT role FROM security.users_private_lookup WHERE id = auth.uid();
 $$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
-CREATE OR REPLACE FUNCTION get_user_center_id()
+CREATE OR REPLACE FUNCTION public.get_user_center_id()
 RETURNS UUID AS $$
   SELECT center_id FROM security.users_private_lookup WHERE id = auth.uid();
 $$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
-CREATE OR REPLACE FUNCTION is_same_center(target_center_id UUID)
+-- Drop function first to avoid parameter name mismatch error (42P13)
+-- This happens if the existing function has a different parameter name
+DROP FUNCTION IF EXISTS public.is_same_center(uuid);
+CREATE OR REPLACE FUNCTION public.is_same_center(target_center_id UUID)
 RETURNS BOOLEAN AS $$
   SELECT center_id = target_center_id FROM security.users_private_lookup WHERE id = auth.uid();
 $$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
