@@ -22,6 +22,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { toast } from "sonner"
 import { addMonths, endOfMonth, format, isValid, isWithinInterval, parseISO, startOfMonth, subMonths } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 
 import { Database, Tables } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
@@ -60,6 +62,7 @@ export default function TeacherAttendancePage() {
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, TeacherAttendance>>({});
+  const { currentPage, pageSize, setPage, getRange } = usePagination(50, 1, 'teacher_att');
   const [reportMonthFilter, setReportMonthFilter] = useState<string>(format(new Date(), "yyyy-MM"));
   const [showTeacherDetailDialog, setShowTeacherDetailDialog] = useState(false);
   const [selectedTeacherDetail, setSelectedTeacherDetail] = useState<Teacher | null>(null);
@@ -140,19 +143,32 @@ export default function TeacherAttendancePage() {
     enabled: !!dateStr && !!user?.center_id
   });
 
-  // Fetch all attendance for report
-  const { data: allTeacherAttendance = [] } = useQuery({
-    queryKey: ["all-teacher-attendance", user?.center_id],
+  // Fetch paginated attendance for report
+  const { data: allTeacherAttendanceData, isLoading: logsLoading } = useQuery({
+    queryKey: ["all-teacher-attendance", user?.center_id, reportMonthFilter, currentPage, pageSize],
     queryFn: async () => {
-      if (!user?.center_id) return [];
-      const { data, error } = await supabase
+      if (!user?.center_id) return { data: [], count: 0 };
+      const { from, to } = getRange();
+
+      const start = startOfMonth(parseISO(reportMonthFilter + "-01"));
+      const end = endOfMonth(parseISO(reportMonthFilter + "-01"));
+
+      const { data, error, count } = await supabase
         .from("teacher_attendance")
-        .select("*, teachers(name)")
-        .eq("center_id", user.center_id);
+        .select("*, teachers(name)", { count: 'exact' })
+        .eq("center_id", user.center_id)
+        .gte("date", format(start, "yyyy-MM-dd"))
+        .lte("date", format(end, "yyyy-MM-dd"))
+        .order("date", { ascending: false })
+        .range(from, to);
+
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!user?.center_id });
+
+  const allTeacherAttendance = allTeacherAttendanceData?.data || [];
+  const totalLogsCount = allTeacherAttendanceData?.count || 0;
 
   // Fetch all attendance for a specific teacher for the detail dialog
   const { data: teacherDetailAttendance = [], refetch: refetchTeacherDetailAttendance } = useQuery({
@@ -901,7 +917,7 @@ export default function TeacherAttendancePage() {
                </div>
             </div>
           </div>
-          {teachersLoading || allTeacherAttendance.length === 0 ? (
+          {teachersLoading || logsLoading ? (
             <div className="flex justify-center py-12">
               <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
             </div>
@@ -947,6 +963,14 @@ export default function TeacherAttendancePage() {
                 </TableBody>
               </Table>
 </div>
+              <div className="mt-4">
+                <ServerPagination
+                  currentPage={currentPage}
+                  pageSize={pageSize}
+                  totalCount={totalLogsCount}
+                  onPageChange={setPage}
+                />
+              </div>
             </div>
           )}
         </CardContent>

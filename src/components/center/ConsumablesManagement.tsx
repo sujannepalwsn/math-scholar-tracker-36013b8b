@@ -21,18 +21,18 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
   const [form, setForm] = useState({ name: "", category: "Stationery", unit: "Packs", stock: "0", min: "5", price: "0" });
 
   const { data: students } = useQuery({
-    queryKey: ["active-students-inventory", centerId],
+    queryKey: ["active-students-inventory-dropdown", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("students").select("id, name, grade").eq("center_id", centerId).eq("is_active", true);
+      const { data, error } = await supabase.from("students").select("id, name, grade").eq("center_id", centerId).eq("is_active", true).order('name');
       if (error) throw error;
       return data;
     },
   });
 
   const { data: teachers } = useQuery({
-    queryKey: ["active-teachers-inventory", centerId],
+    queryKey: ["active-teachers-inventory-dropdown", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("teachers").select("id, name").eq("center_id", centerId).eq("is_active", true);
+      const { data, error } = await supabase.from("teachers").select("id, name").eq("center_id", centerId).eq("is_active", true).order('name');
       if (error) throw error;
       return data;
     },
@@ -67,62 +67,17 @@ export default function ConsumablesManagement({ centerId, canEdit }: { centerId:
       if (!showDistribute) return;
       const amount = parseFloat(distForm.amount);
 
-      // 1. Update Stock using atomic RPC to prevent race conditions
-      const { error: updateError } = await supabase.rpc('decrement_consumable_stock', {
-        item_id: showDistribute,
-        amount: amount
+      // Single atomic RPC call to handle stock, log, and invoice
+      const { error } = await supabase.rpc('distribute_consumable_securely', {
+        p_center_id: centerId,
+        p_consumable_id: showDistribute,
+        p_recipient_type: distForm.recipientType,
+        p_recipient_id: distForm.recipientId,
+        p_amount: amount,
+        p_notes: distForm.notes
       });
-      if (updateError) throw updateError;
 
-      // 2. Record Log
-      const { error: logError } = await supabase.from('consumable_logs').insert({
-        center_id: centerId,
-        consumable_id: showDistribute,
-        student_id: distForm.recipientType === 'student' ? distForm.recipientId : null,
-        teacher_id: distForm.recipientType === 'teacher' ? distForm.recipientId : null,
-        quantity: amount,
-        action_type: 'distributed',
-        notes: distForm.notes
-      });
-      if (logError) {
-        // Rollback stock if log fails
-        await supabase.rpc('increment_consumable_stock', {
-          item_id: showDistribute,
-          amount: amount
-        });
-        throw logError;
-      }
-
-      // 3. Finance Integration: Create Invoice for Students
-      if (distForm.recipientType === 'student') {
-        const item = consumables?.find(c => c.id === showDistribute);
-        const totalAmount = (item?.unit_price || 0) * amount;
-
-        if (totalAmount > 0) {
-          const { data: inv, error: invError } = await supabase.from('invoices').insert({
-            center_id: centerId,
-            student_id: distForm.recipientId,
-            total_amount: totalAmount,
-            status: 'unpaid',
-            invoice_date: new Date().toISOString().split('T')[0],
-            invoice_number: `INV-INV-${Date.now()}`,
-            notes: `Purchase: ${item?.name} x ${amount}`
-          }).select().single();
-
-          if (!invError && inv) {
-            const { error: itemError } = await supabase.from('invoice_items').insert({
-              invoice_id: inv.id,
-              description: `${item?.name} x ${amount}`,
-              quantity: amount,
-              unit_amount: item?.unit_price || 0,
-              total_amount: totalAmount
-            });
-            if (itemError) throw itemError;
-          } else if (invError) {
-            throw invError;
-          }
-        }
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consumables"] });

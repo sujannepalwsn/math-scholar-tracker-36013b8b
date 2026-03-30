@@ -16,7 +16,7 @@ export default function RegulatoryReports({ centerId }: { centerId: string }) {
   const { data: students = [] } = useQuery({
     queryKey: ["students-for-reports", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("students").select("*").eq("center_id", centerId).eq("is_active", true);
+      const { data, error } = await supabase.from("students").select("id, name, grade, parent_name, contact_number, created_at").eq("center_id", centerId).eq("is_active", true).order('name');
       if (error) throw error;
       return data;
     },
@@ -25,7 +25,7 @@ export default function RegulatoryReports({ centerId }: { centerId: string }) {
   const { data: teachers = [] } = useQuery({
     queryKey: ["teachers-for-reports", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("teachers").select("*").eq("center_id", centerId).eq("is_active", true);
+      const { data, error } = await supabase.from("teachers").select("id, name, subject, email, phone, is_active").eq("center_id", centerId).eq("is_active", true).order('name');
       if (error) throw error;
       return data;
     },

@@ -21,9 +21,9 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
   const [issueForm, setIssueForm] = useState({ bookId: "", studentId: "", dueDate: "" });
 
   const { data: students } = useQuery({
-    queryKey: ["active-students-library", centerId],
+    queryKey: ["active-students-library-dropdown", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("students").select("id, name, grade").eq("center_id", centerId).eq("is_active", true);
+      const { data, error } = await supabase.from("students").select("id, name, grade").eq("center_id", centerId).eq("is_active", true).order('name');
       if (error) throw error;
       return data;
     },
@@ -60,25 +60,16 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
   const issueBookMutation = useMutation({
     mutationFn: async () => {
       if (!canEdit) throw new Error("Access Denied: You do not have permission to issue books.");
-      // 1. Decrement available copies using atomic RPC to prevent race conditions
-      const { error: updateError } = await supabase.rpc('decrement_book_copies', { row_id: issueForm.bookId });
-      if (updateError) throw updateError;
 
-      // 2. Record Loan
-      const { error: loanError } = await supabase.from("book_loans").insert({
-        center_id: centerId,
-        book_id: issueForm.bookId,
-        student_id: issueForm.studentId,
-        issue_date: new Date().toISOString().split('T')[0],
-        due_date: issueForm.dueDate,
-        status: 'Issued'
-      } as any);
+      // Single atomic RPC call to handle book copy decrement and loan record
+      const { error } = await supabase.rpc('issue_book_securely', {
+        p_center_id: centerId,
+        p_book_id: issueForm.bookId,
+        p_student_id: issueForm.studentId,
+        p_due_date: issueForm.dueDate
+      });
 
-      if (loanError) {
-        // Rollback copies if loan record fails
-        await supabase.rpc('increment_available_copies', { row_id: issueForm.bookId });
-        throw loanError;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["book-loans"] });
