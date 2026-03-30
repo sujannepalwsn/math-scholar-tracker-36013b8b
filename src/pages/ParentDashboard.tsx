@@ -142,7 +142,7 @@ export default function ParentDashboard() {
       const { data, error } = await supabase.from('student_chapters').select(`
         *,
         lesson_plans!inner(id, subject, chapter, topic, lesson_date, lesson_file_url, grade, notes),
-        recorded_by_teacher:recorded_by_teacher_id(name)
+        recorded_by_teacher:teachers!recorded_by_teacher_id(name)
       `).eq('student_id', activeStudentId).order('completed_at', { ascending: false });
       if (error) throw error;
       return data;

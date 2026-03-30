@@ -106,7 +106,7 @@ export default function ClassRoutine() {
     queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_periods(*), teachers:teachers(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
 
       if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         query = query.eq('teacher_id', user.teacher_id);
@@ -124,7 +124,7 @@ export default function ClassRoutine() {
     queryKey: ["all-period-schedules", user?.center_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("period_schedules").select(`*, class_periods:class_period_id(*), teachers:teacher_id(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_periods(*), teachers:teachers(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
 
       if (isRestricted) {
         query = query.eq('teacher_id', user?.teacher_id);
@@ -170,7 +170,7 @@ export default function ClassRoutine() {
     queryKey: ["class-substitutions-routine", user?.center_id, today],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      const { data, error } = await supabase.from("class_substitutions").select("*, substitute_teacher:substitute_teacher_id(name)").eq("center_id", user.center_id).eq("date", today);
+      const { data, error } = await supabase.from("class_substitutions").select("*, substitute_teacher:teachers!substitute_teacher_id(name)").eq("center_id", user.center_id).eq("date", today);
       if (error) throw error;
       return data;
     },

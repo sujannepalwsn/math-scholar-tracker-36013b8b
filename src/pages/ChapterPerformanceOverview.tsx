@@ -98,7 +98,7 @@ export default function ChapterPerformanceOverview() {
         *,
         students(id, name, grade, center_id),
         lesson_plans(id, chapter, subject, topic, grade, lesson_date, lesson_file_url),
-        recorded_by_teacher:recorded_by_teacher_id(name)
+        recorded_by_teacher:teachers!recorded_by_teacher_id(name)
       `).eq("students.center_id", user.center_id);
 
       if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {

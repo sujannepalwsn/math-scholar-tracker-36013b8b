@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter as BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import GlobalErrorBoundary from "@/components/error-tracking/GlobalErrorBoundary";
+import { ErrorTrackingProvider } from "@/components/error-tracking/ErrorTrackingProvider";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
@@ -77,6 +79,7 @@ import InitAdmin from "./pages/InitAdmin";
 import NotFound from "./pages/NotFound";
 
 import AdminSettings from "./pages/admin/Settings";
+import ErrorTracking from "./pages/admin/ErrorTracking";
 import CenterSettings from "./pages/CenterSettings";
 import GeneralSettings from "./pages/GeneralSettings";
 import ChangePassword from "./pages/ChangePassword";
@@ -127,11 +130,46 @@ const ActivityTracker = () => {
   return null;
 };
 
-const App = () => (
+const App = () => {
+  // Add global uncaught error listeners for tracking
+  useEffect(() => {
+    const handleUncaughtError = (event: ErrorEvent) => {
+      const message = event.error?.message || event.message || "Uncaught Global Error";
+      logger.error(message, event.error, {
+        errorType: 'runtime',
+        severity: 'high',
+        component: 'Window',
+        action: 'uncaught_exception',
+        payload: { filename: event.filename, lineno: event.lineno }
+      });
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const message = event.reason?.message || (typeof event.reason === 'string' ? event.reason : "Unhandled Promise Rejection");
+      logger.error(message, event.reason, {
+        errorType: 'runtime',
+        severity: 'high',
+        component: 'Window',
+        action: 'unhandled_rejection'
+      });
+    };
+
+    window.addEventListener('error', handleUncaughtError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleUncaughtError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <ActivityTracker />
       <ThemeProvider>
+        <GlobalErrorBoundary>
+        <ErrorTrackingProvider moduleName="Global" componentName="AppRoot">
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -257,6 +295,7 @@ const App = () => (
               <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminLayout><AdminFinance /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/errors" element={<ProtectedRoute role="admin"><AdminLayout><ErrorTracking /></AdminLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
 
@@ -264,9 +303,12 @@ const App = () => (
           </BrowserRouter>
 
         </TooltipProvider>
+        </ErrorTrackingProvider>
+        </GlobalErrorBoundary>
       </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

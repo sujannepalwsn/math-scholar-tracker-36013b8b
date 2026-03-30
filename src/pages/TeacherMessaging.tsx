@@ -33,7 +33,7 @@ export default function TeacherMessaging() {
         .from("chat_conversations")
         .select(`
           *,
-          centers:center_id(id, name)
+          centers:centers!center_id(id, name)
         `)
         .eq("parent_user_id", user.id) // Teacher's user ID
         .eq("center_id", user.center_id)
@@ -52,7 +52,7 @@ export default function TeacherMessaging() {
         .from("chat_messages")
         .select(`
           *,
-          sender:sender_user_id(id, username, role)
+          sender:users!sender_user_id(id, username, role)
         `)
         .eq("conversation_id", conversation.id)
         .order("sent_at", { ascending: true });

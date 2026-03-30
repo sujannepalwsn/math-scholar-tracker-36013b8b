@@ -46,9 +46,9 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
         .from("book_loans")
         .select(`
           *,
-          books:book_id(title),
-          users:user_id(username),
-          students:student_id(name)
+          books:books!book_id(title),
+          users:users!user_id(username),
+          students:students!student_id(name)
         `)
         .eq("center_id", centerId)
         .order("issue_date", { ascending: false });

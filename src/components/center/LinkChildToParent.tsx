@@ -76,8 +76,8 @@ export default function LinkChildToParent({ open, onOpenChange }: LinkChildToPar
           id,
           parent_user_id,
           student_id,
-          users:parent_user_id(username),
-          students:student_id(name, grade)
+          users:users!parent_user_id(username),
+          students:students!student_id(name, grade)
         `)
         .in("student_id", studentIds);
       if (error) throw error;

@@ -33,7 +33,7 @@ export default function ParentLessonTracking() {
       let query = supabase.from('student_chapters').select(`
         *,
         lesson_plans(id, subject, chapter, topic, lesson_date, lesson_file_url),
-        recorded_by_teacher:recorded_by_teacher_id(name)
+        recorded_by_teacher:teachers!recorded_by_teacher_id(name)
       `).eq('student_id', user.student_id).order('completed_at', { ascending: false });
       
       const { data, error } = await query;

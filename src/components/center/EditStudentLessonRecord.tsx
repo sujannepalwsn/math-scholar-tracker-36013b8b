@@ -40,7 +40,7 @@ export default function EditStudentLessonRecord({ studentChapterId, onSave, onCa
         .from("student_chapters")
         .select(`
           *,
-          recorded_by_teacher:recorded_by_teacher_id(name)
+          recorded_by_teacher:teachers!recorded_by_teacher_id(name)
         `)
         .eq("id", studentChapterId)
         .single();

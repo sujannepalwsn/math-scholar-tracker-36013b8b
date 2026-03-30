@@ -115,14 +115,14 @@ export default function TeacherDashboard() {
       const dayOfWeek = new Date(dateRange.to).getDay();
       const { data: regular, error } = await supabase
         .from("period_schedules")
-        .select("*, class_periods!inner(*)")
+        .select("*, class_periods:class_periods!inner(*)")
         .eq("teacher_id", teacherId)
         .eq("day_of_week", dayOfWeek);
       if (error) throw error;
 
       const { data: subs, error: subError } = await supabase
         .from("class_substitutions")
-        .select("*, period_schedules(*, class_periods(*))")
+        .select("*, period_schedules:period_schedules(*, class_periods:class_periods(*))")
         .eq("substitute_teacher_id", teacherId)
         .eq("date", today);
       if (subError) throw subError;
@@ -205,7 +205,7 @@ export default function TeacherDashboard() {
       const { data, error } = await supabase.from('student_chapters').select(`
         *,
         lesson_plans!inner(id, subject, chapter, topic, lesson_date, lesson_file_url, grade, notes),
-        recorded_by_teacher:recorded_by_teacher_id(name)
+        recorded_by_teacher:teachers!recorded_by_teacher_id(name)
       `)
         .eq('recorded_by_teacher_id', teacherId)
         .gte('completed_at', `${dateRange.from}T00:00:00`)

@@ -29,8 +29,8 @@ export default function ParentMessaging() {
         .from("chat_conversations")
         .select(`
           *,
-          students:student_id(id, name, grade),
-          centers:center_id(id, name)
+          students:students!student_id(id, name, grade),
+          centers:centers!center_id(id, name)
         `)
         .eq("parent_user_id", user.id)
         .maybeSingle();
@@ -48,7 +48,7 @@ export default function ParentMessaging() {
         .from("chat_messages")
         .select(`
           *,
-          sender:sender_user_id(id, username, role)
+          sender:users!sender_user_id(id, username, role)
         `)
         .eq("conversation_id", conversation.id)
         .order("sent_at", { ascending: true });
