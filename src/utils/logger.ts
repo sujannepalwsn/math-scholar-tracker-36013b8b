@@ -1,12 +1,11 @@
-import { supabase } from "@/integrations/supabase/client";
+import { rawSupabase as supabase } from "@/integrations/supabase/client";
 
 /**
- * Standardized logging utility for Math Scholar Tracker.
- * Pushes error logs to Supabase for tracking and AI debugging.
+ * Enhanced Logging Utility for AI Debugger Integration
  */
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
-type ErrorType = 'runtime' | 'api' | 'database' | 'ui';
+type ErrorType = 'runtime' | 'api' | 'database' | 'ui' | 'rls';
 type Severity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface LogContext {
@@ -22,6 +21,7 @@ export interface LogContext {
     query?: any;
   };
   schemaContext?: string;
+  payload?: any; // New column for AI context
   [key: string]: unknown;
 }
 
@@ -88,11 +88,12 @@ class Logger {
         },
         request_context: context?.request || {},
         schema_context: context?.schemaContext,
+        payload: context?.payload || {}, // New payload column for AI studio
         device_info: this.getDeviceInfo(),
         timestamp: new Date().toISOString(),
       };
 
-      // Asynchronous insert to Supabase
+      // Asynchronous insert to Supabase - The trigger will send this to the AI studio
       const { error: insertError } = await supabase
         .from('error_logs')
         .insert(errorPayload);
