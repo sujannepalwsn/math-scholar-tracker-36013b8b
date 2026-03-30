@@ -20,6 +20,7 @@ import TimetableAutomation from "@/components/center/TimetableAutomation";
 import AcademicYearManagement from "@/components/center/AcademicYearManagement";
 import PayrollSettings from "@/components/center/PayrollSettings";
 import SubscriptionPlans from "@/components/center/SubscriptionPlans";
+import { logger } from "@/utils/logger";
 
 interface CenterTheme {
   primary: string;
@@ -276,7 +277,7 @@ export default function CenterSettings() {
       toast.success('Password changed successfully. Please log in again.');
       setTimeout(() => logout(), 2000);
     } catch (error) {
-      console.error('Password change error:', error);
+      logger.error('Password change error:', error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       toast.error(errorMessage || 'Failed to change password.');
     } finally {

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { UserRole } from "@/types/roles";
 import { Book, CheckCircle, CheckSquare, Clock, Edit, FileUp, Loader2, Plus, Trash2, Users, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,12 +16,15 @@ import { ExternalLink, MessageCircle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 
 type Homework = Tables<'homework'>;
 type Student = Tables<'students'>;
@@ -30,11 +34,18 @@ type LessonPlan = Tables<'lesson_plans'>;
 export default function HomeworkManagement() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10, 1, 'hw');
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [gradeFilter, subjectFilter, setPage]);
 
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
@@ -51,24 +62,34 @@ export default function HomeworkManagement() {
   const [bulkStatus, setBulkStatus] = useState<StudentHomeworkRecord['status']>("completed");
   const [bulkRemarks, setBulkRemarks] = useState("");
 
-  const { data: homeworkList = [], isLoading } = useQuery({
-    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id, isRestricted],
+  const { data: homeworkData, isLoading } = useQuery({
+    queryKey: ["homework", user?.center_id, gradeFilter, subjectFilter, user?.teacher_id, isRestricted, currentPage, pageSize],
     queryFn: async () => {
-      if (!user?.center_id) return [];
-      let query = supabase.from("homework").select("*, lesson_plans(*)").eq("center_id", user.center_id).order("due_date", { ascending: false });
+      if (!user?.center_id) return { data: [], count: 0 };
+      const { from, to } = getRange();
 
-      if (user?.role === 'teacher' && isRestricted) {
+      let query = supabase
+        .from("homework")
+        .select("*, lesson_plans(*)", { count: 'exact' })
+        .eq("center_id", user.center_id)
+        .order("due_date", { ascending: false });
+
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
 
-      const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     },
-    enabled: !!user?.center_id });
+    enabled: !!user?.center_id,
+    placeholderData: (previousData) => previousData });
+
+  const homeworkList = homeworkData?.data || [];
+  const totalCount = homeworkData?.count || 0;
 
   const { data: lessonPlans = [] } = useQuery({
     queryKey: ["lesson-plans-for-homework", user?.center_id, user?.teacher_id, isRestricted],
@@ -81,7 +102,7 @@ export default function HomeworkManagement() {
         .eq("status", "approved")
         .order("lesson_date", { ascending: false });
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
@@ -103,7 +124,7 @@ export default function HomeworkManagement() {
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
         if (myGrades.length > 0) {
-          query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
+          query = query.in('grade', myGrades);
         } else {
           return [];
         }
@@ -190,7 +211,7 @@ export default function HomeworkManagement() {
             link: "/parent-homework"
           }));
           const { error: notifError } = await supabase.from("notifications").insert(notifications);
-          if (notifError) console.error("Error sending notifications:", notifError);
+          if (notifError) logger.error("Error sending notifications:", notifError);
         }
       }
     },
@@ -398,7 +419,7 @@ export default function HomeworkManagement() {
               <p className="text-muted-foreground font-medium">No homework found for selected filters.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto space-y-4">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent border-muted/10">
@@ -471,6 +492,12 @@ export default function HomeworkManagement() {
                   ))}
                 </TableBody>
               </Table>
+              <ServerPagination
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+              />
             </div>
           )}
         </CardContent>

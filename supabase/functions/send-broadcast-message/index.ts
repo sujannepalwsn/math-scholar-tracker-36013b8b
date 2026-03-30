@@ -2,7 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
         created_by: senderUserId
       });
 
-    if (noticeError) console.error('Error inserting into notices:', noticeError);
+    if (noticeError) console.error(JSON.stringify({ event: 'error', message: 'Error inserting into notices:', details: noticeError }));
 
     let recipientUsers: Array<{ id: string; student_id?: string; teacher_id?: string }> = [];
 

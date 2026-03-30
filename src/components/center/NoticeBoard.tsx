@@ -1,4 +1,5 @@
 import React from "react";
+import { UserRole } from "@/types/roles";
 import { Megaphone, Bell, Calendar, Info, AlertTriangle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +21,9 @@ export default function DigitalNoticeBoard({ centerId, role, grade }: { centerId
         .select("*")
         .eq("center_id", centerId);
 
-      if (role === 'teacher') {
+      if (role === UserRole.TEACHER) {
         query = query.or('target_audience.eq.Teachers,target_audience.eq.All,target_audience.eq.Center');
-      } else if (role === 'parent') {
+      } else if (role === UserRole.PARENT) {
         let conditions = 'target_audience.eq.Parents,target_audience.eq.All';
         if (grade) {
           conditions += `,and(target_audience.eq.Grade,target_grade.eq."${grade}")`;

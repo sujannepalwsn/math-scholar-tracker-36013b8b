@@ -548,7 +548,7 @@ export default function ParentStudentReport() {
       toast.success("AI summary generated successfully");
     },
     onError: (error: any) => {
-      console.error("Error generating summary:", error);
+      logger.error("Error generating summary:", error);
       toast.error("Failed to generate AI summary");
     } });
 
@@ -769,6 +769,7 @@ export default function ParentStudentReport() {
             <title>Academic Performance Report — ${selectedStudent?.name}</title>
             <style>
               @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+import { logger } from "@/utils/logger";
               body {
                 font-family: 'Inter', -apple-system, sans-serif;
                 padding: 40px;

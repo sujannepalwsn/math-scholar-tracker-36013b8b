@@ -1,7 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X, Settings, GripVertical, Trash2, RefreshCcw, Edit2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { logger } from "@/utils/logger";
 
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -165,7 +167,7 @@ export default function Sidebar({
       // Sidebar relies on the centralized hasPermission logic for visibility filtering.
       return hasPermission(user, featureKey || 'unknown', item.to);
     } catch (err) {
-      console.error("Error filtering nav item:", item, err);
+      logger.error("Error filtering nav item:", item, err);
       return false;
     }
   });
@@ -564,7 +566,7 @@ export default function Sidebar({
           {renderNavLinks(filteredNavItems, false)}
         </nav>
         <div className="mt-auto p-4 space-y-4">
-          {(user?.role === 'center' || (user?.role === 'teacher' && user.teacher_scope_mode === 'full' && (hasPermission(user, 'settings_access') || hasPermission(user, 'test_management')))) && (
+          {(user?.role === UserRole.CENTER || (user?.role === UserRole.TEACHER && user.teacher_scope_mode === 'full' && (hasPermission(user, 'settings_access') || hasPermission(user, 'test_management')))) && (
             <div className="space-y-2">
               <Button
                 variant="ghost"

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { ArrowLeft, Megaphone, MessageCircleMore, MessageSquare, Radio, Search, Send, Users } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +52,7 @@ export default function Messaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.center_id && user?.role === "center",
+    enabled: !!user?.center_id && user?.role === UserRole.CENTER,
   });
 
   const { data: parentConversations = [] } = useQuery({
@@ -66,10 +67,10 @@ export default function Messaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id && user?.role === "parent",
+    enabled: !!user?.id && user?.role === UserRole.PARENT,
   });
 
-  const activeConversations = user?.role === "parent" ? parentConversations : conversations;
+  const activeConversations = user?.role === UserRole.PARENT ? parentConversations : conversations;
 
   // Fetch unread counts per conversation
   const { data: unreadCounts = {} } = useQuery({
@@ -89,7 +90,6 @@ export default function Messaging() {
       return counts;
     },
     enabled: !!user?.id && activeConversations.length > 0,
-    refetchInterval: 10000,
   });
 
   // Fetch messages
@@ -106,20 +106,38 @@ export default function Messaging() {
       return data;
     },
     enabled: !!selectedConversation?.id,
-    refetchInterval: 3000,
   });
 
   // Real-time subscription
   useEffect(() => {
-    if (!selectedConversation?.id) return;
+    if (!user?.center_id) return;
+
+    // Subscribe to all messages for this center to update unread counts and current conversation
     const channel = supabase
-      .channel(`chat-${selectedConversation.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `conversation_id=eq.${selectedConversation.id}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["chat-messages", selectedConversation.id] });
-      })
+      .channel('center-messages-realtime')
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chat_messages"
+        },
+        (payload) => {
+          // Invalidate counts for any message change
+          queryClient.invalidateQueries({ queryKey: ["unread-counts"] });
+          queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
+          queryClient.invalidateQueries({ queryKey: ["parent-chat-conversations"] });
+
+          // If the message belongs to the selected conversation, invalidate messages
+          if (selectedConversation?.id && (payload.new as any).conversation_id === selectedConversation.id) {
+            queryClient.invalidateQueries({ queryKey: ["chat-messages", selectedConversation.id] });
+          }
+        }
+      )
       .subscribe();
+
     return () => { supabase.removeChannel(channel); };
-  }, [selectedConversation?.id]);
+  }, [selectedConversation?.id, user?.center_id, queryClient]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -147,7 +165,7 @@ export default function Messaging() {
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
       if (!selectedConversation?.id || !user?.id || !newMessage.trim()) throw new Error("Missing data");
-      if (!canEdit && user.role !== 'parent') throw new Error("Access Denied: You do not have permission to send messages.");
+      if (!canEdit && user.role !== UserRole.PARENT) throw new Error("Access Denied: You do not have permission to send messages.");
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: selectedConversation.id,
         sender_user_id: user.id,
@@ -158,9 +176,9 @@ export default function Messaging() {
       if (convUpdateError) throw convUpdateError;
 
       // Notify recipient
-      const recipientId = user.role === 'parent' ? null : selectedConversation.parent_user_id;
-      const title = user.role === 'parent' ? `New message from parent` : `New message from center`;
-      const link = user.role === 'parent' ? '/messages' : '/parent-messages';
+      const recipientId = user.role === UserRole.PARENT ? null : selectedConversation.parent_user_id;
+      const title = user.role === UserRole.PARENT ? `New message from parent` : `New message from center`;
+      const link = user.role === UserRole.PARENT ? '/messages' : '/parent-messages';
 
       const { error: notifError } = await supabase.from('notifications').insert({
         center_id: user.center_id,
@@ -192,7 +210,7 @@ export default function Messaging() {
     onError: (error: any) => toast.error(error.message || "Failed to send message"),
   });
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Students with parents
   const { data: studentsWithParents = [] } = useQuery({
@@ -222,13 +240,13 @@ export default function Messaging() {
       if (studentsError) throw studentsError;
       return students?.map((s) => ({ ...s, parentUser: parentUsers?.find((u) => u.student_id === s.id) })) || [];
     },
-    enabled: !!user?.center_id && (user?.role === "center" || user?.role === "teacher"),
+    enabled: !!user?.center_id && (user?.role === UserRole.CENTER || user?.role === UserRole.TEACHER),
   });
 
   const createConversationMutation = useMutation({
     mutationFn: async (studentData: any) => {
       if (!user?.center_id) throw new Error("Center ID not found");
-      if (!canEdit && user.role !== 'parent') throw new Error("Access Denied: You do not have permission to start conversations.");
+      if (!canEdit && user.role !== UserRole.PARENT) throw new Error("Access Denied: You do not have permission to start conversations.");
       const { data: existing } = await supabase.from("chat_conversations").select("id").eq("center_id", user.center_id).eq("student_id", studentData.id).eq("parent_user_id", studentData.parentUser.id).maybeSingle();
       if (existing) return existing;
       const { data, error } = await supabase.from("chat_conversations").insert({ center_id: user.center_id, student_id: studentData.id, parent_user_id: studentData.parentUser.id }).select().single();
@@ -302,8 +320,8 @@ export default function Messaging() {
     (s) => (newConversationGradeFilter === "all" || s.grade === newConversationGradeFilter) && s.name.toLowerCase().includes(newConversationStudentSearch.toLowerCase())
   );
 
-  const getConversationName = (conv: any) => (user?.role === "parent" ? conv.centers?.name || "Center" : conv.students?.name || "Student");
-  const getConversationSub = (conv: any) => (user?.role === "parent" ? `Student: ${conv.students?.name}` : `Parent: ${conv.parent_user?.username}`);
+  const getConversationName = (conv: any) => (user?.role === UserRole.PARENT ? conv.centers?.name || "Center" : conv.students?.name || "Student");
+  const getConversationSub = (conv: any) => (user?.role === UserRole.PARENT ? `Student: ${conv.students?.name}` : `Parent: ${conv.parent_user?.username}`);
 
   // Mobile: show chat list or chat view
   const showChatView = isMobile && selectedConversation;
@@ -315,14 +333,14 @@ export default function Messaging() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search conversations..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9" />
         </div>
-        {(user?.role === "center" || canEdit) && (
+        {(user?.role === UserRole.CENTER || canEdit) && (
           <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setShowNewConversation(!showNewConversation)}>
             + New Conversation
           </Button>
         )}
       </div>
 
-      {showNewConversation && user?.role === "center" && (
+      {showNewConversation && user?.role === UserRole.CENTER && (
         <div className="p-3 border-b bg-muted/30 space-y-2">
           <Select value={newConversationGradeFilter} onValueChange={setNewConversationGradeFilter}>
             <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Grade" /></SelectTrigger>
@@ -533,12 +551,12 @@ export default function Messaging() {
                       <Select value={broadcastTargetAudience} onValueChange={setBroadcastTargetAudience}>
                         <SelectTrigger className="h-12 bg-white/50 border-none shadow-soft rounded-2xl focus:ring-primary/20 font-bold"><SelectValue placeholder="Select audience" /></SelectTrigger>
                         <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl font-bold">
-                          {(user?.role === 'center' || (user?.role === 'teacher' && user?.teacher_scope_mode === 'full')) && (
+                          {(user?.role === UserRole.CENTER || (user?.role === UserRole.TEACHER && user?.teacher_scope_mode === 'full')) && (
                             <SelectItem value="all_parents">All Parents</SelectItem>
                           )}
                           <SelectItem value="all_teachers">All Teachers</SelectItem>
                           <SelectItem value="center">Center (Internal Notice)</SelectItem>
-                          {(user?.role === 'center' || (user?.role === 'teacher' && user?.teacher_scope_mode === 'full')) && (
+                          {(user?.role === UserRole.CENTER || (user?.role === UserRole.TEACHER && user?.teacher_scope_mode === 'full')) && (
                             uniqueGrades.map((g) => (<SelectItem key={`grade_${g}`} value={`grade_${g}`}>Parents of Grade {g}</SelectItem>))
                           )}
                         </SelectContent>

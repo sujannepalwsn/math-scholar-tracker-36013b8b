@@ -60,6 +60,11 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
   const issueBookMutation = useMutation({
     mutationFn: async () => {
       if (!canEdit) throw new Error("Access Denied: You do not have permission to issue books.");
+      // 1. Decrement available copies using atomic RPC to prevent race conditions
+      const { error: updateError } = await supabase.rpc('decrement_book_copies', { row_id: issueForm.bookId });
+      if (updateError) throw updateError;
+
+      // 2. Record Loan
       const { error: loanError } = await supabase.from("book_loans").insert({
         center_id: centerId,
         book_id: issueForm.bookId,
@@ -68,14 +73,11 @@ export default function LibraryManagement({ centerId, canEdit }: { centerId: str
         due_date: issueForm.dueDate,
         status: 'Issued'
       } as any);
-      if (loanError) throw loanError;
 
-      // Decrement available copies
-      const { data: book, error: fetchError } = await supabase.from('books').select('available_copies').eq('id', issueForm.bookId).single();
-      if (fetchError) throw fetchError;
-      if (book) {
-        const { error: updateError } = await supabase.from('books').update({ available_copies: Math.max(0, book.available_copies - 1) }).eq('id', issueForm.bookId);
-        if (updateError) throw updateError;
+      if (loanError) {
+        // Rollback copies if loan record fails
+        await supabase.rpc('increment_available_copies', { row_id: issueForm.bookId });
+        throw loanError;
       }
     },
     onSuccess: () => {

@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/utils/logger";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import CenterLayout from "./components/CenterLayout";
@@ -98,16 +99,28 @@ const ActivityTracker = () => {
   useEffect(() => {
     if (!user?.id) return;
 
+    let lastUpdate = 0;
+    const UPDATE_INTERVAL = 15 * 60 * 1000; // 15 mins for interval
+    const MIN_UPDATE_DIFF = 10 * 60 * 1000; // 10 mins minimum gap
+
     const updateActivity = async () => {
+      const now = Date.now();
+      if (now - lastUpdate < MIN_UPDATE_DIFF) return;
+
       const { error } = await supabase
         .from('users')
         .update({ last_active_at: new Date().toISOString() })
         .eq('id', user.id);
-      if (error) console.error("Error updating activity:", error);
+
+      if (error) {
+        logger.error("Error updating activity", error, { userId: user.id });
+      } else {
+        lastUpdate = now;
+      }
     };
 
     updateActivity();
-    const interval = setInterval(updateActivity, 5 * 60 * 1000); // Every 5 mins
+    const interval = setInterval(updateActivity, UPDATE_INTERVAL);
     return () => clearInterval(interval);
   }, [user?.id]);
 

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertCircle, ArrowLeft, Check, CreditCard, Download, Eye, FileText, Info, PieChart, Receipt, TrendingUp, Wallet } from "lucide-react";
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,7 @@ const ParentFinanceDashboard = () => {
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
 
   // Check if user is parent with student
-  if (user?.role !== 'parent' || !user?.student_id) {
+  if (user?.role !== UserRole.PARENT || !user?.student_id) {
     navigate('/login-parent');
     return null;
   }

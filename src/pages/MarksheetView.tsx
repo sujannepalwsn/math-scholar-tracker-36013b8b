@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Download, Printer, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +26,7 @@ export default function MarksheetView() {
     queryKey: ["center-info", centerId],
     queryFn: async () => {
       if (!centerId) return null;
-      const { data } = await supabase.from("centers").select("*").eq("id", centerId).single();
+      const { data } = await supabase.from("centers").select("*").eq("id", centerId).maybeSingle();
       return data;
     },
     enabled: !!centerId,
@@ -40,11 +41,11 @@ export default function MarksheetView() {
         .eq("center_id", centerId)
         .order("created_at", { ascending: false });
 
-      if (user?.role === 'parent') {
+      if (user?.role === UserRole.PARENT) {
         query = query.eq("status", "published");
       }
 
-      if (user?.role === 'teacher' && user?.teacher_id) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
         const assignedGrades = assignments?.map(a => a.grade) || [];
         const { data: subjectAssignments } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import {
   Search,
   Users,
@@ -50,7 +51,7 @@ export function CommandCenter() {
   const { data: teachers = [] } = useQuery({
     queryKey: ["command-center-teachers", search],
     queryFn: async () => {
-      if (search.length < 2 || user?.role !== 'center') return [];
+      if (search.length < 2 || user?.role !== UserRole.CENTER) return [];
       const { data } = await supabase
         .from("teachers")
         .select("id, name, subject")
@@ -58,7 +59,7 @@ export function CommandCenter() {
         .limit(5);
       return data || [];
     },
-    enabled: !!user && search.length >= 2 && user.role === 'center',
+    enabled: !!user && search.length >= 2 && user.role === UserRole.CENTER,
   });
 
   useEffect(() => {
@@ -95,11 +96,11 @@ export function CommandCenter() {
       <CommandList className="max-h-[400px]">
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Quick Actions">
-          <CommandItem onSelect={() => runCommand(() => navigate(user?.role === 'teacher' ? "/teacher-dashboard" : user?.role === 'parent' ? "/parent-dashboard" : "/"))}>
+          <CommandItem onSelect={() => runCommand(() => navigate(user?.role === UserRole.TEACHER ? "/teacher-dashboard" : user?.role === UserRole.PARENT ? "/parent-dashboard" : "/"))}>
             <Calendar className="mr-2 h-4 w-4" />
             <span>Go to Dashboard</span>
           </CommandItem>
-          {user?.role === 'center' && (
+          {user?.role === UserRole.CENTER && (
             <CommandItem onSelect={() => runCommand(() => navigate("/register"))}>
               <UserPlus className="mr-2 h-4 w-4" />
               <span>Register New Student</span>
@@ -108,7 +109,7 @@ export function CommandCenter() {
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="Modules">
-          {user?.role === 'center' && (
+          {user?.role === UserRole.CENTER && (
             <>
               <CommandItem onSelect={() => runCommand(() => navigate("/teachers"))}>
                 <Users className="mr-2 h-4 w-4" />
@@ -124,7 +125,7 @@ export function CommandCenter() {
               </CommandItem>
             </>
           )}
-          {user?.role === 'teacher' && (
+          {user?.role === UserRole.TEACHER && (
             <>
               <CommandItem onSelect={() => runCommand(() => navigate("/teacher/take-attendance"))}>
                 <Calendar className="mr-2 h-4 w-4" />
@@ -140,7 +141,7 @@ export function CommandCenter() {
               </CommandItem>
             </>
           )}
-          {user?.role === 'parent' && (
+          {user?.role === UserRole.PARENT && (
             <>
               <CommandItem onSelect={() => runCommand(() => navigate("/parent-homework"))}>
                 <BookOpen className="mr-2 h-4 w-4" />
@@ -164,7 +165,7 @@ export function CommandCenter() {
               {students.map((student) => (
                 <CommandItem
                   key={student.id}
-                  onSelect={() => runCommand(() => navigate(user?.role === 'parent' ? "/parent-student-report" : `/student-report?student_id=${student.id}`))}
+                  onSelect={() => runCommand(() => navigate(user?.role === UserRole.PARENT ? "/parent-student-report" : `/student-report?student_id=${student.id}`))}
                 >
                   <User className="mr-2 h-4 w-4" />
                   <span>{student.name} (Grade {student.grade})</span>
@@ -184,7 +185,7 @@ export function CommandCenter() {
         )}
         <CommandSeparator />
         <CommandGroup heading="Settings">
-          <CommandItem onSelect={() => runCommand(() => navigate(user?.role === 'teacher' ? "/teacher/settings" : user?.role === 'parent' ? "/parent-settings" : "/settings"))}>
+          <CommandItem onSelect={() => runCommand(() => navigate(user?.role === UserRole.TEACHER ? "/teacher/settings" : user?.role === UserRole.PARENT ? "/parent-settings" : "/settings"))}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
             <CommandShortcut>⌘S</CommandShortcut>

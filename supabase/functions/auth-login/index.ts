@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import * as bcrypt from "https://esm.sh/bcryptjs";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -36,7 +36,7 @@ serve(async (req) => {
       .single();
 
     if (userError || !userData) {
-      console.error('User not found:', userError);
+      console.error(JSON.stringify({ event: 'error', message: 'User not found:', details: userError }));
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid username or password' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
@@ -117,36 +117,8 @@ serve(async (req) => {
       }
     }
 
-    // Fetch center feature permissions if role is center OR teacher OR parent
-    if (userData.center_id) {
-      const { data: permissionsData } = await supabaseClient
-        .from('center_feature_permissions')
-        .select('*')
-        .eq('center_id', userData.center_id)
-        .maybeSingle();
-      
-      if (permissionsData) {
-        user.centerPermissions = permissionsData;
-      } else {
-        user.centerPermissions = {};
-      }
-    }
-
-    // Fetch teacher feature permissions if role is teacher
-    if (userData.role === 'teacher' && userData.teacher_id) {
-      const { data: permissionsData } = await supabaseClient
-        .from('teacher_feature_permissions')
-        .select('*')
-        .eq('teacher_id', userData.teacher_id)
-        .maybeSingle();
-      
-      if (permissionsData) {
-        user.teacherPermissions = permissionsData;
-        user.teacher_scope_mode = permissionsData.teacher_scope_mode || 'restricted';
-      } else {
-        user.teacherPermissions = {};
-      }
-    }
+    // SECURITY: Permission payloads are no longer returned during login to prevent client-side manipulation.
+    // The frontend should fetch these permissions dynamically and verify them against RLS policies.
 
     // Update last login
     await supabaseClient
@@ -160,7 +132,7 @@ serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    console.error('Login error:', error);
+    console.error(JSON.stringify({ event: 'error', message: 'Login error:', details: error }));
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),

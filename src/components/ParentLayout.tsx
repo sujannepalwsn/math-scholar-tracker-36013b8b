@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, Archive, Award, BarChart3, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, Star, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -9,12 +10,12 @@ import BottomNav from "./BottomNav";
 import CenterLogo from "./CenterLogo";
 import NotificationBell from "./NotificationBell";
 import SchoolBranding from "./dashboard/SchoolBranding";
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 
-const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'parent');
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === UserRole.PARENT);
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -30,6 +31,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   const { dynamicCategories, dynamicItems, getIcon } = useDynamicNavigation();
 
+  const queryClient = useQueryClient();
   const { data: unreadMessageCount = 0 } = useQuery({
     queryKey: ["unread-messages-parent", user?.id, user?.center_id],
     queryFn: async () => {
@@ -51,10 +53,34 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       if (error) return 0;
       return count || 0;
     },
-    enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000 });
+    enabled: !!user?.id && !!user?.center_id
+  });
 
-  const parentDynamicItems = dynamicItems.filter(it => it.role === 'parent');
+  // Supabase Realtime for unread messages
+  React.useEffect(() => {
+    if (!user?.id || !user?.center_id) return;
+
+    const channel = supabase
+      .channel('parent-messages-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["unread-messages-parent", user?.id, user?.center_id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.center_id, queryClient]);
+
+  const parentDynamicItems = dynamicItems.filter(it => it.role === UserRole.PARENT);
   const updatedNavItems = parentDynamicItems.length > 1
     ? parentDynamicItems.map(it => {
         const cat = dynamicCategories.find(c => c.id === it.category_id);

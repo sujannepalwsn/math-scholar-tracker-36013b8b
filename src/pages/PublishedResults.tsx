@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Download, Eye, GraduationCap, Printer, Search, BarChart3, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,13 +40,13 @@ export default function PublishedResults() {
         .eq("center_id", centerId)
         .order("created_at", { ascending: false });
 
-      if (user?.role === 'parent') {
+      if (user?.role === UserRole.PARENT) {
         query = query.in("status", ["published", "results_published"]);
       }
 
-      const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+      const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
-      if (user?.role === 'teacher' && user?.teacher_id) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
         const assignedGrades = assignments?.map(a => a.grade) || [];
 
@@ -64,7 +65,7 @@ export default function PublishedResults() {
         }
       }
 
-      if (user?.role === 'parent' && user?.linked_students) {
+      if (user?.role === UserRole.PARENT && user?.linked_students) {
         const parentGrades = Array.from(new Set(user.linked_students.map((s: any) => typeof s === 'string' ? null : s.grade).filter(Boolean)));
         if (parentGrades.length > 0) {
           query = query.in('grade', parentGrades);
@@ -103,8 +104,8 @@ export default function PublishedResults() {
         query = query.eq("grade", selectedExam.grade);
       } else {
         // If no exam selected, and user is teacher, filter students by teacher's assigned grades
-        const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
-        if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+        const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+        if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
            const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
            const assignedGrades = assignments?.map(a => a.grade) || [];
            const { data: subjectAssignments } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
@@ -116,7 +117,7 @@ export default function PublishedResults() {
         }
       }
 
-      if (user?.role === 'parent' && user?.linked_students) {
+      if (user?.role === UserRole.PARENT && user?.linked_students) {
         const studentIds = user.linked_students.map((s: any) => typeof s === 'string' ? s : s.id);
         query = query.in('id', studentIds);
       }
@@ -185,7 +186,7 @@ export default function PublishedResults() {
           marks: studentMarks
         };
       })
-      .filter(r => user?.role !== 'parent' || r.hasAnyMarks); // Only show students with marks for parents
+      .filter(r => user?.role !== UserRole.PARENT || r.hasAnyMarks); // Only show students with marks for parents
   }, [students, marks, subjects, selectedExamId, gradeFilter, searchQuery, user?.role]);
 
   const handlePrint = () => {
@@ -235,7 +236,7 @@ export default function PublishedResults() {
             </div>
             <div>
               <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-                {user?.role === 'parent' ? "Scholar Records" : "Exam Analytics"}
+                {user?.role === UserRole.PARENT ? "Scholar Records" : "Exam Analytics"}
               </h1>
               <div className="flex items-center gap-2 mt-1">
                  <div className="h-2 w-2 rounded-full bg-primary" />
@@ -287,7 +288,7 @@ export default function PublishedResults() {
               </Select>
             </div>
 
-            {user?.role !== 'parent' && (
+            {user?.role !== UserRole.PARENT && (
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Cohort</label>
                 <Select value={gradeFilter} onValueChange={setGradeFilter}>

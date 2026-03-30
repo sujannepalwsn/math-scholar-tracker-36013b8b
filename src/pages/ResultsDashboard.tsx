@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Award, BarChart3, Percent, TrendingUp, Users, XCircle, PieChart as PieChartIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ export default function ResultsDashboard() {
   const centerId = user?.center_id;
   const [selectedExamId, setSelectedExamId] = useState<string>("");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: exams = [] } = useQuery({
     queryKey: ["exams-list-dashboard", centerId, user?.role, user?.teacher_id, isRestricted],
@@ -27,11 +28,11 @@ export default function ResultsDashboard() {
         .eq("center_id", centerId)
         .order("created_at", { ascending: false });
 
-      if (user?.role === 'parent') {
+      if (user?.role === UserRole.PARENT) {
         query = query.eq("status", "published");
       }
 
-      if (user?.role === 'teacher' && user?.teacher_id) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
         const assignedGrades = assignments?.map(a => a.grade) || [];
         const { data: subjectAssignments } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);

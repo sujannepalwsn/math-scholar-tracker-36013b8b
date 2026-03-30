@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, Download, GraduationCap, Loader2, Pencil, Save, Search, Trash2, Upload, User, User as UserIcon, UserPlus, Users, X, ChevronRight, ChevronLeft, Check, Camera } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -31,6 +34,7 @@ import AdmissionWorkflow from "@/components/center/AdmissionWorkflow"
 import StudentPromotion from "@/components/center/StudentPromotion"
 import AlumniManagement from "@/components/center/AlumniManagement"
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 
 interface Student {
   id: string;
@@ -95,14 +99,25 @@ export default function RegisterStudent() {
   const [showLinkChildDialog, setShowLinkChildDialog] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10, 1, 'st');
 
-  // Fetch students
-  const { data: students, isLoading } = useQuery({
-    queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id],
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [gradeFilter, searchFilter, setPage]);
+
+  // Fetch students with pagination
+  const { data: studentsData, isLoading } = useQuery({
+    queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id, gradeFilter, searchFilter, currentPage, pageSize],
     queryFn: async () => {
-      let query = supabase.from("students").select("*").order("created_at", { ascending: false });
-      if (user?.role !== "admin" && user?.center_id) {
+      const { from, to } = getRange();
+      let query = supabase
+        .from("students")
+        .select("*", { count: 'exact' })
+        .order("created_at", { ascending: false });
+
+      if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq("center_id", user.center_id);
       }
 
@@ -114,25 +129,44 @@ export default function RegisterStudent() {
         if (myGrades.length > 0) {
           query = query.in('grade', myGrades);
         } else {
-          return [];
+          return { data: [], count: 0 };
         }
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Student[];
-    } });
+      if (gradeFilter !== "all") {
+        query = query.eq("grade", gradeFilter);
+      }
 
-  // Filter students based on grade and search
-  const filteredStudents = students?.filter(s => 
-    (gradeFilter === "all" || s.grade === gradeFilter) &&
-    (searchFilter === "" || 
-      s.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      s.parent_name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      s.contact_number.includes(searchFilter))
-  );
+      if (searchFilter) {
+        query = query.or(`name.ilike.%${searchFilter}%,parent_name.ilike.%${searchFilter}%,contact_number.ilike.%${searchFilter}%`);
+      }
 
-  const uniqueGrades = Array.from(new Set(students?.map(s => s.grade) || [])).sort();
+      const { data, error, count } = await query.range(from, to);
+      if (error) {
+        logger.error("Error fetching students:", error);
+        throw error;
+      }
+      return { data: (data as Student[]) || [], count: count || 0 };
+    },
+    enabled: !!user?.center_id,
+    placeholderData: (previousData) => previousData });
+
+  const students = studentsData?.data || [];
+  const totalCount = studentsData?.count || 0;
+
+  // For unique grades dropdown, we still need a global fetch or a separate query
+  const { data: allGrades = [] } = useQuery({
+    queryKey: ["all-student-grades", user?.center_id],
+    queryFn: async () => {
+      if (!user?.center_id) return [];
+      const { data, error } = await supabase.from('students').select('grade').eq('center_id', user.center_id);
+      if (error) return [];
+      return Array.from(new Set(data.map(s => s.grade))).filter(Boolean).sort();
+    },
+    enabled: !!user?.center_id
+  });
+
+  const uniqueGrades = allGrades;
 
   const handlePhotoChange = (file: File | null) => {
     setPhotoFile(file);
@@ -164,7 +198,7 @@ export default function RegisterStudent() {
   };
 
   const nextStep = () => {
-    if (validateStep(currentStep)) {
+    if (currentStep < 3 && validateStep(currentStep)) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -196,7 +230,7 @@ export default function RegisterStudent() {
         photo_url = fileName;
       }
 
-      const { data: center } = await supabase.from('centers').select('short_code').eq('id', user.center_id).single();
+      const { data: center } = await supabase.from('centers').select('short_code').eq('id', user.center_id).maybeSingle();
       const { data: lastStudent } = await supabase
         .from('students')
         .select('student_id_number')
@@ -220,7 +254,16 @@ export default function RegisterStudent() {
 
       const { error } = await supabase.from("students").insert([
         {
-          ...student,
+          name: student.name,
+          grade: student.grade,
+          school_name: student.school_name,
+          parent_name: student.parent_name,
+          contact_number: student.contact_number,
+          date_of_birth: student.date_of_birth || null,
+          gender: student.gender,
+          blood_group: student.blood_group || null,
+          address: student.address || null,
+          roll_number: student.roll_number || null,
           photo_url,
           student_id_number: studentIdNumber,
           center_id: user?.center_id },
@@ -228,7 +271,7 @@ export default function RegisterStudent() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students", user?.center_id] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
       setFormData({
         name: "",
         grade: "",
@@ -247,8 +290,9 @@ export default function RegisterStudent() {
       setCurrentStep(1);
       toast.success("Student registered successfully!");
     },
-    onError: () => {
-      toast.error("Failed to register student");
+    onError: (error: any) => {
+      logger.error("Registration error:", error);
+      toast.error(error.message || "Failed to register student");
     } });
 
   // Update
@@ -284,18 +328,18 @@ export default function RegisterStudent() {
           school_name: student.school_name,
           parent_name: student.parent_name,
           contact_number: student.contact_number,
-          date_of_birth: student.date_of_birth,
+          date_of_birth: student.date_of_birth || null,
           gender: student.gender,
-          blood_group: student.blood_group,
-          address: student.address,
-          roll_number: student.roll_number,
+          blood_group: student.blood_group || null,
+          address: student.address || null,
+          roll_number: student.roll_number || null,
           photo_url
         })
         .eq("id", student.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students", user?.center_id] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
       setEditingId(null);
       setEditData(null);
       setPhotoFile(null);
@@ -303,8 +347,9 @@ export default function RegisterStudent() {
       setIsEditDialogOpen(false);
       toast.success("Student updated successfully!");
     },
-    onError: () => {
-      toast.error("Failed to update student");
+    onError: (error: any) => {
+      logger.error("Update error:", error);
+      toast.error(error.message || "Failed to update student");
     } });
 
   // Delete
@@ -317,11 +362,12 @@ export default function RegisterStudent() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students", user?.center_id] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
       toast.success("Student deleted successfully!");
     },
-    onError: () => {
-      toast.error("Failed to delete student");
+    onError: (error: any) => {
+      logger.error("Deletion error:", error);
+      toast.error(error.message || "Failed to delete student");
     } });
 
   // Create parent account
@@ -368,7 +414,7 @@ export default function RegisterStudent() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students", user?.center_id] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
       toast.success("Bulk students added successfully");
       setCsvPreviewRows([]);
       setMultilineText("");
@@ -864,7 +910,8 @@ export default function RegisterStudent() {
               ) : (
                 hasFullAccess && (
                   <Button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     disabled={createMutation.isPending}
                     className="h-12 rounded-2xl px-12 font-black uppercase text-xs tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
                   >
@@ -907,7 +954,7 @@ export default function RegisterStudent() {
               <div className="flex items-center gap-2 ml-14">
                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                   {filteredStudents?.length || 0} active enrolment records
+                   {totalCount} active enrolment records
                  </p>
               </div>
             </div>
@@ -956,8 +1003,8 @@ export default function RegisterStudent() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-20"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></TableCell>
                   </TableRow>
-                ) : filteredStudents && filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
+                ) : students.length > 0 ? (
+                  students.map((student) => (
                     <TableRow key={student.id} className="group transition-all duration-300 hover:bg-card/60">
                       <TableCell className="px-8 py-5">
                         <div className="flex items-center gap-3">
@@ -1021,6 +1068,12 @@ export default function RegisterStudent() {
                 )}
               </TableBody>
             </Table>
+            <ServerPagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={setPage}
+            />
           </div>
         </CardContent>
       </Card>

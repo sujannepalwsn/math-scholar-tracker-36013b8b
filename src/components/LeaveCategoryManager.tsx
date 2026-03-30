@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +31,7 @@ export default function LeaveCategoryManager() {
         .from("leave_categories")
         .select("*");
 
-      if (user?.role === 'admin') {
+      if (user?.role === UserRole.ADMIN) {
         // Superadmin sees only global ones (or all if we want)
         query = query.is("center_id", null);
       } else if (user?.center_id) {

@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -23,7 +23,7 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
-      console.error('[OCR] LOVABLE_API_KEY is not configured');
+      console.error(JSON.stringify({ event: 'error', message: '[OCR] LOVABLE_API_KEY is not configured' }));
       return new Response(
         JSON.stringify({ error: 'OCR service is not properly configured on the server.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -97,7 +97,7 @@ Guidelines:
     try {
       result = JSON.parse(data.choices[0].message.content);
     } catch (parseErr) {
-      console.error("[OCR] Failed to parse AI content:", data.choices[0].message.content);
+      console.error(JSON.stringify({ event: 'error', message: '[OCR] Failed to parse AI content:', details: data.choices[0].message.content }));
       throw new Error("The AI service returned an invalid data format.");
     }
 
@@ -105,7 +105,7 @@ Guidelines:
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('[OCR] Internal Error:', error);
+    console.error(JSON.stringify({ event: 'error', message: '[OCR] Internal Error:', details: error }));
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : 'An unknown error occurred during OCR processing.',

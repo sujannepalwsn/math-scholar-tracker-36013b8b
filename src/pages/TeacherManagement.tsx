@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, ShieldCheck, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -14,12 +15,15 @@ import { Badge } from "@/components/ui/badge"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination";
+import { ServerPagination } from "@/components/ui/ServerPagination";
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Tables } from "@/integrations/supabase/types"
 import * as bcrypt from 'bcryptjs';
 import TeacherFeaturePermissions from '@/components/center/TeacherFeaturePermissions';
 import StaffHRModule from '@/components/center/StaffHRModule';
+import { logger } from "@/utils/logger";
 
 type Teacher = Tables<'teachers'>;
 
@@ -96,29 +100,38 @@ export default function TeacherManagement() {
   const [selectedTeacherForClassAssign, setSelectedTeacherForClassAssign] = useState<Teacher | null>(null);
   const [classTeacherGrade, setClassTeacherGrade] = useState("select-grade");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10, 1, 'tr');
 
-  const { data: teachers = [], isLoading } = useQuery({
-    queryKey: ["teachers", user?.center_id, isRestricted, user?.teacher_id],
+  const { data: teachersData, isLoading } = useQuery({
+    queryKey: ["teachers", user?.center_id, isRestricted, user?.teacher_id, currentPage, pageSize],
     queryFn: async () => {
-      if (!user?.center_id) return [];
+      if (!user?.center_id) return { data: [], count: 0 };
+      const { from, to } = getRange();
+
       let query = supabase
         .from("teachers")
-        .select("*, users!teachers_user_id_fkey(id, username, is_active)")
+        .select("*, users!teachers_user_id_fkey(id, username, is_active)", { count: 'exact' })
         .eq("center_id", user.center_id);
 
       if (isRestricted) {
         query = query.eq('id', user?.teacher_id);
       }
 
-      const { data, error } = await query.order("name");
+      const { data, error, count } = await query
+        .order("name")
+        .range(from, to);
+
       if (error) {
-        console.error("Error fetching teachers:", error);
+        logger.error("Error fetching teachers:", error);
         throw error;
       }
-      return data || [];
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!user?.center_id });
+
+  const teachers = teachersData?.data || [];
+  const totalCount = teachersData?.count || 0;
 
   // Fetch students for unique grades
   const { data: students = [] } = useQuery({
@@ -332,7 +345,7 @@ export default function TeacherManagement() {
         ...legacyObj,
         permissions: permissionsObj
       });
-      if (permError) console.error('Error seeding default permissions:', permError);
+      if (permError) logger.error('Error seeding default permissions:', permError);
       return newTeacher;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Teacher added successfully!"); setIsDialogOpen(false); resetForm(); },
@@ -891,6 +904,12 @@ export default function TeacherManagement() {
                       })}
                     </TableBody>
                   </Table>
+                  <ServerPagination
+                    currentPage={currentPage}
+                    pageSize={pageSize}
+                    totalCount={totalCount}
+                    onPageChange={setPage}
+                  />
                 </div>
               )}
             </CardContent>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Users, FileText, DollarSign, Award, Briefcase, FileCheck, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +20,7 @@ export default function HRManagement() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: teachers = [], isLoading } = useQuery({
     queryKey: ["teachers-hr", centerId, isRestricted, user?.teacher_id],

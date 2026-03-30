@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertTriangle, Archive, Award, BarChart3, Book, BookOpen, Brain, Bus, Calendar, CalendarDays, CheckSquare, ClipboardCheck, Clock, DollarSign, FileText, GraduationCap, Home, IdCard, KeyRound, LayoutList, LogOut, Menu, MessageSquare, Paintbrush, PenTool, Plane, Settings, Star, TrendingUp, User, UserCheck, UserPlus, Users, Video } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -13,8 +14,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
+import { logger } from "@/utils/logger";
 
-const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher');
+const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === UserRole.TEACHER);
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -53,16 +55,40 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       if (error) return 0;
       return count || 0;
     },
-    enabled: !!user?.id && !!user?.center_id,
-    refetchInterval: 10000 });
+    enabled: !!user?.id && !!user?.center_id
+  });
 
-  const teacherDynamicItems = dynamicItems.filter(it => it.role === 'teacher' || it.route === '/teacher/leave');
-  const teacherStaticItems = DEFAULT_NAV_ITEMS.filter(it => it.role === 'teacher' || it.route === '/teacher/leave');
+  // Supabase Realtime for unread messages
+  React.useEffect(() => {
+    if (!user?.id || !user?.center_id) return;
+
+    const channel = supabase
+      .channel('teacher-messages-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["unread-messages-teacher", user?.id, user?.center_id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.center_id, queryClient]);
+
+  const teacherDynamicItems = dynamicItems.filter(it => it.role === UserRole.TEACHER || it.route === '/teacher/leave');
+  const teacherStaticItems = DEFAULT_NAV_ITEMS.filter(it => it.role === UserRole.TEACHER || it.route === '/teacher/leave');
 
   // Auto-sync defaults if no teacher items exist for this center
   React.useEffect(() => {
-    if (user?.center_id && dynamicItems.length > 0 && dynamicItems.filter(it => it.role === 'teacher').length === 0) {
-      console.log("TeacherLayout: No teacher nav items found, synchronizing defaults...");
+    if (user?.center_id && dynamicItems.length > 0 && dynamicItems.filter(it => it.role === UserRole.TEACHER).length === 0) {
+      logger.info("TeacherLayout: No teacher nav items found, synchronizing defaults...");
       syncDefaults.mutate();
     }
   }, [user?.center_id, dynamicItems.length]);
@@ -120,7 +146,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         staticItem => !teacherDynamicItems.some(it => it.route === staticItem.route)
       );
       if (hasMissing) {
-        console.log("TeacherLayout: Detected missing navigation items, syncing...");
+        logger.info("TeacherLayout: Detected missing navigation items, syncing...");
         syncMissingItems.mutate();
       }
     }

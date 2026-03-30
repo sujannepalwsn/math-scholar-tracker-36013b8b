@@ -1,4 +1,9 @@
+import { UserRole } from "@/types/roles";
 /**
+ * SECURITY WARNING: This utility is for FRONTEND UI/UX purposes only.
+ * It determines whether to hide or show buttons, menu items, or views.
+ * TRUE authorization is enforced solely by Supabase Row Level Security (RLS) on the backend.
+ *
  * PERMISSION_MAPPING aligns navigation/feature names or routes with database column names.
  * The keys are the 'featureName' or 'route' used in navigation items or UI checks.
  * The values are the corresponding column names in 'center_feature_permissions' and 'teacher_feature_permissions'.
@@ -126,7 +131,7 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   if (!user) return false;
 
   // Super Admin bypass
-  if (user.role === 'admin' && !user.center_id) return true;
+  if (user.role === UserRole.ADMIN && !user.center_id) return true;
 
   // 1. Normalize the feature key
   let dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
@@ -152,12 +157,12 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   }
 
   // 5. Role-based logic
-  if (user.role === 'center' || user.role === 'admin') {
+  if (user.role === UserRole.CENTER || user.role === UserRole.ADMIN) {
     // Center Admin has access to everything unless globally disabled at center level
     return true;
   }
 
-  if (user.role === 'teacher') {
+  if (user.role === UserRole.TEACHER) {
     const isFullScope = user.teacher_scope_mode === 'full';
 
     // FULL SCOPE MODE: Equivalent to Center Admin
@@ -202,14 +207,15 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   }
 
   // Parents follow center global override
-  if (user.role === 'parent') {
+  if (user.role === UserRole.PARENT) {
     const allowedParent = ['leave_management', 'messaging', 'dashboard_access', 'homework_management', 'exams_results', 'discipline_issues', 'preschool_activities'];
     if (allowedParent.includes(dbColumnName)) {
       return true;
     }
+    return false; // Fail-closed for parents
   }
 
-  return true;
+  return false; // Fail-closed by default for any unhandled roles or scenarios
 };
 
 /**
@@ -222,18 +228,18 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
   if (action === 'view') return hasPermission(user, featureKey);
 
   // Super Admin/Center Admin bypass
-  if (user.role === 'admin' || user.role === 'center') {
+  if (user.role === UserRole.ADMIN || user.role === UserRole.CENTER) {
     return hasPermission(user, featureKey);
   }
 
   // Parents can only 'edit' (create) for specific modules
-  if (user.role === 'parent') {
+  if (user.role === UserRole.PARENT) {
     const allowedActions = ['leave_management', 'messaging'];
     const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
     return action === 'edit' && allowedActions.includes(dbColumnName);
   }
 
-  if (user.role !== 'teacher') return false;
+  if (user.role !== UserRole.TEACHER) return false;
 
   const dbColumnName = PERMISSION_MAPPING[featureKey] || featureKey;
   const isFullScope = user.teacher_scope_mode === 'full';

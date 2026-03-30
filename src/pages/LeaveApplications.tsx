@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
 import { Switch } from "@/components/ui/switch";
 import { hasActionPermission } from "@/utils/permissions";
+import { logger } from "@/utils/logger";
 
 export default function LeaveApplications() {
   const { user } = useAuth();
@@ -63,8 +65,8 @@ export default function LeaveApplications() {
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
 
-  const isParent = user?.role === 'parent';
-  const isTeacher = user?.role === 'teacher';
+  const isParent = user?.role === UserRole.PARENT;
+  const isTeacher = user?.role === UserRole.TEACHER;
   const canApply = hasActionPermission(user, 'leave_management', 'edit');
 
   // Fetch leave categories
@@ -225,7 +227,7 @@ export default function LeaveApplications() {
       });
 
       if (error) {
-        console.error("Failed to send notification:", error);
+        logger.error("Failed to send notification:", error);
       }
     }
   });

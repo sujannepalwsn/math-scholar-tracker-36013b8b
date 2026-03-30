@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { BarChart3, BookOpen, CheckCircle, ClipboardCheck, Users, TrendingUp } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query"
@@ -30,7 +31,7 @@ export default function TeacherPerformanceReport() {
   };
   const range = getDateRange();
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: teachers = [] } = useQuery({
     queryKey: ["teachers-for-report", user?.center_id, user?.role, user?.teacher_id, isRestricted],
@@ -38,7 +39,7 @@ export default function TeacherPerformanceReport() {
       if (!user?.center_id) return [];
       let query = supabase.from("teachers").select("id, name").eq("center_id", user.center_id).eq("is_active", true);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         query = query.eq('id', user.teacher_id);
       }
 
@@ -55,7 +56,7 @@ export default function TeacherPerformanceReport() {
       if (!user?.center_id) return [];
       let query = supabase.from("teacher_attendance").select("*").eq("center_id", user.center_id).gte("date", range.start).lte("date", range.end);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       } else if (selectedTeacher !== "all") {
         query = query.eq("teacher_id", selectedTeacher);
@@ -74,7 +75,7 @@ export default function TeacherPerformanceReport() {
       if (!user?.center_id) return [];
       let query = supabase.from("lesson_plans").select("*").eq("center_id", user.center_id).gte("lesson_date", range.start).lte("lesson_date", range.end);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       } else if (selectedTeacher !== "all") {
         query = query.eq("teacher_id", selectedTeacher);
@@ -93,7 +94,7 @@ export default function TeacherPerformanceReport() {
       if (!user?.center_id) return [];
       let query = supabase.from("homework").select("*").eq("center_id", user.center_id).gte("due_date", range.start).lte("due_date", range.end);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         query = query.eq('teacher_id', user.teacher_id);
       } else if (selectedTeacher !== "all") {
         query = query.eq("teacher_id", selectedTeacher);
@@ -112,7 +113,7 @@ export default function TeacherPerformanceReport() {
       if (!user?.center_id) return [];
       let query = supabase.from("student_chapters").select("*").gte("completed_at", range.start).lte("completed_at", range.end);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         query = query.eq('recorded_by_teacher_id', user.teacher_id);
       } else if (selectedTeacher !== "all") {
         query = query.eq("recorded_by_teacher_id", selectedTeacher);

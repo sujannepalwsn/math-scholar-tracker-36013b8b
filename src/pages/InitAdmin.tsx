@@ -1,3 +1,4 @@
+import { logger } from "@/utils/logger";
 import React, { useState } from "react";
 import { CheckCircle2, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client"
@@ -28,7 +29,7 @@ const InitAdmin = () => {
           description: data.message || 'Admin already exists' });
       }
     } catch (error: any) {
-      console.error('Init error:', error);
+      logger.error('Init error:', error);
       toast({
         title: 'Initialization failed',
         description: error.message,

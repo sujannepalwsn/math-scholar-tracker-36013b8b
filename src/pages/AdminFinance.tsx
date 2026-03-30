@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { UserRole } from "@/types/roles";
 import { AlertCircle, ArrowLeft, FileText, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, Target } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 const AdminFinance = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
   const canEdit = hasActionPermission(user, 'finance', 'edit');
 
   // Fetch invoices summary
@@ -35,7 +36,7 @@ const AdminFinance = () => {
         .select('total_amount, status, student_id')
         .eq('center_id', user.center_id);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         // Teachers only see invoices for their assigned grades
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
@@ -69,7 +70,7 @@ const AdminFinance = () => {
         .select('id, student_id')
         .eq('center_id', user.center_id);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user.teacher_id);
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
         const grades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
@@ -112,7 +113,7 @@ const AdminFinance = () => {
         .select('amount')
         .eq('center_id', user.center_id);
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('created_by', user.id);
       }
 
@@ -163,7 +164,7 @@ const AdminFinance = () => {
               </div>
             </div>
           </div>
-          <Button variant="outline" onClick={() => navigate(user?.role === 'admin' ? '/admin-dashboard' : '/')} className="rounded-xl h-11 border-2">
+          <Button variant="outline" onClick={() => navigate(user?.role === UserRole.ADMIN ? '/admin-dashboard' : '/')} className="rounded-xl h-11 border-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Control Center
           </Button>

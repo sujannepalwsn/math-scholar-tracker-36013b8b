@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2, PlusCircle, MinusCircle, Printer, Send, CheckCircle2, XCircle, User, Loader2, Scan } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +22,7 @@ import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import LessonPlanOCR from "@/components/center/LessonPlanOCR";
+import { logger } from "@/utils/logger";
 
 type LessonPlan = Tables<'lesson_plans'>;
 
@@ -52,7 +56,7 @@ export default function LessonPlans() {
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const isTeacher = user?.role === 'teacher';
+  const isTeacher = user?.role === UserRole.TEACHER;
 
   const { data: assignedSchedules = [] } = useQuery({
     queryKey: ["teacher-assigned-schedules", user?.teacher_id, user?.center_id, isTeacher],
@@ -109,12 +113,23 @@ export default function LessonPlans() {
   }, [selectedGrade, subject, lessonDate, assignedSchedules, isTeacher]);
 
   const isRestricted = isTeacher && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10);
 
-  const { data: lessonPlans = [], isLoading } = useQuery({
-    queryKey: ["lesson-plans-all", user?.center_id, subjectFilter, gradeFilter, user?.teacher_id, isRestricted],
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [subjectFilter, gradeFilter, setPage]);
+
+  const { data: lessonPlansData, isLoading } = useQuery({
+    queryKey: ["lesson-plans-all", user?.center_id, subjectFilter, gradeFilter, user?.teacher_id, isRestricted, currentPage, pageSize],
     queryFn: async () => {
-      if (!user?.center_id) return [];
-      let query = supabase.from("lesson_plans").select("*, teachers(name)").eq("center_id", user.center_id).order("lesson_date", { ascending: false });
+      if (!user?.center_id) return { data: [], count: 0 };
+      const { from, to } = getRange();
+      let query = supabase
+        .from("lesson_plans")
+        .select("*, teachers(name)", { count: 'exact' })
+        .eq("center_id", user.center_id)
+        .order("lesson_date", { ascending: false });
       if (subjectFilter !== "all") query = query.eq("subject", subjectFilter);
       if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
 
@@ -125,11 +140,14 @@ export default function LessonPlans() {
         query = query.eq('teacher_id', user.teacher_id);
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!user?.center_id });
+
+  const lessonPlans = lessonPlansData?.data || [];
+  const totalCount = lessonPlansData?.count || 0;
 
   const resetForm = () => {
     setTitle("");
@@ -281,7 +299,7 @@ export default function LessonPlans() {
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
 
   const handleOCRExtracted = (data: Record<string, unknown>) => {
-    console.log("Mapping OCR data to form...", data);
+    logger.info("Mapping OCR data to form...", data);
     if (!data) return;
 
     if (data.subject) setSubject(data.subject.toString());
@@ -312,7 +330,7 @@ export default function LessonPlans() {
           setLessonDate(format(dateObj, "yyyy-MM-dd"));
         }
       } catch (e) {
-        console.warn("Extracted date was invalid:", data.date);
+        logger.warn("Extracted date was invalid:", data.date);
       }
     }
 
@@ -462,6 +480,12 @@ export default function LessonPlans() {
                   ))}
                 </TableBody>
               </Table>
+              <ServerPagination
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+              />
             </div>
           )}
         </CardContent>

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as bcrypt from 'bcryptjs';
 import ThemeSelector from "@/components/ThemeSelector";
+import { logger } from "@/utils/logger";
 
 export default function GeneralSettings() {
   const { user, logout } = useAuth();
@@ -66,7 +67,7 @@ export default function GeneralSettings() {
       toast.success('Password changed successfully. Please log in again.');
       setTimeout(() => logout(), 2000);
     } catch (error: any) {
-      console.error('Password change error:', error);
+      logger.error('Password change error:', error);
       toast.error(error.message || 'Failed to change password.');
     } finally {
       setLoading(false);

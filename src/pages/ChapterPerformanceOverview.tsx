@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { BookOpen, TrendingUp } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query"
@@ -42,7 +43,7 @@ export default function ChapterPerformanceOverview() {
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [studentFilter, setStudentFilter] = useState<string>("all"); // NEW: Student filter state
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch all students for grade and student filters
   const { data: allStudents = [] } = useQuery({
@@ -100,7 +101,7 @@ export default function ChapterPerformanceOverview() {
         recorded_by_teacher:recorded_by_teacher_id(name)
       `).eq("students.center_id", user.center_id);
 
-      if (user?.role === 'teacher' && user?.teacher_id && isRestricted) {
+      if (user?.role === UserRole.TEACHER && user?.teacher_id && isRestricted) {
         query = query.eq('recorded_by_teacher_id', user.teacher_id);
       }
 
@@ -137,7 +138,7 @@ export default function ChapterPerformanceOverview() {
         `) // Removed lesson_plans(chapter) as it's not directly on tests
         .eq("tests.center_id", user.center_id); // Ensure tests belong to the same center
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('tests.created_by', user.id);
       }
 

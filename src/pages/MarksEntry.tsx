@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { UserRole } from "@/types/roles";
 import { useSearchParams } from "react-router-dom";
 import { CheckCircle, Save, XCircle, SquarePen } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,7 +39,7 @@ export default function MarksEntry() {
   const [marksData, setMarksData] = useState<Record<string, Record<string, string>>>({});
   const [filterGrade, setFilterGrade] = useState<string>("all");
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   const { data: exams = [] } = useQuery({
     queryKey: ["exams-entry-list", centerId, isRestricted, user?.id],

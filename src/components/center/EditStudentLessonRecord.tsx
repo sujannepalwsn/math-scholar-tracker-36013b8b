@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { Star, User } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -60,7 +61,7 @@ export default function EditStudentLessonRecord({ studentChapterId, onSave, onCa
     mutationFn: async () => {
       // Allow both 'center' and 'teacher' roles to update.
       // If a teacher is logged in, use their ID. Otherwise, leave recorded_by_teacher_id as null.
-      const recordedById = user?.role === 'teacher' ? user.teacher_id : null;
+      const recordedById = user?.role === UserRole.TEACHER ? user.teacher_id : null;
 
       const { error } = await supabase
         .from("student_chapters")

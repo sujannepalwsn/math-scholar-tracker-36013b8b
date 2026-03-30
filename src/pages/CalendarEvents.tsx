@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { CalendarDays, Edit, GraduationCap, PartyPopper, Plus, Trash2, Users } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -39,7 +40,7 @@ export default function CalendarEvents() {
   const [eventType, setEventType] = useState("holiday");
   const [isHoliday, setIsHoliday] = useState(false);
 
-  const isParent = user?.role === 'parent';
+  const isParent = user?.role === UserRole.PARENT;
 
   // For parents, fetch student's center_id
   const { data: student } = useQuery({
@@ -57,7 +58,7 @@ export default function CalendarEvents() {
   // Determine center_id: use user's center_id for center/teacher/admin, or student's center_id for parents
   const centerId = isParent ? student?.center_id : user?.center_id;
 
-  const isRestricted = user?.role === 'teacher' && user?.teacher_scope_mode !== 'full';
+  const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch events
   const { data: events = [], isLoading } = useQuery({
@@ -69,7 +70,7 @@ export default function CalendarEvents() {
         .select("*")
         .eq("center_id", centerId);
 
-      if (user?.role === 'teacher' && isRestricted) {
+      if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('created_by', user.id);
       }
 

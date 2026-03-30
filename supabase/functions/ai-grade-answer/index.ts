@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGINS") ?? "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -70,7 +70,7 @@ Grade this answer and provide suggested marks with feedback.`;
         });
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error(JSON.stringify({ event: 'error', message: 'AI gateway error:', details: response.status, errorText }));
       throw new Error("AI gateway error");
     }
 
@@ -96,7 +96,7 @@ Grade this answer and provide suggested marks with feedback.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in ai-grade-answer:", error);
+    console.error(JSON.stringify({ event: 'error', message: 'Error in ai-grade-answer:', details: error }));
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       {

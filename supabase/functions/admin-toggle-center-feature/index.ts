@@ -46,7 +46,7 @@ Deno.serve(async (req: Request) => {
       status: 200, headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('Error in admin-toggle-center-feature:', err);
+    console.error(JSON.stringify({ event: 'error', message: 'Error in admin-toggle-center-feature:', details: err }));
     return new Response(JSON.stringify({ success: false, error: String(err) }), {
       status: 500, headers: { 'Content-Type': 'application/json' },
     });

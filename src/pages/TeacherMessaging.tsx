@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { UserRole } from "@/types/roles";
 import { MessageSquare, Send } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -18,7 +19,7 @@ export default function TeacherMessaging() {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  if (!user || user.role !== 'teacher' || !user.id || !user.center_id) {
+  if (!user || user.role !== UserRole.TEACHER || !user.id || !user.center_id) {
     return <div className="p-6 text-center text-muted-foreground">Please log in as a teacher to view messages.</div>;
   }
 
@@ -58,8 +59,7 @@ export default function TeacherMessaging() {
       if (error) throw error;
       return data;
     },
-    enabled: !!conversation?.id,
-    refetchInterval: 5000 });
+    enabled: !!conversation?.id });
 
   // Scroll to bottom
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function TeacherMessaging() {
     const channel = supabase
       .channel(`teacher-chat-${conversation.id}`)
       .on("postgres_changes", {
-        event: "INSERT",
+        event: "*",
         schema: "public",
         table: "chat_messages",
         filter: `conversation_id=eq.${conversation.id}`

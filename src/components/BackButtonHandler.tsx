@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { logger } from "@/utils/logger";
 
 /**
  * BackButtonHandler
@@ -46,7 +47,7 @@ const BackButtonHandler = () => {
         }
       }
 
-      console.log("Back button intercepted", location.pathname, event.state);
+      logger.info("Back button intercepted", location.pathname, event.state);
     };
 
     window.addEventListener('popstate', handlePopState);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRole } from "@/types/roles";
 import { ArrowLeft, KeyRound, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import * as bcrypt from 'bcryptjs';
+import { logger } from "@/utils/logger";
 
 export default function ChangePassword() {
   const { user, logout } = useAuth();
@@ -21,9 +23,9 @@ export default function ChangePassword() {
   const [loading, setLoading] = useState(false);
 
   const handleBack = () => {
-    if (user?.role === 'admin') navigate('/admin-dashboard');
-    else if (user?.role === 'parent') navigate('/parent-dashboard');
-    else if (user?.role === 'teacher') navigate('/teacher-dashboard');
+    if (user?.role === UserRole.ADMIN) navigate('/admin-dashboard');
+    else if (user?.role === UserRole.PARENT) navigate('/parent-dashboard');
+    else if (user?.role === UserRole.TEACHER) navigate('/teacher-dashboard');
     else navigate('/');
   };
 
@@ -75,11 +77,11 @@ export default function ChangePassword() {
 
       toast({ title: 'Success', description: 'Password changed successfully. Please log in again.' });
       logout();
-      if (user.role === 'admin') navigate('/login-admin');
-      else if (user.role === 'parent') navigate('/login-parent');
+      if (user.role === UserRole.ADMIN) navigate('/login-admin');
+      else if (user.role === UserRole.PARENT) navigate('/login-parent');
       else navigate('/login');
     } catch (error: any) {
-      console.error('Password change error:', error);
+      logger.error('Password change error:', error);
       toast({ title: 'Error', description: error.message || 'Failed to change password.', variant: 'destructive' });
     } finally {
       setLoading(false);
