@@ -101,7 +101,7 @@ export default function TeacherManagement() {
   const [classTeacherGrade, setClassTeacherGrade] = useState("select-grade");
 
   const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
-  const { currentPage, pageSize, setPage, getRange } = usePagination(10);
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10, 1, 'tr');
 
   const { data: teachersData, isLoading } = useQuery({
     queryKey: ["teachers", user?.center_id, isRestricted, user?.teacher_id, currentPage, pageSize],

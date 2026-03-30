@@ -78,26 +78,18 @@ const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
       const invoice = unpaidInvoices.find(i => i.id === paymentForm.invoice_id);
       if (!invoice) throw new Error('Invoice not found');
 
-      // Create payment record
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          invoice_id: paymentForm.invoice_id,
-          amount: parseFloat(paymentForm.amount),
-          payment_date: new Date().toISOString().split('T')[0],
-          payment_method: paymentForm.payment_method,
-          reference_number: paymentForm.reference_number || null
-        });
-      if (paymentError) throw paymentError;
+      // Atomic RPC call to handle both payment record and invoice update
+      const { error } = await supabase.rpc('record_invoice_payment', {
+        p_invoice_id: paymentForm.invoice_id,
+        p_amount: parseFloat(paymentForm.amount),
+        p_payment_date: new Date().toISOString().split('T')[0],
+        p_payment_method: paymentForm.payment_method,
+        p_reference_number: paymentForm.reference_number || null
+      });
 
-      // Update invoice status if fully paid
-      const totalPaid = parseFloat(paymentForm.amount);
-      if (totalPaid >= invoice.total_amount) {
-        const { error: updateError } = await supabase
-          .from('invoices')
-          .update({ status: 'paid' })
-          .eq('id', paymentForm.invoice_id);
-        if (updateError) throw updateError;
+      if (error) {
+        logger.error("Error recording payment via RPC:", error, { invoiceId: paymentForm.invoice_id });
+        throw error;
       }
     },
     onSuccess: () => {
@@ -107,6 +99,7 @@ const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['unpaid-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices-summary'] }); // Invalidate dashboard stats
     },
     onError: (error: any) => toast.error(error.message || 'Failed to record payment')
   });

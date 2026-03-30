@@ -17,7 +17,7 @@ export const ServerPagination: React.FC<ServerPaginationProps> = ({
 }) => {
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  if (totalPages <= 1) return null;
+  if (totalCount === 0) return null;
 
   return (
     <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/50">
@@ -28,7 +28,7 @@ export const ServerPagination: React.FC<ServerPaginationProps> = ({
         <Button
           variant="outline"
           size="sm"
-          disabled={currentPage === 1}
+          disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
           className="h-8 w-8 p-0 rounded-lg"
         >
@@ -40,7 +40,7 @@ export const ServerPagination: React.FC<ServerPaginationProps> = ({
         <Button
           variant="outline"
           size="sm"
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
           className="h-8 w-8 p-0 rounded-lg"
         >

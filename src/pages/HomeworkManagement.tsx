@@ -35,17 +35,17 @@ export default function HomeworkManagement() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
-  const { currentPage, pageSize, setPage, getRange } = usePagination(10);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [gradeFilter, subjectFilter, setPage]);
+  const { currentPage, pageSize, setPage, getRange } = usePagination(10, 1, 'hw');
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [gradeFilter, subjectFilter, setPage]);
 
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
@@ -85,7 +85,8 @@ export default function HomeworkManagement() {
       if (error) throw error;
       return { data: data || [], count: count || 0 };
     },
-    enabled: !!user?.center_id });
+    enabled: !!user?.center_id,
+    placeholderData: (previousData) => previousData });
 
   const homeworkList = homeworkData?.data || [];
   const totalCount = homeworkData?.count || 0;
@@ -123,7 +124,7 @@ export default function HomeworkManagement() {
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
         if (myGrades.length > 0) {
-          query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
+          query = query.in('grade', myGrades);
         } else {
           return [];
         }

@@ -112,7 +112,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       // Fetch user preferences and center details in parallel
       const centerResult = user.center_id
-        ? await supabase.from('centers').select('theme, logo_url').eq('id', user.center_id).single()
+        ? await supabase.from('centers').select('theme, logo_url').eq('id', user.center_id).maybeSingle()
         : { data: null, error: null };
 
       // Load preferences from localStorage only

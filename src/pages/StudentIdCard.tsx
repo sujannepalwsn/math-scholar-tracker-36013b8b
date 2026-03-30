@@ -31,7 +31,7 @@ export default function StudentIdCard() {
     queryKey: ["center-idcard", centerId],
     queryFn: async () => {
       if (!centerId) return null;
-      const { data } = await supabase.from("centers").select("*").eq("id", centerId).single();
+      const { data } = await supabase.from("centers").select("*").eq("id", centerId).maybeSingle();
       return data;
     },
     enabled: !!centerId,

@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 
 export const usePagination = (initialPageSize = 10, initialPage = 1, key?: string) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const paramName = key ? `${key}_page` : 'page';
 
   // Try to get page from URL, otherwise use initialPage
-  const urlPage = parseInt(searchParams.get('page') || '0');
+  const urlPage = parseInt(searchParams.get(paramName) || '0');
   const [currentPage, setCurrentPage] = useState(urlPage > 0 ? urlPage : initialPage);
 
   // Use key for localStorage persistence of pageSize if provided
@@ -15,22 +16,27 @@ export const usePagination = (initialPageSize = 10, initialPage = 1, key?: strin
 
   // Sync currentPage with URL
   useEffect(() => {
-    const page = parseInt(searchParams.get('page') || '0');
-    if (page > 0 && page !== currentPage) {
-      setCurrentPage(page);
+    const page = parseInt(searchParams.get(paramName) || '0');
+    if (page > 0) {
+      if (page !== currentPage) {
+        setCurrentPage(page);
+      }
+    } else if (currentPage !== initialPage) {
+      // If param is missing, and we are not on initial page, reset to initial
+      setCurrentPage(initialPage);
     }
-  }, [searchParams]);
+  }, [searchParams, paramName, initialPage]);
 
   const setPage = useCallback((page: number) => {
     setCurrentPage(page);
     const newParams = new URLSearchParams(searchParams);
-    if (page === 1) {
-      newParams.delete('page');
+    if (page === initialPage) {
+      newParams.delete(paramName);
     } else {
-      newParams.set('page', page.toString());
+      newParams.set(paramName, page.toString());
     }
     setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, paramName, initialPage]);
 
   const updatePageSize = useCallback((size: number) => {
     setPageSize(size);

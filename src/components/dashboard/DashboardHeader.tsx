@@ -56,7 +56,7 @@ export default function DashboardHeader() {
         .from("centers")
         .select("*")
         .eq("id", user.center_id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },

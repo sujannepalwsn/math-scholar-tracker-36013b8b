@@ -124,28 +124,27 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
       const invoice = invoices.find(i => i.id === invoiceId);
       if (!invoice) throw new Error('Invoice not found');
 
-      // Update invoice status
-      const { error: invoiceError } = await supabase
-        .from('invoices')
-        .update({ status: 'paid', paid_amount: invoice.total_amount }) // Mark as fully paid
-        .eq('id', invoiceId);
-      if (invoiceError) throw invoiceError;
+      const remainingAmount = Number(invoice.total_amount) - Number(invoice.paid_amount || 0);
+      if (remainingAmount <= 0) return;
 
-      // Create payment record
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          invoice_id: invoiceId,
-          amount: invoice.total_amount,
-          payment_date: new Date().toISOString().split('T')[0],
-          payment_method: 'cash'
-        });
-      if (paymentError) throw paymentError;
+      // Atomic RPC call to handle both payment record and invoice update
+      const { error } = await supabase.rpc('record_invoice_payment', {
+        p_invoice_id: invoiceId,
+        p_amount: remainingAmount,
+        p_payment_date: new Date().toISOString().split('T')[0],
+        p_payment_method: 'cash'
+      });
+
+      if (error) {
+        logger.error("Error marking invoice as paid via RPC:", error, { invoiceId });
+        throw error;
+      }
     },
     onSuccess: () => {
-      toast.success('Invoice marked as paid');
+      toast.success('Invoice marked as fully paid');
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices-summary'] }); // Invalidate dashboard stats
     },
     onError: (error: any) => toast.error(error.message || 'Failed to mark as paid')
   });

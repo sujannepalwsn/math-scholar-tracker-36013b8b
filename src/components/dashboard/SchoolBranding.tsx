@@ -21,7 +21,7 @@ export default function SchoolBranding({ className, isMobileCompact }: SchoolBra
         .from("centers")
         .select("*")
         .eq("id", user.center_id)
-        .single();
+        .maybeSingle();
       if (error) return null;
       return data;
     },
