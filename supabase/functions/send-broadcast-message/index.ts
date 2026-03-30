@@ -12,11 +12,18 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { senderUserId, centerId, messageText, targetAudience, targetGrade, title } = await req.json();
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing authorization header' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (!senderUserId || !centerId || !messageText || !targetAudience) {
+    const { messageText, targetAudience, targetGrade, title } = await req.json();
+
+    if (!messageText || !targetAudience) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Sender, center, message, and target audience are required.' }),
+        JSON.stringify({ success: false, error: 'Message and target audience are required.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -24,6 +31,19 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify user and get context
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !authUser) throw new Error('Unauthorized');
+
+    const { data: profile } = await supabase.from('users').select('id, role, center_id').eq('id', authUser.id).single();
+    if (!profile) throw new Error('Profile not found');
+    if (profile.role !== 'center' && profile.role !== 'admin' && profile.role !== 'teacher') throw new Error('Forbidden');
+
+    const centerId = profile.center_id;
+    const senderUserId = profile.id;
+
+    if (!centerId) throw new Error('User not associated with a center');
 
     const { data: broadcastMessage, error: broadcastError } = await supabase
       .from('broadcast_messages')

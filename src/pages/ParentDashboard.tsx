@@ -427,7 +427,9 @@ export default function ParentDashboard() {
     return null;
   }
 
-  logger.info("Rendering Parent Dashboard, activeStudentId:", activeStudentId);
+  if (import.meta.env.DEV) {
+    logger.debug("Rendering Parent Dashboard, activeStudentId:", activeStudentId);
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-8 pb-24 md:pb-8 page-enter animate-in fade-in duration-1000">

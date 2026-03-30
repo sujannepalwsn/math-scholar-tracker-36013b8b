@@ -224,7 +224,7 @@ export default function Tests() {
         uploadedFileUrl = fileName;
       }
       
-      logger.info("DEBUG: Attempting to create test with lessonPlanId:", selectedLessonPlanId);
+      logger.debug("DEBUG: Attempting to create test with lessonPlanId:", selectedLessonPlanId);
 
       if (selectedLessonPlanId) {
         const lp = lessonPlans.find(l => l.id === selectedLessonPlanId);
@@ -279,7 +279,7 @@ export default function Tests() {
         question_marks: questions.length > 0 ? (questionMarks as any) : null, // Save question-wise marks as Json
       };
 
-      logger.info("Attempting to save test result with data:", resultData);
+      logger.debug("Attempting to save test result with data:", resultData);
 
       const { data, error } = await supabase.from("test_results").insert(resultData);
       if (error) {
@@ -301,7 +301,7 @@ export default function Tests() {
         if (notifError) logger.error("Notification error:", notifError);
       }
 
-      logger.info("Test result saved successfully:", data);
+      logger.debug("Test result saved successfully:", data);
       return data;
     },
     onSuccess: () => {
@@ -326,7 +326,7 @@ export default function Tests() {
   const bulkMarksMutation = useMutation({
     mutationFn: async (marks: Array<{ studentId: string; marks: number }>) => {
       if (!canEdit) throw new Error("Access Denied: You do not have permission to perform bulk marks entry.");
-      logger.info("Attempting bulk marks save for test:", selectedTest, "with marks:", marks);
+      logger.debug("Attempting bulk marks save for test:", selectedTest, "with marks:", marks);
 
       // Delete existing records for these students in this test to prevent unique constraint errors
       const studentIdsInBatch = marks.map((m) => m.studentId);
@@ -340,7 +340,7 @@ export default function Tests() {
         logger.error("Supabase error deleting existing bulk marks:", deleteError);
         throw deleteError;
       }
-      logger.info("Existing bulk marks deleted for selected students.");
+      logger.debug("Existing bulk marks deleted for selected students.");
 
       const records = marks.map((m) => ({
         test_id: selectedTest,
@@ -350,7 +350,7 @@ export default function Tests() {
         question_marks: null, // Bulk entry doesn't support question-wise for now
       }));
 
-      logger.info("Inserting new bulk marks records:", records);
+      logger.debug("Inserting new bulk marks records:", records);
       const { error } = await supabase.from("test_results").insert(records);
       if (error) {
         logger.error("Supabase error inserting bulk marks:", error);
@@ -375,7 +375,7 @@ export default function Tests() {
         if (notifError) logger.error("Notification error:", notifError);
       }
 
-      logger.info("Bulk marks saved successfully.");
+      logger.debug("Bulk marks saved successfully.");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-results"] });
@@ -471,10 +471,10 @@ export default function Tests() {
   };
 
   const addQuestion = () => {
-    logger.info("Attempting to add new question. Current questions length:", questions.length);
+    logger.debug("Attempting to add new question. Current questions length:", questions.length);
     setQuestions(prev => {
       const newQuestions = [...prev, { id: crypto.randomUUID(), questionText: '', maxMarks: 0, correctAnswer: '' }];
-      logger.info("Questions after adding:", newQuestions.length, newQuestions);
+      logger.debug("Questions after adding:", newQuestions.length, newQuestions);
       return newQuestions;
     });
   };

@@ -108,10 +108,10 @@ export default function TakeAttendance() {
 
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
 
-  // Debug logging for troubleshooting - will be visible in browser console
+  // Debug logging for troubleshooting - will be visible in browser console in development
   useEffect(() => {
-    if (user) {
-      logger.info("TakeAttendance [Security Audit]:", {
+    if (user && import.meta.env.DEV) {
+      logger.debug("TakeAttendance [Security Audit]:", {
         userId: user.id,
         role: user.role,
         teacherId: user.teacher_id,

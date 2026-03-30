@@ -278,8 +278,6 @@ export default function Messaging() {
 
       const { data, error } = await supabase.functions.invoke("send-broadcast-message", {
         body: {
-          senderUserId: user.id,
-          centerId: user.center_id,
           title: broadcastTitle.trim() || 'Broadcast Message',
           messageText: broadcastMessageText.trim(),
           targetAudience: finalTargetAudience,

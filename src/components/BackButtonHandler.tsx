@@ -47,7 +47,7 @@ const BackButtonHandler = () => {
         }
       }
 
-      logger.info("Back button intercepted", location.pathname, event.state);
+      logger.debug("Back button intercepted", location.pathname, event.state);
     };
 
     window.addEventListener('popstate', handlePopState);

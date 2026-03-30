@@ -111,12 +111,16 @@ class Logger {
     return `[${timestamp}] [${level.toUpperCase()}] ${message}`;
   }
 
-  public info(message: string, context?: LogContext) {
-    console.info(this.formatMessage('info', message), context || '');
+  public info(message: string, ...args: any[]) {
+    if (import.meta.env.DEV) {
+      console.info(this.formatMessage('info', message), ...args);
+    }
   }
 
-  public warn(message: string, context?: LogContext) {
-    console.warn(this.formatMessage('warn', message), context || '');
+  public warn(message: string, ...args: any[]) {
+    if (import.meta.env.DEV) {
+      console.warn(this.formatMessage('warn', message), ...args);
+    }
   }
 
   public async error(message: string, error?: unknown, context?: LogContext) {
@@ -135,9 +139,9 @@ class Logger {
     return await this.persistError(message, error, context);
   }
 
-  public debug(message: string, context?: LogContext) {
+  public debug(message: string, ...args: any[]) {
     if (import.meta.env.DEV) {
-      console.debug(this.formatMessage('debug', message), context || '');
+      console.debug(this.formatMessage('debug', message), ...args);
     }
   }
 }

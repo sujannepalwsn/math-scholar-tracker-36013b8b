@@ -383,8 +383,8 @@ export default function RegisterStudent() {
         body: {
           username: parentUsername,
           password: parentPassword,
-          studentId: selectedStudentForParent.id,
-          centerId: user.center_id } });
+          studentId: selectedStudentForParent.id
+        } });
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Failed to create parent account via Edge Function');
       return data;
