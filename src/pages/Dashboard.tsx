@@ -535,7 +535,7 @@ export default function Dashboard() {
 
       let query = supabase
         .from("period_schedules")
-        .select("*, teachers:teachers(*), class_periods:class_periods!inner(*)")
+        .select("*, teachers:teachers!period_schedules_teacher_id_fkey(*), substitute_teacher:teachers!period_schedules_substitute_teacher_id_fkey(name), class_periods:class_periods!inner(*)")
         .eq("center_id", centerId)
         .eq("day_of_week", dayOfWeek);
 
@@ -741,10 +741,10 @@ export default function Dashboard() {
       class_period_id: ps.class_period_id,
       time: ps.class_periods ? `${ps.class_periods.start_time?.slice(0, 5)} – ${ps.class_periods.end_time?.slice(0, 5)}` : "N/A",
       grade: ps.grade,
-      teacher: sub ? `${sub.substitute_teacher?.name} (Sub)` : (ps.teachers?.name || "Unassigned"),
+      teacher: (sub || ps.substitute_teacher) ? `${sub?.substitute_teacher?.name || ps.substitute_teacher?.name} (Sub)` : (ps.teachers?.name || "Unassigned"),
       subject: ps.subject,
-      isSubstitution: !!sub,
-      isVacant: !sub && (!ps.teacher_id || isMissingAttendance || isOnLeave || (() => {
+      isSubstitution: !!sub || !!ps.substitute_teacher,
+      isVacant: !sub && !ps.substitute_teacher && (!ps.teacher_id || isMissingAttendance || isOnLeave || (() => {
         const att = teacherAttendance.find((a: any) => a.teacher_id === ps.teacher_id);
         return att?.status === 'absent' || att?.status === 'leave';
       })()),
