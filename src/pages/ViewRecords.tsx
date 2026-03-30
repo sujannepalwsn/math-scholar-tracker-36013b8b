@@ -50,7 +50,7 @@ export default function ViewRecords() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [gradeFilter, setGradeFilter] = useState<string>("all");
-  const { currentPage, pageSize, setPage, getRange } = usePagination(20);
+  const { currentPage, pageSize, setPage, getRange } = usePagination(50);
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const [showStudentDetailDialog, setShowStudentDetailDialog] = useState(false);
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<StudentDetail | null>(null);

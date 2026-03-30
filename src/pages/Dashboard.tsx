@@ -88,6 +88,36 @@ export default function Dashboard() {
     }
   }, [kpiOrder, visibleWidgets, mainWidgetsOrder, user?.id, isInitialized]);
 
+  // Real-time subscription for dashboard data
+  useEffect(() => {
+    if (!centerId) return;
+
+    const channel = supabase
+      .channel('dashboard-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance', filter: `center_id=eq.${centerId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["attendance-dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["attendance-historical"] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teacher_attendance', filter: `center_id=eq.${centerId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["teacher-attendance-dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["teacher-attendance-historical"] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_applications', filter: `center_id=eq.${centerId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["pending-leaves-count"] });
+        queryClient.invalidateQueries({ queryKey: ["approved-leaves-dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["leave-applications-dashboard"] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lesson_plans', filter: `center_id=eq.${centerId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["pending-lesson-plans-count"] });
+        queryClient.invalidateQueries({ queryKey: ["upcoming-lessons-dashboard"] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [centerId, queryClient]);
+
   const handleDragStart = (e: React.DragEvent, type: 'kpi' | 'main', id: string) => {
     if (!isCustomizeMode) return;
     e.dataTransfer.setData('text/plain', JSON.stringify({ type, id }));
@@ -205,7 +235,6 @@ export default function Dashboard() {
       return data || [];
     },
     enabled: !!centerId,
-    refetchInterval: 30000,
   });
 
   const { data: pendingLeavesCount = 0 } = useQuery({
@@ -240,7 +269,6 @@ export default function Dashboard() {
       return data || [];
     },
     enabled: !!centerId,
-    refetchInterval: 30000,
   });
 
   const { data: teacherAttendance = [] } = useQuery({
@@ -252,7 +280,6 @@ export default function Dashboard() {
       return data || [];
     },
     enabled: !!centerId,
-    refetchInterval: 30000,
   });
 
   const { data: todayApprovedLeaves = [] } = useQuery({
@@ -292,7 +319,6 @@ export default function Dashboard() {
       return data || [];
     },
     enabled: !!centerId,
-    refetchInterval: 30000,
   });
 
   const { data: evaluationStats = [] } = useQuery({

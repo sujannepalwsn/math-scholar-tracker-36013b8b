@@ -11,9 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { usePagination } from "@/hooks/usePagination";
+import { ServerPagination } from "@/components/ui/ServerPagination";
 
 export default function AlumniManagement({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
+  const { currentPage, pageSize, setPage, getRange } = usePagination(50, 1, 'alumni');
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Graduated");
   const [selectedStudentForTC, setSelectedStudentForTC] = useState<any>(null);
@@ -22,20 +25,32 @@ export default function AlumniManagement({ centerId, canEdit }: { centerId: stri
     leavingDate: new Date().toISOString().split('T')[0]
   });
 
-  const { data: students, isLoading } = useQuery({
-    queryKey: ["alumni-students", centerId, statusFilter],
+  const { data: studentsData, isLoading } = useQuery({
+    queryKey: ["alumni-students", centerId, statusFilter, search, currentPage, pageSize],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { from, to } = getRange();
+      let query = supabase
         .from("students")
-        .select("*")
+        .select("*", { count: 'exact' })
         .eq("center_id", centerId)
-        .eq("status", statusFilter)
-        .order("name");
+        .eq("status", statusFilter);
+
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,student_id_number.ilike.%${search}%`);
+      }
+
+      const { data, error, count } = await query
+        .order("name")
+        .range(from, to);
+
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!centerId,
   });
+
+  const students = studentsData?.data || [];
+  const totalCount = studentsData?.count || 0;
 
   const generateTCMutation = useMutation({
     mutationFn: async () => {
@@ -59,11 +74,6 @@ export default function AlumniManagement({ centerId, canEdit }: { centerId: stri
       setSelectedStudentForTC(null);
     }
   });
-
-  const filteredStudents = students?.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    (s.student_id_number || "").includes(search)
-  );
 
   return (
     <div className="space-y-6">
@@ -104,10 +114,10 @@ export default function AlumniManagement({ centerId, canEdit }: { centerId: stri
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={5} className="text-center py-10">Loading...</TableCell></TableRow>
-            ) : filteredStudents?.length === 0 ? (
+            ) : students.length === 0 ? (
               <TableRow><TableCell colSpan={5} className="text-center py-10 italic text-slate-400">No records found for {statusFilter}</TableCell></TableRow>
             ) : (
-              filteredStudents?.map((s: any) => (
+              students.map((s: any) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-bold">{s.name}</TableCell>
                   <TableCell>Grade {s.grade}</TableCell>
@@ -129,6 +139,14 @@ export default function AlumniManagement({ centerId, canEdit }: { centerId: stri
           </TableBody>
         </Table>
 </div>
+        <div className="px-4 py-4 border-t">
+          <ServerPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       <Dialog open={!!selectedStudentForTC} onOpenChange={() => setSelectedStudentForTC(null)}>

@@ -8,29 +8,37 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users } from "lucide-react";
+import { usePagination } from "@/hooks/usePagination";
+import { ServerPagination } from "@/components/ui/ServerPagination";
 
 export default function StudentPromotion({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
+  const { currentPage, pageSize, setPage, getRange } = usePagination(50, 1, 'promotion');
   const [fromGrade, setFromGrade] = useState<string>("");
   const [toGrade, setToGrade] = useState<string>("");
   const [academicYear, setAcademicYear] = useState<string>("2024-2025");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
-  const { data: students, isLoading } = useQuery({
-    queryKey: ["students-for-promotion", centerId, fromGrade],
+  const { data: studentsData, isLoading } = useQuery({
+    queryKey: ["students-for-promotion", centerId, fromGrade, currentPage, pageSize],
     queryFn: async () => {
-      if (!fromGrade) return [];
-      const { data, error } = await supabase
+      if (!fromGrade) return { data: [], count: 0 };
+      const { from, to } = getRange();
+      const { data, error, count } = await supabase
         .from("students")
-        .select("*")
+        .select("*", { count: 'exact' })
         .eq("center_id", centerId)
         .eq("grade", fromGrade)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .range(from, to);
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!centerId && !!fromGrade,
   });
+
+  const students = studentsData?.data || [];
+  const totalCount = studentsData?.count || 0;
 
   const promoteMutation = useMutation({
     mutationFn: async () => {
@@ -186,6 +194,14 @@ export default function StudentPromotion({ centerId, canEdit }: { centerId: stri
                 </TableBody>
               </Table>
 </div>
+              <div className="mt-4 px-4 pb-4">
+                <ServerPagination
+                  currentPage={currentPage}
+                  pageSize={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={setPage}
+                />
+              </div>
             </div>
           )}
 
