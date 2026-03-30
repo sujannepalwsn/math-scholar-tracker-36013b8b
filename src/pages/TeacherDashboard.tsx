@@ -115,7 +115,7 @@ export default function TeacherDashboard() {
       const dayOfWeek = new Date(dateRange.to).getDay();
       const { data: regular, error } = await supabase
         .from("period_schedules")
-        .select("*, class_periods:class_periods!inner(*)")
+        .select("*, teachers!period_schedules_teacher_id_fkey(name), substitute_teacher:teachers!period_schedules_substitute_teacher_id_fkey(name), class_periods:class_periods!inner(*)")
         .eq("teacher_id", teacherId)
         .eq("day_of_week", dayOfWeek);
       if (error) throw error;
@@ -284,7 +284,7 @@ export default function TeacherDashboard() {
         id: ps.id,
         time: ps.class_periods ? `${ps.class_periods.start_time.slice(0, 5)} - ${ps.class_periods.end_time.slice(0, 5)}` : "N/A",
         grade: ps.grade,
-        teacher: ps.isSubstitution ? "Substitution Coverage" : (user?.username?.split('@')[0] || "Me"),
+        teacher: ps.substitute_teacher?.name ? `${ps.substitute_teacher.name} (Sub)` : (ps.isSubstitution ? "Substitution Coverage" : (user?.username?.split('@')[0] || "Me")),
         subject: ps.subject,
         status: "upcoming" as const,
         lesson_plan_id: matchingPlan?.id,

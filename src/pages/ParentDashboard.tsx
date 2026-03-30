@@ -243,7 +243,7 @@ export default function ParentDashboard() {
 
       const { data, error } = await supabase
         .from("period_schedules")
-        .select("*, teachers(name), class_periods!inner(*)")
+        .select("*, teachers!period_schedules_teacher_id_fkey(name), substitute_teacher:teachers!period_schedules_substitute_teacher_id_fkey(name), class_periods!inner(*)")
         .eq("center_id", user.center_id)
         .or(`grade.eq.${student.grade},grade.eq.Grade ${student.grade}`)
         .eq("day_of_week", dayOfWeek)
@@ -319,7 +319,7 @@ export default function ParentDashboard() {
       id: ps.id,
       time: ps.class_periods ? `${ps.class_periods.start_time?.slice(0, 5)} - ${ps.class_periods.end_time?.slice(0, 5)}` : "N/A",
       grade: ps.grade,
-      teacher: ps.teachers?.name || "Unassigned",
+      teacher: ps.substitute_teacher?.name ? `${ps.substitute_teacher.name} (Sub)` : (ps.teachers?.name || "Unassigned"),
       subject: ps.subject,
       status: (() => {
         if (!ps.class_periods) return "upcoming" as const;

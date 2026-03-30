@@ -106,7 +106,7 @@ export default function ClassRoutine() {
     queryKey: ["period-schedules", user?.center_id, selectedGrade, user?.role, user?.teacher_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("period_schedules").select(`*, class_periods:class_periods(*), teachers:teachers(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_periods(*), teachers:teachers!period_schedules_teacher_id_fkey(id, name, expected_check_in, expected_check_out), substitute_teacher:teachers!period_schedules_substitute_teacher_id_fkey(id, name)`).eq("center_id", user.center_id);
 
       if (user?.role === UserRole.TEACHER && user?.teacher_id) {
         query = query.eq('teacher_id', user.teacher_id);
@@ -124,7 +124,7 @@ export default function ClassRoutine() {
     queryKey: ["all-period-schedules", user?.center_id, isRestricted],
     queryFn: async () => {
       if (!user?.center_id) return [];
-      let query = supabase.from("period_schedules").select(`*, class_periods:class_periods(*), teachers:teachers(id, name, expected_check_in, expected_check_out)`).eq("center_id", user.center_id);
+      let query = supabase.from("period_schedules").select(`*, class_periods:class_periods(*), teachers:teachers!period_schedules_teacher_id_fkey(id, name, expected_check_in, expected_check_out), substitute_teacher:teachers!period_schedules_substitute_teacher_id_fkey(id, name)`).eq("center_id", user.center_id);
 
       if (isRestricted) {
         query = query.eq('teacher_id', user?.teacher_id);
@@ -826,7 +826,13 @@ export default function ClassRoutine() {
                               {entry ? (
                                 <div className="space-y-1">
                                   <div className="font-black text-xs text-slate-800 uppercase tracking-tight leading-tight">{entry.subject}</div>
-                                  <div className="text-[10px] font-medium text-slate-500 italic">{entry.teachers?.name || "Unassigned"}</div>
+                                  <div className="text-[10px] font-medium text-slate-500 italic">
+                                    {entry.substitute_teacher?.name ? (
+                                      <span className="text-blue-600 font-bold">{entry.substitute_teacher.name} (Sub)</span>
+                                    ) : (
+                                      entry.teachers?.name || "Unassigned"
+                                    )}
+                                  </div>
 
                                   {status && (
                                     <TooltipProvider>
@@ -933,10 +939,14 @@ export default function ClassRoutine() {
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-black uppercase">Slot {schedule.class_periods?.period_number}</span>
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{schedule.class_periods?.start_time} - {schedule.class_periods?.end_time}</span>
                               </div>
-                              {schedule.teachers?.name && (
+                              {(schedule.teachers?.name || schedule.substitute_teacher?.name) && (
                                 <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
                                   <div className="h-1 w-1 rounded-full bg-slate-300" />
-                                  {schedule.teachers.name}
+                                  {schedule.substitute_teacher?.name ? (
+                                    <span className="text-blue-600 font-bold">{schedule.substitute_teacher.name} (Sub)</span>
+                                  ) : (
+                                    schedule.teachers.name
+                                  )}
                                 </div>
                               )}
                             </div>
