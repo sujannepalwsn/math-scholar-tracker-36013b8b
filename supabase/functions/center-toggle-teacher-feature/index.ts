@@ -12,6 +12,13 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing authorization header' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { teacherId, featureName, isEnabled } = await req.json();
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -22,6 +29,27 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Verify user and get context
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !authUser) throw new Error('Unauthorized');
+
+    const { data: profile } = await supabase.from('users').select('id, role, center_id').eq('id', authUser.id).single();
+    if (!profile) throw new Error('Profile not found');
+    if (profile.role !== 'center' && profile.role !== 'admin') throw new Error('Forbidden');
+
+    const centerId = profile.center_id;
+    if (!centerId) throw new Error('User not associated with a center');
+
+    // Security check: Ensure teacher belongs to the same center
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('center_id')
+      .eq('id', teacherId)
+      .single();
+
+    if (teacherError || !teacher) throw new Error('Teacher not found');
+    if (teacher.center_id !== centerId) throw new Error('Forbidden: Teacher belongs to another center');
 
     // Check if permission record exists
     const { data: existingPerm } = await supabase

@@ -117,7 +117,7 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
 
   // Effect to initialize form fields and selections when 'meeting' prop changes
   useEffect(() => {
-    logger.info("MeetingForm useEffect triggered. Meeting prop:", meeting);
+    logger.debug("MeetingForm useEffect triggered. Meeting prop:", meeting);
     if (meeting) {
       // Editing existing meeting
       setTitle(meeting.title);
@@ -141,16 +141,16 @@ export default function MeetingForm({ meeting, onSave, onCancel }: MeetingFormPr
         });
         setSelectedStudentIds(initialSelectedStudentIds);
         setSelectedTeacherIds(initialSelectedTeacherIds);
-        logger.info("Pre-selected Student IDs:", initialSelectedStudentIds);
-        logger.info("Pre-selected Teacher IDs:", initialSelectedTeacherIds);
+        logger.debug("Pre-selected Student IDs:", initialSelectedStudentIds);
+        logger.debug("Pre-selected Teacher IDs:", initialSelectedTeacherIds);
       } else {
         setSelectedStudentIds([]);
         setSelectedTeacherIds([]);
-        logger.info("No attendees found for existing meeting, clearing selections.");
+        logger.debug("No attendees found for existing meeting, clearing selections.");
       }
     } else {
       // Creating new meeting - reset all form states
-      logger.info("Creating new meeting, resetting form states.");
+      logger.debug("Creating new meeting, resetting form states.");
       setTitle("");
       setDescription("");
       setMeetingDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));

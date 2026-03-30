@@ -13,11 +13,18 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { centerId, month, year, academicYear, dueInDays = 30, gradeFilter = 'all' } = await req.json();
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing authorization header' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (!centerId || !month || !year || !academicYear) {
+    const { month, year, academicYear, dueInDays = 30, gradeFilter = 'all' } = await req.json();
+
+    if (!month || !year || !academicYear) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Center ID, month, year, and academic year are required.' }),
+        JSON.stringify({ success: false, error: 'Month, year, and academic year are required.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -25,6 +32,17 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify user and get context
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !authUser) throw new Error('Unauthorized');
+
+    const { data: profile } = await supabase.from('users').select('id, role, center_id').eq('id', authUser.id).single();
+    if (!profile) throw new Error('Profile not found');
+    if (profile.role !== 'center' && profile.role !== 'admin') throw new Error('Forbidden');
+
+    const centerId = profile.center_id;
+    if (!centerId) throw new Error('User not associated with a center');
 
     let studentsQuery = supabase.from('students').select('id, name, grade').eq('center_id', centerId).eq('is_active', true);
     if (gradeFilter !== 'all') studentsQuery = studentsQuery.eq('grade', gradeFilter);

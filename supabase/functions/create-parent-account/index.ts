@@ -13,11 +13,17 @@ serve(async (req) => {
   }
 
   try {
-    const { username, password, studentId, centerId } = await req.json();
-    console.log('Create parent account request:', { username, studentId, centerId });
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing authorization header' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (!username || !password || !studentId || !centerId) {
-      console.error(JSON.stringify({ event: 'error', message: 'Missing required fields:', details: { username: !!username, password: !!password, studentId: !!studentId, centerId: !!centerId } }));
+    const { username, password, studentId } = await req.json();
+
+    if (!username || !password || !studentId) {
+      console.error(JSON.stringify({ event: 'error', message: 'Missing required fields:', details: { username: !!username, password: !!password, studentId: !!studentId } }));
       return new Response(
         JSON.stringify({ success: false, error: 'All fields are required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -27,6 +33,17 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify user and get context
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !authUser) throw new Error('Unauthorized');
+
+    const { data: profile } = await supabase.from('users').select('id, role, center_id').eq('id', authUser.id).single();
+    if (!profile) throw new Error('Profile not found');
+    if (profile.role !== 'center' && profile.role !== 'admin') throw new Error('Forbidden');
+
+    const centerId = profile.center_id;
+    if (!centerId) throw new Error('User not associated with a center');
 
     // Check if username already exists
     const { data: existingUser } = await supabase

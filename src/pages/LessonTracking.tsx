@@ -206,7 +206,7 @@ export default function LessonTracking() {
         const isStudentMatch = recordStudentId && tr.student_id === recordStudentId;
         const isLessonPlanMatch = recordLessonPlanId && testLessonPlanId === recordLessonPlanId;
 
-        // logger.info(`DEBUG: Checking test result ${tr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Test's LP ID: ${testLessonPlanId}`);
+        // logger.debug(`DEBUG: Checking test result ${tr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Test's LP ID: ${testLessonPlanId}`);
         return isStudentMatch && isLessonPlanMatch;
       });
 
@@ -219,11 +219,11 @@ export default function LessonTracking() {
         const isStudentMatch = recordStudentId && hr.student_id === recordStudentId;
         const isLessonPlanMatch = recordLessonPlanId && homeworkLessonPlanId === recordLessonPlanId;
 
-        // logger.info(`DEBUG: Checking homework record ${hr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Homework's LP ID: ${homeworkLessonPlanId}`);
+        // logger.debug(`DEBUG: Checking homework record ${hr.id} for student ${recordStudentId} (match: ${isStudentMatch}) and lesson plan ${recordLessonPlanId} (match: ${isLessonPlanMatch}). Homework's LP ID: ${homeworkLessonPlanId}`);
         return isStudentMatch && isLessonPlanMatch;
       });
 
-      // logger.info(`DEBUG: For lesson plan ${lessonPlan.id}, student ${record.students?.name}: Found ${linkedTestResults.length} linked tests and ${linkedHomeworkRecords.length} linked homeworks.`);
+      // logger.debug(`DEBUG: For lesson plan ${lessonPlan.id}, student ${record.students?.name}: Found ${linkedTestResults.length} linked tests and ${linkedHomeworkRecords.length} linked homeworks.`);
 
       groups.get(lessonPlan.id)?.students.push({
         ...record,

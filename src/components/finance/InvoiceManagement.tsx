@@ -96,7 +96,6 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
 
       const { data, error } = await supabase.functions.invoke('generate-monthly-invoices', {
         body: {
-          centerId: user.center_id,
           month: parseInt(bulkGenerateForm.month),
           year: parseInt(bulkGenerateForm.year),
           academicYear: bulkGenerateForm.academicYear,

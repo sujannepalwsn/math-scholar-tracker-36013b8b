@@ -115,7 +115,7 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         staticItem => !centerDynamicItems.some(it => it.route === staticItem.route)
       );
       if (hasMissing) {
-        logger.info("CenterLayout: Detected missing navigation items, syncing...");
+        logger.debug("CenterLayout: Detected missing navigation items, syncing...");
         syncMissingItems.mutate();
       }
     }

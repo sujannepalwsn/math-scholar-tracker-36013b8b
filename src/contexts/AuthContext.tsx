@@ -28,6 +28,11 @@ interface User {
   teacherPermissions?: Record<string, any>;
   teacher_scope_mode?: 'full' | 'restricted';
   linked_students?: LinkedStudent[];
+  // SECURITY: Metadata for UI/UX purposes only. NOT a secure source of truth.
+  untrusted_metadata?: {
+    permissions_fetched_at: string;
+    is_ui_restricted: boolean;
+  };
 }
 
 interface AuthContextType {
@@ -102,6 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 if (hasChanges) {
+                  updatedUser.untrusted_metadata = {
+                    permissions_fetched_at: new Date().toISOString(),
+                    is_ui_restricted: updatedUser.teacher_scope_mode === 'restricted'
+                  };
                   setUser(updatedUser);
                   localStorage.setItem('auth_user', JSON.stringify(updatedUser));
                 }
@@ -125,17 +134,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     username: string,
     password: string,
   ) => {
-    logger.info('AuthContext: login function called');
+    logger.debug('AuthContext: login function called');
     try {
-      logger.info('AuthContext: Preparing to invoke auth-login Edge Function...'); // Added this line
+      logger.debug('AuthContext: Preparing to invoke auth-login Edge Function...');
       const { data, error: invokeError } = await supabase.functions.invoke('auth-login', {
         body: { username, password } });
-      logger.info('AuthContext: Edge Function invocation completed.');
+      logger.debug('AuthContext: Edge Function invocation completed.');
 
       if (invokeError) {
         logger.error('AuthContext: Edge Function invocation error:', invokeError);
-        // Log the full error object for more details
-        logger.error('AuthContext: Full invokeError object:', JSON.stringify(invokeError, null, 2));
         return { success: false, error: invokeError.message || 'Login failed' };
       }
 
@@ -145,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const loggedInUser: User = data.user;
-      logger.info('AuthContext: User logged in successfully:', loggedInUser.username);
+      logger.debug('AuthContext: User logged in successfully:', loggedInUser.username);
 
       // The role check is now handled by ProtectedRoute after successful authentication
       // This allows any valid user to log in via the main login page and then be redirected
@@ -180,14 +187,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      updatedUser.untrusted_metadata = {
+        permissions_fetched_at: new Date().toISOString(),
+        is_ui_restricted: updatedUser.teacher_scope_mode === 'restricted'
+      };
       setUser(updatedUser);
       localStorage.setItem('auth_user', JSON.stringify(updatedUser));
-      logger.info('AuthContext: User state (with permissions) updated and stored in localStorage.');
+      logger.debug('AuthContext: User state (with untrusted permissions) updated and stored in localStorage.');
       return { success: true };
     } catch (error) {
       logger.error('AuthContext: Login error caught in client-side:', error);
-      // Log the full error object for more details
-      logger.error('AuthContext: Full client-side error object:', JSON.stringify(error, null, 2));
       return { success: false, error: error.message || 'Login failed' };
     }
   };

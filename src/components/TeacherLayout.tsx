@@ -88,7 +88,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   // Auto-sync defaults if no teacher items exist for this center
   React.useEffect(() => {
     if (user?.center_id && dynamicItems.length > 0 && dynamicItems.filter(it => it.role === UserRole.TEACHER).length === 0) {
-      logger.info("TeacherLayout: No teacher nav items found, synchronizing defaults...");
+      logger.debug("TeacherLayout: No teacher nav items found, synchronizing defaults...");
       syncDefaults.mutate();
     }
   }, [user?.center_id, dynamicItems.length]);
@@ -146,7 +146,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         staticItem => !teacherDynamicItems.some(it => it.route === staticItem.route)
       );
       if (hasMissing) {
-        logger.info("TeacherLayout: Detected missing navigation items, syncing...");
+        logger.debug("TeacherLayout: Detected missing navigation items, syncing...");
         syncMissingItems.mutate();
       }
     }

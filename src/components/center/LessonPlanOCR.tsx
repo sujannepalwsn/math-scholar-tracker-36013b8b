@@ -58,7 +58,7 @@ export default function LessonPlanOCR({ open, onOpenChange, onExtracted }: Lesso
 
       // 2. Network/Invocation Phase
       setStep("analyzing");
-      logger.info("Invoking lesson-plan-ocr Edge Function...");
+      logger.debug("Invoking lesson-plan-ocr Edge Function...");
 
       const { data, error } = await supabase.functions.invoke("lesson-plan-ocr", {
         body: { image: base64 }

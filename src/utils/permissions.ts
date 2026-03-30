@@ -1,7 +1,8 @@
 import { UserRole } from "@/types/roles";
 /**
  * SECURITY WARNING: This utility is for FRONTEND UI/UX purposes only.
- * It determines whether to hide or show buttons, menu items, or views.
+ * It determines whether to hide or show buttons, menu items, or views based on
+ * metadata stored in local storage. This metadata is NOT a secure source of truth.
  * TRUE authorization is enforced solely by Supabase Row Level Security (RLS) on the backend.
  *
  * PERMISSION_MAPPING aligns navigation/feature names or routes with database column names.

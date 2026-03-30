@@ -299,7 +299,7 @@ export default function LessonPlans() {
   const uniqueSubjects = Array.from(new Set(lessonPlans.map(lp => lp.subject))).sort();
 
   const handleOCRExtracted = (data: Record<string, unknown>) => {
-    logger.info("Mapping OCR data to form...", data);
+    logger.debug("Mapping OCR data to form...", data);
     if (!data) return;
 
     if (data.subject) setSubject(data.subject.toString());
