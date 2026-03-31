@@ -136,6 +136,7 @@ export default function LessonPlans() {
       // Full access for teachers if module is enabled
       const hasFullAccess = hasPermission(user, 'lesson_plans');
 
+      // Hardening: Frontend filtering is for UI/UX. RLS enforces the actual restriction.
       if (isTeacher && (isRestricted || !hasFullAccess)) {
         query = query.eq('teacher_id', user.teacher_id);
       }
