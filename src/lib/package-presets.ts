@@ -11,34 +11,35 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'settings_access': true,
     'school_days': true,
     'student_id_cards': true,
-    // explicitly disabled
+    'about_institution': true,
+    'view_records': true, // Essential for student management
+    // Explicitly Disabled for Basic
     'parent_portal': false,
     'exams_results': false,
     'published_results': false,
-    'homework_management': false,
-    'discipline_issues': false,
     'finance': false,
     'messaging': false,
     'meetings_management': false,
-    'calendar_events': false,
+    'ai_insights': false,
+    'homework_management': false,
+    'discipline_issues': false,
+    'lesson_plans': false,
+    'lesson_tracking': false,
+    'hr_management': false,
+    'leave_management': false,
+    'inventory_assets': false,
+    'transport_tracking': false,
     'student_report': false,
     'attendance_summary': false,
     'summary': false,
-    'view_records': false,
-    'leave_management': false,
-    'lesson_plans': false,
-    'lesson_tracking': false,
     'test_management': false,
     'preschool_activities': false,
-    'hr_management': false,
-    'inventory_assets': false,
-    'transport_tracking': false,
     'teacher_reports': false,
     'chapter_performance': false,
-    'about_institution': true, // Usually included
-    'ai_insights': false,
+    'calendar_events': false,
   },
   'Standard': {
+    // All Basic
     'dashboard_access': true,
     'register_student': true,
     'teacher_management': true,
@@ -48,6 +49,9 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'settings_access': true,
     'school_days': true,
     'student_id_cards': true,
+    'about_institution': true,
+    'view_records': true,
+    // Additional Standard Features
     'parent_portal': true,
     'exams_results': true,
     'published_results': true,
@@ -60,10 +64,8 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'student_report': true,
     'attendance_summary': true,
     'summary': true,
-    'view_records': true,
     'test_management': true,
-    'about_institution': true,
-    // explicitly disabled
+    // Explicitly Disabled for Standard
     'ai_insights': false,
     'inventory_assets': false,
     'transport_tracking': false,
@@ -76,6 +78,7 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'chapter_performance': false,
   },
   'Premium': {
+    // Everything ON
     'dashboard_access': true,
     'register_student': true,
     'teacher_management': true,
@@ -111,4 +114,37 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'about_institution': true,
     'ai_insights': true,
   }
+};
+
+export const PACKAGE_HIGHLIGHTS: Record<PackageType, string[]> = {
+  'Basic': [
+    'Authentication & Authorization',
+    'Role-based Dashboards',
+    'Student Management',
+    'Teacher Management',
+    'Class & Subject Management',
+    'Attendance (Student & Teacher)',
+    'Settings & Customization',
+    'School Days & ID Cards'
+  ],
+  'Standard': [
+    'Everything in Basic',
+    'Parent Portal Access',
+    'Exams & Results Management',
+    'Homework & Assignments',
+    'Discipline Tracking',
+    'Finance & Fee Management',
+    'Messaging & Video Meetings',
+    'Advanced Reports & Summaries'
+  ],
+  'Premium': [
+    'Everything in Standard',
+    'AI Insights & Predictive Analytics',
+    'Lesson Planning & Tracking (OCR)',
+    'Inventory & Asset Management',
+    'Transport & Vehicle Tracking',
+    'HR & Leave Management',
+    'Teacher Performance Reports',
+    'Full ERP Access'
+  ]
 };
