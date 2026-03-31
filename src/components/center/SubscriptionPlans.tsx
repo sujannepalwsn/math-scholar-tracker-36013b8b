@@ -90,7 +90,21 @@ export default function SubscriptionPlans() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans?.map((p: any) => {
-          const isCurrent = currentSub?.plan_id === p.id;
+          const isCurrent = currentSub?.plan_id === p.id && currentSub?.status === 'Active';
+
+          let proRatedPrice = p.price;
+          let isProRated = false;
+
+          if (currentSub?.status === 'Active' && !isCurrent) {
+             proRatedPrice = calculateProRatedAmount(
+               currentSub.billed_amount || currentSub.subscription_plans?.price || 0,
+               currentSub.subscription_days || 30,
+               currentSub.start_date!,
+               p.price
+             );
+             isProRated = true;
+          }
+
           return (
             <Card key={p.id} className={cn(
               "rounded-3xl border-none shadow-strong bg-white transition-all relative overflow-hidden group",
@@ -106,9 +120,16 @@ export default function SubscriptionPlans() {
                   <Badge className="w-fit bg-slate-100 text-slate-600 border-none font-black text-[10px] uppercase tracking-widest py-1 px-3">
                     {p.name}
                   </Badge>
-                  <div className="flex items-baseline gap-1 mt-2">
-                    <span className="text-4xl font-black tracking-tighter">₹{p.price}</span>
-                    <span className="text-sm font-bold text-slate-400">/mo</span>
+                  <div className="flex flex-col mt-2">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black tracking-tighter">₹{p.price}</span>
+                      <span className="text-sm font-bold text-slate-400">/mo</span>
+                    </div>
+                    {isProRated && (
+                      <p className="text-[10px] font-black text-primary uppercase mt-1">
+                        Pro-rated Total: {formatCurrency(proRatedPrice)}
+                      </p>
+                    )}
                   </div>
                 </div>
 

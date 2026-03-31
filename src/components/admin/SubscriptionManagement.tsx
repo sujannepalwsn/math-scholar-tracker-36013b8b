@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { applyPackagePreset } from "@/utils/package-utils";
-import { PackageType } from "@/lib/package-presets";
+import { PackageType, PACKAGE_FEATURES } from "@/lib/package-presets";
 import { formatCurrency } from "@/integrations/supabase/finance-types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SubscriptionManagement() {
   const queryClient = useQueryClient();
@@ -132,6 +133,23 @@ export default function SubscriptionManagement() {
     }
   });
 
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', planId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscription-plans"] });
+      toast.success("Subscription plan deleted.");
+    },
+    onError: (error: any) => {
+      toast.error("Cannot delete plan. It might be in use by centers.");
+    }
+  });
+
   const addPlanMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("subscription_plans").insert({
@@ -240,7 +258,17 @@ export default function SubscriptionManagement() {
                    </div>
                 </div>
               </div>
-              <Button variant="outline" className="w-full h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest">Manage Features</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest">Manage</Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deletePlanMutation.mutate(p.id)}
+                  className="h-12 w-12 rounded-2xl text-rose-500 hover:bg-rose-50 border-2 border-transparent hover:border-rose-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
