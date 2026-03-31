@@ -13,7 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized: Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -81,7 +88,7 @@ serve(async (req) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Create user
-    const { data: user, error: userError } = await supabase
+    const { data: userCreated, error: userCreatedError } = await supabase
       .from('users')
       .insert({
         username,
@@ -93,16 +100,16 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (userError) {
+    if (userCreatedError) {
       // Rollback: delete the center if user creation fails
       await supabase.from('centers').delete().eq('id', center.id);
-      throw userError;
+      throw userCreatedError;
     }
 
     console.log('Center created successfully:', center.id);
 
     return new Response(
-      JSON.stringify({ success: true, center, user: { id: user.id, username: user.username } }),
+      JSON.stringify({ success: true, center, user: { id: userCreated.id, username: userCreated.username } }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
