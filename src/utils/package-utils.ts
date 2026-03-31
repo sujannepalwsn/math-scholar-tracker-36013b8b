@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets";
+import { differenceInDays } from "date-fns";
 
 export const applyPackagePreset = async (centerId: string, packageType: PackageType) => {
   const features = PACKAGE_FEATURES[packageType];
@@ -39,8 +40,7 @@ export const applyPackagePreset = async (centerId: string, packageType: PackageT
 
   if (teachersError) throw teachersError;
 
-  // Filter features to only those present in teacher_feature_permissions table
-  // This prevents "column does not exist" errors
+  // Final corrected column names for teacher_feature_permissions based on types.ts
   const TEACHER_VALID_FEATURES = [
     'ai_insights', 'attendance_summary', 'calendar_events', 'chapter_performance',
     'class_routine', 'discipline_issues', 'finance', 'homework_management',
@@ -49,38 +49,59 @@ export const applyPackagePreset = async (centerId: string, packageType: PackageT
     'test_management', 'view_records'
   ];
 
-  // Optimization: We could use upsert with a list of objects but since we need to match existing IDs,
-  // we do a mapped update. To avoid N+1 queries being too slow, we prepare the data first.
+  if (teachers && teachers.length > 0) {
+    const teacherUpdates = teachers.map(teacher => {
+      const teacherPermissionsUpdate: Record<string, any> = {
+        teacher_id: teacher.id
+      };
 
-  for (const teacher of teachers || []) {
-    const teacherPermissionsUpdate: Record<string, boolean> = {};
-    TEACHER_VALID_FEATURES.forEach(fn => {
-      // Map 'preschool_activities' to 'activities' if needed, but the table has both?
-      // Actually checking the types output above: it has 'activities' and 'preschool_activities'.
-      if (features[fn] !== undefined) {
-        teacherPermissionsUpdate[fn] = features[fn];
+      TEACHER_VALID_FEATURES.forEach(fn => {
+        if (features[fn] !== undefined) {
+          teacherPermissionsUpdate[fn] = features[fn];
+        }
+      });
+
+      // Special mappings for fields with slightly different names in teacher table
+      if (features['student_report'] !== undefined) {
+        teacherPermissionsUpdate['student_report_access'] = features['student_report'];
       }
+
+      return teacherPermissionsUpdate;
     });
 
-    // Special mapping for field naming differences if any
-    if (features['preschool_activities'] !== undefined) {
-      teacherPermissionsUpdate['activities'] = features['preschool_activities'];
-    }
-    if (features['student_report'] !== undefined) {
-      teacherPermissionsUpdate['student_report_access'] = features['student_report'];
-    }
-
-    const { error } = await supabase
+    // Bulk upsert to optimize performance
+    const { error: bulkError } = await supabase
       .from('teacher_feature_permissions')
-      .upsert({
-        teacher_id: teacher.id,
-        ...teacherPermissionsUpdate
-      }, { onConflict: 'teacher_id' });
+      .upsert(teacherUpdates, { onConflict: 'teacher_id' });
 
-    if (error) {
-       console.error(`Failed to update permissions for teacher ${teacher.id}:`, error);
+    if (bulkError) {
+       console.error(`Failed to bulk update teacher permissions:`, bulkError);
     }
   }
 
   return { success: true, features };
+};
+
+/**
+ * Calculates the pro-rated amount for a new subscription.
+ * (Current Amount / Total Days) * Days Used + New Amount
+ */
+export const calculateProRatedAmount = (
+  currentAmount: number,
+  totalDays: number,
+  startDate: string,
+  newPlanPrice: number
+) => {
+  const today = new Date();
+  const start = new Date(startDate);
+  const daysUsed = Math.max(0, differenceInDays(today, start));
+
+  // If we've used more days than the subscription total (expired but not yet processed),
+  // we just charge the full new amount.
+  if (daysUsed >= totalDays) return newPlanPrice;
+
+  const costPerDay = currentAmount / totalDays;
+  const usedCost = costPerDay * daysUsed;
+
+  return parseFloat((usedCost + newPlanPrice).toFixed(2));
 };

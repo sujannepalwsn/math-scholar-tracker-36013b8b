@@ -6,10 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock, FileText, AlertCircle } from "lucide-react";
+import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock, FileText, AlertCircle, Layers, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets";
+import { calculateProRatedAmount } from "@/utils/package-utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/integrations/supabase/finance-types";
+import { addDays, differenceInDays, format } from "date-fns";
 
 export default function SubscriptionPlans() {
   const { user } = useAuth();
@@ -27,11 +30,13 @@ export default function SubscriptionPlans() {
   const { data: currentSub } = useQuery({
     queryKey: ["center-current-subscription", user?.center_id],
     queryFn: async () => {
+      // Fetch the most recent subscription (Active, Pending, or Rejected)
       const { data, error } = await supabase
         .from("center_subscriptions")
         .select("*, subscription_plans(*)")
         .eq("center_id", user?.center_id)
-        .eq("status", "Active")
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -54,13 +59,14 @@ export default function SubscriptionPlans() {
   });
 
   const subscribeMutation = useMutation({
-    mutationFn: async ({ planId, packageName }: { planId: string, packageName: string }) => {
+    mutationFn: async ({ planId, packageType, isRenewal = false, proRatedAmount }: { planId: string, packageType: string, isRenewal?: boolean, proRatedAmount?: number }) => {
       // Create a pending subscription request
       const { error } = await supabase.from("center_subscriptions").insert({
         center_id: user?.center_id,
         plan_id: planId,
-        package_type: packageName,
+        package_type: packageType,
         status: "Pending",
+        billed_amount: proRatedAmount // Will be used by Admin to confirm invoice amount
       });
       if (error) throw error;
     },
@@ -123,11 +129,44 @@ export default function SubscriptionPlans() {
                     <Clock className="h-4 w-4 text-amber-500" />
                     24/7 Priority Support
                   </div>
+                  <div className="flex items-start gap-3 pt-2 border-t border-slate-100">
+                    <Layers className="h-4 w-4 text-amber-500 mt-1 shrink-0" />
+                    <div>
+                        <p className="text-[10px] font-black uppercase text-slate-400">Included Modules ({p.features?.[0] || 'Basic'})</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {Object.entries(PACKAGE_FEATURES[(p.features?.[0] as PackageType) || 'Basic'])
+                            .filter(([_, enabled]) => enabled)
+                            .slice(0, 6)
+                            .map(([feat]) => (
+                              <span key={feat} className="text-[9px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 text-slate-500 font-medium">
+                                 {feat.replace(/_/g, ' ')}
+                              </span>
+                            ))
+                          }
+                          <span className="text-[9px] text-slate-400 px-1 font-bold">+ More</span>
+                        </div>
+                    </div>
+                  </div>
                 </div>
 
                 <Button
-                  onClick={() => subscribeMutation.mutate({ planId: p.id, packageName: p.name })}
-                  disabled={isCurrent || subscribeMutation.isPending}
+                  onClick={() => {
+                    let amount = p.price;
+                    if (currentSub?.status === 'Active') {
+                      amount = calculateProRatedAmount(
+                        currentSub.billed_amount || currentSub.subscription_plans?.price || 0,
+                        currentSub.subscription_days || 30,
+                        currentSub.start_date!,
+                        p.price
+                      );
+                    }
+                    subscribeMutation.mutate({
+                      planId: p.id,
+                      packageType: p.features?.[0] || 'Basic',
+                      proRatedAmount: amount
+                    });
+                  }}
+                  disabled={isCurrent || subscribeMutation.isPending || (currentSub?.status === 'Pending' && currentSub?.plan_id === p.id)}
                   className={cn(
                     "w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest transition-all",
                     isCurrent ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-50" : "bg-slate-900 text-white shadow-lg"
@@ -141,23 +180,66 @@ export default function SubscriptionPlans() {
         })}
       </div>
 
-      {currentSub && (
+      {currentSub && currentSub.status === 'Active' && (
         <Card className="rounded-[2.5rem] border-none shadow-strong bg-primary/5 overflow-hidden">
-          <CardContent className="p-8 flex items-center justify-between">
+          <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-1">
-               <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Subscription Context</p>
+               <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Subscription Lifecycle</p>
                <h4 className="text-lg font-black text-slate-800">
-                 Your institution is currently on the <span className="text-primary">{currentSub.subscription_plans?.name}</span> plan.
-                 {currentSub.status === 'Pending' && <Badge className="ml-2 bg-amber-100 text-amber-600">Pending Approval</Badge>}
+                 Institutional Plan: <span className="text-primary">{currentSub.subscription_plans?.name}</span>
                </h4>
                {currentSub.start_date && (
-                 <p className="text-sm font-medium text-slate-500">Subscription started on {new Date(currentSub.start_date).toLocaleDateString()}. Next billing cycle will renew automatically.</p>
+                 <div className="space-y-1">
+                    <p className="text-sm font-medium text-slate-500">
+                      Activated: {format(new Date(currentSub.start_date), "PPP")}
+                    </p>
+                    <p className="text-sm font-bold text-slate-700">
+                      Expires: {format(addDays(new Date(currentSub.start_date), currentSub.subscription_days || 30), "PPP")}
+                      <span className="ml-2 text-primary">
+                        ({Math.max(0, differenceInDays(addDays(new Date(currentSub.start_date), currentSub.subscription_days || 30), new Date()))} days remaining)
+                      </span>
+                    </p>
+                 </div>
                )}
             </div>
-            <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-soft">
-               {currentSub.status === 'Active' ? <CheckCircle2 className="h-8 w-8 text-primary" /> : <Clock className="h-8 w-8 text-amber-500" />}
+            <div className="flex items-center gap-4">
+               <Button
+                 onClick={() => subscribeMutation.mutate({
+                   planId: currentSub.plan_id,
+                   packageType: currentSub.package_type,
+                   isRenewal: true,
+                   proRatedAmount: currentSub.subscription_plans?.price
+                 })}
+                 variant="outline"
+                 className="rounded-xl font-black uppercase text-[10px] tracking-widest border-2 h-11 px-6 bg-white"
+               >
+                 <RefreshCw className="h-4 w-4 mr-2" /> Renew Plan
+               </Button>
+               <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-soft shrink-0">
+                  <CheckCircle2 className="h-8 w-8 text-primary" />
+               </div>
             </div>
           </CardContent>
+        </Card>
+      )}
+
+      {currentSub && (currentSub.status === 'Pending' || currentSub.status === 'Rejected') && (
+        <Card className="rounded-[2.5rem] border-none shadow-strong bg-slate-50 overflow-hidden">
+           <CardContent className="p-8 flex items-center justify-between">
+              <div className="space-y-1">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Request Status</p>
+                 <h4 className="text-lg font-black text-slate-800">
+                   Plan Request: <span className="text-primary">{currentSub.subscription_plans?.name}</span>
+                   {currentSub.status === 'Pending' && <Badge className="ml-2 bg-amber-100 text-amber-600 border-none uppercase text-[9px] font-black">Waiting for Approval</Badge>}
+                   {currentSub.status === 'Rejected' && <Badge className="ml-2 bg-rose-100 text-rose-600 border-none uppercase text-[9px] font-black">Request Declined</Badge>}
+                 </h4>
+                 <p className="text-sm font-medium text-slate-500">Requested on {currentSub.created_at ? format(new Date(currentSub.created_at), "PPP") : 'Recently'}</p>
+              </div>
+              <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-soft">
+                 {currentSub.status === 'Pending' && <Clock className="h-8 w-8 text-amber-500" />}
+                 {currentSub.status === 'Rejected' && <AlertCircle className="h-8 w-8 text-rose-500" />}
+              </div>
+           </CardContent>
         </Card>
       )}
 

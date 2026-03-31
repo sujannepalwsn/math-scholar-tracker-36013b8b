@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee } from "lucide-react";
+import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { applyPackagePreset } from "@/utils/package-utils";
 import { PackageType } from "@/lib/package-presets";
@@ -16,7 +16,13 @@ import { formatCurrency } from "@/integrations/supabase/finance-types";
 export default function SubscriptionManagement() {
   const queryClient = useQueryClient();
   const [showAddPlan, setShowAddPlan] = useState(false);
-  const [planForm, setPlanForm] = useState({ name: "", price: "", students: "100", teachers: "10" });
+  const [planForm, setPlanForm] = useState({
+    name: "",
+    price: "",
+    students: "100",
+    teachers: "10",
+    packageType: "Basic" as PackageType
+  });
 
   const { data: plans } = useQuery({
     queryKey: ["subscription-plans"],
@@ -57,12 +63,18 @@ export default function SubscriptionManagement() {
       // 1. Mark subscription as active
       const { error: subError } = await supabase
         .from('center_subscriptions')
-        .update({ status: 'Active', start_date: new Date().toISOString() })
+        .update({
+          status: 'Active',
+          start_date: new Date().toISOString(),
+          billed_amount: amount // Store final approved amount
+        })
         .eq('id', subId);
       if (subError) throw subError;
 
       // 2. Apply package features
-      await applyPackagePreset(centerId, packageType as PackageType);
+      // Fallback to plan name if packageType is missing (for legacy)
+      const finalPackage = (packageType || 'Basic') as PackageType;
+      await applyPackagePreset(centerId, finalPackage);
 
       // 3. Generate SaaS Invoice
       const { error: invError } = await supabase
@@ -75,11 +87,34 @@ export default function SubscriptionManagement() {
           status: 'Unpaid'
         });
       if (invError) throw invError;
+
+      // 4. Send Notification to Center
+      await supabase.from('notifications').insert({
+        center_id: centerId,
+        title: 'Subscription Approved',
+        message: `Your request for the ${packageType} plan has been approved. Package features have been applied automatically.`,
+        type: 'subscription',
+        is_read: false
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["center-subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["admin-saas-invoices"] });
       toast.success("Subscription approved and package applied!");
+    }
+  });
+
+  const rejectSubscriptionMutation = useMutation({
+    mutationFn: async (subId: string) => {
+      const { error } = await supabase
+        .from('center_subscriptions')
+        .update({ status: 'Rejected' })
+        .eq('id', subId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["center-subscriptions"] });
+      toast.success("Subscription request rejected.");
     }
   });
 
@@ -102,13 +137,14 @@ export default function SubscriptionManagement() {
       const { error } = await supabase.from("subscription_plans").insert({
         name: planForm.name,
         price: parseFloat(planForm.price),
-        limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) }
+        limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
+        features: [planForm.packageType] // Store the package preset in the features array
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription-plans"] });
-      setPlanForm({ name: "", price: "", students: "100", teachers: "10" });
+      setPlanForm({ name: "", price: "", students: "100", teachers: "10", packageType: "Basic" });
       setShowAddPlan(false);
       toast.success("Subscription plan created");
     }
@@ -141,7 +177,20 @@ export default function SubscriptionManagement() {
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Student Limit</Label>
                   <Input type="number" value={planForm.students} onChange={(e) => setPlanForm({...planForm, students: e.target.value})} className="h-12 rounded-2xl" />
                 </div>
-                <div className="flex items-end">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Package Preset</Label>
+                  <Select value={planForm.packageType} onValueChange={(val) => setPlanForm({...planForm, packageType: val as PackageType})}>
+                    <SelectTrigger className="h-12 rounded-2xl">
+                      <SelectValue placeholder="Select Preset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Basic">Basic</SelectItem>
+                      <SelectItem value="Standard">Standard</SelectItem>
+                      <SelectItem value="Premium">Premium</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end md:col-span-4">
                    <Button onClick={() => addPlanMutation.mutate()} className="w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest bg-slate-900 text-white shadow-lg">Save Plan</Button>
                 </div>
              </div>
@@ -172,6 +221,24 @@ export default function SubscriptionManagement() {
                   <BarChart3 className="h-4 w-4 text-purple-500" />
                   Institutional Analytics
                 </div>
+                <div className="flex items-start gap-3 pt-2 border-t border-slate-100">
+                   <Layers className="h-4 w-4 text-amber-500 mt-1 shrink-0" />
+                   <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400">Included Modules ({p.features?.[0] || 'Basic'})</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {Object.entries(PACKAGE_FEATURES[(p.features?.[0] as PackageType) || 'Basic'])
+                          .filter(([_, enabled]) => enabled)
+                          .slice(0, 6)
+                          .map(([feat]) => (
+                            <span key={feat} className="text-[9px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 text-slate-500 font-medium">
+                               {feat.replace(/_/g, ' ')}
+                            </span>
+                          ))
+                        }
+                        <span className="text-[9px] text-slate-400 px-1 font-bold">+ More</span>
+                      </div>
+                   </div>
+                </div>
               </div>
               <Button variant="outline" className="w-full h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest">Manage Features</Button>
             </CardContent>
@@ -200,7 +267,12 @@ export default function SubscriptionManagement() {
                 <TableRow key={sub.id}>
                   <TableCell className="px-8 font-bold text-slate-700">{sub.centers?.name}</TableCell>
                   <TableCell><Badge className="bg-primary/10 text-primary border-none">{sub.subscription_plans?.name}</Badge></TableCell>
-                  <TableCell className="text-xs font-bold text-slate-500 uppercase tracking-widest">{sub.package_type}</TableCell>
+                  <TableCell className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    {sub.package_type}
+                    <div className="text-[9px] text-primary font-black mt-1">
+                      {formatCurrency(sub.billed_amount || sub.subscription_plans?.price || 0)}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right px-4">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -210,11 +282,19 @@ export default function SubscriptionManagement() {
                           centerId: sub.center_id,
                           planId: sub.plan_id,
                           packageType: sub.package_type,
-                          amount: sub.subscription_plans?.price
+                          amount: sub.billed_amount || sub.subscription_plans?.price || 0
                         })}
                         className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase"
                       >
                         <Check className="h-3 w-3 mr-1" /> Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => rejectSubscriptionMutation.mutate(sub.id)}
+                        className="h-8 rounded-lg text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase"
+                      >
+                        <X className="h-3 w-3 mr-1" /> Reject
                       </Button>
                     </div>
                   </TableCell>
