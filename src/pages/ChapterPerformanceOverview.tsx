@@ -40,7 +40,7 @@ interface CombinedChapterRecord {
 export default function ChapterPerformanceOverview() {
   const { user } = useAuth();
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
-  const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [gradeFilter, setGradeFilter] = useState<string>("");
   const [studentFilter, setStudentFilter] = useState<string>("all"); // NEW: Student filter state
 
   const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
@@ -287,10 +287,9 @@ export default function ChapterPerformanceOverview() {
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
               <Select value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
-                  <SelectValue placeholder="Grade" />
+                  <SelectValue placeholder="Select Grade" />
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-                  <SelectItem value="all">All Grades</SelectItem>
                   {uniqueGrades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                 </SelectContent>
               </Select>

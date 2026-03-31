@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 
 interface AttendanceStats {
   studentId: string;
@@ -37,13 +39,25 @@ export default function AttendanceSummary() {
   const [selectedStudent, setSelectedStudent] = useState('all');
 
   const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(24);
 
-  const { data: students = [] } = useQuery({
-    queryKey: ['students', user?.center_id, isRestricted, user?.teacher_id],
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [selectedClass, selectedMonth, setPage]);
+
+  const { data: studentsData } = useQuery({
+    queryKey: ['students-attendance-summary', user?.center_id, selectedClass, isRestricted, user?.teacher_id, currentPage, pageSize],
     queryFn: async () => {
-      let query = supabase.from('students').select('id, name, grade').order('name');
+      const { from, to } = getRange();
+      let query = supabase.from('students').select('id, name, grade', { count: 'exact' }).order('name');
+
       if (user?.role !== UserRole.ADMIN && user?.center_id) {
         query = query.eq('center_id', user.center_id);
+      }
+
+      if (selectedClass !== 'all') {
+        query = query.eq('grade', selectedClass);
       }
 
       if (isRestricted) {
@@ -53,18 +67,33 @@ export default function AttendanceSummary() {
 
         if (myGrades.length > 0) {
           query = query.in('grade', myGrades);
+        } else {
+            return { data: [], count: 0 };
         }
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     } });
 
-  const classes = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
+  const students = studentsData?.data || [];
+  const totalCount = studentsData?.count || 0;
+
+  // Fetch all classes for filter
+  const { data: allClasses = [] } = useQuery({
+    queryKey: ['all-classes-attendance-summary', user?.center_id],
+    queryFn: async () => {
+        if (!user?.center_id) return [];
+        const { data } = await supabase.from('students').select('grade').eq('center_id', user.center_id);
+        return Array.from(new Set(data?.map(s => s.grade).filter(Boolean) || [])).sort();
+    }
+  });
+
+  const classes = allClasses;
 
   const { data: attendanceData = [] } = useQuery({
-    queryKey: ['attendance-summary', selectedMonth.toISOString().slice(0, 7), user?.center_id, user?.id, isRestricted],
+    queryKey: ['attendance-data-summary', selectedMonth.toISOString().slice(0, 7), students.map(s => s.id).join(','), user?.id, isRestricted],
     queryFn: async () => {
       const startDate = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(selectedMonth), 'yyyy-MM-dd');
@@ -89,7 +118,7 @@ export default function AttendanceSummary() {
     },
     enabled: students.length > 0 });
 
-  const filteredStudents = students.filter(s => selectedClass === 'all' || s.grade === selectedClass);
+  const filteredStudents = students;
 
   const calculateStats = (): AttendanceStats[] => {
     const statsMap = new Map<string, AttendanceStats>();
@@ -265,6 +294,12 @@ export default function AttendanceSummary() {
                 );
               })}
             </div>
+            <ServerPagination
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+            />
           </CardContent>
         </Card>
       )}

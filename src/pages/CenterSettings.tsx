@@ -16,10 +16,11 @@ import ThemeSelector from "@/components/ThemeSelector";
 import * as bcrypt from 'bcryptjs';
 import NotificationSettings from "@/components/center/NotificationSettings";
 import RegulatoryReports from "@/components/center/RegulatoryReports";
-import TimetableAutomation from "@/components/center/TimetableAutomation";
 import AcademicYearManagement from "@/components/center/AcademicYearManagement";
 import PayrollSettings from "@/components/center/PayrollSettings";
 import SubscriptionPlans from "@/components/center/SubscriptionPlans";
+import CenterRequirements from "@/components/center/CenterRequirements";
+import CenterSuggestions from "@/components/center/CenterSuggestions";
 import { logger } from "@/utils/logger";
 
 interface CenterTheme {
@@ -298,7 +299,8 @@ export default function CenterSettings() {
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Cycles</TabsTrigger>
           <TabsTrigger value="communication" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Communication</TabsTrigger>
           <TabsTrigger value="compliance" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Compliance</TabsTrigger>
-          <TabsTrigger value="automation" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Automation</TabsTrigger>
+          <TabsTrigger value="requirements" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Requirements</TabsTrigger>
+          <TabsTrigger value="suggestions" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Suggestions</TabsTrigger>
           <TabsTrigger value="subscription" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">SaaS Plan</TabsTrigger>
         </TabsList>
 
@@ -672,10 +674,6 @@ export default function CenterSettings() {
           <RegulatoryReports centerId={user?.center_id || ""} />
         </TabsContent>
 
-        <TabsContent value="automation" className="outline-none">
-          <TimetableAutomation centerId={user?.center_id || ""} />
-        </TabsContent>
-
         <TabsContent value="payroll" className="outline-none">
           <Card className="border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
             <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
@@ -691,6 +689,14 @@ export default function CenterSettings() {
               <PayrollSettings centerId={user?.center_id || ""} canEdit={canEdit} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="requirements" className="outline-none">
+          <CenterRequirements centerId={user?.center_id || ""} />
+        </TabsContent>
+
+        <TabsContent value="suggestions" className="outline-none">
+          <CenterSuggestions centerId={user?.center_id || ""} />
         </TabsContent>
 
         <TabsContent value="subscription" className="outline-none">

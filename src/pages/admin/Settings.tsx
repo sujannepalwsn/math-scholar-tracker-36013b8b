@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import ThemeSelector from "@/components/ThemeSelector";
 import LoginSettingsManager from "@/components/admin/LoginSettingsManager";
+import AllCenterRequirements from "@/components/admin/AllCenterRequirements";
 
 const Settings = () => (
   <div className="space-y-8 animate-in fade-in duration-1000">
@@ -36,6 +37,10 @@ const Settings = () => (
 
        <div className="md:col-span-2">
           <LoginSettingsManager />
+       </div>
+
+       <div className="md:col-span-2">
+          <AllCenterRequirements />
        </div>
 
        <Card className="md:col-span-2 border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">

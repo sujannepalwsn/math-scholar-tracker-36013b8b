@@ -33,7 +33,6 @@ import TeacherManagement from "./pages/TeacherManagement";
 import TeacherAttendancePage from "./pages/TeacherAttendance";
 import Tests from "./pages/Tests";
 import StudentReport from "./pages/StudentReport";
-import AIInsights from "./pages/AIInsights";
 import ViewRecords from "./pages/ViewRecords";
 import Summary from "./pages/Summary";
 
@@ -73,7 +72,6 @@ import MeetingManagement from "./pages/MeetingManagement";
 import Messaging from "./pages/Messaging";
 import ClassRoutine from "./pages/ClassRoutine";
 import CalendarEvents from "./pages/CalendarEvents";
-import SchoolDays from "./pages/SchoolDays";
 
 import InitAdmin from "./pages/InitAdmin";
 import NotFound from "./pages/NotFound";
@@ -228,7 +226,6 @@ const App = () => {
               <Route path="/teacher/test-management" element={<ProtectedRoute role="teacher"><TeacherLayout><Tests /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/student-report" element={<ProtectedRoute role="teacher"><TeacherLayout><StudentReport /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/chapter-performance" element={<ProtectedRoute role="teacher"><TeacherLayout><ChapterPerformanceOverview /></TeacherLayout></ProtectedRoute>} />
-              <Route path="/teacher/ai-insights" element={<ProtectedRoute role="teacher"><TeacherLayout><AIInsights /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/about-institution" element={<ProtectedRoute role="teacher"><TeacherLayout><AboutInstitution /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/view-records" element={<ProtectedRoute role="teacher"><TeacherLayout><ViewRecords /></TeacherLayout></ProtectedRoute>} />
               <Route path="/teacher/summary" element={<ProtectedRoute role="teacher"><TeacherLayout><Summary /></TeacherLayout></ProtectedRoute>} />
@@ -256,7 +253,6 @@ const App = () => {
               <Route path="/teacher-attendance" element={<ProtectedRoute role="center"><CenterLayout><TeacherAttendancePage /></CenterLayout></ProtectedRoute>} />
               <Route path="/tests" element={<ProtectedRoute role="center"><CenterLayout><Tests /></CenterLayout></ProtectedRoute>} />
               <Route path="/student-report" element={<ProtectedRoute role="center"><CenterLayout><StudentReport /></CenterLayout></ProtectedRoute>} />
-              <Route path="/ai-insights" element={<ProtectedRoute role="center"><CenterLayout><AIInsights /></CenterLayout></ProtectedRoute>} />
               <Route path="/records" element={<ProtectedRoute role="center"><CenterLayout><ViewRecords /></CenterLayout></ProtectedRoute>} />
               <Route path="/summary" element={<ProtectedRoute role="center"><CenterLayout><Summary /></CenterLayout></ProtectedRoute>} />
               <Route path="/finance" element={<ProtectedRoute role="center"><CenterLayout><AdminFinance /></CenterLayout></ProtectedRoute>} />
@@ -275,7 +271,6 @@ const App = () => {
               <Route path="/results-dashboard" element={<ProtectedRoute role="center"><CenterLayout><ResultsDashboard /></CenterLayout></ProtectedRoute>} />
               <Route path="/marksheet" element={<ProtectedRoute role="center"><CenterLayout><MarksheetView /></CenterLayout></ProtectedRoute>} />
               <Route path="/student-id-cards" element={<ProtectedRoute role="center"><CenterLayout><StudentIdCard /></CenterLayout></ProtectedRoute>} />
-              <Route path="/school-days" element={<ProtectedRoute role="center"><CenterLayout><SchoolDays /></CenterLayout></ProtectedRoute>} />
               <Route path="/inventory" element={<ProtectedRoute role="center"><CenterLayout><InventoryManagement /></CenterLayout></ProtectedRoute>} />
               <Route path="/hr-management" element={<ProtectedRoute role="center"><CenterLayout><HRManagement /></CenterLayout></ProtectedRoute>} />
               <Route path="/transport" element={<ProtectedRoute role="center"><CenterLayout><TransportManagementPage /></CenterLayout></ProtectedRoute>} />

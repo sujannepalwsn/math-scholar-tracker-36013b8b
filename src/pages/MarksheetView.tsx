@@ -174,29 +174,28 @@ export default function MarksheetView() {
   }, [marks, subjects, students, selectedStudentId, gradingSystems, selectedExam]);
 
   const handlePrint = () => {
-    const content = printRef.current;
-    if (!content) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>Marksheet</title><style>
-      body { font-family: sans-serif; padding: 20px; }
-      table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-      th { background: #f5f5f5; }
-      .text-center { text-align: center; }
-      .text-right { text-align: right; }
-      .font-bold { font-weight: bold; }
-      .text-sm { font-size: 14px; }
-      .mt-8 { margin-top: 32px; }
-      .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
-      .sig-line { border-top: 1px solid #333; padding-top: 4px; width: 150px; text-align: center; }
-    </style></head><body>${content.innerHTML}</body></html>`);
-    printWindow.document.close();
-    printWindow.print();
+    window.print();
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <style>
+        {`
+          @media print {
+            body * { visibility: hidden; }
+            .printable-content, .printable-content * { visibility: visible; }
+            .printable-content {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              padding: 0 !important;
+            }
+            .no-print { display: none !important; }
+            @page { size: A4; margin: 10mm; }
+          }
+        `}
+      </style>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -216,7 +215,7 @@ export default function MarksheetView() {
         </div>
       </div>
 
-      <div className="relative group">
+      <div className="no-print relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
         <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
           <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -255,6 +254,7 @@ export default function MarksheetView() {
         </Card>
       </div>
 
+      <div className="printable-content">
       {selectedExamId && !selectedStudentId && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((s: any) => (
@@ -282,7 +282,7 @@ export default function MarksheetView() {
 
       {marksheetData && (
         <>
-          <div className="flex gap-3 justify-end">
+          <div className="no-print flex gap-3 justify-end">
             <Button variant="outline" onClick={handlePrint} className="rounded-xl font-bold text-xs shadow-soft bg-white/50 h-10 px-6 border-2">
               <Printer className="h-4 w-4 mr-2" /> Print Official Copy
             </Button>
@@ -384,6 +384,7 @@ export default function MarksheetView() {
           </Card>
         </>
       )}
+      </div>
     </div>
   );
 }

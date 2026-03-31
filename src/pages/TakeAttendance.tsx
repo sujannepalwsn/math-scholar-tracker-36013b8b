@@ -51,20 +51,21 @@ export default function TakeAttendance() {
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [attendance, setAttendance] = useState<Record<string, AttendanceRecord>>({});
-  const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [gradeFilter, setGradeFilter] = useState<string>("");
   const [bulkAction, setBulkAction] = useState<{ type: 'present' | 'absent' | null, open: boolean }>({ type: null, open: false });
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
-  const { data: schoolDay } = useQuery({
-    queryKey: ["school-day-status", dateStr, user?.center_id],
+  const { data: holidayEvent } = useQuery({
+    queryKey: ["school-holiday-status", dateStr, user?.center_id],
     queryFn: async () => {
       if (!user?.center_id) return null;
       const { data, error } = await supabase
-        .from("school_days")
+        .from("calendar_events")
         .select("*")
         .eq("center_id", user.center_id)
         .eq("date", dateStr)
+        .eq("is_school_day", false)
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -72,7 +73,7 @@ export default function TakeAttendance() {
     enabled: !!dateStr && !!user?.center_id
   });
 
-  const isOperationalDay = schoolDay ? schoolDay.is_school_day : true;
+  const isOperationalDay = !holidayEvent;
 
   // Fetch class teacher assignments if teacher role (ONLY from official assignments)
   const { data: classTeacherGrades = [] } = useQuery({
@@ -221,12 +222,6 @@ export default function TakeAttendance() {
     return availableGrades;
   }, [isTeacher, isCenter, isRestricted, classTeacherGrades, availableGrades]);
 
-  // Auto-set grade filter for restricted teachers
-  useEffect(() => {
-    if (isTeacher && isRestricted && gradeFilter === "all" && classTeacherGrades.length > 0) {
-      setGradeFilter(classTeacherGrades[0]);
-    }
-  }, [isTeacher, isRestricted, classTeacherGrades, gradeFilter]);
 
   useEffect(() => {
     if (students) {
@@ -429,7 +424,7 @@ export default function TakeAttendance() {
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle className="font-black uppercase text-xs tracking-widest">Attendance Disabled</AlertTitle>
           <AlertDescription className="text-sm font-bold">
-            Not a school day. Reason: {schoolDay?.reason || "Institutional Closure"}
+          Not a school day. Reason: {holidayEvent?.title || "Institutional Closure"}
           </AlertDescription>
         </Alert>
       )}
@@ -480,7 +475,6 @@ export default function TakeAttendance() {
                   <SelectValue placeholder="Select Grade" />
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-                  {(!isRestricted || isCenter) && <SelectItem value="all">All Grades</SelectItem>}
                   {allowedGrades.length === 0 && isRestricted && (
                     <SelectItem value="none" disabled>No assigned grades</SelectItem>
                   )}

@@ -9,7 +9,6 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'take_attendance': true,
     'teachers_attendance': true,
     'settings_access': true,
-    'school_days': true,
     'student_id_cards': true,
     'about_institution': true,
     'view_records': true, // Essential for student management
@@ -20,7 +19,6 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'finance': false,
     'messaging': false,
     'meetings_management': false,
-    'ai_insights': false,
     'homework_management': false,
     'discipline_issues': false,
     'lesson_plans': false,
@@ -47,7 +45,6 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'take_attendance': true,
     'teachers_attendance': true,
     'settings_access': true,
-    'school_days': true,
     'student_id_cards': true,
     'about_institution': true,
     'view_records': true,
@@ -66,7 +63,6 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'summary': true,
     'test_management': true,
     // Explicitly Disabled for Standard
-    'ai_insights': false,
     'inventory_assets': false,
     'transport_tracking': false,
     'hr_management': false,
@@ -86,7 +82,6 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'take_attendance': true,
     'teachers_attendance': true,
     'settings_access': true,
-    'school_days': true,
     'student_id_cards': true,
     'parent_portal': true,
     'exams_results': true,
@@ -105,14 +100,12 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'leave_management': true,
     'lesson_plans': true,
     'lesson_tracking': true,
-    'preschool_activities': true,
     'hr_management': true,
     'inventory_assets': true,
     'transport_tracking': true,
     'teacher_reports': true,
     'chapter_performance': true,
     'about_institution': true,
-    'ai_insights': true,
   }
 };
 
@@ -125,7 +118,7 @@ export const PACKAGE_HIGHLIGHTS: Record<PackageType, string[]> = {
     'Class & Subject Management',
     'Attendance (Student & Teacher)',
     'Settings & Customization',
-    'School Days & ID Cards'
+    'Calendar Events & ID Cards'
   ],
   'Standard': [
     'Everything in Basic',
@@ -139,7 +132,6 @@ export const PACKAGE_HIGHLIGHTS: Record<PackageType, string[]> = {
   ],
   'Premium': [
     'Everything in Standard',
-    'AI Insights & Predictive Analytics',
     'Lesson Planning & Tracking (OCR)',
     'Inventory & Asset Management',
     'Transport & Vehicle Tracking',

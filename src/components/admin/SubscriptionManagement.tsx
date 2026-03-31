@@ -207,6 +207,9 @@ export default function SubscriptionManagement() {
       const planId = values.planId || values.plan_id;
       const packageType = values.packageType || values.package_type;
 
+      const { data: plans } = await supabase.from("subscription_plans").select("*");
+      const targetPlan = plans?.find(p => p.id === planId);
+
       const { error } = await supabase
         .from('center_subscriptions')
         .update({
@@ -218,6 +221,18 @@ export default function SubscriptionManagement() {
       if (error) throw error;
 
       if (values.status === 'Active') {
+        // Generate SaaS Invoice if it doesn't exist for this sub's amount or if manually triggered
+        if (targetPlan) {
+          await supabase
+            .from('saas_invoices')
+            .insert({
+              center_id: values.center_id,
+              plan_id: planId,
+              amount: targetPlan.price,
+              due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              status: 'Unpaid'
+            });
+        }
         await applyPackagePreset(values.center_id, packageType as PackageType);
       }
     },

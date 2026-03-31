@@ -30,6 +30,47 @@ export default function AcademicYearManagement({ centerId }: { centerId: string 
     },
   });
 
+  const addYearMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.from("academic_years").insert({
+        center_id: centerId,
+        name: yearForm.name,
+        start_date: yearForm.start,
+        end_date: yearForm.end,
+        is_current: false
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["academic-years"] });
+      setShowAddYear(false);
+      setYearForm({ name: "2026/2027", start: "", end: "" });
+      toast.success("Academic year initialized");
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
+
+  const setYearActiveMutation = useMutation({
+    mutationFn: async (year: any) => {
+      // 1. Mark all as not current for this center
+      await supabase.from("academic_years").update({ is_current: false }).eq("center_id", centerId);
+
+      // 2. Mark this one as current
+      const { error } = await supabase.from("academic_years").update({ is_current: true }).eq("id", year.id);
+      if (error) throw error;
+
+      // 3. Update all users in this center to use this active year
+      const { error: userError } = await supabase.from("users").update({ active_academic_year: year.name }).eq("center_id", centerId);
+      if (userError) throw userError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["academic-years"] });
+      queryClient.invalidateQueries({ queryKey: ["current-academic-year"] });
+      toast.success("Institutional academic cycle updated");
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -59,7 +100,13 @@ export default function AcademicYearManagement({ centerId }: { centerId: string 
                   <Input type="date" value={yearForm.end} onChange={(e) => setYearForm({...yearForm, end: e.target.value})} className="h-12 rounded-2xl" />
                 </div>
                 <div className="flex items-end">
-                   <Button className="w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest bg-primary shadow-lg shadow-primary/20">Initialize Year</Button>
+                   <Button
+                    onClick={() => addYearMutation.mutate()}
+                    disabled={addYearMutation.isPending || !yearForm.start || !yearForm.end}
+                    className="w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest bg-primary shadow-lg shadow-primary/20"
+                   >
+                     {addYearMutation.isPending ? "Initializing..." : "Initialize Year"}
+                   </Button>
                 </div>
               </div>
            </CardContent>
@@ -87,7 +134,17 @@ export default function AcademicYearManagement({ centerId }: { centerId: string 
                            }
                         </TableCell>
                         <TableCell className="text-right px-8">
-                           {!y.is_current && <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase text-primary">Set Active</Button>}
+                           {!y.is_current && (
+                             <Button
+                                variant="ghost"
+                                size="sm"
+                                className="font-black text-[10px] uppercase text-primary"
+                                onClick={() => setYearActiveMutation.mutate(y)}
+                                disabled={setYearActiveMutation.isPending}
+                             >
+                               Set Active
+                             </Button>
+                           )}
                         </TableCell>
                      </TableRow>
                    ))}

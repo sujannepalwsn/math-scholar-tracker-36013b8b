@@ -4,6 +4,8 @@ import { CalendarIcon, Camera, CheckSquare, Edit, Plus, Settings, Star, Trash2, 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +22,7 @@ import ActivityTypeManagement from "@/components/center/ActivityTypeManagement";
 import { Badge } from "@/components/ui/badge"
 import { compressImage } from "@/lib/image-utils";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
+import MediaPreviewModal from "@/components/ui/MediaPreviewModal";
 
 
 type Activity = Tables<'activities'>;
@@ -45,6 +48,16 @@ export default function PreschoolActivities() {
   const [video, setVideo] = useState<File | null>(null);
   const [involvementRating, setInvolvementRating] = useState<number | null>(null);
   const [modalGradeFilter, setModalGradeFilter] = useState<string>("all"); // New state for grade filter inside modal
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  const { currentPage, pageSize, setPage, getRange } = usePagination(20);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [gradeFilter, setPage]);
 
   // Fetch students
   const { data: students = [] } = useQuery({
@@ -95,35 +108,37 @@ export default function PreschoolActivities() {
     enabled: !!user?.center_id });
 
   // Fetch activities - now properly filtered by center and teacher
-  const { data: activities = [], isLoading } = useQuery({
-    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id, isRestricted],
+  const { data: activitiesData, isLoading } = useQuery({
+    queryKey: ["preschool-activities", user?.center_id, gradeFilter, user?.id, isRestricted, currentPage, pageSize],
     queryFn: async () => {
-      if (!user?.center_id) return [];
-      // First get student IDs for this center
-      const { data: centerStudents } = await supabase
-        .from("students")
-        .select("id")
-        .eq("center_id", user.center_id);
-      
-      if (!centerStudents || centerStudents.length === 0) return [];
-      
-      const studentIds = centerStudents.map(s => s.id);
-      
+      if (!user?.center_id) return { data: [], count: 0 };
+      const { from, to } = getRange();
+
+      // Optimize: Instead of getting all student IDs first, we can join with students table and filter by center_id
       let query = supabase
         .from("student_activities")
-        .select("*, students(name, grade, center_id), activities!inner(*), activity_types(name)")
-        .in("student_id", studentIds);
+        .select("*, students!inner(name, grade, center_id), activities!inner(*), activity_types(name)", { count: 'exact' })
+        .eq("students.center_id", user.center_id);
+
+      if (gradeFilter !== "all") {
+        query = query.eq("students.grade", gradeFilter);
+      }
 
       if (isRestricted) {
         query = query.eq('activities.created_by', user?.id);
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const { data, error, count } = await query
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
-      return data || [];
+      return { data: data || [], count: count || 0 };
     },
     enabled: !!user?.center_id });
+
+  const activities = activitiesData?.data || [];
+  const totalCount = activitiesData?.count || 0;
 
   const resetForm = () => {
     setSelectedStudentIds([]);
@@ -568,17 +583,29 @@ export default function PreschoolActivities() {
                       <TableCell className="text-right pr-6">
                         <div className="flex justify-end gap-2">
                           {activity.activities?.photo_url && (
-                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary" asChild>
-                               <a href={supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                             <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary"
+                                onClick={() => {
+                                  setPreviewUrl(supabase.storage.from("activity-photos").getPublicUrl(activity.activities.photo_url).data.publicUrl);
+                                  setPreviewOpen(true);
+                                }}
+                              >
                                  <Camera className="h-4 w-4" />
-                               </a>
                              </Button>
                           )}
                           {activity.activities?.video_url && (
-                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary" asChild>
-                               <a href={supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl} target="_blank" rel="noopener noreferrer">
+                             <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary"
+                                onClick={() => {
+                                  setPreviewUrl(supabase.storage.from("activity-videos").getPublicUrl(activity.activities.video_url).data.publicUrl);
+                                  setPreviewOpen(true);
+                                }}
+                              >
                                  <Video className="h-4 w-4" />
-                               </a>
                              </Button>
                           )}
                           {hasActionPermission(user, 'preschool_activities', 'edit') && (
@@ -597,6 +624,12 @@ export default function PreschoolActivities() {
                   ))}
                 </TableBody>
               </Table>
+              <ServerPagination
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+              />
             </div>
           )}
         </CardContent>
@@ -614,6 +647,12 @@ export default function PreschoolActivities() {
           <ActivityTypeManagement />
         </DialogContent>
       </Dialog>
+
+      <MediaPreviewModal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        mediaUrl={previewUrl}
+      />
     </div>
   );
 }

@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { endOfMonth, format, isWithinInterval, parseISO, startOfMonth } from "date-fns"
+import { usePagination } from "@/hooks/usePagination"
+import { ServerPagination } from "@/components/ui/ServerPagination"
 
 interface StudentSummary {
   id: string;
@@ -29,13 +31,22 @@ export default function Summary() {
   const [monthFilter, setMonthFilter] = useState<string>(format(new Date(), "yyyy-MM"));
 
   const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
+  const { currentPage, pageSize, setPage, getRange } = usePagination(50);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [gradeFilter, monthFilter, setPage]);
 
   // Fetch students
-  const { data: students } = useQuery({
-    queryKey: ["students", user?.center_id, isRestricted, user?.teacher_id],
+  const { data: studentsData } = useQuery({
+    queryKey: ["students-summary", user?.center_id, gradeFilter, isRestricted, user?.teacher_id, currentPage, pageSize],
     queryFn: async () => {
-      let query = supabase.from("students").select("*").order("name");
+      const { from, to } = getRange();
+      let query = supabase.from("students").select("*", { count: 'exact' }).order("name");
+
       if (user?.role !== UserRole.ADMIN && user?.center_id) query = query.eq("center_id", user.center_id);
+      if (gradeFilter !== "all") query = query.eq("grade", gradeFilter);
 
       if (isRestricted) {
         const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', user?.teacher_id);
@@ -45,25 +56,44 @@ export default function Summary() {
         if (myGrades.length > 0) {
           query = query.in('grade', myGrades);
         } else {
-          return [];
+          return { data: [], count: 0 };
         }
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
       if (error) throw error;
-      return data;
+      return { data: data || [], count: count || 0 };
     } });
+
+  const students = studentsData?.data || [];
+  const totalCount = studentsData?.count || 0;
+
+  // Fetch all grades for filter
+  const { data: allGrades = [] } = useQuery({
+    queryKey: ["all-grades-summary", user?.center_id],
+    queryFn: async () => {
+        if (!user?.center_id) return [];
+        const { data } = await supabase.from('students').select('grade').eq('center_id', user.center_id);
+        return Array.from(new Set(data?.map(s => s.grade).filter(Boolean) || [])).sort();
+    }
+  });
 
   // Fetch attendance
   const studentIds = students?.map((s) => s.id) || [];
   const { data: allAttendance } = useQuery({
-    queryKey: ["all-attendance", user?.center_id, studentIds.length > 0 ? studentIds.join(",") : "", user?.role, user?.id, isRestricted],
+    queryKey: ["all-attendance-summary", user?.center_id, studentIds.join(","), monthFilter, user?.role, user?.id, isRestricted],
     queryFn: async () => {
       if (!studentIds.length) return [];
+
+      const start = format(startOfMonth(parseISO(monthFilter + "-01")), "yyyy-MM-dd");
+      const end = format(endOfMonth(parseISO(monthFilter + "-01")), "yyyy-MM-dd");
+
       let query = supabase
         .from("attendance")
         .select("*")
-        .in("student_id", studentIds);
+        .in("student_id", studentIds)
+        .gte("date", start)
+        .lte("date", end);
 
       if (user?.role === UserRole.TEACHER && isRestricted) {
         query = query.eq('marked_by', user.id);
@@ -75,7 +105,7 @@ export default function Summary() {
     },
     enabled: !!studentIds.length });
 
-  const grades = [...new Set(students?.map((s) => s.grade) || [])];
+  const grades = allGrades;
 
   const summaryData: StudentSummary[] =
     students
@@ -267,6 +297,12 @@ export default function Summary() {
                   ))}
                 </TableBody>
               </Table>
+              <ServerPagination
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                onPageChange={setPage}
+              />
             </div>
           ) : (
             <p className="text-center text-muted-foreground">No attendance data available</p>

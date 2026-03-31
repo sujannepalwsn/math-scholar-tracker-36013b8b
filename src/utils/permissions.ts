@@ -60,12 +60,10 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   'inventory': 'inventory_assets',
   'transport_tracking': 'transport_tracking',
   'transport': 'transport_tracking',
-  'school_days': 'school_days',
   'settings_access': 'settings_access',
   'settings': 'settings_access',
   'about_institution': 'about_institution',
   'about-institution': 'about_institution',
-  'ai_insights': 'ai_insights',
   'class_routine': 'class_routine',
   'parent_portal': 'parent_portal',
 
@@ -83,7 +81,6 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/student-id-cards': 'student_id_cards',
   '/inventory': 'inventory_assets',
   '/transport': 'transport_tracking',
-  '/school-days': 'school_days',
   '/settings': 'settings_access',
   '/finance': 'finance',
   '/about-institution': 'about_institution',
@@ -104,7 +101,6 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/teacher/discipline-issues': 'discipline_issues',
   '/teacher/test-management': 'test_management',
   '/teacher/chapter-performance': 'chapter_performance',
-  '/teacher/ai-insights': 'ai_insights',
   '/teacher/view-records': 'view_records',
   '/teacher/summary': 'summary',
   '/teacher/finance': 'finance',
@@ -254,7 +250,7 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
       case 'edit':
         if (dbColumnName === 'leave_management' || dbColumnName === 'teachers_attendance') return true;
 
-        const readOnlyInRestricted = ['class_routine', 'school_days', 'published_results'];
+        const readOnlyInRestricted = ['class_routine', 'published_results'];
         if (readOnlyInRestricted.includes(dbColumnName)) return false;
 
         return modulePerms.can_edit === true;

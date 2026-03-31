@@ -12,6 +12,7 @@ import { AlertList } from "@/components/dashboard/AlertList"
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DigitalNoticeBoard from "@/components/center/NoticeBoard";
+import SuggestionForm from "@/components/center/SuggestionForm";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -351,6 +352,7 @@ export default function TeacherDashboard() {
         </div>
         <div className="space-y-6">
            <DigitalNoticeBoard centerId={centerId || ""} role="teacher" />
+           <SuggestionForm role="teacher" />
            <AlertList alerts={teacherAlerts} onViewAll={() => navigate("/teacher-messages")} />
         </div>
       </div>

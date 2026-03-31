@@ -501,32 +501,32 @@ export default function LessonPlans() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[98vw] sm:max-w-4xl md:max-w-5xl max-h-[98vh] overflow-y-auto rounded-t-none sm:rounded-3xl p-4 sm:p-6 custom-scrollbar">
+        <DialogContent className="w-[98vw] sm:max-w-4xl md:max-w-5xl max-h-[90vh] md:max-h-[98vh] overflow-y-auto rounded-t-[2rem] sm:rounded-3xl p-4 sm:p-6 custom-scrollbar">
           <DialogHeader>
-            <div className="flex justify-between items-center pr-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pr-10">
               <div>
-                <DialogTitle className="text-2xl font-black">{editingLessonPlan ? "Refine Lesson Architecture" : "Construct New Lesson Plan"}</DialogTitle>
-                <DialogDescription className="font-medium">Define the pedagogical structure for institutional review.</DialogDescription>
+                <DialogTitle className="text-xl sm:text-2xl font-black">{editingLessonPlan ? "Refine Lesson Architecture" : "Construct New Lesson Plan"}</DialogTitle>
+                <DialogDescription className="text-xs sm:text-sm font-medium">Define the pedagogical structure for institutional review.</DialogDescription>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsOCROpen(true)}
-                className="rounded-xl border-primary text-primary font-black uppercase text-[10px] tracking-widest gap-2 shadow-soft hover:bg-primary hover:text-white transition-all"
+                className="rounded-xl border-primary text-primary font-black uppercase text-[9px] sm:text-[10px] tracking-widest gap-2 shadow-soft hover:bg-primary hover:text-white transition-all"
               >
-                <Scan className="h-4 w-4" /> SCAN HANDWRITTEN
+                <Scan className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> SCAN HANDWRITTEN
               </Button>
             </div>
           </DialogHeader>
-          <div className="space-y-6 py-4">
+          <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
              {/* Daily Lesson Plan Format Header */}
-             <div className="border-2 border-slate-900 rounded-3xl overflow-hidden divide-y-2 md:divide-y-0 md:divide-x-2 divide-slate-900 grid grid-cols-1 md:grid-cols-2">
+             <div className="border-2 border-slate-900 rounded-2xl sm:rounded-3xl overflow-hidden divide-y-2 md:divide-y-0 md:divide-x-2 divide-slate-900 grid grid-cols-1 md:grid-cols-2">
                 <div className="divide-y-2 divide-slate-900">
-                  <div className="p-4 flex items-center gap-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Subject:</Label>
+                  <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest min-w-[80px] sm:min-w-[100px]">Subject:</Label>
                     {isTeacher ? (
                       <Select value={subject} onValueChange={setSubject} disabled={selectedGrade === "all"}>
-                        <SelectTrigger className="h-9 border-0 border-b border-slate-400 rounded-none focus:ring-0 px-0 bg-transparent font-bold">
+                        <SelectTrigger className="h-8 sm:h-9 border-0 border-b border-slate-400 rounded-none focus:ring-0 px-0 bg-transparent font-bold text-xs sm:text-sm">
                           <SelectValue placeholder={selectedGrade === "all" ? "Select Grade First" : "Select Subject"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -537,20 +537,20 @@ export default function LessonPlans() {
                       <Input value={subject} onChange={(e) => setSubject(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
                     )}
                   </div>
-                  <div className="p-4 flex items-center gap-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Unit:</Label>
-                    <Input value={chapter} onChange={(e) => setChapter(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest min-w-[80px] sm:min-w-[100px]">Unit:</Label>
+                    <Input value={chapter} onChange={(e) => setChapter(e.target.value)} className="h-8 sm:h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold text-xs sm:text-sm" />
                   </div>
-                  <div className="p-4 flex items-center gap-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Lesson Topic:</Label>
-                    <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest min-w-[80px] sm:min-w-[100px]">Lesson Topic:</Label>
+                    <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="h-8 sm:h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold text-xs sm:text-sm" />
                   </div>
                 </div>
                 <div className="divide-y-2 divide-slate-900">
-                  <div className="p-4 flex items-center gap-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Class:</Label>
+                  <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest min-w-[80px] sm:min-w-[100px]">Class:</Label>
                     <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                      <SelectTrigger className="h-9 border-0 border-b border-slate-400 rounded-none focus:ring-0 px-0 bg-transparent font-bold">
+                      <SelectTrigger className="h-8 sm:h-9 border-0 border-b border-slate-400 rounded-none focus:ring-0 px-0 bg-transparent font-bold text-xs sm:text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -559,78 +559,78 @@ export default function LessonPlans() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="p-4 flex items-center gap-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Period:</Label>
-                    <Input value={period} onChange={(e) => setPeriod(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest min-w-[80px] sm:min-w-[100px]">Period:</Label>
+                    <Input value={period} onChange={(e) => setPeriod(e.target.value)} className="h-8 sm:h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold text-xs sm:text-sm" />
                   </div>
-                  <div className="p-4 flex items-center gap-3">
-                    <Label className="text-[10px] font-black uppercase tracking-widest min-w-[100px]">Date:</Label>
-                    <Input type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} className="h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold" />
+                  <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest min-w-[80px] sm:min-w-[100px]">Date:</Label>
+                    <Input type="date" value={lessonDate} onChange={(e) => setLessonDate(e.target.value)} className="h-8 sm:h-9 border-0 border-b border-slate-400 rounded-none focus-visible:ring-0 px-0 bg-transparent font-bold text-xs sm:text-sm" />
                   </div>
                 </div>
              </div>
 
-             <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">1. Learning Outcomes</Label>
-                <Textarea value={objectives} onChange={(e) => setObjectives(e.target.value)} rows={3} placeholder="Define what students will master..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
+             <div className="space-y-1 sm:space-y-1.5">
+                <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">1. Learning Outcomes</Label>
+                <Textarea value={objectives} onChange={(e) => setObjectives(e.target.value)} rows={3} placeholder="Define what students will master..." className="rounded-xl sm:rounded-2xl bg-card/50 border-muted-foreground/10 text-xs sm:text-sm" />
              </div>
 
-             <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">2. Warm up & Review</Label>
-                <Textarea value={warmUpReview} onChange={(e) => setWarmUpReview(e.target.value)} rows={3} placeholder="Previous lesson recap and engagement..." className="rounded-2xl bg-card/50 border-muted-foreground/10" />
+             <div className="space-y-1 sm:space-y-1.5">
+                <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">2. Warm up & Review</Label>
+                <Textarea value={warmUpReview} onChange={(e) => setWarmUpReview(e.target.value)} rows={3} placeholder="Previous lesson recap and engagement..." className="rounded-xl sm:rounded-2xl bg-card/50 border-muted-foreground/10 text-xs sm:text-sm" />
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2 sm:space-y-3">
                    <div className="flex items-center justify-between">
-                     <Label className="text-[10px] font-black uppercase tracking-widest text-primary">3. Teaching Learning Activities</Label>
+                     <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary">3. Teaching Learning Activities</Label>
                    </div>
-                   <div className="space-y-2">
+                   <div className="space-y-1 sm:space-y-2">
                       {learningActivities.map((act, i) => (
                         <div key={i} className="flex gap-2 items-center">
-                           <span className="text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
+                           <span className="text-[10px] sm:text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
                            <Input value={act} onChange={(e) => {
                              const n = [...learningActivities]; n[i] = e.target.value; setLearningActivities(n);
-                           }} className="h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-xs font-medium" />
+                           }} className="h-8 sm:h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-[11px] sm:text-xs font-medium" />
                         </div>
                       ))}
                    </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                    <div className="flex items-center justify-between">
-                     <Label className="text-[10px] font-black uppercase tracking-widest text-violet-600">4. Class Review / Evaluation</Label>
+                     <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-violet-600">4. Class Review / Evaluation</Label>
                    </div>
-                   <div className="space-y-2">
+                   <div className="space-y-1 sm:space-y-2">
                       {evaluationActivities.map((act, i) => (
                         <div key={i} className="flex gap-2 items-center">
-                           <span className="text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
+                           <span className="text-[10px] sm:text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
                            <Input value={act} onChange={(e) => {
                              const n = [...evaluationActivities]; n[i] = e.target.value; setEvaluationActivities(n);
-                           }} className="h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-xs font-medium" />
+                           }} className="h-8 sm:h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-[11px] sm:text-xs font-medium" />
                         </div>
                       ))}
                    </div>
                 </div>
              </div>
 
-             <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest">5. Assignments</Label>
-                <div className="border-2 border-slate-900 md:divide-x-2 divide-slate-900 grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden">
+             <div className="space-y-2 sm:space-y-3">
+                <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">5. Assignments</Label>
+                <div className="border-2 border-slate-900 md:divide-x-2 divide-slate-900 grid grid-cols-1 md:grid-cols-2 rounded-xl sm:rounded-2xl overflow-hidden">
                   <div className="divide-y-2 divide-slate-900">
-                    <div className="bg-slate-50 p-2 text-center font-black uppercase text-[10px]">Class Work</div>
-                    <Textarea value={classWork} onChange={(e) => setClassWork(e.target.value)} rows={4} className="border-0 rounded-none focus-visible:ring-0 text-sm font-medium" />
+                    <div className="bg-slate-50 p-2 text-center font-black uppercase text-[9px] sm:text-[10px]">Class Work</div>
+                    <Textarea value={classWork} onChange={(e) => setClassWork(e.target.value)} rows={3} className="border-0 rounded-none focus-visible:ring-0 text-xs sm:text-sm font-medium" />
                   </div>
                   <div className="divide-y-2 divide-slate-900 border-t-2 md:border-t-0 border-slate-900">
-                    <div className="bg-slate-50 p-2 text-center font-black uppercase text-[10px]">Home Assignment</div>
-                    <Textarea value={homeAssignment} onChange={(e) => setHomeAssignment(e.target.value)} rows={4} className="border-0 rounded-none focus-visible:ring-0 text-sm font-medium" />
+                    <div className="bg-slate-50 p-2 text-center font-black uppercase text-[9px] sm:text-[10px]">Home Assignment</div>
+                    <Textarea value={homeAssignment} onChange={(e) => setHomeAssignment(e.target.value)} rows={3} className="border-0 rounded-none focus-visible:ring-0 text-xs sm:text-sm font-medium" />
                   </div>
                 </div>
              </div>
 
-             <div className="flex gap-3 pt-4 border-t border-muted/10">
-                <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="flex-1 rounded-2xl font-bold">CANCEL</Button>
-                <Button variant="outline" onClick={() => saveLessonPlan.mutate(false)} className="flex-1 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 shadow-soft" disabled={saveLessonPlan.isPending}>SAVE DRAFT</Button>
-                <Button onClick={() => saveLessonPlan.mutate(true)} className="flex-[1.5] rounded-2xl font-black uppercase text-[10px] tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-strong hover:scale-[1.02] transition-all" disabled={saveLessonPlan.isPending}><Send className="h-4 w-4 mr-2" /> SUBMIT FOR APPROVAL</Button>
+             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-muted/10">
+                <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm order-3 sm:order-1">CANCEL</Button>
+                <Button variant="outline" onClick={() => saveLessonPlan.mutate(false)} className="flex-1 rounded-xl sm:rounded-2xl font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-2 shadow-soft order-2 sm:order-2 h-10 sm:h-11" disabled={saveLessonPlan.isPending}>SAVE DRAFT</Button>
+                <Button onClick={() => saveLessonPlan.mutate(true)} className="flex-[1.5] rounded-xl sm:rounded-2xl font-black uppercase text-[9px] sm:text-[10px] tracking-widest bg-gradient-to-r from-primary to-violet-600 shadow-strong hover:scale-[1.02] transition-all order-1 sm:order-3 h-10 sm:h-11" disabled={saveLessonPlan.isPending}><Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" /> SUBMIT FOR APPROVAL</Button>
              </div>
           </div>
         </DialogContent>

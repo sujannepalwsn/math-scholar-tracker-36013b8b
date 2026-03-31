@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets"
 import { cn } from "@/lib/utils"
-import { applyPackagePreset } from "@/utils/package-utils"
+import { applyPackagePreset, calculateProRatedAmount } from "@/utils/package-utils"
 
 const FEATURES = [
   { name: 'parent_portal', label: 'Parent Portal' },
@@ -32,7 +32,6 @@ const FEATURES = [
   { name: 'student_id_cards', label: 'Student ID Cards' },
   { name: 'inventory_assets', label: 'Inventory & Assets' },
   { name: 'transport_tracking', label: 'Transport & Tracking' },
-  { name: 'school_days', label: 'School Days' },
   { name: 'settings_access', label: 'Settings' },
   { name: 'messaging', label: 'Messages' },
   { name: 'meetings_management', label: 'Meetings' },
@@ -45,7 +44,6 @@ const FEATURES = [
   { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance' },
   { name: 'about_institution', label: 'About Institution' },
-  { name: 'ai_insights', label: 'AI Insights' },
 ];
 
 const TEACHER_FEATURES = [
@@ -70,7 +68,6 @@ const TEACHER_FEATURES = [
   { name: 'teacher_reports', label: 'Teacher Reports' },
   { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance Access' },
-  { name: 'ai_insights', label: 'AI Insights' },
   { name: 'about_institution', label: 'About Institution' },
   { name: 'settings_access', label: 'Settings Access' },
   { name: 'register_student', label: 'Students Registration' },
@@ -80,7 +77,6 @@ const TEACHER_FEATURES = [
   { name: 'student_id_cards', label: 'Student ID Cards' },
   { name: 'inventory_assets', label: 'Inventory & Assets' },
   { name: 'transport_tracking', label: 'Transport & Tracking' },
-  { name: 'school_days', label: 'School Days' },
   { name: 'exams_results', label: 'Exams & Results' },
   { name: 'published_results', label: 'Published Results' },
 ];
@@ -200,6 +196,54 @@ export default function CenterFeaturePermissions() {
 
   const applyPackageMutation = useMutation({
     mutationFn: async ({ centerId, packageType }: { centerId: string; packageType: PackageType }) => {
+      // 1. Get current subscription and plans for invoice generation
+      const { data: currentSub } = await supabase
+        .from("center_subscriptions")
+        .select("*, subscription_plans(*)")
+        .eq("center_id", centerId)
+        .eq("status", "Active")
+        .maybeSingle();
+
+      const { data: plans } = await supabase.from("subscription_plans").select("*");
+      const targetPlan = plans?.find(p => p.features?.[0] === packageType);
+
+      if (targetPlan) {
+        let amount = targetPlan.price;
+        if (currentSub) {
+          amount = calculateProRatedAmount(
+            currentSub.billed_amount || currentSub.subscription_plans?.price || 0,
+            currentSub.subscription_days || 30,
+            currentSub.start_date!,
+            targetPlan.price
+          );
+        }
+
+        // Generate SaaS Invoice
+        await supabase
+          .from('saas_invoices')
+          .insert({
+            center_id: centerId,
+            plan_id: targetPlan.id,
+            amount: amount,
+            due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'Unpaid'
+          });
+
+        // Update or Insert active subscription record
+        if (currentSub) {
+          await supabase.from('center_subscriptions').update({ status: 'Inactive' }).eq('id', currentSub.id);
+        }
+
+        await supabase.from('center_subscriptions').insert({
+          center_id: centerId,
+          plan_id: targetPlan.id,
+          package_type: packageType,
+          status: 'Active',
+          start_date: new Date().toISOString(),
+          billed_amount: amount
+        });
+      }
+
       const result = await applyPackagePreset(centerId, packageType);
       return { centerId, features: result.features };
     },
