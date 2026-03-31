@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { applyPackagePreset } from "@/utils/package-utils";
 import { PackageType, PACKAGE_FEATURES } from "@/lib/package-presets";
 import { formatCurrency } from "@/integrations/supabase/finance-types";
+import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SYSTEM_MODULES } from "@/lib/system-modules";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
