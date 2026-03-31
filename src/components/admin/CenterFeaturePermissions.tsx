@@ -1,12 +1,17 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Package, Sparkles } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets"
+import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
 
 const FEATURES = [
+  { name: 'parent_portal', label: 'Parent Portal' },
   { name: 'leave_management', label: 'Leave Applications' },
   { name: 'dashboard_access', label: 'Dashboard' },
   { name: 'take_attendance', label: 'Take Attendance' },
@@ -43,6 +48,7 @@ const FEATURES = [
 ];
 
 const TEACHER_FEATURES = [
+  { name: 'parent_portal', label: 'Parent Portal' },
   { name: 'leave_management', label: 'Leave Applications' },
   { name: 'dashboard_access', label: 'Dashboard' },
   { name: 'take_attendance', label: 'Take Attendance' },
@@ -80,6 +86,7 @@ const TEACHER_FEATURES = [
 
 export default function CenterFeaturePermissions() {
   const queryClient = useQueryClient();
+  const [highlightedFeatures, setHighlightedFeatures] = useState<Record<string, Set<string>>>({});
 
   const { data: centers = [], isLoading: centersLoading } = useQuery({
     queryKey: ['admin-centers'],
@@ -190,6 +197,87 @@ export default function CenterFeaturePermissions() {
     updateTeacherPermissionMutation.mutate({ teacherId, featureName, isEnabled: !currentStatus });
   };
 
+  const applyPackageMutation = useMutation({
+    mutationFn: async ({ centerId, packageType }: { centerId: string; packageType: PackageType }) => {
+      const features = PACKAGE_FEATURES[packageType];
+
+      // 1. Update center package type
+      const { error: centerError } = await supabase
+        .from('centers')
+        .update({ package_type: packageType })
+        .eq('id', centerId);
+      if (centerError) throw centerError;
+
+      // 2. Update center permissions
+      const existingPerm = permissionsByCenter[centerId];
+      if (existingPerm) {
+        const { error } = await supabase
+          .from('center_feature_permissions')
+          .update(features)
+          .eq('center_id', centerId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('center_feature_permissions')
+          .insert({ center_id: centerId, ...features });
+        if (error) throw error;
+      }
+
+      // 3. Update all teachers in this center
+      const centerTeachers = teachers.filter((t: any) => t.center_id === centerId);
+      for (const teacher of centerTeachers) {
+        const existingTPerm = permissionsByTeacher[teacher.id];
+        // For teachers, we only sync a subset or just matching names from the package features
+        // Based on memory and current TEACHER_FEATURES, we apply what matches
+        const teacherPermissionsUpdate: Record<string, boolean> = {};
+        TEACHER_FEATURES.forEach(tf => {
+          if (features[tf.name] !== undefined) {
+            teacherPermissionsUpdate[tf.name] = features[tf.name];
+          }
+        });
+
+        if (existingTPerm) {
+          const { error } = await supabase
+            .from('teacher_feature_permissions')
+            .update(teacherPermissionsUpdate)
+            .eq('teacher_id', teacher.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('teacher_feature_permissions')
+            .insert({ teacher_id: teacher.id, ...teacherPermissionsUpdate });
+          if (error) throw error;
+        }
+      }
+
+      return { centerId, features };
+    },
+    onSuccess: ({ centerId, features }) => {
+      queryClient.invalidateQueries({ queryKey: ['center-feature-permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher-feature-permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-centers'] });
+
+      // Trigger highlight effect
+      setHighlightedFeatures(prev => ({
+        ...prev,
+        [centerId]: new Set(Object.keys(features))
+      }));
+
+      setTimeout(() => {
+        setHighlightedFeatures(prev => {
+          const next = { ...prev };
+          delete next[centerId];
+          return next;
+        });
+      }, 2000);
+
+      toast.success('Package applied! You can still customize features below.');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to apply package');
+    }
+  });
+
   if (centersLoading || permissionsLoading) {
     return <p>Loading feature permissions...</p>;
   }
@@ -206,7 +294,7 @@ export default function CenterFeaturePermissions() {
   <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 top-0 bg-background z-20">Center Name</TableHead>
+                <TableHead className="sticky left-0 top-0 bg-background z-20 min-w-[200px]">Center Name & Package</TableHead>
                 {FEATURES.map(feature => (
                   <TableHead key={feature.name} className="text-center min-w-[120px] sticky top-0 bg-background z-10">{feature.label}</TableHead>
                 ))}
@@ -215,16 +303,46 @@ export default function CenterFeaturePermissions() {
             <TableBody>
               {centers.map(center => (
                 <TableRow key={center.id}>
-                  <TableCell className="font-medium sticky left-0 bg-card z-10">{center.name}</TableCell>
+                  <TableCell className="font-medium sticky left-0 bg-card z-10 space-y-2 py-4">
+                    <div className="font-black text-sm uppercase tracking-tight">{center.name}</div>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={center.package_type || 'Premium'}
+                        onValueChange={(val) => applyPackageMutation.mutate({ centerId: center.id, packageType: val as PackageType })}
+                        disabled={applyPackageMutation.isPending}
+                      >
+                        <SelectTrigger className="h-8 w-[130px] text-[10px] font-black uppercase tracking-widest bg-primary/5 border-none shadow-none">
+                          <Package className="h-3 w-3 mr-1 text-primary" />
+                          <SelectValue placeholder="Select Package" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Basic" className="text-[10px] font-black uppercase tracking-widest">Basic</SelectItem>
+                          <SelectItem value="Standard" className="text-[10px] font-black uppercase tracking-widest">Standard</SelectItem>
+                          <SelectItem value="Premium" className="text-[10px] font-black uppercase tracking-widest">Premium</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {applyPackageMutation.isPending && applyPackageMutation.variables?.centerId === center.id && (
+                         <Sparkles className="h-3 w-3 animate-pulse text-primary" />
+                      )}
+                    </div>
+                  </TableCell>
                   {FEATURES.map(feature => {
                     const centerPerm = permissionsByCenter[center.id];
                     const isEnabled = centerPerm?.[feature.name] ?? true;
+                    const isHighlighted = highlightedFeatures[center.id]?.has(feature.name);
+
                     return (
-                      <TableCell key={feature.name} className="text-center">
+                      <TableCell
+                        key={feature.name}
+                        className={cn(
+                          "text-center transition-all duration-500",
+                          isHighlighted && "bg-primary/20 scale-110"
+                        )}
+                      >
                         <Switch
                           checked={isEnabled}
                           onCheckedChange={() => handleToggle(center.id, feature.name, isEnabled)}
-                          disabled={updatePermissionMutation.isPending}
+                          disabled={updatePermissionMutation.isPending || applyPackageMutation.isPending}
                         />
                       </TableCell>
                     );

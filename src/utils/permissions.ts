@@ -67,6 +67,7 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   'about-institution': 'about_institution',
   'ai_insights': 'ai_insights',
   'class_routine': 'class_routine',
+  'parent_portal': 'parent_portal',
 
   // Route Fallbacks (to handle items with null feature_name in DB)
   '/register': 'register_student',
@@ -143,6 +144,11 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
   // 3. Check Global Center Override (Absolute Master Toggle)
   // If explicitly set to false, NO ONE in the center has access.
   if (centerPerms[dbColumnName] === false) {
+    return false;
+  }
+
+  // Special Check: If parent portal is disabled globally, parents lose all access
+  if (user.role === UserRole.PARENT && centerPerms['parent_portal'] === false) {
     return false;
   }
 

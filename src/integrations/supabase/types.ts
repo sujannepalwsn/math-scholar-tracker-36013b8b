@@ -458,6 +458,7 @@ export type Database = {
           lesson_tracking: boolean | null
           meetings_management: boolean | null
           messaging: boolean | null
+          parent_portal: boolean | null
           preschool_activities: boolean | null
           register_student: boolean | null
           student_report: boolean | null
@@ -483,6 +484,7 @@ export type Database = {
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
           messaging?: boolean | null
+          parent_portal?: boolean | null
           preschool_activities?: boolean | null
           register_student?: boolean | null
           student_report?: boolean | null
@@ -508,6 +510,7 @@ export type Database = {
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
           messaging?: boolean | null
+          parent_portal?: boolean | null
           preschool_activities?: boolean | null
           register_student?: boolean | null
           student_report?: boolean | null
@@ -552,6 +555,7 @@ export type Database = {
           longitude: number | null
           mission: string | null
           name: string
+          package_type: string | null
           phone: string | null
           principal_message: string | null
           principal_name: string | null
@@ -586,6 +590,7 @@ export type Database = {
           longitude?: number | null
           mission?: string | null
           name: string
+          package_type?: string | null
           phone?: string | null
           principal_message?: string | null
           principal_name?: string | null
@@ -620,6 +625,7 @@ export type Database = {
           longitude?: number | null
           mission?: string | null
           name?: string
+          package_type?: string | null
           phone?: string | null
           principal_message?: string | null
           principal_name?: string | null
@@ -2604,6 +2610,7 @@ export type Database = {
           lesson_tracking: boolean | null
           meetings_management: boolean | null
           messaging: boolean | null
+          parent_portal: boolean | null
           preschool_activities: boolean | null
           student_report_access: boolean | null
           summary: boolean | null
@@ -2629,6 +2636,7 @@ export type Database = {
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
           messaging?: boolean | null
+          parent_portal?: boolean | null
           preschool_activities?: boolean | null
           student_report_access?: boolean | null
           summary?: boolean | null
@@ -2654,6 +2662,7 @@ export type Database = {
           lesson_tracking?: boolean | null
           meetings_management?: boolean | null
           messaging?: boolean | null
+          parent_portal?: boolean | null
           preschool_activities?: boolean | null
           student_report_access?: boolean | null
           summary?: boolean | null
