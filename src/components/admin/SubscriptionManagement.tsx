@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee, Layers, ListChecks, Info, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { applyPackagePreset } from "@/utils/package-utils";
 import { PackageType, PACKAGE_FEATURES } from "@/lib/package-presets";

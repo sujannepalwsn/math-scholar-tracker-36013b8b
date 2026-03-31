@@ -46,7 +46,7 @@ export const applyPackagePreset = async (centerId: string, packageType: PackageT
     'class_routine', 'discipline_issues', 'finance', 'homework_management',
     'lesson_plans', 'lesson_tracking', 'meetings_management', 'messaging',
     'parent_portal', 'preschool_activities', 'summary', 'take_attendance',
-    'test_management', 'view_records'
+    'test_management', 'view_records', 'hr_management', 'leave_management'
   ];
 
   if (teachers && teachers.length > 0) {
