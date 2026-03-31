@@ -126,16 +126,24 @@ class Logger {
   public async error(message: string, error?: unknown, context?: LogContext) {
     const formattedMessage = this.formatMessage('error', message);
 
+    // Filter sensitive context in production logs
+    const safeContext = import.meta.env.DEV ? context : {
+      module: context?.module,
+      component: context?.component,
+      errorType: context?.errorType,
+      severity: context?.severity,
+    };
+
     console.error(formattedMessage, {
       error: error instanceof Error ? {
         message: error.message,
-        stack: error.stack,
-        ...(error as any)
-      } : error,
-      ...context
+        stack: import.meta.env.DEV ? error.stack : undefined,
+        ...(import.meta.env.DEV ? (error as any) : {})
+      } : (import.meta.env.DEV ? error : 'Sensitive Error Detail Restricted'),
+      ...safeContext
     });
 
-    // Only persist errors to the database
+    // Persist full error to secure database (admin-only access via RLS)
     return await this.persistError(message, error, context);
   }
 

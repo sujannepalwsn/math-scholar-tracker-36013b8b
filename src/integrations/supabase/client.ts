@@ -80,14 +80,18 @@ function wrapQueryBuilder(builder: any, tableName: string, queryLog: any[] = [])
       }
 
       if (typeof value === 'function') {
-        const boundFn = value.bind(target);
         return (...args: any[]) => {
           // Capture the call in the query log for debugging
           const updatedLog = [...queryLog, { method: prop, args }];
-          const result = boundFn(...args);
+          const result = value.apply(target, args);
 
-          // Only wrap results that look like another PostgREST builder
-          if (result && typeof result === 'object' && typeof result.then === 'function' && !result.then.name.includes('bound')) {
+          // Only wrap results that look like another PostgREST builder (thenable objects)
+          // and are not the same object as target (to prevent redundant wrapping)
+          if (result &&
+              typeof result === 'object' &&
+              typeof result.then === 'function' &&
+              result !== target &&
+              !result[IS_PROXY]) {
              return wrapQueryBuilder(result, tableName, updatedLog);
           }
           return result;
@@ -107,7 +111,7 @@ export const supabase = new Proxy(rawSupabase, {
   get(target, prop, receiver) {
     const value = Reflect.get(target, prop, receiver);
 
-    if (prop === 'from') {
+    if (prop === 'from' && typeof value === 'function') {
       return (tableName: string) => {
         const queryBuilder = value.call(target, tableName);
 
@@ -119,6 +123,11 @@ export const supabase = new Proxy(rawSupabase, {
         return wrapQueryBuilder(queryBuilder, tableName);
       };
     }
+
+    if (typeof value === 'function') {
+      return value.bind(target);
+    }
+
     return value;
   }
 });

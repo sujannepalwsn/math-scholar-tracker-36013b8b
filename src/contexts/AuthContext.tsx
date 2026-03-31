@@ -152,7 +152,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const loggedInUser: User = data.user;
-      logger.debug('AuthContext: User logged in successfully:', loggedInUser.username);
+      const session = data.session;
+      logger.debug('AuthContext: User data received from Edge Function:', loggedInUser.username);
+
+      if (session) {
+        logger.debug('AuthContext: Setting Supabase session...');
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+
+        if (sessionError) {
+          logger.error('AuthContext: Error setting Supabase session:', sessionError);
+        } else {
+          logger.debug('AuthContext: Supabase session successfully established.');
+        }
+      } else {
+        logger.warn('AuthContext: No session returned from login. RLS may block data access.');
+      }
 
       // The role check is now handled by ProtectedRoute after successful authentication
       // This allows any valid user to log in via the main login page and then be redirected
