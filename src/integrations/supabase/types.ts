@@ -340,6 +340,54 @@ export type Database = {
           },
         ]
       }
+      center_subscriptions: {
+        Row: {
+          center_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          package_type: string | null
+          plan_id: string | null
+          start_date: string | null
+          status: string | null
+        }
+        Insert: {
+          center_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          package_type?: string | null
+          plan_id?: string | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          center_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          package_type?: string | null
+          plan_id?: string | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_subscriptions_center_id_fkey"
+            columns: ["center_id"]
+            isOneToOne: false
+            referencedRelation: "centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "center_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broadcast_messages: {
         Row: {
           center_id: string
@@ -3064,6 +3112,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saas_invoices: {
+        Row: {
+          amount: number
+          center_id: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_date: string | null
+          payment_date: string | null
+          plan_id: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          center_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          payment_date?: string | null
+          plan_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          center_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          payment_date?: string | null
+          plan_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_invoices_center_id_fkey"
+            columns: ["center_id"]
+            isOneToOne: false
+            referencedRelation: "centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          billing_cycle: string | null
+          created_at: string
+          features: Json | null
+          id: string
+          limits: Json | null
+          name: string
+          price: number
+        }
+        Insert: {
+          billing_cycle?: string | null
+          created_at?: string
+          features?: Json | null
+          id?: string
+          limits?: Json | null
+          name: string
+          price: number
+        }
+        Update: {
+          billing_cycle?: string | null
+          created_at?: string
+          features?: Json | null
+          id?: string
+          limits?: Json | null
+          name?: string
+          price?: number
+        }
+        Relationships: []
       }
     }
     Views: {

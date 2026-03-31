@@ -7,8 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2 } from "lucide-react";
+import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { applyPackagePreset } from "@/utils/package-utils";
+import { PackageType } from "@/lib/package-presets";
+import { formatCurrency } from "@/integrations/supabase/finance-types";
 
 export default function SubscriptionManagement() {
   const queryClient = useQueryClient();
@@ -27,10 +30,71 @@ export default function SubscriptionManagement() {
   const { data: centerSubs } = useQuery({
     queryKey: ["center-subscriptions"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("center_subscriptions").select("*, centers(name), subscription_plans(name)");
+      const { data, error } = await supabase.from("center_subscriptions").select("*, centers(name), subscription_plans(*)");
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: allInvoices } = useQuery({
+    queryKey: ["admin-saas-invoices"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("saas_invoices").select("*, centers(name), subscription_plans(name)").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const approveSubscriptionMutation = useMutation({
+    mutationFn: async ({ subId, centerId, planId, packageType, amount }: { subId: string, centerId: string, planId: string, packageType: string, amount: number }) => {
+      // 0. Deactivate existing active subscriptions
+      await supabase
+        .from('center_subscriptions')
+        .update({ status: 'Inactive' })
+        .eq('center_id', centerId)
+        .eq('status', 'Active');
+
+      // 1. Mark subscription as active
+      const { error: subError } = await supabase
+        .from('center_subscriptions')
+        .update({ status: 'Active', start_date: new Date().toISOString() })
+        .eq('id', subId);
+      if (subError) throw subError;
+
+      // 2. Apply package features
+      await applyPackagePreset(centerId, packageType as PackageType);
+
+      // 3. Generate SaaS Invoice
+      const { error: invError } = await supabase
+        .from('saas_invoices')
+        .insert({
+          center_id: centerId,
+          plan_id: planId,
+          amount: amount,
+          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+          status: 'Unpaid'
+        });
+      if (invError) throw invError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["center-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-saas-invoices"] });
+      toast.success("Subscription approved and package applied!");
+    }
+  });
+
+  const markAsPaidMutation = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { error } = await supabase
+        .from('saas_invoices')
+        .update({ status: 'Paid', payment_date: new Date().toISOString() })
+        .eq('id', invoiceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-saas-invoices"] });
+      toast.success("Invoice marked as paid.");
+    }
   });
 
   const addPlanMutation = useMutation({
@@ -116,6 +180,55 @@ export default function SubscriptionManagement() {
       </div>
 
       <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+        <CardHeader className="bg-amber-50/50 border-b border-amber-100">
+           <CardTitle className="text-lg font-black uppercase tracking-widest text-amber-700 flex items-center gap-2">
+             <Clock className="h-5 w-5" /> Pending Approval Requests
+           </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="px-8 font-black text-[10px] uppercase">Center</TableHead>
+                <TableHead className="font-black text-[10px] uppercase">Requested Plan</TableHead>
+                <TableHead className="font-black text-[10px] uppercase">Package Preset</TableHead>
+                <TableHead className="font-black text-[10px] uppercase text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {centerSubs?.filter((s: any) => s.status === 'Pending').map((sub: any) => (
+                <TableRow key={sub.id}>
+                  <TableCell className="px-8 font-bold text-slate-700">{sub.centers?.name}</TableCell>
+                  <TableCell><Badge className="bg-primary/10 text-primary border-none">{sub.subscription_plans?.name}</Badge></TableCell>
+                  <TableCell className="text-xs font-bold text-slate-500 uppercase tracking-widest">{sub.package_type}</TableCell>
+                  <TableCell className="text-right px-4">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => approveSubscriptionMutation.mutate({
+                          subId: sub.id,
+                          centerId: sub.center_id,
+                          planId: sub.plan_id,
+                          packageType: sub.package_type,
+                          amount: sub.subscription_plans?.price
+                        })}
+                        className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase"
+                      >
+                        <Check className="h-3 w-3 mr-1" /> Approve
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {centerSubs?.filter((s: any) => s.status === 'Pending').length === 0 && (
+                <TableRow><TableCell colSpan={4} className="text-center py-8 text-slate-400 italic">No pending requests.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
         <CardHeader className="bg-slate-50 border-b border-slate-100">
            <CardTitle className="text-lg font-black uppercase tracking-widest text-slate-700">Active Tenant Subscriptions</CardTitle>
         </CardHeader>
@@ -132,7 +245,7 @@ export default function SubscriptionManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {centerSubs?.map((sub: any) => (
+              {centerSubs?.filter((s: any) => s.status === 'Active').map((sub: any) => (
                 <TableRow key={sub.id} className="hover:bg-white/50 transition-colors">
                   <TableCell className="px-8 font-bold text-slate-700">{sub.centers?.name}</TableCell>
                   <TableCell><Badge variant="outline" className="font-black text-[9px] uppercase">{sub.subscription_plans?.name}</Badge></TableCell>
@@ -144,16 +257,71 @@ export default function SubscriptionManagement() {
                   </TableCell>
                   <TableCell className="text-xs font-medium text-slate-500">{sub.end_date ? new Date(sub.end_date).toLocaleDateString() : 'Lifetime'}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase text-primary">Upgrade</Button>
+                    <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase text-primary">Modify</Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {centerSubs?.length === 0 && (
+              {centerSubs?.filter((s: any) => s.status === 'Active').length === 0 && (
                 <TableRow><TableCell colSpan={5} className="text-center py-12 text-slate-400 italic">No active subscriptions detected.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
 </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-col gap-1 mt-12">
+        <h3 className="text-xl font-black uppercase tracking-tight text-slate-700 flex items-center gap-2">
+          <FileText className="h-5 w-5 text-blue-500" /> Global SaaS Invoicing
+        </h3>
+        <p className="text-sm text-muted-foreground font-medium">Monitor institutional billing and process incoming payments.</p>
+      </div>
+
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead className="px-8 py-4 font-black text-[10px] uppercase">Center</TableHead>
+                <TableHead className="py-4 font-black text-[10px] uppercase">Plan</TableHead>
+                <TableHead className="py-4 font-black text-[10px] uppercase">Amount</TableHead>
+                <TableHead className="py-4 font-black text-[10px] uppercase">Status</TableHead>
+                <TableHead className="py-4 font-black text-[10px] uppercase text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allInvoices?.map((inv: any) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="px-8 font-bold text-slate-700">{inv.centers?.name}</TableCell>
+                  <TableCell className="text-xs font-medium">{inv.subscription_plans?.name}</TableCell>
+                  <TableCell className="font-black text-primary">{formatCurrency(inv.amount)}</TableCell>
+                  <TableCell>
+                    <Badge className={cn(
+                      "font-black text-[9px] uppercase",
+                      inv.status === 'Paid' ? "bg-emerald-50 text-emerald-600 border-none" : "bg-rose-50 text-rose-600 border-none"
+                    )}>
+                      {inv.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right px-4">
+                    {inv.status === 'Unpaid' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => markAsPaidMutation.mutate(inv.id)}
+                        className="h-8 rounded-lg border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-[10px] font-black uppercase"
+                      >
+                        <IndianRupee className="h-3 w-3 mr-1" /> Mark Paid
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(!allInvoices || allInvoices.length === 0) && (
+                <TableRow><TableCell colSpan={5} className="text-center py-12 text-slate-400 italic">No invoices discovered.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

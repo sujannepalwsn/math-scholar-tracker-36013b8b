@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock } from "lucide-react";
+import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock, FileText, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatCurrency } from "@/integrations/supabase/finance-types";
 
 export default function SubscriptionPlans() {
   const { user } = useAuth();
@@ -37,31 +39,34 @@ export default function SubscriptionPlans() {
     enabled: !!user?.center_id,
   });
 
+  const { data: saasInvoices } = useQuery({
+    queryKey: ["center-saas-invoices", user?.center_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("saas_invoices")
+        .select("*, subscription_plans(name)")
+        .eq("center_id", user?.center_id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.center_id,
+  });
+
   const subscribeMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      // For now, we just insert/update the subscription.
-      // In a real app, this would redirect to a payment gateway.
-
-      // Deactivate old subscriptions if any
-      if (currentSub) {
-        const { error: deactivateError } = await supabase
-          .from("center_subscriptions")
-          .update({ status: "Inactive" })
-          .eq("center_id", user?.center_id);
-        if (deactivateError) throw deactivateError;
-      }
-
+    mutationFn: async ({ planId, packageName }: { planId: string, packageName: string }) => {
+      // Create a pending subscription request
       const { error } = await supabase.from("center_subscriptions").insert({
         center_id: user?.center_id,
         plan_id: planId,
-        status: "Active",
-        start_date: new Date().toISOString(),
+        package_type: packageName,
+        status: "Pending",
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["center-current-subscription"] });
-      toast.success("Successfully subscribed to the plan!");
+      toast.success("Subscription request sent to Admin for approval.");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to subscribe");
@@ -121,14 +126,14 @@ export default function SubscriptionPlans() {
                 </div>
 
                 <Button
-                  onClick={() => subscribeMutation.mutate(p.id)}
+                  onClick={() => subscribeMutation.mutate({ planId: p.id, packageName: p.name })}
                   disabled={isCurrent || subscribeMutation.isPending}
                   className={cn(
                     "w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest transition-all",
                     isCurrent ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-50" : "bg-slate-900 text-white shadow-lg"
                   )}
                 >
-                  {isCurrent ? "Currently Active" : "Subscribe Now"}
+                  {isCurrent ? "Currently Active" : subscribeMutation.isPending ? "Requesting..." : "Request Upgrade"}
                 </Button>
               </CardContent>
             </Card>
@@ -141,15 +146,71 @@ export default function SubscriptionPlans() {
           <CardContent className="p-8 flex items-center justify-between">
             <div className="space-y-1">
                <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Subscription Context</p>
-               <h4 className="text-lg font-black text-slate-800">Your institution is currently on the <span className="text-primary">{currentSub.subscription_plans?.name}</span> plan.</h4>
-               <p className="text-sm font-medium text-slate-500">Subscription started on {new Date(currentSub.start_date).toLocaleDateString()}. Next billing cycle will renew automatically.</p>
+               <h4 className="text-lg font-black text-slate-800">
+                 Your institution is currently on the <span className="text-primary">{currentSub.subscription_plans?.name}</span> plan.
+                 {currentSub.status === 'Pending' && <Badge className="ml-2 bg-amber-100 text-amber-600">Pending Approval</Badge>}
+               </h4>
+               {currentSub.start_date && (
+                 <p className="text-sm font-medium text-slate-500">Subscription started on {new Date(currentSub.start_date).toLocaleDateString()}. Next billing cycle will renew automatically.</p>
+               )}
             </div>
             <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-soft">
-               <CheckCircle2 className="h-8 w-8 text-primary" />
+               {currentSub.status === 'Active' ? <CheckCircle2 className="h-8 w-8 text-primary" /> : <Clock className="h-8 w-8 text-amber-500" />}
             </div>
           </CardContent>
         </Card>
       )}
+
+      <div className="flex flex-col gap-1 mt-12">
+        <h3 className="text-xl font-black uppercase tracking-tight text-slate-700 flex items-center gap-2">
+          <FileText className="h-5 w-5 text-blue-500" /> SaaS Billing & Invoices
+        </h3>
+        <p className="text-sm text-muted-foreground font-medium">Review your subscription payments and institutional billing history.</p>
+      </div>
+
+      <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead className="font-black uppercase text-[10px] tracking-widest px-8 py-4">Invoice ID</TableHead>
+                <TableHead className="font-black uppercase text-[10px] tracking-widest py-4">Plan</TableHead>
+                <TableHead className="font-black uppercase text-[10px] tracking-widest py-4">Amount</TableHead>
+                <TableHead className="font-black uppercase text-[10px] tracking-widest py-4">Status</TableHead>
+                <TableHead className="font-black uppercase text-[10px] tracking-widest py-4">Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {saasInvoices?.map((inv: any) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="px-8 font-bold text-slate-600 text-xs uppercase tracking-tighter">#{inv.id.slice(0, 8)}</TableCell>
+                  <TableCell className="font-bold">{inv.subscription_plans?.name}</TableCell>
+                  <TableCell className="font-black text-primary">{formatCurrency(inv.amount)}</TableCell>
+                  <TableCell>
+                    <Badge className={cn(
+                      "font-black text-[9px] uppercase",
+                      inv.status === 'Paid' ? "bg-emerald-50 text-emerald-600 border-none" : "bg-rose-50 text-rose-600 border-none"
+                    )}>
+                      {inv.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-slate-500">{new Date(inv.invoice_date).toLocaleDateString()}</TableCell>
+                </TableRow>
+              ))}
+              {(!saasInvoices || saasInvoices.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <AlertCircle className="h-8 w-8 opacity-20" />
+                      <p className="italic font-medium text-sm">No institutional invoices discovered.</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
