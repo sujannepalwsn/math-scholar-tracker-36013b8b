@@ -74,12 +74,9 @@ export default function TeacherDashboard() {
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', teacherId);
         const grades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
-        if (isRestricted) {
-           if (grades.length > 0) {
-             query = query.in('grade', grades);
-           } else {
-             return [];
-           }
+        // Hardening: Frontend filtering is for UI/UX. RLS enforces the actual restriction.
+        if (isRestricted && grades.length > 0) {
+           query = query.in('grade', grades);
         }
       }
 

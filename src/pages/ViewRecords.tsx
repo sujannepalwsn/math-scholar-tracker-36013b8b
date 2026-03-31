@@ -75,8 +75,6 @@ export default function ViewRecords() {
 
         if (myGrades.length > 0) {
           query = query.in('grade', myGrades);
-        } else {
-          return [];
         }
       }
 

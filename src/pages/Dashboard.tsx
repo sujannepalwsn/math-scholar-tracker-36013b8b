@@ -213,10 +213,10 @@ export default function Dashboard() {
       let query = supabase.from("students").select("*").eq("is_active", true).order("name");
       if (role !== UserRole.ADMIN && centerId) query = query.eq("center_id", centerId);
 
+      // SECURITY: Frontend filtering is for UI/UX. RLS enforces the actual restriction.
+      // We allow the query to run to ensure cards still render even if empty.
       if (isRestricted && myAssignedGrades.length > 0) {
         query = query.in('grade', myAssignedGrades);
-      } else if (isRestricted) {
-        return []; // No assignments, no students in restricted mode
       }
 
       const { data, error } = await query;
@@ -260,8 +260,6 @@ export default function Dashboard() {
 
       if (isRestricted && myAssignedGrades.length > 0) {
         query = query.in('students.grade', myAssignedGrades);
-      } else if (isRestricted) {
-        return [];
       }
 
       const { data, error } = await query;

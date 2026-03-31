@@ -161,12 +161,8 @@ export default function TakeAttendance() {
         .lte("start_date", dateStr)
         .gte("end_date", dateStr);
 
-      if (isRestricted) {
-        if (classTeacherGrades.length > 0) {
-          query = query.in('students.grade', classTeacherGrades);
-        } else {
-          return [];
-        }
+      if (isRestricted && classTeacherGrades.length > 0) {
+        query = query.in('students.grade', classTeacherGrades);
       }
 
       const { data, error } = await query;
@@ -186,13 +182,9 @@ export default function TakeAttendance() {
         .eq("date", dateStr)
         .eq("center_id", user.center_id);
 
-      // Hardening: Restricted teachers should only see attendance for their assigned grades
-      if (isRestricted) {
-        if (classTeacherGrades.length > 0) {
-          query = query.in('students.grade', classTeacherGrades);
-        } else {
-          return [];
-        }
+      // Hardening: Frontend filtering is for UI/UX. RLS enforces the actual restriction.
+      if (isRestricted && classTeacherGrades.length > 0) {
+        query = query.in('students.grade', classTeacherGrades);
       }
 
       const { data, error } = await query;

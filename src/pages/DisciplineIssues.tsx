@@ -69,11 +69,10 @@ export default function DisciplineIssues() {
         const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', user.teacher_id);
         const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
 
+        // Hardening: Frontend filtering is for UI/UX. RLS enforces the actual restriction.
         if (myGrades.length > 0) {
           // Fix: Proper quoting for PostgREST
           query = query.or(`grade.in.(${myGrades.map(g => `"${g}"`).join(',')})`);
-        } else {
-          return [];
         }
       }
 

@@ -53,8 +53,6 @@ export default function AttendanceSummary() {
 
         if (myGrades.length > 0) {
           query = query.in('grade', myGrades);
-        } else {
-          return [];
         }
       }
 

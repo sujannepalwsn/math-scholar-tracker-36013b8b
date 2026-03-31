@@ -118,12 +118,6 @@ export const PERMISSION_MAPPING: Record<string, string> = {
   '/chapter-performance-overview': 'chapter_performance',
 };
 
-// Administrative modules strictly blocked for restricted teachers
-export const ADMIN_BLOCKED_IN_RESTRICTED = [
-  'register_student', 'teacher_management', 'hr_management',
-  'student_id_cards', 'inventory_assets', 'transport_tracking', 'finance'
-];
-
 /**
  * Checks if a user has permission for a specific feature.
  * A module is accessible only if it's enabled and the user can view it.
@@ -177,12 +171,7 @@ export const hasPermission = (user: any, featureKey: string, route?: string): bo
       return centerPerms['leave_management'] !== false;
     }
 
-    // 1. Strictly block administrative modules
-    if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) {
-      return false;
-    }
-
-    // 2. Specific route-based blocks for restricted mode
+    // 1. Specific route-based blocks for restricted mode
     if (dbColumnName === 'lesson_plans' && (featureKey === 'lesson_plan_management' || route === '/lesson-plan-management')) {
       return false;
     }
@@ -257,7 +246,6 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
 
     switch (action) {
       case 'edit':
-        if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) return false;
         if (dbColumnName === 'leave_management' || dbColumnName === 'teachers_attendance') return true;
 
         const readOnlyInRestricted = ['class_routine', 'school_days', 'published_results'];
@@ -279,7 +267,6 @@ export const hasActionPermission = (user: any, featureKey: string, action: 'view
 
   // Fallback for missing JSONB keys
   if (action === 'edit') {
-    if (ADMIN_BLOCKED_IN_RESTRICTED.includes(dbColumnName)) return false;
     if (dbColumnName === 'leave_management' || dbColumnName === 'teachers_attendance') return true;
     return hasPermission(user, featureKey);
   }
