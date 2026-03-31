@@ -30,7 +30,6 @@ const TEACHER_FEATURES = [
   { name: 'teacher_reports', label: 'Teacher Reports' },
   { name: 'view_records', label: 'View Records' },
   { name: 'finance', label: 'Finance Access' },
-  { name: 'ai_insights', label: 'AI Insights' },
   { name: 'about_institution', label: 'About Institution' },
   { name: 'settings_access', label: 'Settings Access' },
   { name: 'register_student', label: 'Students Registration' },
@@ -40,7 +39,6 @@ const TEACHER_FEATURES = [
   { name: 'student_id_cards', label: 'Student ID Cards' },
   { name: 'inventory_assets', label: 'Inventory & Assets' },
   { name: 'transport_tracking', label: 'Transport & Tracking' },
-  { name: 'school_days', label: 'School Days' },
   { name: 'exams_results', label: 'Exams & Results' },
   { name: 'published_results', label: 'Published Results' },
 ];

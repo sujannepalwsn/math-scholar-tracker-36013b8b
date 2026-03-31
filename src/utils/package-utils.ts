@@ -64,7 +64,7 @@ export const applyPackagePreset = async (centerId: string, packageType: PackageT
 
   // Valid features that exist as columns in teacher_feature_permissions
   const TEACHER_VALID_FEATURES = [
-    'ai_insights', 'attendance_summary', 'calendar_events', 'chapter_performance',
+    'attendance_summary', 'calendar_events', 'chapter_performance',
     'class_routine', 'discipline_issues', 'finance', 'homework_management',
     'lesson_plans', 'lesson_tracking', 'meetings_management', 'messaging',
     'parent_portal', 'preschool_activities', 'summary', 'take_attendance',

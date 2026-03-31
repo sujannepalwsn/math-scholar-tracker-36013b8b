@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { UserRole } from "@/types/roles";
-import { CalendarDays, Edit, GraduationCap, PartyPopper, Plus, Trash2, Users } from "lucide-react";
+import { CalendarDays, Edit, GraduationCap, PartyPopper, Plus, Trash2, Users, ShieldCheck, ShieldAlert, Loader2, Filter } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,8 +15,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { format, isSameDay, parseISO } from "date-fns"
+import { format, isSameDay, parseISO, startOfMonth, endOfMonth } from "date-fns"
 import { hasActionPermission } from "@/utils/permissions";
+import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AcademicYearManagement from "@/components/center/AcademicYearManagement";
 
 const EVENT_TYPES = [
   { value: "holiday", label: "Holiday", icon: PartyPopper, color: "bg-red-100 text-red-800" },
@@ -32,13 +35,15 @@ export default function CalendarEvents() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("calendar");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [eventType, setEventType] = useState("holiday");
-  const [isHoliday, setIsHoliday] = useState(false);
+  const [isSchoolDay, setIsSchoolDay] = useState(true);
 
   const isParent = user?.role === UserRole.PARENT;
 
@@ -55,26 +60,24 @@ export default function CalendarEvents() {
     },
     enabled: isParent && !!(user?.student_id || user?.linked_students?.[0]?.id) });
 
-  // Determine center_id: use user's center_id for center/teacher/admin, or student's center_id for parents
   const centerId = isParent ? student?.center_id : user?.center_id;
-
   const isRestricted = user?.role === UserRole.TEACHER && user?.teacher_scope_mode !== 'full';
 
   // Fetch events
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["center-events", centerId, user?.role, user?.id, isRestricted],
+    queryKey: ["calendar-events", centerId, typeFilter],
     queryFn: async () => {
       if (!centerId) return [];
       let query = supabase
-        .from("center_events")
+        .from("calendar_events")
         .select("*")
         .eq("center_id", centerId);
 
-      if (user?.role === UserRole.TEACHER && isRestricted) {
-        query = query.eq('created_by', user.id);
+      if (typeFilter !== "all") {
+          query = query.eq("type", typeFilter);
       }
 
-      const { data, error } = await query.order("event_date");
+      const { data, error } = await query.order("date");
       if (error) throw error;
       return data;
     },
@@ -85,96 +88,79 @@ export default function CalendarEvents() {
     setDescription("");
     setEventDate(format(new Date(), "yyyy-MM-dd"));
     setEventType("holiday");
-    setIsHoliday(false);
+    setIsSchoolDay(true);
     setEditingEvent(null);
   };
 
   const createEventMutation = useMutation({
     mutationFn: async () => {
       if (!user?.center_id) throw new Error("Center ID not found");
-      if (!canEdit) throw new Error("Access Denied: You do not have permission to create calendar events.");
-      const { error } = await supabase.from("center_events").insert({
+      const { error } = await supabase.from("calendar_events").insert({
         center_id: user.center_id,
         title,
         description: description || null,
-        event_date: eventDate,
-        event_type: eventType,
-        is_holiday: isHoliday,
-        created_by: user.id } as any);
+        date: eventDate,
+        type: eventType,
+        is_school_day: isSchoolDay,
+        created_by: user.id });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["center-events"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
       toast.success("Event created successfully!");
       resetForm();
       setShowEventDialog(false);
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create event");
-    } });
+    onError: (error: any) => toast.error(error.message || "Failed to create event")
+  });
 
   const updateEventMutation = useMutation({
     mutationFn: async () => {
       if (!editingEvent?.id) throw new Error("Event ID not found");
-      if (!canEdit) throw new Error("Access Denied: You do not have permission to update calendar events.");
-      const { error } = await supabase.from("center_events").update({
+      const { error } = await supabase.from("calendar_events").update({
         title,
         description: description || null,
-        event_date: eventDate,
-        event_type: eventType,
-        is_holiday: isHoliday } as any).eq("id", editingEvent.id);
+        date: eventDate,
+        type: eventType,
+        is_school_day: isSchoolDay }).eq("id", editingEvent.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["center-events"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
       toast.success("Event updated successfully!");
       resetForm();
       setShowEventDialog(false);
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update event");
-    } });
+    onError: (error: any) => toast.error(error.message || "Failed to update event")
+  });
 
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!canEdit) throw new Error("Access Denied: You do not have permission to delete calendar events.");
-      const { error } = await supabase.from("center_events").delete().eq("id", id);
+      const { error } = await supabase.from("calendar_events").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["center-events"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
       toast.success("Event deleted successfully!");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete event");
-    } });
+    onError: (error: any) => toast.error(error.message || "Failed to delete event")
+  });
 
   const handleEditEvent = (event: any) => {
     setEditingEvent(event);
     setTitle(event.title);
     setDescription(event.description || "");
-    setEventDate(event.event_date);
-    setEventType(event.event_type);
-    setIsHoliday(event.is_holiday);
+    setEventDate(event.date);
+    setEventType(event.type);
+    setIsSchoolDay(event.is_school_day);
     setShowEventDialog(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingEvent) {
-      updateEventMutation.mutate();
-    } else {
-      createEventMutation.mutate();
-    }
-  };
-
-  // Get events for selected date
   const eventsOnSelectedDate = events.filter((event: any) => 
-    selectedDate && isSameDay(parseISO(event.event_date), selectedDate)
+    selectedDate && isSameDay(parseISO(event.date), selectedDate)
   );
 
-  // Get dates with events for calendar highlighting
-  const eventDates = events.map((event: any) => parseISO(event.event_date));
+  const eventDates = events.map((event: any) => parseISO(event.date));
 
   const getEventTypeInfo = (type: string) => {
     return EVENT_TYPES.find(t => t.value === type) || EVENT_TYPES[0];
@@ -190,63 +176,191 @@ export default function CalendarEvents() {
             </div>
             <div>
               <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-                Institutional Calendar
+                School Calendar
               </h1>
-              <div className="flex items-center gap-2 mt-1">
-                 <div className="h-2 w-2 rounded-full bg-primary" />
-                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Academic Events & Operational Cycles</p>
-              </div>
+              <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Unified Academic & Operational Schedule</p>
             </div>
           </div>
         </div>
         {!isParent && canEdit && (
-          <Dialog open={showEventDialog} onOpenChange={(open) => {
-            setShowEventDialog(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.02] transition-all duration-300">
-                <Plus className="h-5 w-5 mr-2" />
-                ADD NEW EVENT
-              </Button>
-            </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingEvent ? "Edit Event" : "Add Event"}</DialogTitle>
-              <DialogDescription>Create a holiday or special event</DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Title *</Label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Diwali Holiday"
-                  required
+          <Button onClick={() => setShowEventDialog(true)} size="lg" className="rounded-2xl shadow-strong h-12 px-6 text-sm font-black tracking-tight bg-gradient-to-r from-primary to-violet-600">
+            <Plus className="h-5 w-5 mr-2" /> ADD EVENT
+          </Button>
+        )}
+      </div>
+
+      <Tabs defaultValue="calendar" className="space-y-8" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md w-full justify-start">
+          <TabsTrigger value="calendar" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Calendar View</TabsTrigger>
+          <TabsTrigger value="list" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Event List</TabsTrigger>
+          {!isParent && <TabsTrigger value="years" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Years</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="calendar" className="space-y-8 outline-none">
+          <div className="grid gap-8 lg:grid-cols-2">
+            <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
+              <CardContent className="p-6">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className="rounded-3xl border border-border/40 bg-white/30 backdrop-blur-sm p-4 shadow-soft mx-auto"
+                  modifiers={{ hasEvent: eventDates }}
+                  modifiersStyles={{ hasEvent: { backgroundColor: 'hsl(var(--primary) / 0.2)', fontWeight: 'bold' } }}
                 />
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 h-fit">
+              <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong">
+                <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
+                    <PartyPopper className="h-6 w-6 text-white" />
+                  </div>
+                  {selectedDate ? format(selectedDate, "MMMM d, yyyy") : "Selected Date"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                {eventsOnSelectedDate.length === 0 ? (
+                  <div className="text-center py-12">
+                     <p className="text-muted-foreground font-medium italic">No events or closures scheduled for this date.</p>
+                     <p className="text-[10px] font-black text-emerald-600 uppercase mt-2">Operational Day</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {eventsOnSelectedDate.map((event: any) => {
+                      const typeInfo = getEventTypeInfo(event.type);
+                      const Icon = typeInfo.icon;
+                      return (
+                        <div key={event.id} className="flex items-start justify-between p-4 rounded-2xl border bg-white/50 group transition-all">
+                          <div className="flex items-start gap-4">
+                            <div className={`p-3 rounded-xl ${typeInfo.color}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-bold text-slate-800">{event.title}</p>
+                              {event.description && <p className="text-xs text-muted-foreground">{event.description}</p>}
+                              <div className="flex gap-2 pt-1">
+                                <Badge variant="outline" className="text-[9px] uppercase font-black">{typeInfo.label}</Badge>
+                                {!event.is_school_day && <Badge variant="destructive" className="text-[9px] uppercase font-black">Closed</Badge>}
+                              </div>
+                            </div>
+                          </div>
+                          {!isParent && canEdit && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="icon" onClick={() => handleEditEvent(event)} className="h-8 w-8 rounded-lg"><Edit className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteEventMutation.mutate(event.id)} className="h-8 w-8 rounded-lg text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-6">
+           <Card className="border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
+              <CardHeader className="border-b border-border/10 bg-primary/5 py-6 flex flex-row items-center justify-between">
+                 <CardTitle className="text-lg font-black uppercase tracking-widest">Master Event Registry</CardTitle>
+                 <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[180px] h-10 rounded-xl bg-white/50 border-none shadow-soft">
+                        <Filter className="h-3 w-3 mr-2 text-primary" />
+                        <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                    </SelectContent>
+                 </Select>
+              </CardHeader>
+              <CardContent className="p-0">
+                 <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                       <thead className="bg-muted/30 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border/10">
+                          <tr>
+                             <th className="px-6 py-4">Event Details</th>
+                             <th className="px-6 py-4">Date</th>
+                             <th className="px-6 py-4">Status</th>
+                             {!isParent && <th className="px-6 py-4 text-right">Actions</th>}
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-border/5">
+                          {events.map((event: any) => {
+                             const typeInfo = getEventTypeInfo(event.type);
+                             return (
+                                <tr key={event.id} className="hover:bg-primary/5 transition-colors group">
+                                   <td className="px-6 py-4">
+                                      <div className="flex items-center gap-3">
+                                         <div className={cn("p-2 rounded-lg", typeInfo.color)}><typeInfo.icon className="h-4 w-4" /></div>
+                                         <div>
+                                            <p className="font-bold text-slate-700">{event.title}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase">{typeInfo.label}</p>
+                                         </div>
+                                      </div>
+                                   </td>
+                                   <td className="px-6 py-4 font-medium">{format(parseISO(event.date), "PPP")}</td>
+                                   <td className="px-6 py-4">
+                                      {event.is_school_day ?
+                                         <Badge className="bg-emerald-50 text-emerald-600 border-none text-[9px] font-black uppercase">Open</Badge> :
+                                         <Badge className="bg-rose-50 text-rose-600 border-none text-[9px] font-black uppercase">Closed</Badge>
+                                      }
+                                   </td>
+                                   {!isParent && (
+                                      <td className="px-6 py-4 text-right">
+                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button variant="ghost" size="icon" onClick={() => handleEditEvent(event)} className="h-8 w-8 rounded-lg"><Edit className="h-4 w-4 text-primary" /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => deleteEventMutation.mutate(event.id)} className="h-8 w-8 rounded-lg text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                                         </div>
+                                      </td>
+                                   )}
+                                </tr>
+                             );
+                          })}
+                       </tbody>
+                    </table>
+                 </div>
+              </CardContent>
+           </Card>
+        </TabsContent>
+
+        {!isParent && (
+           <TabsContent value="years" className="outline-none">
+              <AcademicYearManagement centerId={centerId || ""} />
+           </TabsContent>
+        )}
+      </Tabs>
+
+      {/* Add/Edit Event Dialog */}
+      <Dialog open={showEventDialog} onOpenChange={(open) => { setShowEventDialog(open); if (!open) resetForm(); }}>
+          <DialogContent className="rounded-[2rem]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black uppercase tracking-tight">{editingEvent ? "Refine Event Parameters" : "Initiate New Event"}</DialogTitle>
+              <DialogDescription className="font-medium">Define institutional calendar markers and operational status.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Event Designation *</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Annual Sports Meet" className="h-11 rounded-xl" />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Date *</Label>
-                  <Input
-                    type="date"
-                    value={eventDate}
-                    onChange={(e) => setEventDate(e.target.value)}
-                    required
-                  />
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Date *</Label>
+                  <Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="h-11 rounded-xl" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Event Type</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Category</Label>
                   <Select value={eventType} onValueChange={setEventType}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {EVENT_TYPES.map(type => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
+                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -254,181 +368,31 @@ export default function CalendarEvents() {
               </div>
 
               <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Optional details about the event"
-                  rows={2}
-                />
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-1">Description</Label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Contextual details..." rows={2} className="rounded-xl" />
               </div>
 
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <Label>Mark as Holiday</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Center will be closed on this day
-                  </p>
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest">Operational Day</Label>
+                  <p className="text-[9px] text-muted-foreground font-medium uppercase italic">Disable to mark institution as closed</p>
                 </div>
-                <Switch
-                  checked={isHoliday}
-                  onCheckedChange={setIsHoliday}
-                />
+                <Switch checked={isSchoolDay} onCheckedChange={setIsSchoolDay} />
               </div>
 
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowEventDialog(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={!title || !eventDate}>
-                  {editingEvent ? "Update" : "Create"}
+              <div className="flex gap-3 pt-4">
+                <Button variant="ghost" onClick={() => setShowEventDialog(false)} className="flex-1 rounded-xl uppercase font-black text-[10px]">Cancel</Button>
+                <Button
+                  onClick={() => editingEvent ? updateEventMutation.mutate() : createEventMutation.mutate()}
+                  disabled={!title || !eventDate || createEventMutation.isPending || updateEventMutation.isPending}
+                  className="flex-1 h-12 rounded-xl bg-slate-900 text-white uppercase font-black text-[10px]"
+                >
+                  {createEventMutation.isPending || updateEventMutation.isPending ? "Syncing..." : (editingEvent ? "Commit Changes" : "Register Event")}
                 </Button>
               </div>
-            </form>
+            </div>
           </DialogContent>
         </Dialog>
-        )}
-      </div>
-
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Calendar */}
-        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20">
-          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
-            <CardTitle className="text-xl font-black flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <CalendarDays className="h-6 w-6 text-primary" />
-              </div>
-              Interactive Schedule
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              className="rounded-3xl border border-border/40 bg-white/30 backdrop-blur-sm p-4 shadow-soft mx-auto"
-              modifiers={{
-                hasEvent: eventDates }}
-              modifiersStyles={{
-                hasEvent: {
-                  backgroundColor: 'hsl(var(--primary) / 0.2)',
-                  fontWeight: 'bold' } }}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Events for Selected Date */}
-        <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 h-fit">
-          <CardHeader className="bg-gradient-to-r from-primary to-violet-600 text-primary-foreground py-6 shadow-strong">
-            <CardTitle className="text-xl font-black flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
-                <PartyPopper className="h-6 w-6 text-white" />
-              </div>
-              Daily Agenda: {selectedDate ? format(selectedDate, "MMMM d") : "Protocol Check"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {eventsOnSelectedDate.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No events on this date</p>
-            ) : (
-              <div className="space-y-3">
-                {eventsOnSelectedDate.map((event: any) => {
-                  const typeInfo = getEventTypeInfo(event.event_type);
-                  const Icon = typeInfo.icon;
-                  return (
-                    <div key={event.id} className="flex items-start justify-between p-3 border rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${typeInfo.color}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{event.title}</p>
-                          {event.description && (
-                            <p className="text-sm text-muted-foreground">{event.description}</p>
-                          )}
-                          <div className="flex gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{typeInfo.label}</Badge>
-                            {event.is_holiday && (
-                              <Badge variant="destructive" className="text-xs">Holiday</Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      {!isParent && canEdit && (
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditEvent(event)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteEventMutation.mutate(event.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* All Upcoming Events */}
-      <Card className="border-none shadow-strong overflow-hidden rounded-[2rem] bg-card/40 backdrop-blur-md border border-white/20">
-        <CardHeader className="bg-primary/5 border-b border-border/10 py-6">
-          <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
-             <div className="p-2 rounded-xl bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-             </div>
-             Master Schedule Archive
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8">
-          {isLoading ? (
-            <p>Loading events...</p>
-          ) : events.length === 0 ? (
-            <p className="text-muted-foreground">No events scheduled yet</p>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {events.map((event: any) => {
-                const typeInfo = getEventTypeInfo(event.event_type);
-                const Icon = typeInfo.icon;
-                return (
-                  <div key={event.id} className="flex items-start justify-between p-3 border rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${typeInfo.color}`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(parseISO(event.event_date), "MMM d, yyyy")}
-                        </p>
-                        {event.is_holiday && (
-                          <Badge variant="destructive" className="text-xs mt-1">Holiday</Badge>
-                        )}
-                      </div>
-                    </div>
-                    {!isParent && canEdit && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteEventMutation.mutate(event.id)}
-                      >
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

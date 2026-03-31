@@ -153,14 +153,6 @@ export const SYSTEM_MODULES: SystemModule[] = [
     feature_mapping: ["settings_access", "about_institution"]
   },
   {
-    id: 19,
-    name: "AI Insights",
-    description: "Provides data-driven insights and analytics using AI.",
-    key_functionalities: ["Predictive analytics", "AI recommendations"],
-    completeness: "Fully implemented",
-    feature_mapping: ["ai_insights"]
-  },
-  {
     id: 20,
     name: "Error Tracking",
     description: "Monitors and logs system errors for debugging.",
@@ -175,14 +167,6 @@ export const SYSTEM_MODULES: SystemModule[] = [
     key_functionalities: ["Public registration form", "Application tracking"],
     completeness: "Fully implemented",
     feature_mapping: ["register_student"]
-  },
-  {
-    id: 22,
-    name: "School Days Management",
-    description: "Manages the school's academic calendar and working days.",
-    key_functionalities: ["Defining school days", "Holiday management"],
-    completeness: "Fully implemented",
-    feature_mapping: ["school_days"]
   },
   {
     id: 23,

@@ -27,6 +27,7 @@ interface User {
   centerPermissions?: Record<string, any>;
   teacherPermissions?: Record<string, any>;
   teacher_scope_mode?: 'full' | 'restricted';
+  active_academic_year?: string | null;
   linked_students?: LinkedStudent[];
   // SECURITY: Metadata for UI/UX purposes only. NOT a secure source of truth.
   untrusted_metadata?: {
@@ -74,6 +75,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 if (centerData && centerData.name !== userToUpdate.center_name) {
                   updatedUser.center_name = centerData.name;
+                  hasChanges = true;
+                }
+
+                // Fetch user specific metadata like active_academic_year
+                const { data: userData } = await supabase
+                  .from('users')
+                  .select('active_academic_year')
+                  .eq('id', userToUpdate.id)
+                  .maybeSingle();
+
+                if (userData && userData.active_academic_year !== userToUpdate.active_academic_year) {
+                  updatedUser.active_academic_year = userData.active_academic_year;
                   hasChanges = true;
                 }
 
@@ -180,6 +193,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let updatedUser = { ...loggedInUser };
 
       if (loggedInUser.center_id) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('active_academic_year')
+          .eq('id', loggedInUser.id)
+          .maybeSingle();
+
+        if (userData) {
+          updatedUser.active_academic_year = userData.active_academic_year;
+        }
+
         const { data: centerPerms } = await supabase
           .from('center_feature_permissions')
           .select('*')

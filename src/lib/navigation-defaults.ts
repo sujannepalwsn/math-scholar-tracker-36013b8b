@@ -29,7 +29,6 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Student ID Cards", route: "/student-id-cards", icon: "IdCard", role: "center", feature_name: "student_id_cards", category: 'Administration', order: 17 },
   { name: "Inventory & Assets", route: "/inventory", icon: "Archive", role: "center", feature_name: "inventory_assets", category: 'Administration', order: 18 },
   { name: "Transport & Tracking", route: "/transport", icon: "Bus", role: "center", feature_name: "transport_tracking", category: 'Administration', order: 19 },
-  { name: "School Days", route: "/school-days", icon: "CalendarDays", role: "center", feature_name: "school_days", category: 'Administration', order: 20 },
   { name: "Settings", route: "/settings", icon: "Settings", role: "center", feature_name: "settings_access", category: 'Administration', order: 21 },
 
   // Reports and Communication Group
@@ -57,7 +56,6 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Student ID Cards", route: "/student-id-cards", icon: "IdCard", role: "teacher", feature_name: "student_id_cards", category: 'Administration', order: 16 },
   { name: "Inventory & Assets", route: "/inventory", icon: "Archive", role: "teacher", feature_name: "inventory_assets", category: 'Administration', order: 17 },
   { name: "Transport & Tracking", route: "/transport", icon: "Bus", role: "teacher", feature_name: "transport_tracking", category: 'Administration', order: 18 },
-  { name: "School Days", route: "/school-days", icon: "CalendarDays", role: "teacher", feature_name: "school_days", category: 'Administration', order: 19 },
   { name: "Lesson Tracking", route: "/teacher/lesson-tracking", icon: "BookOpen", role: "teacher", feature_name: "lesson_tracking", category: 'Academics', order: 3 },
   { name: "Homework", route: "/teacher/homework-management", icon: "Book", role: "teacher", feature_name: "homework_management", category: 'Academics', order: 4 },
   { name: "Tests", route: "/teacher/test-management", icon: "ClipboardCheck", role: "teacher", feature_name: "test_management", category: 'Academics', order: 5 },
@@ -79,7 +77,6 @@ export const DEFAULT_NAV_ITEMS = [
   { name: "Summary", route: "/teacher/summary", icon: "BarChart3", role: "teacher", feature_name: "summary", category: 'Reports and Communication', order: 20 },
   { name: "View Records", route: "/teacher/view-records", icon: "FileText", role: "teacher", feature_name: "view_records", category: 'Reports and Communication', order: 21 },
   { name: "Finance", route: "/teacher/finance", icon: "DollarSign", role: "teacher", feature_name: "finance", category: 'Reports and Communication', order: 22 },
-  { name: "AI Insights", route: "/teacher/ai-insights", icon: "Brain", role: "teacher", feature_name: "ai_insights", category: 'Reports and Communication', order: 24 },
   { name: "About Institution", route: "/teacher/about-institution", icon: "Building", role: "teacher", feature_name: "about_institution", category: null, order: 25 },
 
   // Parent Defaults

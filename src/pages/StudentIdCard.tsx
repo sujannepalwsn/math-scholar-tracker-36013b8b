@@ -75,44 +75,35 @@ export default function StudentIdCard() {
   const selectedStudent = students.find((s: any) => s.id === selectedStudentId);
 
   const handlePrint = () => {
-    const content = printRef.current;
-    if (!content) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>Student ID Card</title><style>
-      body { font-family: sans-serif; display: block; padding: 20px; }
-      @media print { .no-print { display: none; } .page-break { page-break-after: always; } }
-      .id-card-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-      .id-card { width: 340px; border: 2px solid ${cardConfig.primaryColor}; border-radius: 12px; overflow: hidden; margin-bottom: 20px; background: white; }
-      .id-header { background: ${cardConfig.primaryColor}; color: white; padding: 16px; text-align: center; }
-      .id-header h2 { margin: 0; font-size: 16px; }
-      .id-header p { margin: 4px 0 0; font-size: 11px; opacity: 0.9; }
-      .id-body { padding: 16px; }
-      .id-photo { width: 80px; height: 80px; border-radius: 50%; border: 3px solid ${cardConfig.primaryColor}; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; overflow: hidden; }
-      .id-photo img { width: 100%; height: 100%; object-fit: cover; }
-      .id-name { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #1e293b; }
-      .id-field { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px solid #eee; }
-      .id-field .label { color: #64748b; }
-      .id-field .value { font-weight: 600; color: #1e293b; }
-      .id-footer { background: #f8fafc; padding: 8px; text-align: center; font-size: 10px; color: #64748b; }
-      .flex { display: flex; }
-      .justify-between { justify-content: space-between; }
-      .border-b { border-bottom: 1px solid #e2e8f0; }
-      .pb-1 { padding-bottom: 4px; }
-      .mb-3 { margin-bottom: 12px; }
-      .text-center { text-align: center; }
-      .font-bold { font-weight: bold; }
-      .text-lg { font-size: 1.125rem; }
-      .text-sm { font-size: 0.875rem; }
-      .font-semibold { font-weight: 600; }
-      .text-muted-foreground { color: #64748b; }
-    </style></head><body><div class="id-card-container">${content.innerHTML}</div></body></html>`);
-    printWindow.document.close();
-    printWindow.print();
+    window.print();
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000 page-enter">
+      <style>
+        {`
+          @media print {
+            body * { visibility: hidden; }
+            .printable-content, .printable-content * { visibility: visible; }
+            .printable-content {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            .id-card-print-grid {
+              display: grid !important;
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 20px !important;
+              justify-items: center !important;
+            }
+            .no-print { display: none !important; }
+            @page { size: A4; margin: 10mm; }
+          }
+        `}
+      </style>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -132,7 +123,7 @@ export default function StudentIdCard() {
         </div>
       </div>
 
-      <Card className="rounded-3xl border-none shadow-strong p-6 bg-card/40 backdrop-blur-md border border-white/20">
+      <Card className="no-print rounded-3xl border-none shadow-strong p-6 bg-card/40 backdrop-blur-md border border-white/20">
         <div className="flex flex-col md:flex-row gap-4 items-end">
           <div className="space-y-2 flex-1">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Card Theme Color</label>
@@ -156,7 +147,7 @@ export default function StudentIdCard() {
         </div>
       </Card>
 
-      <div className="relative group">
+      <div className="no-print relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-violet-500/20 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
         <Card className="relative border-none shadow-medium overflow-hidden bg-card/60 backdrop-blur-2xl border border-white/30 rounded-3xl">
           <CardContent className="p-6 flex flex-col sm:flex-row gap-6">
@@ -183,6 +174,7 @@ export default function StudentIdCard() {
         </Card>
       </div>
 
+      <div className="printable-content">
       {!selectedStudentId && !isBulkMode ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((s: any) => (
@@ -213,7 +205,7 @@ export default function StudentIdCard() {
             <Button variant="outline" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Bulk Print ({filteredStudents.length})</Button>
             <Button variant="outline" onClick={() => setIsBulkMode(false)}>Back to List</Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center" ref={printRef}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center id-card-print-grid" ref={printRef}>
             {filteredStudents.map((s: any) => (
               <div key={s.id} className="id-card w-[340px] border-2 rounded-xl overflow-hidden shadow-lg bg-white page-break" style={{ borderColor: cardConfig.primaryColor }}>
                 <div className="text-white p-4 text-center" style={{ backgroundColor: cardConfig.primaryColor }}>
@@ -262,7 +254,7 @@ export default function StudentIdCard() {
         </>
       ) : selectedStudent && (
         <>
-          <div className="flex gap-2 justify-end">
+          <div className="no-print flex gap-2 justify-end">
             <Button variant="outline" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Print</Button>
             <Button variant="outline" onClick={handlePrint}><Download className="h-4 w-4 mr-2" /> Download</Button>
             <Button variant="outline" onClick={() => setSelectedStudentId(null)}>Back to List</Button>
@@ -329,6 +321,7 @@ export default function StudentIdCard() {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

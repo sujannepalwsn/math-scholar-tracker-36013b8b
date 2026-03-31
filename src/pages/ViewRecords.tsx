@@ -49,7 +49,7 @@ interface StudentDetailAttendance {
 export default function ViewRecords() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [gradeFilter, setGradeFilter] = useState<string>("");
   const { currentPage, pageSize, setPage, getRange } = usePagination(50);
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const [showStudentDetailDialog, setShowStudentDetailDialog] = useState(false);
@@ -278,10 +278,9 @@ export default function ViewRecords() {
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 ml-1">Grade</label>
               <Select value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger className="h-11 bg-card/50 border-muted-foreground/10 focus:ring-primary/20 rounded-xl">
-                  <SelectValue placeholder="Grade" />
+                  <SelectValue placeholder="Select Grade" />
                 </SelectTrigger>
                 <SelectContent className="backdrop-blur-xl bg-card/90 border-muted-foreground/10 rounded-xl">
-                  <SelectItem value="all">All Grades</SelectItem>
                   {Array.from(new Set(students.map(s => s.grade))).map(g => (
                     <SelectItem key={g} value={g}>{g}</SelectItem>
                   ))}

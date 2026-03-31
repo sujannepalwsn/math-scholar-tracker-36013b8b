@@ -24,7 +24,6 @@ import { cn } from "@/lib/utils"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import TimetableAutomation from "@/components/center/TimetableAutomation";
 import { hasActionPermission } from "@/utils/permissions";
 import { logger } from "@/utils/logger";
 
@@ -738,9 +737,6 @@ export default function ClassRoutine() {
           <TabsTrigger value="schedule" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Schedule
           </TabsTrigger>
-          <TabsTrigger value="automation" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-            Automation
-          </TabsTrigger>
           <TabsTrigger value="periods" className="rounded-[1.5rem] flex-1 min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-medium flex items-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all duration-300">
             Slots
           </TabsTrigger>
@@ -885,10 +881,6 @@ export default function ClassRoutine() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="automation" className="outline-none">
-           <TimetableAutomation centerId={user?.center_id || ""} />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">
