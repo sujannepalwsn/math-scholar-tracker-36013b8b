@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { applyPackagePreset } from "@/utils/package-utils"
 
 const FEATURES = [
   { name: 'parent_portal', label: 'Parent Portal' },
@@ -199,58 +200,8 @@ export default function CenterFeaturePermissions() {
 
   const applyPackageMutation = useMutation({
     mutationFn: async ({ centerId, packageType }: { centerId: string; packageType: PackageType }) => {
-      const features = PACKAGE_FEATURES[packageType];
-
-      // 1. Update center package type
-      const { error: centerError } = await supabase
-        .from('centers')
-        .update({ package_type: packageType })
-        .eq('id', centerId);
-      if (centerError) throw centerError;
-
-      // 2. Update center permissions
-      const existingPerm = permissionsByCenter[centerId];
-      if (existingPerm) {
-        const { error } = await supabase
-          .from('center_feature_permissions')
-          .update(features)
-          .eq('center_id', centerId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('center_feature_permissions')
-          .insert({ center_id: centerId, ...features });
-        if (error) throw error;
-      }
-
-      // 3. Update all teachers in this center
-      const centerTeachers = teachers.filter((t: any) => t.center_id === centerId);
-      for (const teacher of centerTeachers) {
-        const existingTPerm = permissionsByTeacher[teacher.id];
-        // For teachers, we only sync a subset or just matching names from the package features
-        // Based on memory and current TEACHER_FEATURES, we apply what matches
-        const teacherPermissionsUpdate: Record<string, boolean> = {};
-        TEACHER_FEATURES.forEach(tf => {
-          if (features[tf.name] !== undefined) {
-            teacherPermissionsUpdate[tf.name] = features[tf.name];
-          }
-        });
-
-        if (existingTPerm) {
-          const { error } = await supabase
-            .from('teacher_feature_permissions')
-            .update(teacherPermissionsUpdate)
-            .eq('teacher_id', teacher.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('teacher_feature_permissions')
-            .insert({ teacher_id: teacher.id, ...teacherPermissionsUpdate });
-          if (error) throw error;
-        }
-      }
-
-      return { centerId, features };
+      const result = await applyPackagePreset(centerId, packageType);
+      return { centerId, features: result.features };
     },
     onSuccess: ({ centerId, features }) => {
       queryClient.invalidateQueries({ queryKey: ['center-feature-permissions'] });

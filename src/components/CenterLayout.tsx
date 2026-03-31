@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 import { logger } from "@/utils/logger";
+import { AlertTriangle } from "lucide-react";
+import { addDays, differenceInDays } from "date-fns";
 
 const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === UserRole.CENTER);
 
@@ -33,6 +35,21 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
   };
 
   const queryClient = useQueryClient();
+  const { data: currentSub } = useQuery({
+    queryKey: ["center-active-subscription", user?.center_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("center_subscriptions")
+        .select("*, subscription_plans(name)")
+        .eq("center_id", user?.center_id)
+        .eq("status", "Active")
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!user?.center_id,
+  });
+
   const { data: unreadMessageCount = 0 } = useQuery({
     queryKey: ["unread-messages-center", user?.id, user?.center_id],
     queryFn: async () => {
@@ -193,6 +210,41 @@ export default function CenterLayout({ children }: { children: React.ReactNode }
         "px-4 pb-20 md:p-6 lg:p-8",
         sidebarCollapsed ? "md:ml-24" : "md:ml-72"
       )}>
+        {/* Subscription Alert */}
+        {currentSub && user?.role === UserRole.CENTER && (
+          (() => {
+            const expiryDate = addDays(new Date(currentSub.start_date), currentSub.subscription_days || 30);
+            const daysLeft = differenceInDays(expiryDate, new Date());
+
+            if (daysLeft <= 7) {
+              return (
+                <div className={cn(
+                  "sticky top-0 z-50 px-4 py-2 flex items-center justify-between text-[10px] font-black uppercase tracking-widest",
+                  daysLeft <= 0 ? "bg-rose-600 text-white" : "bg-amber-400 text-amber-950"
+                )}>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    <span>
+                      {daysLeft <= 0
+                        ? `Institutional access expired on ${expiryDate.toLocaleDateString()}. Renew immediately to prevent service interruption.`
+                        : `Institutional subscription expires in ${daysLeft} days. Please renew your plan.`
+                      }
+                    </span>
+                  </div>
+                  <Button
+                    variant="link"
+                    onClick={() => navigate('/settings?tab=subscription')}
+                    className="h-auto p-0 text-[10px] font-black uppercase text-inherit underline underline-offset-2"
+                  >
+                    Renew Now
+                  </Button>
+                </div>
+              );
+            }
+            return null;
+          })()
+        )}
+
         {/* Navigation spacer for mobile fixed header */}
         <div className="md:hidden h-4" />
 
