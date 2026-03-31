@@ -6,13 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock, FileText, AlertCircle, Layers, RefreshCw } from "lucide-react";
+import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock, FileText, AlertCircle, Layers, RefreshCw, ListChecks, Info, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets";
 import { calculateProRatedAmount } from "@/utils/package-utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/integrations/supabase/finance-types";
 import { addDays, differenceInDays, format } from "date-fns";
+import { SYSTEM_MODULES } from "@/lib/system-modules";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function SubscriptionPlans() {
   const { user } = useAuth();
@@ -58,20 +61,23 @@ export default function SubscriptionPlans() {
     enabled: !!user?.center_id,
   });
 
+  const [requestPlan, setRequestPlan] = useState<any>(null);
+
   const subscribeMutation = useMutation({
-    mutationFn: async ({ planId, packageType, isRenewal = false, proRatedAmount }: { planId: string, packageType: string, isRenewal?: boolean, proRatedAmount?: number }) => {
+    mutationFn: async ({ planId, packageType, proRatedAmount }: { planId: string, packageType: string, proRatedAmount?: number }) => {
       // Create a pending subscription request
       const { error } = await supabase.from("center_subscriptions").insert({
         center_id: user?.center_id,
         plan_id: planId,
         package_type: packageType,
         status: "Pending",
-        billed_amount: proRatedAmount // Will be used by Admin to confirm invoice amount
+        billed_amount: proRatedAmount
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["center-current-subscription"] });
+      setRequestPlan(null);
       toast.success("Subscription request sent to Admin for approval.");
     },
     onError: (error: any) => {
@@ -146,27 +152,62 @@ export default function SubscriptionPlans() {
                     <BarChart3 className="h-4 w-4 text-purple-500" />
                     Full Reports Access
                   </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                    24/7 Priority Support
-                  </div>
-                  <div className="flex items-start gap-3 pt-2 border-t border-slate-100">
-                    <Layers className="h-4 w-4 text-amber-500 mt-1 shrink-0" />
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-slate-400">Included Modules ({p.features?.[0] || 'Basic'})</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {Object.entries(PACKAGE_FEATURES[(p.features?.[0] as PackageType) || 'Basic'])
-                            .filter(([_, enabled]) => enabled)
-                            .slice(0, 6)
-                            .map(([feat]) => (
-                              <span key={feat} className="text-[9px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 text-slate-500 font-medium">
-                                 {feat.replace(/_/g, ' ')}
-                              </span>
-                            ))
-                          }
-                          <span className="text-[9px] text-slate-400 px-1 font-bold">+ More</span>
-                        </div>
-                    </div>
+
+                  <div className="pt-4 border-t border-slate-100">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" className="w-full justify-start h-10 px-0 hover:bg-transparent group/break">
+                           <div className="flex items-center gap-3 text-sm font-bold text-slate-600 group-hover/break:text-primary transition-colors">
+                              <ListChecks className="h-4 w-4 text-amber-500" />
+                              View Module Breakdown
+                              <Info className="h-3 w-3 opacity-40" />
+                           </div>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl rounded-[2.5rem] border-none shadow-strong bg-card/95 backdrop-blur-xl">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl font-black uppercase tracking-tight">
+                            {p.name} Institutional Suite
+                          </DialogTitle>
+                          <DialogDescription className="font-bold text-primary uppercase text-[10px] tracking-widest">
+                            Comprehensive Module Inventory
+                          </DialogDescription>
+                        </DialogHeader>
+                        <ScrollArea className="h-[450px] pr-4 mt-4">
+                          <div className="space-y-6">
+                            {SYSTEM_MODULES.map((mod) => {
+                              const isIncluded = mod.feature_mapping.some(f => PACKAGE_FEATURES[(p.features?.[0] as PackageType) || 'Basic'][f]);
+                              return (
+                                <div key={mod.id} className={cn(
+                                  "p-5 rounded-3xl border transition-all duration-300",
+                                  isIncluded ? "bg-white shadow-soft border-emerald-100" : "bg-slate-50/50 border-slate-100 opacity-50 grayscale"
+                                )}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                       <div className={cn("w-2 h-2 rounded-full", isIncluded ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
+                                       <h4 className="font-black text-sm uppercase tracking-tight">{mod.name}</h4>
+                                    </div>
+                                    {isIncluded ? (
+                                      <Badge className="bg-emerald-50 text-emerald-600 border-none text-[9px] font-black uppercase">Standard Feature</Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-[9px] font-black uppercase text-slate-400">Locked</Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-slate-500 font-medium mb-4 leading-relaxed">{mod.description}</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {mod.key_functionalities.map((func, i) => (
+                                      <span key={i} className="text-[9px] bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 text-slate-600 font-bold italic">
+                                        {func}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </ScrollArea>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
 
@@ -187,13 +228,13 @@ export default function SubscriptionPlans() {
                       proRatedAmount: amount
                     });
                   }}
-                  disabled={isCurrent || subscribeMutation.isPending || (currentSub?.status === 'Pending' && currentSub?.plan_id === p.id)}
+                  disabled={isCurrent || (currentSub?.status === 'Pending' && currentSub?.plan_id === p.id)}
                   className={cn(
                     "w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest transition-all",
                     isCurrent ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-50" : "bg-slate-900 text-white shadow-lg"
                   )}
                 >
-                  {isCurrent ? "Currently Active" : subscribeMutation.isPending ? "Requesting..." : "Request Upgrade"}
+                  {isCurrent ? "Currently Active" : "Request Upgrade"}
                 </Button>
               </CardContent>
             </Card>
@@ -225,11 +266,13 @@ export default function SubscriptionPlans() {
             </div>
             <div className="flex items-center gap-4">
                <Button
-                 onClick={() => subscribeMutation.mutate({
-                   planId: currentSub.plan_id,
-                   packageType: currentSub.package_type,
-                   isRenewal: true,
-                   proRatedAmount: currentSub.subscription_plans?.price
+                 onClick={() => setRequestPlan({
+                    id: currentSub.plan_id,
+                    name: currentSub.subscription_plans?.name,
+                    package_type: currentSub.package_type,
+                    price: currentSub.subscription_plans?.price,
+                    isRenewal: true,
+                    proRatedAmount: currentSub.subscription_plans?.price
                  })}
                  variant="outline"
                  className="rounded-xl font-black uppercase text-[10px] tracking-widest border-2 h-11 px-6 bg-white"
@@ -270,6 +313,65 @@ export default function SubscriptionPlans() {
         </h3>
         <p className="text-sm text-muted-foreground font-medium">Review your subscription payments and institutional billing history.</p>
       </div>
+
+      {/* Request Confirmation Dialog */}
+      <Dialog open={!!requestPlan} onOpenChange={(open) => !open && setRequestPlan(null)}>
+        <DialogContent className="rounded-[2.5rem] border-none shadow-strong">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight">Confirm Plan Request</DialogTitle>
+            <DialogDescription className="font-medium">Please review the details before submitting to Admin for approval.</DialogDescription>
+          </DialogHeader>
+          {requestPlan && (
+            <div className="space-y-6 pt-4">
+               <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10">
+                  <div className="flex justify-between items-center mb-4">
+                     <p className="text-[10px] font-black uppercase text-slate-400">Target Plan</p>
+                     <Badge className="bg-primary text-white border-none uppercase font-black text-[10px]">{requestPlan.name}</Badge>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                     <p className="text-3xl font-black">{formatCurrency(requestPlan.proRatedAmount || requestPlan.price)}</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase">Approval Estimate</p>
+                  </div>
+                  {requestPlan.proRatedAmount && requestPlan.proRatedAmount !== requestPlan.price && (
+                    <p className="text-[10px] font-bold text-primary mt-2 italic">
+                       * Includes pro-rated adjustments for your current billing cycle.
+                    </p>
+                  )}
+               </div>
+
+               <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    Automated Invoice Generation
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    Feature Preset Synchronization
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    24-Hour Approval SLA
+                  </div>
+               </div>
+
+               <div className="flex gap-3 pt-4">
+                  <Button variant="ghost" onClick={() => setRequestPlan(null)} className="flex-1 rounded-xl uppercase font-black text-[10px]">Cancel</Button>
+                  <Button
+                    onClick={() => subscribeMutation.mutate({
+                      planId: requestPlan.id,
+                      packageType: requestPlan.package_type,
+                      proRatedAmount: requestPlan.proRatedAmount
+                    })}
+                    disabled={subscribeMutation.isPending}
+                    className="flex-1 h-12 rounded-xl bg-slate-900 text-white uppercase font-black text-[10px]"
+                  >
+                    {subscribeMutation.isPending ? "Processing..." : "Submit Request"} <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Card className="border-none shadow-strong overflow-hidden rounded-3xl bg-white">
         <CardContent className="p-0">

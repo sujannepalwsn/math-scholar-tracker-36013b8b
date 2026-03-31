@@ -50,22 +50,48 @@ export const applyPackagePreset = async (centerId: string, packageType: PackageT
   ];
 
   if (teachers && teachers.length > 0) {
+    // We update BOTH the legacy boolean columns and the new JSONB 'permissions' column
     const teacherUpdates = teachers.map(teacher => {
       const teacherPermissionsUpdate: Record<string, any> = {
         teacher_id: teacher.id
       };
 
+      const granularPermissions: Record<string, any> = {};
+
       TEACHER_VALID_FEATURES.forEach(fn => {
         if (features[fn] !== undefined) {
-          teacherPermissionsUpdate[fn] = features[fn];
+          const isEnabled = features[fn];
+          teacherPermissionsUpdate[fn] = isEnabled;
+
+          granularPermissions[fn] = {
+            enabled: isEnabled,
+            can_view: isEnabled,
+            can_edit: isEnabled,
+            can_approve: (fn === 'lesson_plans' || fn === 'leave_management') ? isEnabled : false,
+            can_publish: (fn === 'exams_results' || fn === 'published_results') ? isEnabled : false
+          };
         }
       });
 
       // Special mappings for fields with slightly different names in teacher table
       if (features['student_report'] !== undefined) {
-        teacherPermissionsUpdate['student_report_access'] = features['student_report'];
+        const isEnabled = features['student_report'];
+        teacherPermissionsUpdate['student_report_access'] = isEnabled;
+        granularPermissions['student_report'] = {
+           enabled: isEnabled,
+           can_view: isEnabled,
+           can_edit: isEnabled,
+           can_approve: false,
+           can_publish: false
+        };
       }
 
+      // Fix: 'activities' is a legacy boolean column mapping to 'preschool_activities'
+      if (features['preschool_activities'] !== undefined) {
+          teacherPermissionsUpdate['activities'] = features['preschool_activities'];
+      }
+
+      teacherPermissionsUpdate['permissions'] = granularPermissions;
       return teacherPermissionsUpdate;
     });
 

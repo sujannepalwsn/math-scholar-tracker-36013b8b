@@ -7,16 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee, Layers } from "lucide-react";
+import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee, Layers, ListChecks, Info, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { applyPackagePreset } from "@/utils/package-utils";
 import { PackageType, PACKAGE_FEATURES } from "@/lib/package-presets";
 import { formatCurrency } from "@/integrations/supabase/finance-types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SYSTEM_MODULES } from "@/lib/system-modules";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function SubscriptionManagement() {
   const queryClient = useQueryClient();
   const [showAddPlan, setShowAddPlan] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [modifyingSub, setModifyingSub] = useState<any>(null);
   const [planForm, setPlanForm] = useState({
     name: "",
     price: "",
@@ -152,21 +157,70 @@ export default function SubscriptionManagement() {
 
   const addPlanMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("subscription_plans").insert({
-        name: planForm.name,
-        price: parseFloat(planForm.price),
-        limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
-        features: [planForm.packageType] // Store the package preset in the features array
-      });
-      if (error) throw error;
+      if (editingPlan) {
+        const { error } = await supabase.from("subscription_plans").update({
+          name: planForm.name,
+          price: parseFloat(planForm.price),
+          limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
+          features: [planForm.packageType]
+        }).eq('id', editingPlan.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("subscription_plans").insert({
+          name: planForm.name,
+          price: parseFloat(planForm.price),
+          limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
+          features: [planForm.packageType]
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription-plans"] });
       setPlanForm({ name: "", price: "", students: "100", teachers: "10", packageType: "Basic" });
       setShowAddPlan(false);
-      toast.success("Subscription plan created");
+      setEditingPlan(null);
+      toast.success(editingPlan ? "Subscription plan updated" : "Subscription plan created");
     }
   });
+
+  const modifySubscriptionMutation = useMutation({
+    mutationFn: async (values: any) => {
+      const planId = values.planId || values.plan_id;
+      const packageType = values.packageType || values.package_type;
+
+      const { error } = await supabase
+        .from('center_subscriptions')
+        .update({
+          plan_id: planId,
+          status: values.status,
+          package_type: packageType
+        })
+        .eq('id', values.id);
+      if (error) throw error;
+
+      if (values.status === 'Active') {
+        await applyPackagePreset(values.center_id, packageType as PackageType);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["center-subscriptions"] });
+      setModifyingSub(null);
+      toast.success("Subscription modified successfully");
+    }
+  });
+
+  const handleEditPlan = (plan: any) => {
+    setEditingPlan(plan);
+    setPlanForm({
+      name: plan.name,
+      price: plan.price.toString(),
+      students: plan.limits?.max_students?.toString() || "100",
+      teachers: plan.limits?.max_teachers?.toString() || "10",
+      packageType: (plan.features?.[0] as PackageType) || "Basic"
+    });
+    setShowAddPlan(true);
+  };
 
   return (
     <div className="space-y-8">
@@ -174,7 +228,10 @@ export default function SubscriptionManagement() {
         <h3 className="text-xl font-black uppercase tracking-tight text-slate-700 flex items-center gap-2">
           <Zap className="h-5 w-5 text-amber-500" /> Subscription Ecosystem
         </h3>
-        <Button onClick={() => setShowAddPlan(!showAddPlan)} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
+        <Button onClick={() => {
+          setShowAddPlan(!showAddPlan);
+          if (showAddPlan) setEditingPlan(null);
+        }} className="rounded-xl font-bold uppercase text-[10px] tracking-widest">
           {showAddPlan ? "Cancel" : "Create Plan"}
         </Button>
       </div>
@@ -208,8 +265,30 @@ export default function SubscriptionManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-end md:col-span-4">
-                   <Button onClick={() => addPlanMutation.mutate()} className="w-full h-12 rounded-2xl font-black uppercase text-xs tracking-widest bg-slate-900 text-white shadow-lg">Save Plan</Button>
+
+                <div className="md:col-span-4 p-6 rounded-3xl bg-slate-50 border border-slate-100">
+                   <div className="flex items-center gap-2 mb-3">
+                      <ListChecks className="h-4 w-4 text-primary" />
+                      <p className="text-[10px] font-black uppercase text-slate-500">Preset Module Preview</p>
+                   </div>
+                   <div className="flex flex-wrap gap-2">
+                      {SYSTEM_MODULES.filter(m => m.feature_mapping.some(f => PACKAGE_FEATURES[planForm.packageType][f]))
+                        .map(m => (
+                          <Badge key={m.id} variant="outline" className="bg-white text-[9px] font-bold py-0.5 border-slate-200">
+                             {m.name}
+                          </Badge>
+                        ))
+                      }
+                   </div>
+                </div>
+
+                <div className="flex items-end md:col-span-4 gap-4">
+                   <Button onClick={() => addPlanMutation.mutate()} className="flex-1 h-12 rounded-2xl font-black uppercase text-xs tracking-widest bg-slate-900 text-white shadow-lg">
+                     {editingPlan ? "Update Plan Configuration" : "Save Plan"}
+                   </Button>
+                   {editingPlan && (
+                     <Button variant="ghost" onClick={() => { setEditingPlan(null); setShowAddPlan(false); }} className="h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest">Cancel</Button>
+                   )}
                 </div>
              </div>
           </CardContent>
@@ -259,7 +338,62 @@ export default function SubscriptionManagement() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest">Manage</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleEditPlan(p)}
+                  className="flex-1 h-12 rounded-2xl border-2 font-black uppercase text-[10px] tracking-widest"
+                >
+                  <Pencil className="h-3 w-3 mr-1" /> Edit
+                </Button>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" className="h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-slate-50">
+                      <ListChecks className="h-4 w-4 mr-1 text-primary" /> Breakdown
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl rounded-[2rem]">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-black uppercase tracking-tight">
+                        {p.name} Package Breakdown
+                      </DialogTitle>
+                      <DialogDescription className="font-bold text-primary uppercase text-[10px] tracking-widest">
+                        Full Module Inventory & Capabilities
+                      </DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="h-[400px] pr-4">
+                      <div className="space-y-6 pt-4">
+                        {SYSTEM_MODULES.map((mod) => {
+                          const isIncluded = mod.feature_mapping.some(f => PACKAGE_FEATURES[(p.features?.[0] as PackageType) || 'Basic'][f]);
+                          return (
+                            <div key={mod.id} className={cn(
+                              "p-4 rounded-2xl border transition-all",
+                              isIncluded ? "bg-emerald-50/50 border-emerald-100" : "bg-slate-50 border-slate-100 opacity-60"
+                            )}>
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-black text-sm uppercase">{mod.name}</h4>
+                                {isIncluded ? (
+                                  <Badge className="bg-emerald-500 text-white border-none text-[9px] font-black uppercase">Included</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[9px] font-black uppercase">Not in Tier</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-500 font-medium mb-3">{mod.description}</p>
+                              <div className="flex flex-wrap gap-1">
+                                {mod.key_functionalities.map((func, i) => (
+                                  <span key={i} className="text-[9px] bg-white px-2 py-0.5 rounded-full border border-slate-100 text-slate-600 font-bold italic">
+                                    • {func}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </DialogContent>
+                </Dialog>
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -365,7 +499,14 @@ export default function SubscriptionManagement() {
                   </TableCell>
                   <TableCell className="text-xs font-medium text-slate-500">{sub.end_date ? new Date(sub.end_date).toLocaleDateString() : 'Lifetime'}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase text-primary">Modify</Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setModifyingSub(sub)}
+                      className="font-black text-[10px] uppercase text-primary"
+                    >
+                      Modify
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -377,6 +518,81 @@ export default function SubscriptionManagement() {
 </div>
         </CardContent>
       </Card>
+
+      {/* Modification Dialog */}
+      <Dialog open={!!modifyingSub} onOpenChange={(open) => !open && setModifyingSub(null)}>
+        <DialogContent className="rounded-[2.5rem] border-none shadow-strong">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight">Manual Override: {modifyingSub?.centers?.name}</DialogTitle>
+            <DialogDescription className="font-medium">Force update institutional subscription parameters.</DialogDescription>
+          </DialogHeader>
+          {modifyingSub && (
+            <div className="space-y-6 pt-4">
+               <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase">Institutional Plan</Label>
+                 <Select
+                   defaultValue={modifyingSub.plan_id}
+                   onValueChange={(val) => setModifyingSub({...modifyingSub, planId: val})}
+                 >
+                   <SelectTrigger className="h-12 rounded-2xl">
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {plans?.map((p: any) => (
+                       <SelectItem key={p.id} value={p.id}>{p.name} ({formatCurrency(p.price)})</SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
+               </div>
+
+               <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase">Status Override</Label>
+                 <Select
+                   defaultValue={modifyingSub.status}
+                   onValueChange={(val) => setModifyingSub({...modifyingSub, status: val})}
+                 >
+                   <SelectTrigger className="h-12 rounded-2xl">
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="Active">Active</SelectItem>
+                     <SelectItem value="Pending">Pending</SelectItem>
+                     <SelectItem value="Inactive">Inactive</SelectItem>
+                     <SelectItem value="Rejected">Rejected</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+
+               <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase">Package Preset Force</Label>
+                 <Select
+                   defaultValue={modifyingSub.package_type || 'Basic'}
+                   onValueChange={(val) => setModifyingSub({...modifyingSub, packageType: val})}
+                 >
+                   <SelectTrigger className="h-12 rounded-2xl">
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="Basic">Basic</SelectItem>
+                     <SelectItem value="Standard">Standard</SelectItem>
+                     <SelectItem value="Premium">Premium</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+
+               <div className="flex gap-3 pt-4">
+                 <Button variant="ghost" onClick={() => setModifyingSub(null)} className="flex-1 rounded-xl uppercase font-black text-[10px]">Cancel</Button>
+                 <Button
+                   onClick={() => modifySubscriptionMutation.mutate(modifyingSub)}
+                   className="flex-1 h-12 rounded-xl bg-slate-900 text-white uppercase font-black text-[10px]"
+                 >
+                   Commit Overrides
+                 </Button>
+               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-col gap-1 mt-12">
         <h3 className="text-xl font-black uppercase tracking-tight text-slate-700 flex items-center gap-2">
