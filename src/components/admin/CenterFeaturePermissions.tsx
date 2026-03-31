@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { Calendar, Package, Sparkles } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -7,7 +8,6 @@ import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets"
-import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { applyPackagePreset } from "@/utils/package-utils"
 

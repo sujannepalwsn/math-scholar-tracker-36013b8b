@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock, FileText, AlertCircle, Layers, RefreshCw, ListChecks, Info, ArrowRight } from "lucide-react";
+import { CheckCircle2, Zap, Users, Shield, BarChart3, Clock, FileText, AlertCircle, Layers, RefreshCw, ListChecks, Info, ArrowRight, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PACKAGE_FEATURES, PackageType } from "@/lib/package-presets";
+import { PACKAGE_FEATURES, PackageType, PACKAGE_HIGHLIGHTS } from "@/lib/package-presets";
 import { calculateProRatedAmount } from "@/utils/package-utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/integrations/supabase/finance-types";
@@ -144,13 +144,17 @@ export default function SubscriptionPlans() {
                     <Users className="h-4 w-4 text-blue-500" />
                     Up to {p.limits?.max_students || 0} Students
                   </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
-                    <Shield className="h-4 w-4 text-emerald-500" />
-                    Security & Permissions
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
-                    <BarChart3 className="h-4 w-4 text-purple-500" />
-                    Full Reports Access
+
+                  <div className="pt-4 border-t border-slate-100">
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-3">Key Features</p>
+                    <div className="space-y-2">
+                      {PACKAGE_HIGHLIGHTS[(p.features?.[0] as PackageType) || 'Basic'].slice(0, 5).map((highlight, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
+                          <CheckCircle className="h-3 w-3 text-emerald-500 shrink-0" />
+                          <span className="truncate">{highlight}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="pt-4 border-t border-slate-100">

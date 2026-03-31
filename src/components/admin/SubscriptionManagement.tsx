@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee, Layers, ListChecks, Info, Pencil } from "lucide-react";
+import { Shield, Plus, Trash2, Zap, BarChart3, Users, CheckCircle2, Clock, Check, X, FileText, IndianRupee, Layers, ListChecks, Info, Pencil, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { applyPackagePreset } from "@/utils/package-utils";
-import { PackageType, PACKAGE_FEATURES } from "@/lib/package-presets";
+import { PackageType, PACKAGE_FEATURES, PACKAGE_HIGHLIGHTS } from "@/lib/package-presets";
 import { formatCurrency } from "@/integrations/supabase/finance-types";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,46 +60,55 @@ export default function SubscriptionManagement() {
 
   const approveSubscriptionMutation = useMutation({
     mutationFn: async ({ subId, centerId, planId, packageType, amount }: { subId: string, centerId: string, planId: string, packageType: string, amount: number }) => {
-      // 0. Deactivate existing active subscriptions
-      await supabase
+      console.log(`Starting approval for sub ${subId}, center ${centerId}, package ${packageType}`);
+
+      // 1. Deactivate existing active subscriptions
+      const { error: deactivateError } = await supabase
         .from('center_subscriptions')
         .update({ status: 'Inactive' })
         .eq('center_id', centerId)
         .eq('status', 'Active');
 
-      // 1. Mark subscription as active
+      if (deactivateError) console.error("Error deactivating old subs:", deactivateError);
+
+      // 2. Mark subscription as active
       const { error: subError } = await supabase
         .from('center_subscriptions')
         .update({
           status: 'Active',
           start_date: new Date().toISOString(),
-          billed_amount: amount // Store final approved amount
+          billed_amount: amount
         })
         .eq('id', subId);
-      if (subError) throw subError;
 
-      // 2. Apply package features
-      // Fallback to plan name if packageType is missing (for legacy)
+      if (subError) {
+        console.error("Error activating sub:", subError);
+        throw subError;
+      }
+
+      // 3. Apply package features - CRITICAL STEP
       const finalPackage = (packageType || 'Basic') as PackageType;
-      await applyPackagePreset(centerId, finalPackage);
+      const result = await applyPackagePreset(centerId, finalPackage);
+      console.log("Package preset application result:", result);
 
-      // 3. Generate SaaS Invoice
+      // 4. Generate SaaS Invoice
       const { error: invError } = await supabase
         .from('saas_invoices')
         .insert({
           center_id: centerId,
           plan_id: planId,
           amount: amount,
-          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           status: 'Unpaid'
         });
-      if (invError) throw invError;
 
-      // 4. Send Notification to Center
+      if (invError) console.error("Error generating invoice:", invError);
+
+      // 5. Send Notification to Center
       await supabase.from('notifications').insert({
         center_id: centerId,
-        title: 'Subscription Approved',
-        message: `Your request for the ${packageType} plan has been approved. Package features have been applied automatically.`,
+        title: '🚀 Subscription Approved!',
+        message: `Your request for the ${packageType} plan has been approved. All ${packageType} features are now active for your institution.`,
         type: 'subscription',
         is_read: false
       });
@@ -126,12 +135,20 @@ export default function SubscriptionManagement() {
   });
 
   const markAsPaidMutation = useMutation({
-    mutationFn: async (invoiceId: string) => {
+    mutationFn: async ({ invoiceId, centerId }: { invoiceId: string, centerId: string }) => {
       const { error } = await supabase
         .from('saas_invoices')
         .update({ status: 'Paid', payment_date: new Date().toISOString() })
         .eq('id', invoiceId);
       if (error) throw error;
+
+      await supabase.from('notifications').insert({
+        center_id: centerId,
+        title: '💰 Payment Received',
+        message: `Your payment for the subscription invoice has been recorded. Thank you for your continued partnership!`,
+        type: 'finance',
+        is_read: false
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-saas-invoices"] });
@@ -315,27 +332,20 @@ export default function SubscriptionManagement() {
                   <Shield className="h-4 w-4 text-emerald-500" />
                   Advanced RLS Security
                 </div>
-                <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
-                  <BarChart3 className="h-4 w-4 text-purple-500" />
-                  Institutional Analytics
-                </div>
-                <div className="flex items-start gap-3 pt-2 border-t border-slate-100">
-                   <Layers className="h-4 w-4 text-amber-500 mt-1 shrink-0" />
-                   <div>
-                      <p className="text-[10px] font-black uppercase text-slate-400">Included Modules ({p.features?.[0] || 'Basic'})</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {Object.entries(PACKAGE_FEATURES[(p.features?.[0] as PackageType) || 'Basic'])
-                          .filter(([_, enabled]) => enabled)
-                          .slice(0, 6)
-                          .map(([feat]) => (
-                            <span key={feat} className="text-[9px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 text-slate-500 font-medium">
-                               {feat.replace(/_/g, ' ')}
-                            </span>
-                          ))
-                        }
-                        <span className="text-[9px] text-slate-400 px-1 font-bold">+ More</span>
+
+                <div className="pt-4 border-t border-slate-100">
+                  <p className="text-[10px] font-black uppercase text-slate-400 mb-3">Key Features</p>
+                  <div className="space-y-2">
+                    {PACKAGE_HIGHLIGHTS[(p.features?.[0] as PackageType) || 'Basic'].slice(0, 5).map((highlight, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
+                        <CheckCircle className="h-3 w-3 text-emerald-500 shrink-0" />
+                        <span className="truncate">{highlight}</span>
                       </div>
-                   </div>
+                    ))}
+                    {PACKAGE_HIGHLIGHTS[(p.features?.[0] as PackageType) || 'Basic'].length > 5 && (
+                      <p className="text-[9px] font-black text-primary uppercase pl-5">+ {PACKAGE_HIGHLIGHTS[(p.features?.[0] as PackageType) || 'Basic'].length - 5} More Modules</p>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -633,7 +643,7 @@ export default function SubscriptionManagement() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => markAsPaidMutation.mutate(inv.id)}
+                        onClick={() => markAsPaidMutation.mutate({ invoiceId: inv.id, centerId: inv.center_id })}
                         className="h-8 rounded-lg border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-[10px] font-black uppercase"
                       >
                         <IndianRupee className="h-3 w-3 mr-1" /> Mark Paid
