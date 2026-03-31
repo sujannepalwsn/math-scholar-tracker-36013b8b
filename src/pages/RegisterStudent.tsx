@@ -389,6 +389,11 @@ export default function RegisterStudent() {
       if (!data.success) throw new Error(data.error || 'Failed to create parent account via Edge Function');
       return data;
     },
+    onMutate: () => {
+      if (!hasPermission(user, 'parent_portal')) {
+        throw new Error("Parent Portal feature is disabled. Enable it to create parent accounts.");
+      }
+    },
     onSuccess: () => {
       toast.success("Parent account created successfully");
       setIsCreatingParent(false);
@@ -1044,9 +1049,11 @@ export default function RegisterStudent() {
                               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleEdit(student)}>
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleCreateParentAccount(student)}>
-                                <UserPlus className="h-3.5 w-3.5" />
-                              </Button>
+                              {hasPermission(user, 'parent_portal') && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-white shadow-soft text-primary hover:bg-primary/5" onClick={() => handleCreateParentAccount(student)}>
+                                  <UserPlus className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
