@@ -43,13 +43,43 @@ serve(async (req) => {
       );
     }
 
-    // Verify password
+    // Verify password using bcrypt (matching how the application stores hashes)
     const passwordMatch = await bcrypt.compare(password, userData.password_hash);
     if (!passwordMatch) {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid username or password' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
+    }
+
+    // AUTHENTICATE IN SUPABASE AUTH TO RESTORE RLS (auth.uid())
+    // Note: This assumes the email/password for Supabase Auth matches the username/password
+    // OR we manage Supabase Auth sessions separately.
+    // In this app, users have both a public.users record and a corresponding auth.users record.
+    const { data: authData, error: authError } = await supabaseClient.auth.admin.getUserById(userData.id);
+
+    let session = null;
+    if (authData?.user) {
+      // Since we don't have the user's password for Supabase Auth (it might be different from userData.password_hash)
+      // We can generate a login link or just create a signed JWT if we're doing custom auth.
+      // However, the standard way in this template is using supabase.auth.signInWithPassword.
+
+      // If we are using the Edge Function to bridge, we need to sign them in.
+      // We can try to use the user's email if it exists.
+      const userEmail = authData.user.email;
+      if (userEmail) {
+        // Authenticate as the user to get a session
+        const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
+          email: userEmail,
+          password: password,
+        });
+
+        if (signInData?.session) {
+          session = signInData.session;
+        } else {
+          console.error(JSON.stringify({ event: 'error', message: 'Failed to create Supabase session:', details: signInError }));
+        }
+      }
     }
 
     // Build user object with related data
@@ -88,7 +118,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch all linked students for parent (from junction table)
+    // Fetch all linked students for parent
     if (userData.role === 'parent') {
       const { data: linkedStudents } = await supabaseClient
         .from('parent_students')
@@ -117,9 +147,6 @@ serve(async (req) => {
       }
     }
 
-    // SECURITY: Permission payloads are no longer returned during login to prevent client-side manipulation.
-    // The frontend should fetch these permissions dynamically and verify them against RLS policies.
-
     // Update last login
     await supabaseClient
       .from('users')
@@ -127,7 +154,7 @@ serve(async (req) => {
       .eq('id', userData.id);
 
     return new Response(
-      JSON.stringify({ success: true, user }),
+      JSON.stringify({ success: true, user, session }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 

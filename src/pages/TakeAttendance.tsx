@@ -108,7 +108,8 @@ export default function TakeAttendance() {
 
   const hasEditPermission = hasActionPermission(user, 'take_attendance', 'edit');
 
-  // Debug logging for troubleshooting - will be visible in browser console in development
+  // Security Audit Logging - restricted to development environment only.
+  // Sensitive IDs and security scopes are never logged in production console.
   useEffect(() => {
     if (user && import.meta.env.DEV) {
       logger.debug("TakeAttendance [Security Audit]:", {

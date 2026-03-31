@@ -17,6 +17,20 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Security: Only allow initialization if no admin exists at all
+    const { count, error: countError } = await supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'admin');
+
+    if (countError) throw countError;
+    if (count && count > 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden: Admin user already exists. This function can only be used for initial setup.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Check if admin exists
     const { data: existingAdmin } = await supabase
       .from('users')

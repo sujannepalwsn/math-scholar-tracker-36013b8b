@@ -12,6 +12,14 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -23,31 +31,40 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Get user from auth header
-    const authHeader = req.headers.get('Authorization')!;
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let targetStudentIds: string[] | null = null;
     let centerId: string | null = null;
 
-    if (user) {
-      const { data: profile } = await supabase.from('users').select('center_id, role, teacher_id').eq('id', user.id).single();
-      if (profile) {
-        centerId = profile.center_id;
-        if (profile.role === 'teacher' && profile.teacher_id) {
-          const { data: perms } = await supabase.from('teacher_feature_permissions').select('teacher_scope_mode').eq('teacher_id', profile.teacher_id).single();
-          if (perms?.teacher_scope_mode !== 'full') {
-            const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', profile.teacher_id);
-            const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', profile.teacher_id);
-            const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+    const { data: profile } = await supabase.from('users').select('center_id, role, teacher_id').eq('id', user.id).single();
+    if (!profile) {
+      return new Response(JSON.stringify({ error: "Profile not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-            if (myGrades.length > 0) {
-              const { data: myStudents } = await supabase.from('students').select('id').in('grade', myGrades).eq('center_id', centerId);
-              targetStudentIds = myStudents?.map(s => s.id) || [];
-            } else {
-              targetStudentIds = [];
-            }
-          }
+    centerId = profile.center_id;
+    if (profile.role === 'teacher' && profile.teacher_id) {
+      const { data: perms } = await supabase.from('teacher_feature_permissions').select('teacher_scope_mode').eq('teacher_id', profile.teacher_id).single();
+      if (perms?.teacher_scope_mode !== 'full') {
+        const { data: assignments } = await supabase.from('class_teacher_assignments').select('grade').eq('teacher_id', profile.teacher_id);
+        const { data: schedules } = await supabase.from('period_schedules').select('grade').eq('teacher_id', profile.teacher_id);
+        const myGrades = Array.from(new Set([...(assignments?.map(a => a.grade) || []), ...(schedules?.map(s => s.grade) || [])]));
+
+        if (myGrades.length > 0) {
+          const { data: myStudents } = await supabase.from('students').select('id').in('grade', myGrades).eq('center_id', centerId);
+          targetStudentIds = myStudents?.map(s => s.id) || [];
+        } else {
+          targetStudentIds = [];
         }
       }
     }
