@@ -34,11 +34,12 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useLoginSettings } from "@/hooks/use-login-settings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // --- Components ---
 
-const DotNavigation = ({ activeSection, sections, scrollToSection }: { activeSection: number, sections: string[], scrollToSection: (index: number) => void }) => {
+const DotNavigation = ({ activeSection, sections, scrollToSection, primaryColor }: { activeSection: number, sections: string[], scrollToSection: (index: number) => void, primaryColor: string }) => {
   return (
     <div className="fixed right-8 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-4">
       {sections.map((_, i) => (
@@ -47,8 +48,9 @@ const DotNavigation = ({ activeSection, sections, scrollToSection }: { activeSec
           onClick={() => scrollToSection(i)}
           className={cn(
             "w-3 h-3 rounded-full transition-all duration-300",
-            activeSection === i ? "bg-indigo-600 scale-125 shadow-[0_0_10px_rgba(79,70,229,0.5)]" : "bg-white/20 hover:bg-white/40"
+            activeSection === i ? "scale-125 shadow-[0_0_10px_rgba(79,70,229,0.5)]" : "bg-white/20 hover:bg-white/40"
           )}
+          style={activeSection === i ? { backgroundColor: primaryColor } : {}}
         />
       ))}
     </div>
@@ -104,8 +106,8 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
       {/* Sidebar */}
       <div className="w-16 md:w-48 border-r border-white/5 bg-white/5 p-4 flex flex-col gap-6">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-indigo-400" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
+            <Zap className="w-5 h-5" style={{ color: primaryColor }} />
           </div>
           <span className="font-bold text-white hidden md:block">EDUFLOW</span>
         </div>
@@ -117,7 +119,11 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
             { label: 'Finance', active: false },
             { label: 'Reports', active: false }
           ].map((item, i) => (
-            <div key={i} className={cn("h-10 rounded-xl flex items-center gap-3 px-3", item.active ? "bg-indigo-600/20 text-indigo-400" : "text-slate-400")}>
+            <div
+              key={i}
+              className={cn("h-10 rounded-xl flex items-center gap-3 px-3", !item.active && "text-slate-400")}
+              style={item.active ? { backgroundColor: `${primaryColor}20`, color: primaryColor } : {}}
+            >
               <div className="w-5 h-5 rounded bg-current/20" />
               <div className="text-[10px] font-bold hidden md:block uppercase tracking-wider">{item.label}</div>
             </div>
@@ -253,12 +259,12 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
         {role === 'parent' && (
           <div className="flex gap-6 h-full">
             <div className="flex-1 space-y-6">
-              <div className="p-6 rounded-[2rem] bg-gradient-to-br from-indigo-600/30 to-blue-600/30 border border-white/10 text-white">
+              <div className="p-6 rounded-[2rem] bg-gradient-to-br border border-white/10 text-white" style={{ backgroundImage: `linear-gradient(to bottom right, ${primaryColor}4d, #3b82f64d)` }}>
                 <div className="text-sm font-bold opacity-80 mb-1">Quarterly Tuition Fee</div>
                 <div className="text-3xl font-black mb-4">$850.00</div>
                 <div className="flex justify-between items-center">
                   <div className="text-xs font-medium px-3 py-1 rounded-full bg-white/20">Due: June 15</div>
-                  <div className="h-8 w-24 bg-white text-indigo-600 rounded-xl flex items-center justify-center text-xs font-black">PAY NOW</div>
+                  <div className="h-8 w-24 bg-white rounded-xl flex items-center justify-center text-xs font-black" style={{ color: primaryColor }}>PAY NOW</div>
                 </div>
               </div>
 
@@ -316,12 +322,12 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
 
 // --- Page Sections ---
 
-const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => void, setActiveSection: (i: number) => void }) => {
+const HeroSection = ({ scrollToNext, setActiveSection, primaryColor }: { scrollToNext: () => void, setActiveSection: (i: number) => void, primaryColor: string }) => {
   return (
     <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full bg-primary/10 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full bg-indigo-600/10 blur-[120px] animate-pulse delay-1000" />
+        <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse" style={{ backgroundColor: `${primaryColor}20` }} />
+        <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] animate-pulse delay-1000" style={{ backgroundColor: `${primaryColor}10` }} />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
 
@@ -330,7 +336,8 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 text-[10px] font-black tracking-widest uppercase mb-8"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black tracking-widest uppercase mb-8"
+          style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
         >
           <SparklesIcon className="w-4 h-4" />
           <span>The Future of School Management</span>
@@ -343,7 +350,7 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 max-w-4xl"
         >
           Run Your Entire School <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-400">from One Platform</span>
+          <span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to r, ${primaryColor}, #60a5fa)` }}>from One Platform</span>
         </motion.h1>
 
         <motion.p
@@ -362,15 +369,28 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex flex-wrap gap-6 justify-center"
         >
-          <Button asChild className="h-16 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95">
-            <Link to="/contact-sales">Get Started <ArrowRight className="ml-2 w-6 h-6" /></Link>
+          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: primaryColor }}>
+            <Link to="/apply">Get Started <ArrowRight className="ml-2 w-6 h-6" /></Link>
           </Button>
 
-          <Button asChild variant="outline" className="h-16 px-10 rounded-2xl border-white/10 bg-white/5 text-white text-lg font-black hover:bg-white/10 transition-all">
-            <Link to="/contact-sales">
-              <Play className="mr-2 w-5 h-5 fill-current" /> Watch Demo
-            </Link>
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="h-16 px-10 rounded-2xl border-white/10 bg-white/5 text-white text-lg font-black hover:bg-white/10 transition-all">
+                <Play className="mr-2 w-5 h-5 fill-current" /> Watch Demo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-5xl aspect-video p-0 overflow-hidden bg-black border-none">
+              <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                title="Product Demo"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </DialogContent>
+          </Dialog>
         </motion.div>
 
         <motion.div
@@ -450,7 +470,7 @@ const SolutionOverview = ({ setActiveSection }: { setActiveSection: (i: number) 
     <Section id="solution" index={2} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto flex flex-col lg:flex-row items-center gap-20">
         <div className="flex-1 space-y-8">
-          <Badge className="bg-indigo-600/10 text-indigo-400 border-indigo-600/20 rounded-full px-4 py-1">THE SOLUTION</Badge>
+          <Badge className="border-none rounded-full px-4 py-1" style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}>THE SOLUTION</Badge>
           <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9]">
             Meet EDUFLOW. <br />
             <span className="text-slate-500 text-4xl md:text-5xl">Your digital command center.</span>
@@ -482,17 +502,17 @@ const SolutionOverview = ({ setActiveSection }: { setActiveSection: (i: number) 
   );
 };
 
-const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActiveSection }: { title: string, valueProp: string, icon: any, highlights: string[], index: number, setActiveSection: (i: number) => void }) => {
+const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActiveSection, primaryColor }: { title: string, valueProp: string, icon: any, highlights: string[], index: number, setActiveSection: (i: number) => void, primaryColor: string }) => {
   return (
     <Section id={`feature-${index}`} index={index} setActiveSection={setActiveSection} className={cn(index % 2 === 0 ? "bg-slate-900" : "bg-slate-950")}>
        <div className="container mx-auto flex flex-col lg:flex-row items-center gap-16">
           <div className={cn("flex-1 space-y-8", index % 2 === 1 ? "lg:order-2" : "")}>
-             <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 flex items-center justify-center text-indigo-400 mb-6">
+             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}>
                 <Icon className="w-8 h-8" />
              </div>
              <div className="space-y-4">
                 <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">{title}</h2>
-                <p className="text-2xl text-indigo-400 font-bold">{valueProp}</p>
+                <p className="text-2xl font-bold" style={{ color: primaryColor }}>{valueProp}</p>
              </div>
              <div className="grid gap-4">
                 {highlights.map((h, i) => (
@@ -511,7 +531,7 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
              <div className="relative w-full max-w-lg aspect-square rounded-[3rem] bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 p-8 flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-20">
                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary blur-[80px]" />
-                   <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600 blur-[80px]" />
+                   <div className="absolute bottom-0 left-0 w-64 h-64 blur-[80px]" style={{ backgroundColor: primaryColor }} />
                 </div>
 
                 {title === "Student Management" && (
@@ -563,7 +583,8 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                             initial={{ height: 0 }}
                             whileInView={{ height: `${h}%` }}
                             transition={{ duration: 1, delay: i * 0.1 }}
-                            className="flex-1 bg-gradient-to-t from-indigo-600 to-blue-400 rounded-t-lg"
+                            className="flex-1 rounded-t-lg"
+                            style={{ backgroundImage: `linear-gradient(to top, ${primaryColor}, #60a5fa)` }}
                           />
                         ))}
                      </div>
@@ -601,8 +622,8 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                 {title === "Parent Portal" && (
                   <div className="relative z-10 w-64 aspect-[9/19] bg-slate-950 border-[6px] border-slate-800 rounded-[3rem] p-4 flex flex-col gap-4 shadow-2xl">
                      <div className="w-16 h-1.5 bg-slate-800 rounded-full mx-auto mb-2" />
-                     <div className="h-24 rounded-2xl bg-indigo-600/20 border border-indigo-600/30 p-3">
-                        <div className="h-2 w-12 bg-indigo-600/40 rounded mb-2" />
+                     <div className="h-24 rounded-2xl p-3 border" style={{ backgroundColor: `${primaryColor}33`, borderColor: `${primaryColor}4d` }}>
+                        <div className="h-2 w-12 rounded mb-2" style={{ backgroundColor: `${primaryColor}66` }} />
                         <div className="text-[10px] font-bold text-white">Homework Assigned</div>
                      </div>
                      <div className="flex-1 space-y-3">
@@ -648,26 +669,29 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                             <motion.div
                               animate={{ rotate: 360 }}
                               transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-                              className="w-32 h-32 rounded-full border-2 border-dashed border-indigo-600/40"
+                              className="w-32 h-32 rounded-full border-2 border-dashed"
+                              style={{ borderColor: `${primaryColor}66` }}
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
-                               <Zap className="w-12 h-12 text-indigo-400 animate-pulse" />
+                               <Zap className="w-12 h-12 animate-pulse" style={{ color: primaryColor }} />
                             </div>
                          </div>
                       </div>
                       <div className="grid gap-3">
                          <motion.div
                            whileHover={{ x: 10 }}
-                           className="p-4 rounded-2xl bg-indigo-600/10 border border-indigo-600/20 flex gap-4 items-center"
+                           className="p-4 rounded-2xl border flex gap-4 items-center"
+                           style={{ backgroundColor: `${primaryColor}1a`, borderColor: `${primaryColor}33` }}
                          >
-                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                            <div className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: primaryColor }} />
                             <p className="text-sm font-bold text-white">Attendance predicted to rise by 12% next month</p>
                          </motion.div>
                          <motion.div
                            whileHover={{ x: 10 }}
-                           className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex gap-4 items-center"
+                           className="p-4 rounded-2xl border flex gap-4 items-center"
+                           style={{ backgroundColor: `${primaryColor}1a`, borderColor: `${primaryColor}33` }}
                          >
-                            <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }} />
                             <p className="text-sm font-bold text-white">Identify students at risk of falling behind</p>
                          </motion.div>
                       </div>
@@ -680,23 +704,31 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
   );
 };
 
-const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
+const RoleExperienceSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i: number) => void, primaryColor: string }) => {
   const [activeTab, setActiveTab] = useState('admin');
 
   return (
     <Section id="roles" index={10} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto">
         <div className="text-center mb-16 space-y-4">
-          <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 rounded-full px-4 py-1">EXPERIENCE ROLES</Badge>
+          <Badge className="border-none rounded-full px-4 py-1" style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}>EXPERIENCE ROLES</Badge>
           <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">One System. <br /><span className="text-slate-500">Every Perspective.</span></h2>
         </div>
 
         <Tabs defaultValue="admin" className="w-full" onValueChange={setActiveTab}>
+          <style>
+            {`
+              [data-state=active].tab-trigger-custom {
+                background-color: ${primaryColor} !important;
+                color: white !important;
+              }
+            `}
+          </style>
           <div className="flex justify-center mb-12">
             <TabsList className="bg-white/5 border border-white/10 p-1 h-14 rounded-2xl">
-              <TabsTrigger value="admin" className="rounded-xl px-8 font-black uppercase text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Admin</TabsTrigger>
-              <TabsTrigger value="teacher" className="rounded-xl px-8 font-black uppercase text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Teacher</TabsTrigger>
-              <TabsTrigger value="parent" className="rounded-xl px-8 font-black uppercase text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Parent</TabsTrigger>
+              <TabsTrigger value="admin" className="tab-trigger-custom rounded-xl px-8 font-black uppercase text-xs">Admin</TabsTrigger>
+              <TabsTrigger value="teacher" className="tab-trigger-custom rounded-xl px-8 font-black uppercase text-xs">Teacher</TabsTrigger>
+              <TabsTrigger value="parent" className="tab-trigger-custom rounded-xl px-8 font-black uppercase text-xs">Parent</TabsTrigger>
             </TabsList>
           </div>
 
@@ -718,7 +750,7 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
                      <ul className="space-y-3">
                         {["Center Management", "Financial Analytics", "Staff Payroll", "Inventory Tracking"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <ShieldCheck className="w-5 h-5 text-indigo-400" /> {item}
+                             <ShieldCheck className="w-5 h-5" style={{ color: primaryColor }} /> {item}
                           </li>
                         ))}
                      </ul>
@@ -739,7 +771,7 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
                      <ul className="space-y-3">
                         {["One-tap Attendance", "Digital Lesson Plans", "Auto-grading Exams", "Activity Logs"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <GraduationCap className="w-5 h-5 text-indigo-400" /> {item}
+                             <GraduationCap className="w-5 h-5" style={{ color: primaryColor }} /> {item}
                           </li>
                         ))}
                      </ul>
@@ -760,7 +792,7 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
                      <ul className="space-y-3">
                         {["Live Progress Reports", "Instant Messaging", "Online Fee Payment", "Homework Tracker"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <Users className="w-5 h-5 text-indigo-400" /> {item}
+                             <Users className="w-5 h-5" style={{ color: primaryColor }} /> {item}
                           </li>
                         ))}
                      </ul>
@@ -779,7 +811,7 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
   );
 };
 
-const WorkflowSection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
+const WorkflowSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i: number) => void, primaryColor: string }) => {
   const steps = [
     { title: "Admission", desc: "Digital enrollment & data capture", icon: Users },
     { title: "Class", desc: "Automated routine & scheduling", icon: Calendar },
@@ -809,7 +841,17 @@ const WorkflowSection = ({ setActiveSection }: { setActiveSection: (i: number) =
                transition={{ delay: i * 0.2 }}
                className="relative z-10 flex-1 flex flex-col items-center text-center group"
              >
-               <div className="w-20 h-20 rounded-[2rem] bg-slate-950 border border-white/10 flex items-center justify-center text-indigo-400 mb-6 transition-all group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110">
+               <style>
+                 {`
+                   .workflow-icon-group:hover {
+                      background-color: ${primaryColor} !important;
+                   }
+                 `}
+               </style>
+               <div
+                 className="workflow-icon-group w-20 h-20 rounded-[2rem] bg-slate-950 border border-white/10 flex items-center justify-center mb-6 transition-all group-hover:text-white group-hover:scale-110"
+                 style={{ color: primaryColor }}
+               >
                   <step.icon className="w-8 h-8" />
                </div>
                <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
@@ -822,7 +864,7 @@ const WorkflowSection = ({ setActiveSection }: { setActiveSection: (i: number) =
   );
 };
 
-const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
+const TrustSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i: number) => void, primaryColor: string }) => {
   return (
     <Section id="trust" index={12} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto">
@@ -834,11 +876,11 @@ const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => v
             </p>
             <div className="grid grid-cols-2 gap-8">
                <div>
-                  <div className="text-5xl font-black text-indigo-500 tracking-tighter mb-2">15,400+</div>
+                  <div className="text-5xl font-black tracking-tighter mb-2" style={{ color: primaryColor }}>15,400+</div>
                   <div className="text-xs font-black text-slate-500 uppercase tracking-widest">Students Managed</div>
                </div>
                <div>
-                  <div className="text-5xl font-black text-indigo-500 tracking-tighter mb-2">320+</div>
+                  <div className="text-5xl font-black tracking-tighter mb-2" style={{ color: primaryColor }}>320+</div>
                   <div className="text-xs font-black text-slate-500 uppercase tracking-widest">Institutions</div>
                </div>
             </div>
@@ -864,7 +906,7 @@ const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => v
                      </div>
                   </div>
                   <div className="absolute top-0 right-0 p-8 opacity-5">
-                     <MessageSquare className="w-32 h-32 text-indigo-500" />
+                     <MessageSquare className="w-32 h-32" style={{ color: primaryColor }} />
                   </div>
                </div>
              ))}
@@ -875,9 +917,9 @@ const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => v
   );
 };
 
-const FinalCTASection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
+const FinalCTASection = ({ setActiveSection, primaryColor, scrollToSection }: { setActiveSection: (i: number) => void, primaryColor: string, scrollToSection: (i: number) => void }) => {
   return (
-    <Section id="final-cta" index={13} setActiveSection={setActiveSection} className="bg-indigo-600 overflow-hidden">
+    <Section id="final-cta" index={13} setActiveSection={setActiveSection} className="overflow-hidden" style={{ backgroundColor: primaryColor }}>
       <div className="absolute inset-0 z-0">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_0%,transparent_70%)]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] border border-white/10 rounded-full animate-ping" />
@@ -892,11 +934,14 @@ const FinalCTASection = ({ setActiveSection }: { setActiveSection: (i: number) =
         </p>
 
         <div className="flex flex-wrap gap-6 justify-center">
-          <Button asChild className="h-16 px-10 rounded-2xl bg-white text-indigo-600 text-lg font-black hover:bg-slate-100 transition-all hover:scale-105 active:scale-95 shadow-2xl">
-            <Link to="/contact-sales">Get Started Now</Link>
+          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: primaryColor, boxShadow: `0 25px 50px -12px ${primaryColor}33` }}>
+            <Link to="/apply">Get Started Now</Link>
           </Button>
-          <Button asChild className="h-16 px-10 rounded-2xl border-white/20 bg-white/10 text-white text-lg font-black hover:bg-white/20 transition-all">
-            <Link to="/contact-sales">Book a Demo</Link>
+          <Button
+            onClick={() => scrollToSection(14)}
+            className="h-16 px-10 rounded-2xl border-white/20 bg-white/10 text-white text-lg font-black hover:bg-white/20 transition-all"
+          >
+            Book a Demo
           </Button>
         </div>
 
@@ -928,11 +973,20 @@ const SparklesIcon = ({ className }: { className?: string }) => (
 const GettingStarted = () => {
   const [activeSection, setActiveSection] = useState(0);
   const navigate = useNavigate();
+  const { data: settings } = useLoginSettings('center');
+  const primaryColor = settings?.primary_color || '#4f46e5';
+
+  // Inject CSS variables for primary color to use in tailwind-like classes if needed,
+  // though we mostly use inline styles for precision here.
+  useEffect(() => {
+    document.documentElement.style.setProperty('--primary-custom', primaryColor);
+    return () => document.documentElement.style.removeProperty('--primary-custom');
+  }, [primaryColor]);
 
   const sections = [
     "hero", "problems", "solution",
     "student-mgmt", "attendance", "exams", "teachers", "parents", "finance", "ai",
-    "roles", "workflow", "trust", "final-cta"
+    "roles", "workflow", "trust", "final-cta", "contact"
   ];
 
   const scrollToSection = (index: number) => {
@@ -1021,30 +1075,31 @@ const GettingStarted = () => {
         activeSection={activeSection}
         sections={sections}
         scrollToSection={scrollToSection}
+        primaryColor={primaryColor}
       />
 
       {/* Nav Overlay */}
       <nav className="fixed top-0 left-0 w-full z-[60] px-6 py-6 flex justify-between items-center pointer-events-none">
         <div className="flex items-center gap-3 pointer-events-auto cursor-pointer" onClick={() => navigate("/")}>
-          <div className={cn("p-2 rounded-xl border transition-colors", activeSection === 13 ? "bg-white/20 border-white/20" : "bg-indigo-600/20 border-indigo-600/20")}>
-            <ShieldCheck className={cn("h-6 w-6 transition-colors", activeSection === 13 ? "text-white" : "text-indigo-400")} />
+          <div className={cn("p-2 rounded-xl border transition-colors", activeSection === 13 ? "bg-white/20 border-white/20" : "bg-indigo-600/20 border-indigo-600/20")} style={activeSection !== 13 ? { backgroundColor: `${primaryColor}20`, borderColor: `${primaryColor}20` } : {}}>
+            <ShieldCheck className={cn("h-6 w-6 transition-colors", activeSection === 13 ? "text-white" : "text-indigo-400")} style={activeSection !== 13 ? { color: primaryColor } : {}} />
           </div>
-          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-indigo-400")}>FLOW</span></span>
+          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-indigo-400")} style={activeSection !== 13 ? { color: primaryColor } : {}}>FLOW</span></span>
         </div>
 
         <div className="pointer-events-auto">
            <Button asChild variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
              <Link to="/login">Login</Link>
            </Button>
-           <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-full px-8 shadow-lg shadow-indigo-600/20">
-             <Link to="/contact-sales">Get Started</Link>
+           <Button asChild className="text-white font-bold rounded-full px-8 shadow-lg shadow-indigo-600/20" style={{ backgroundColor: primaryColor }}>
+             <Link to="/apply">Get Started</Link>
            </Button>
         </div>
       </nav>
 
-      <HeroSection scrollToNext={() => scrollToSection(1)} setActiveSection={setActiveSection} />
+      <HeroSection scrollToNext={() => scrollToSection(1)} setActiveSection={setActiveSection} primaryColor={primaryColor} />
       <ProblemSection setActiveSection={setActiveSection} />
-      <SolutionOverview setActiveSection={setActiveSection} />
+      <SolutionOverview setActiveSection={setActiveSection} primaryColor={primaryColor} />
 
       {featureSlides.map((feature, i) => (
         <FeatureSlide
@@ -1052,18 +1107,44 @@ const GettingStarted = () => {
           index={3 + i}
           {...feature}
           setActiveSection={setActiveSection}
+          primaryColor={primaryColor}
         />
       ))}
 
-      <RoleExperienceSection setActiveSection={setActiveSection} />
-      <WorkflowSection setActiveSection={setActiveSection} />
-      <TrustSection setActiveSection={setActiveSection} />
-      <FinalCTASection setActiveSection={setActiveSection} />
+      <RoleExperienceSection setActiveSection={setActiveSection} primaryColor={primaryColor} />
+      <WorkflowSection setActiveSection={setActiveSection} primaryColor={primaryColor} />
+      <TrustSection setActiveSection={setActiveSection} primaryColor={primaryColor} />
+      <FinalCTASection setActiveSection={setActiveSection} primaryColor={primaryColor} scrollToSection={scrollToSection} />
+
+      <Section id="contact" index={14} setActiveSection={setActiveSection} className="bg-slate-900">
+         <div className="container mx-auto max-w-4xl">
+            <div className="text-center mb-12">
+               <h2 className="text-4xl font-black text-white mb-4">Request a Personalized Demo</h2>
+               <p className="text-slate-400">Our team will show you how EDUFLOW can transform your school.</p>
+            </div>
+            <div className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10">
+               <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                     <div className="h-2 w-20 bg-white/10 rounded" />
+                     <div className="h-12 rounded-xl bg-white/5 border border-white/10" />
+                  </div>
+                  <div className="space-y-2">
+                     <div className="h-2 w-20 bg-white/10 rounded" />
+                     <div className="h-12 rounded-xl bg-white/5 border border-white/10" />
+                  </div>
+               </div>
+               <div className="h-32 rounded-xl bg-white/5 border border-white/10 mb-6" />
+               <Button asChild className="w-full h-14 rounded-xl font-black uppercase tracking-widest" style={{ backgroundColor: primaryColor }}>
+                  <Link to="/contact-sales">Go to Full Contact Page</Link>
+               </Button>
+            </div>
+         </div>
+      </Section>
 
       {/* Footer */}
       <footer className="bg-slate-950 py-12 px-6 border-t border-white/5 text-center">
          <div className="flex items-center justify-center gap-3 mb-6">
-            <ShieldCheck className="h-6 w-6 text-indigo-500" />
+            <ShieldCheck className="h-6 w-6" style={{ color: primaryColor }} />
             <span className="text-xl font-black text-white tracking-tighter">EDUFLOW</span>
          </div>
          <p className="text-slate-500 font-medium mb-8">© 2024 EDUFLOW Tech Solutions. All rights reserved.</p>

@@ -30,6 +30,7 @@ const ContactSales = () => {
   const { data: settings, isLoading: settingsLoading } = useLoginSettings('contact-sales');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const primaryColor = settings?.primary_color || '#4f46e5';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -87,20 +88,20 @@ const ContactSales = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 selection:text-indigo-600">
+    <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 selection:text-indigo-600" style={{ '--primary': primaryColor } as React.CSSProperties}>
       {/* Navbar */}
       <nav className="sticky top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="p-1.5 rounded-lg bg-indigo-600">
+          <div className="p-1.5 rounded-lg bg-primary" style={{ backgroundColor: primaryColor }}>
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">EDU<span className="text-indigo-600">FLOW</span></span>
+          <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">EDU<span className="text-primary" style={{ color: primaryColor }}>FLOW</span></span>
         </div>
         <div className="flex items-center gap-4">
            <Button asChild variant="ghost" className="text-slate-600 font-bold hover:bg-slate-100 px-6 hidden sm:flex">
              <Link to="/getting-started">Product Tour</Link>
            </Button>
-           <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 shadow-md shadow-indigo-600/10">
+           <Button asChild className="text-white font-bold px-6 shadow-md shadow-indigo-600/10" style={{ backgroundColor: primaryColor }}>
              <Link to="/login">Login</Link>
            </Button>
         </div>
@@ -116,7 +117,7 @@ const ContactSales = () => {
             className="space-y-12"
           >
             <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-black tracking-widest uppercase">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-primary text-[10px] font-black tracking-widest uppercase" style={{ color: primaryColor }}>
                 <MessageSquare className="w-3 h-3" />
                 <span>Contact Sales</span>
               </div>
@@ -231,7 +232,7 @@ const ContactSales = () => {
                      <Textarea id="message" name="message" placeholder="Tell us about your current challenges..." className="min-h-[120px] rounded-xl bg-slate-50 border-slate-100 focus:bg-white transition-all resize-none" />
                   </div>
 
-                  <Button type="submit" disabled={isSubmitting} className="w-full h-14 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all active:scale-95 disabled:opacity-70">
+                  <Button type="submit" disabled={isSubmitting} className="w-full h-14 rounded-xl text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all active:scale-95 disabled:opacity-70" style={{ backgroundColor: primaryColor }}>
                      {isSubmitting ? (
                         <span className="flex items-center gap-2">
                            <Loader2 className="w-4 h-4 animate-spin" /> Processing...
