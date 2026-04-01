@@ -34,7 +34,6 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useLoginSettings } from "@/hooks/use-login-settings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // --- Components ---
@@ -834,7 +833,7 @@ const WorkflowSection = ({ setActiveSection }: { setActiveSection: (i: number) =
                <style>
                  {`
                    .workflow-icon-group:hover {
-                      background-color: ${primaryColor} !important;
+                      background-color: ${PREMIUM_PRIMARY} !important;
                    }
                  `}
                </style>
