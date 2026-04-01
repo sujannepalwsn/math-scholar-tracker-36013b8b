@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +53,18 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
 
   const currentRole = getCurrentRole();
   const { data: stats } = useSystemStats();
+  const [partners, setPartners] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      const { data } = await supabase
+        .from('centers')
+        .select('id, name')
+        .order('name');
+      if (data) setPartners(data);
+    };
+    fetchPartners();
+  }, []);
 
   const handleRoleChange = (role: string) => {
     if (role === 'admin') navigate('/login-admin');
@@ -104,9 +117,9 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         </div>
 
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Features</a>
-          <a href="#packages" className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Pricing</a>
-          <a href="#about" className="text-sm font-bold text-slate-300 hover:text-white transition-colors">About</a>
+          <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Features</a>
+          <a href="#packages" onClick={(e) => { e.preventDefault(); document.getElementById('packages')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Pricing</a>
+          <a href="#about" onClick={(e) => { e.preventDefault(); document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">About</a>
         </nav>
 
         <div className="flex items-center gap-4">
@@ -430,6 +443,41 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
             </div>
           </section>
         )}
+
+        {/* Partners Section */}
+        {partners.length > 0 && (
+          <section id="partners" className="py-24 border-t border-white/5 bg-slate-900/20">
+            <div className="container mx-auto px-4">
+              <div className="flex flex-col lg:flex-row">
+                <div className="flex-1">
+                  <div className="mb-12">
+                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-4">Our Distinguished Partners</h2>
+                    <p className="text-slate-400 font-medium">Empowering leading educational institutions across the region.</p>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {partners.map((partner) => (
+                      <Link
+                        key={partner.id}
+                        to={`/institution/${partner.id}`}
+                      >
+                        <motion.div
+                          whileHover={{ y: -5, backgroundColor: "rgba(255,255,255,0.05)" }}
+                          className="p-6 rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-white group-hover:text-primary transition-colors">{partner.name}</span>
+                            <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-primary transition-all opacity-0 group-hover:opacity-100" />
+                          </div>
+                        </motion.div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+                <div className="hidden lg:block w-[460px] shrink-0" />
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Modern Footer */}
@@ -469,7 +517,16 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
                   <ul className="space-y-4">
                     {column.links.map((link: any, j: number) => (
                       <li key={j}>
-                        <a href={link.href} className="text-slate-400 font-medium hover:text-white transition-colors flex items-center gap-2 group">
+                        <a
+                          href={link.href}
+                          onClick={(e) => {
+                            if (link.href.startsWith('#')) {
+                              e.preventDefault();
+                              document.getElementById(link.href.substring(1))?.scrollIntoView({ behavior: 'smooth' });
+                            }
+                          }}
+                          className="text-slate-400 font-medium hover:text-white transition-colors flex items-center gap-2 group"
+                        >
                           <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" />
                           {link.label}
                         </a>
