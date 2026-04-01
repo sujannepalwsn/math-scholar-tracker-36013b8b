@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Activity, DollarSign, Home, KeyRound, LogOut, Settings, Shield, User } from "lucide-react";
+import { Activity, DollarSign, Home, KeyRound, LogOut, Settings, Shield, User, Building2, BarChart3, Receipt, Database, Zap } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -15,10 +15,14 @@ const navItems: Array<{
   category?: 'Academics' | 'Administration' | 'Reports and Communications';
 }> = [
   { to: "/admin-dashboard", label: "Dashboard", icon: Home, role: 'admin' as const },
-  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const, category: 'Reports and Communication' },
+  { to: "/admin/centers", label: "Tuition Centers", icon: Building2, role: 'admin' as const },
+  { to: "/admin/analytics", label: "Center Analytics", icon: BarChart3, role: 'admin' as const },
+  { to: "/admin/billing", label: "Billing System", icon: Receipt, role: 'admin' as const },
+  { to: "/admin/usage", label: "Data Usage", icon: Database, role: 'admin' as const },
+  { to: "/admin/subscriptions", label: "SaaS Subscriptions", icon: Zap, role: 'admin' as const },
   { to: "/admin/errors", label: "Error Tracking", icon: Activity, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const, category: 'Reports and Communication' },
   { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const, category: 'Administration' },
-  { to: "/change-password", label: "Change Password", icon: KeyRound, role: 'admin' as const, category: 'Administration' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

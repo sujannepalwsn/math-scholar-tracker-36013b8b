@@ -1,332 +1,105 @@
-import React, { useState } from "react";
+import React from "react";
 import { UserRole } from "@/types/roles";
-import { Edit, Plus, Power, PowerOff, Users } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Users, Building2, Activity, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import * as bcrypt from 'bcryptjs';
-import CenterFeaturePermissions from '@/components/admin/CenterFeaturePermissions';
-import SubscriptionManagement from '@/components/admin/SubscriptionManagement';
-import CenterAnalytics from '@/components/admin/CenterAnalytics';
-import SuperAdminBilling from '@/components/admin/SuperAdminBilling';
-import UsageMonitoring from '@/components/admin/UsageMonitoring';
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { logger } from "@/utils/logger";
-
+import { motion } from "framer-motion";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingCenter, setEditingCenter] = useState<any>(null);
-  const [editedCenterData, setEditedCenterData] = useState({ centerName: '', address: '' });
-  const [newCenter, setNewCenter] = useState({ centerName: '', address: '', phone: '', username: '', password: '' });
 
   if (user?.role !== UserRole.ADMIN) {
     navigate('/');
     return null;
   }
 
-  const { data: centers = [], isLoading } = useQuery({
-    queryKey: ['centers-with-users'],
+  const { data: stats } = useQuery({
+    queryKey: ['admin-summary-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('centers')
-        .select('*, users(*)')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      const { count: centersCount } = await supabase.from('centers').select('*', { count: 'exact', head: true });
+      const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+      const { count: errorLogsCount } = await supabase.from('error_logs').select('*', { count: 'exact', head: true });
+
+      return {
+        centers: centersCount || 0,
+        totalUsers: usersCount || 0,
+        errors: errorLogsCount || 0,
+      };
     }
   });
 
-  const createCenterMutation = useMutation({
-    mutationFn: async () => {
-      const hashedPassword = await bcrypt.hash(newCenter.password, 12);
-
-      const { data: centerData, error: centerError } = await supabase
-        .from('centers')
-        .insert({
-          name: newCenter.centerName,
-          address: newCenter.address || null,
-          phone: newCenter.phone || null
-        })
-        .select()
-        .single();
-
-      if (centerError) throw centerError;
-
-      const { error: userError } = await supabase
-        .from('users')
-        .insert({
-          username: newCenter.username,
-          password_hash: hashedPassword,
-          role: 'center',
-          center_id: centerData.id,
-          is_active: true
-        });
-
-      if (userError) throw userError;
-
-      // Create default permissions
-      const { error: permError } = await supabase.from('center_feature_permissions').insert({
-        center_id: centerData.id });
-      if (permError) logger.error('Error seeding permissions:', permError);
-
-      return centerData;
-    },
-    onSuccess: () => {
-      toast({ title: 'Center created', description: 'New center has been created successfully' });
-      setIsCreateDialogOpen(false);
-      setNewCenter({ centerName: '', address: '', phone: '', username: '', password: '' });
-      queryClient.invalidateQueries({ queryKey: ['centers-with-users'] });
-    },
-    onError: (error: any) => {
-      toast({ title: 'Failed to create center', description: error.message, variant: 'destructive' });
-    }
-  });
-
-  const toggleStatusMutation = useMutation({
-    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
-      const { error } = await supabase.from('users').update({ is_active: !isActive }).eq('id', userId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: 'Status updated' });
-      queryClient.invalidateQueries({ queryKey: ['centers-with-users'] });
-    },
-    onError: (error: any) => {
-      toast({ title: 'Failed to update status', description: error.message, variant: 'destructive' });
-    }
-  });
-
-  const updateCenterMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from('centers')
-        .update({ name: editedCenterData.centerName, address: editedCenterData.address })
-        .eq('id', editingCenter.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: 'Center updated' });
-      setIsEditDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['centers-with-users'] });
-    },
-    onError: (error: any) => {
-      toast({ title: 'Failed to update center', description: error.message, variant: 'destructive' });
-    }
-  });
-
-  const handleOpenEditDialog = (center: any) => {
-    setEditingCenter(center);
-    setEditedCenterData({ centerName: center.name, address: center.address || '' });
-    setIsEditDialogOpen(true);
-  };
+  const kpis = [
+    { label: "Total Centers", value: stats?.centers, icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "System Users", value: stats?.totalUsers, icon: Users, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Health Status", value: "Optimal", icon: ShieldCheck, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "System Errors", value: stats?.errors, icon: Activity, color: "text-rose-600", bg: "bg-rose-50" },
+  ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="max-w-7xl mx-auto space-y-12">
-      <Tabs defaultValue="centers" className="space-y-8">
-        <TabsList className="bg-card/40 border border-border/40 p-1.5 rounded-2xl h-14 shadow-soft backdrop-blur-md overflow-x-auto">
-          <TabsTrigger value="centers" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Tuition Centers</TabsTrigger>
-          <TabsTrigger value="analytics" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Center Analytics</TabsTrigger>
-          <TabsTrigger value="billing" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Billing System</TabsTrigger>
-          <TabsTrigger value="usage" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">Data Usage</TabsTrigger>
-          <TabsTrigger value="subscriptions" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft whitespace-nowrap">SaaS Subscriptions</TabsTrigger>
-        </TabsList>
+    <div className="space-y-12 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
+            Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            Global System Overview
+          </p>
+        </div>
+      </div>
 
-        <TabsContent value="centers" className="space-y-12 outline-none">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-primary/10 border border-primary/20">
-                <Users className="h-8 w-8 text-primary animate-pulse" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-600">
-                  System Administration
-                </h1>
-                <div className="flex items-center gap-2 mt-1">
-                   <div className="h-2 w-2 rounded-full bg-primary" />
-                   <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">Global Governance Portal</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {kpis.map((kpi, index) => (
+          <motion.div
+            key={kpi.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card className="border-none shadow-strong rounded-[2rem] overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-4 rounded-2xl ${kpi.bg} ${kpi.color} group-hover:scale-110 transition-transform duration-500`}>
+                    <kpi.icon className="h-6 w-6" />
+                  </div>
                 </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{kpi.label}</p>
+                  <p className="text-3xl font-black tracking-tighter">{kpi.value ?? "..."}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      <Card className="border-none shadow-strong rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">
+        <CardContent className="p-12">
+          <div className="max-w-2xl space-y-6">
+            <h2 className="text-3xl font-black tracking-tight">System Status</h2>
+            <p className="text-slate-400 font-medium leading-relaxed">
+              All core services are operational. The global infrastructure is monitoring
+              active sessions across all tuition centers. Automated backups and security
+              protocols are synchronized.
+            </p>
+            <div className="flex gap-4 pt-4">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/5">
+                <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Network Stable</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/5">
+                <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Database Synced</span>
               </div>
             </div>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="rounded-[1.5rem] shadow-strong h-14 px-8 text-xs font-black tracking-widest uppercase bg-gradient-to-r from-primary to-violet-600 hover:scale-[1.05] transition-all duration-500 border-none">
-                <Plus className="h-5 w-5 mr-2" />
-                REGISTER NEW CENTER
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Center</DialogTitle>
-                <DialogDescription>Add a new tuition center with login credentials</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Center Name *</Label>
-                  <Input value={newCenter.centerName} onChange={(e) => setNewCenter({ ...newCenter, centerName: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Address</Label>
-                  <Input value={newCenter.address} onChange={(e) => setNewCenter({ ...newCenter, address: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Phone</Label>
-                  <Input value={newCenter.phone} onChange={(e) => setNewCenter({ ...newCenter, phone: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Username *</Label>
-                  <Input value={newCenter.username} onChange={(e) => setNewCenter({ ...newCenter, username: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Password *</Label>
-                  <Input type="password" value={newCenter.password} onChange={(e) => setNewCenter({ ...newCenter, password: e.target.value })} />
-                </div>
-                <Button onClick={() => createCenterMutation.mutate()} disabled={!newCenter.centerName || !newCenter.username || !newCenter.password || createCenterMutation.isPending} className="w-full">
-                  {createCenterMutation.isPending ? 'Creating...' : 'Create Center'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Center</DialogTitle>
-              <DialogDescription>Update center details</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Center Name *</Label>
-                <Input value={editedCenterData.centerName} onChange={(e) => setEditedCenterData({ ...editedCenterData, centerName: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Address</Label>
-                <Input value={editedCenterData.address} onChange={(e) => setEditedCenterData({ ...editedCenterData, address: e.target.value })} />
-              </div>
-              <Button onClick={() => updateCenterMutation.mutate()} disabled={!editedCenterData.centerName || updateCenterMutation.isPending} className="w-full">
-                {updateCenterMutation.isPending ? 'Updating...' : 'Update Center'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Card className="border-none shadow-strong overflow-hidden rounded-[2.5rem] bg-card/40 backdrop-blur-md border border-border/20 group hover:shadow-xl transition-all duration-500">
-          <CardHeader className="border-b border-muted/20 bg-primary/5 py-8 px-8">
-            <CardTitle className="text-xl font-black flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-primary/10 group-hover:scale-110 transition-transform duration-500">
-                <Users className="h-6 w-6 text-primary" />
-              </div>
-              Registered Tuition Centers
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="h-8 w-8 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
-              </div>
-            ) : centers.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground font-medium italic">No active center registrations discovered.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/5">
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Center Entity</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Physical Location</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Telecom</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Identity</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4">Status</TableHead>
-                      <TableHead className="font-black uppercase text-[10px] tracking-widest px-6 py-4 text-right">Operations</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {centers.map((center: any) => {
-                      const centerUser = center.users?.[0];
-                      return (
-                        <TableRow key={center.id} className="group transition-all duration-300 hover:bg-card/60">
-                          <TableCell className="px-6 py-4 font-black text-slate-700 group-hover:text-primary transition-colors">{center.name}</TableCell>
-                          <TableCell className="px-6 py-4 font-medium text-slate-500 text-xs truncate max-w-[200px]">{center.address || '-'}</TableCell>
-                          <TableCell className="px-6 py-4 font-bold text-primary text-xs">{center.phone || '-'}</TableCell>
-                          <TableCell className="px-6 py-4">
-                            <code className="bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-700">{centerUser?.username || '-'}</code>
-                          </TableCell>
-                          <TableCell className="px-6 py-4">
-                            {centerUser?.is_active ?
-                              <Badge className="bg-green-500/10 text-green-600 border-none rounded-lg font-black uppercase text-[9px] tracking-tighter px-2 py-0.5">Operational</Badge> :
-                              <Badge variant="destructive" className="bg-red-500/10 text-red-600 border-none rounded-lg font-black uppercase text-[9px] tracking-tighter px-2 py-0.5">Suspended</Badge>
-                            }
-                          </TableCell>
-                          <TableCell className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-soft" onClick={() => handleOpenEditDialog(center)}>
-                                <Edit className="h-3.5 w-3.5 text-primary" />
-                              </Button>
-                              {centerUser && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className={cn(
-                                    "h-8 w-8 rounded-full shadow-soft transition-all",
-                                    centerUser.is_active ? "bg-white hover:bg-red-50 text-red-600" : "bg-white hover:bg-green-50 text-green-600"
-                                  )}
-                                  onClick={() => toggleStatusMutation.mutate({ userId: centerUser.id, isActive: centerUser.is_active })}
-                                >
-                                  {centerUser.is_active ? <PowerOff className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5" />}
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <CenterFeaturePermissions />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="outline-none">
-          <CenterAnalytics />
-        </TabsContent>
-
-        <TabsContent value="billing" className="outline-none">
-          <SuperAdminBilling />
-        </TabsContent>
-
-        <TabsContent value="usage" className="outline-none">
-          <UsageMonitoring />
-        </TabsContent>
-
-        <TabsContent value="subscriptions" className="outline-none">
-          <SubscriptionManagement />
-        </TabsContent>
-      </Tabs>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,9 +1,10 @@
-import { Bell, Cpu, Database, Globe, Palette, Settings2, Shield } from "lucide-react";
+import { Bell, Cpu, Database, Globe, Palette, Settings2, Shield, KeyRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import ThemeSelector from "@/components/ThemeSelector";
 import LoginSettingsManager from "@/components/admin/LoginSettingsManager";
-import AllCenterRequirements from "@/components/admin/AllCenterRequirements";
 
 const Settings = () => (
   <div className="space-y-8 animate-in fade-in duration-1000">
@@ -39,9 +40,29 @@ const Settings = () => (
           <LoginSettingsManager />
        </div>
 
-       <div className="md:col-span-2">
-          <AllCenterRequirements />
-       </div>
+       <Card className="md:col-span-2 border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
+          <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 text-violet-600">
+                <KeyRound className="h-6 w-6" />
+              </div>
+              Security & Access
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-1 text-center md:text-left">
+                <h4 className="font-bold text-lg">Change Password</h4>
+                <p className="text-muted-foreground text-sm">Update your administrative account credentials.</p>
+              </div>
+              <Button asChild className="rounded-2xl h-12 px-8 font-black uppercase text-xs tracking-widest shadow-strong">
+                <Link to="/change-password">
+                  Update Credentials
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+       </Card>
 
        <Card className="md:col-span-2 border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
           <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
