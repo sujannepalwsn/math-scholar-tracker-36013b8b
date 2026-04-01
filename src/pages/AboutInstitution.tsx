@@ -90,13 +90,25 @@ export default function AboutInstitution() {
     queryKey: ["center-about", centerId],
     queryFn: async () => {
       if (!centerId) return null;
-      const { data, error } = await supabase
-        .from("centers")
-        .select("*")
-        .eq("id", centerId)
-        .single();
-      if (error) throw error;
-      return data;
+
+      // If public view, only fetch public-facing columns to prevent accidental data exposure
+      const query = supabase.from("centers");
+
+      if (isPublicView) {
+        const { data, error } = await query
+          .select("id, name, about_description, mission, vision, principal_message, principal_name, established_date, academic_info, facilities, achievements, gallery, social_links, institution_type, phone, email, address, website_url, header_bg_url")
+          .eq("id", centerId)
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await query
+          .select("*")
+          .eq("id", centerId)
+          .single();
+        if (error) throw error;
+        return data;
+      }
     },
     enabled: !!centerId
   });
@@ -160,6 +172,7 @@ export default function AboutInstitution() {
 
   const updateAboutMutation = useMutation({
     mutationFn: async () => {
+      if (isPublicView) throw new Error("Editing is disabled in public view mode.");
       if (!user?.center_id) throw new Error("Center ID not found");
       if (!canEdit) throw new Error("Access Denied: You do not have permission to update institution information.");
 
