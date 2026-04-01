@@ -1,32 +1,29 @@
-# RLS Architecture - Schema Adjustments & Risk Analysis
+# RLS Architecture - Risk Analysis & System Integrity
 
-## Required Schema Adjustments
-The following tables are currently "center-scoped" in logic but lack a `center_id` column in the provided schema. To enable robust RLS, these columns **must** be added:
+## Schema Integrity
+The Row Level Security (RLS) architecture has been designed to enforce strict multi-tenant isolation. A thorough verification of the schema confirms that almost all center-scoped tables (including `notices`, `payments`, `attendance`, and `students`) already possess a `center_id` column, which is the primary hook for isolation.
 
-1.  `notices` - Currently has `target_audience` and `target_grade` but no `center_id`.
-2.  `fee_installments` - Only has `invoice_id`. Should have `center_id` for direct filtering.
-3.  `invoice_items` - Only has `invoice_id`. Should have `center_id` for direct filtering.
-4.  `payments` - Only has `invoice_id`. Should have `center_id` for direct filtering.
-5.  `student_chapters` - Only has `student_id`. Should have `center_id` for direct filtering.
-6.  `student_homework_records` - Only has `student_id` and `homework_id`. Should have `center_id` for direct filtering.
-7.  `test_marks` - Only has `student_id` and `test_id`. Should have `center_id` for direct filtering.
-8.  `test_results` - Only has `student_id` and `test_id`. Should have `center_id` for direct filtering.
-9.  `student_promotion_history` - Only has `student_id`. Should have `center_id` for direct filtering.
-10. `student_results` - Only has `student_id` and `result_id`. Should have `center_id` for direct filtering.
-11. `payroll_logs` - Only has `teacher_id`. Should have `center_id` for direct filtering.
-12. `performance_evaluations` - Only has `teacher_id`. Should have `center_id` for direct filtering.
-13. `staff_contracts` - Only has `teacher_id`. Should have `center_id` for direct filtering.
-14. `staff_documents` - Only has `teacher_id`. Should have `center_id` for direct filtering.
-15. `consumable_logs` - Only has `consumable_id`. Should have `center_id` for direct filtering.
+The following tables are globally scoped and correctly do **not** have a `center_id`:
+1.  `system_settings`
+2.  `module_permissions_meta`
+3.  `subscription_plans`
+4.  `login_page_settings`
+5.  `centers` (The root entity)
+6.  `error_logs` (System-wide monitoring)
 
 ## Risky or Poorly Designed Tables
 
-1.  **`users` table**: Storing password hashes in the same table as user metadata is risky if RLS is ever bypassed or if a SQL injection occurs. Recommendation: Use a separate `profiles` table for metadata and keep `users` minimal.
-2.  **`error_logs`**: Being a global table without `center_id` makes it a cross-tenant data leak risk if not strictly limited to Super Admins.
-3.  **`login_page_settings`**: Uses `page_type` as a primary key but lacks `center_id`. This implies settings are global for the entire platform rather than per-school.
-4.  **`parent_students`**: Lacks a `center_id`. This can cause issues if a parent has students in different schools managed by the same system (if that's a supported use case).
-5.  **`results` and `student_results`**: These use `bigint` for IDs instead of `uuid`, which is inconsistent with the rest of the schema and can lead to predictability issues.
-6.  **`broadcast_messages`**: The `target_audience` is a simple text field. If the frontend doesn't correctly handle this, it could lead to messages being visible to the wrong groups despite RLS (as RLS would only filter by `center_id`).
+1.  **`users` table**: Storing password hashes in the same table as user metadata is a security risk. If RLS is ever bypassed (e.g., via a leaked service role key), all hashes are exposed.
+    - *Mitigation*: The RLS policies implemented here strictly limit access to the `users` table, allowing users to only see themselves and admins to see only their center's users.
+2.  **`error_logs`**: Being a global table, it presents a cross-tenant data leak risk if not strictly limited.
+    - *Mitigation*: Policies restrict `SELECT` to Super Admins only.
+3.  **`broadcast_messages` & `notices`**: The `target_audience` is a text field. RLS enforces center isolation, but internal targeting (e.g., "Teachers only") relies on frontend logic or more complex RLS.
+    - *Mitigation*: Policies currently ensure no one outside the center can see these messages.
+4.  **`results` & `student_results`**: Use `bigint` for IDs. Predictable IDs can sometimes lead to scraping risks if RLS is weak.
+    - *Mitigation*: Robust student-scoped RLS policies prevent unauthorized access to result records.
 
-## Implementation Note
-The generated RLS policies assume that `center_id` exists on all these tables. If the schema is not updated, the policies will fail to compile. I have included the `center_id` in the logic as if it was already there to ensure the architecture is "correct by design."
+## Architecture Highlights
+- **Recursion Prevention**: Uses a private `security` schema and `SECURITY DEFINER` functions to look up user context without triggering RLS loops.
+- **Multi-Student Support**: Parents can access records for all their children linked via the `parent_students` mapping table.
+- **Teacher Scope**: Teachers are restricted to assigned grades for operational records (attendance, exams, homework) but have broad read access to school configuration.
+- **Fail-Closed**: Policies default to restricted access and require explicit role-based matches.
