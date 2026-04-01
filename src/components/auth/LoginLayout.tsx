@@ -126,9 +126,11 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
            <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
              Contact Sales
            </Button>
-           <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 shadow-lg shadow-primary/20">
-             Get Started
-           </Button>
+           <Link to="/getting-started">
+             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 shadow-lg shadow-primary/20">
+               Get Started
+             </Button>
+           </Link>
         </div>
       </header>
 
