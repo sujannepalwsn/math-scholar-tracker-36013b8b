@@ -200,30 +200,66 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
 };
 
 // --- Hero Section ---
-export const HeroSection = () => {
+interface HeroSectionProps {
+  title?: string;
+  subtitle?: string;
+  features?: { title: string, description: string, icon: string }[];
+}
+
+export const HeroSection: React.FC<HeroSectionProps> = ({ title, subtitle, features }) => {
+  const displayTitle = title || "EMPOWER YOUR INSTITUTION";
+  const displaySubtitle = subtitle || "A comprehensive, data-driven ecosystem designed to streamline administrative workflows and enhance the learning experience.";
+
   return (
     <div className="relative pt-10 pb-20 overflow-hidden">
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-0 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center md:text-left max-w-3xl"
+          className="text-center lg:text-left max-w-4xl"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 backdrop-blur-md border border-primary/20 text-primary text-sm font-black tracking-widest uppercase mb-8">
             <Icons.Sparkles className="h-4 w-4" />
             <span>Next Generation Education ERP</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8">
-            EMPOWER YOUR <span className="text-primary">INSTITUTION</span>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[0.95] tracking-tighter mb-8 uppercase">
+            {displayTitle.split(' ').map((word, i) => (
+              <span key={i} className={cn(i === displayTitle.split(' ').length - 1 ? "text-primary" : "")}>
+                {word}{' '}
+              </span>
+            ))}
           </h1>
 
-          <p className="text-xl md:text-2xl text-slate-300 font-medium leading-relaxed max-w-2xl">
-            A comprehensive, data-driven ecosystem designed to streamline administrative workflows and enhance the learning experience.
+          <p className="text-xl md:text-2xl text-slate-300 font-medium leading-relaxed max-w-2xl mb-12">
+            {displaySubtitle}
           </p>
 
-          <div className="mt-12 flex flex-wrap gap-6 items-center justify-center md:justify-start">
+          {/* Marketing Features if present */}
+          {features && features.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+              {features.map((f, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + (i * 0.1) }}
+                  className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/10"
+                >
+                  <div className="p-2 rounded-xl bg-primary/20">
+                    <DynamicIcon name={f.icon} className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-sm">{f.title}</h4>
+                    <p className="text-slate-400 text-xs mt-1">{f.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-6 items-center justify-center lg:justify-start">
             <div className="flex -space-x-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="w-12 h-12 rounded-full border-4 border-slate-900 bg-slate-800 flex items-center justify-center overflow-hidden">

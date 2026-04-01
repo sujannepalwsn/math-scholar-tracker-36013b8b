@@ -69,6 +69,12 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
 
   const devInfo = (settings?.developer_info as any) || { name: "EduFlow Tech", website: "#", copyright: `© ${new Date().getFullYear()}` };
   const helpInfo = (settings?.help_info as any) || { text: "Documentation", link: "#" };
+  const footerLinks = Array.isArray(settings?.footer_links) ? (settings.footer_links as any) : [
+    { title: "Product", links: [{ label: "Features", href: "#features" }, { label: "Pricing", href: "#packages" }, { label: "Testimonials", href: "#" }] },
+    { title: "Support", links: [{ label: "Help Center", href: "#" }, { label: "API Docs", href: "#" }, { label: "Security", href: "#" }] },
+    { title: "Company", links: [{ label: "About Us", href: "#about" }, { label: "Contact", href: "#" }, { label: "Privacy", href: "#" }] }
+  ];
+  const toggles = (settings?.section_toggles as any) || { show_features: true, show_packages: true, show_stats: true, show_footer: true };
 
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-primary/20 scroll-smooth overflow-x-hidden" style={{ backgroundColor: bgColor }}>
@@ -120,7 +126,11 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
 
             {/* Hero Text */}
             <div className="flex-1 order-2 lg:order-1">
-               <HeroSection />
+               <HeroSection
+                 title={settings?.marketing_title || undefined}
+                 subtitle={settings?.marketing_subtitle || undefined}
+                 features={Array.isArray(settings?.features) ? (settings.features as any) : undefined}
+               />
             </div>
 
             {/* Login Card */}
@@ -272,147 +282,124 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         </section>
 
         {/* Features Grid */}
-        <section id="features" className="py-32 bg-slate-950/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-20 space-y-4">
-              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">POWERFUL MODULES</h2>
-              <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-                Our platform is built on a modular architecture, allowing you to scale features as your institution grows.
-              </p>
-            </div>
+        {toggles.show_features && (
+          <section id="features" className="py-32 bg-slate-950/30">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-20 space-y-4">
+                <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">POWERFUL MODULES</h2>
+                <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
+                  Our platform is built on a modular architecture, allowing you to scale features as your institution grows.
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-              {sortedModules.map((module, idx) => (
-                <FeatureCard key={module.id} module={module} index={idx} />
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                {sortedModules.map((module, idx) => (
+                  <FeatureCard key={module.id} module={module} index={idx} />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Packages Grid */}
-        <section id="packages" className="py-32 relative overflow-hidden">
-          {/* Background Decor */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[180px] pointer-events-none" />
+        {toggles.show_packages && (
+          <section id="packages" className="py-32 relative overflow-hidden">
+            {/* Background Decor */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[180px] pointer-events-none" />
 
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center mb-20 space-y-4">
-              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">FLEXIBLE PLANS</h2>
-              <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-                Choose the perfect package for your school's unique requirements.
-              </p>
-            </div>
+            <div className="container mx-auto px-4 relative z-10">
+              <div className="text-center mb-20 space-y-4">
+                <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">FLEXIBLE PLANS</h2>
+                <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
+                  Choose the perfect package for your school's unique requirements.
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
-              {packages.map((type, idx) => (
-                <PackageCard key={type} type={type} index={idx} allModules={SYSTEM_MODULES} />
-              ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
+                {packages.map((type, idx) => (
+                  <PackageCard key={type} type={type} index={idx} allModules={SYSTEM_MODULES} />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* About / Stats Section */}
-        <section id="about" className="py-32 border-t border-white/5">
-          <div className="container mx-auto px-4">
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                {[
-                  { label: "Daily Active Users", value: "250K+" },
-                  { label: "Data Uptime", value: "99.9%" },
-                  { label: "Student Records", value: "15M+" },
-                  { label: "Years of Service", value: "12+" }
-                ].map((stat, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
-                    className="text-center space-y-2"
-                  >
-                    <p className="text-4xl md:text-6xl font-black text-white tracking-tighter">{stat.value}</p>
-                    <p className="text-sm font-bold text-primary uppercase tracking-widest">{stat.label}</p>
-                  </motion.div>
-                ))}
-             </div>
-          </div>
-        </section>
+        {toggles.show_stats && (
+          <section id="about" className="py-32 border-t border-white/5">
+            <div className="container mx-auto px-4">
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  {[
+                    { label: "Daily Active Users", value: "250K+" },
+                    { label: "Data Uptime", value: "99.9%" },
+                    { label: "Student Records", value: "15M+" },
+                    { label: "Years of Service", value: "12+" }
+                  ].map((stat, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="text-center space-y-2"
+                    >
+                      <p className="text-4xl md:text-6xl font-black text-white tracking-tighter">{stat.value}</p>
+                      <p className="text-sm font-bold text-primary uppercase tracking-widest">{stat.label}</p>
+                    </motion.div>
+                  ))}
+               </div>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Modern Footer */}
-      <footer className="relative z-10 bg-slate-950 border-t border-white/5 pt-20 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
-            <div className="space-y-6 col-span-1 md:col-span-1">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-primary/20 border border-primary/20">
-                  <Shield className="h-6 w-6 text-primary" />
+      {toggles.show_footer && (
+        <footer className="relative z-10 bg-slate-950 border-t border-white/5 pt-20 pb-12">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+              <div className="space-y-6 col-span-1 md:col-span-1">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/20 border border-primary/20">
+                    <Shield className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="text-2xl font-black text-white tracking-tighter">EDUFLOW</span>
                 </div>
-                <span className="text-2xl font-black text-white tracking-tighter">EDUFLOW</span>
+                <p className="text-slate-400 font-medium leading-relaxed">
+                  Revolutionizing education through innovative digital solutions and seamless institution management.
+                </p>
+                <div className="flex items-center gap-4">
+                  <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
+                    <Twitter className="h-5 w-5" />
+                  </a>
+                  <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
+                    <Linkedin className="h-5 w-5" />
+                  </a>
+                  <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
+                    <Github className="h-5 w-5" />
+                  </a>
+                  <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
+                    <Facebook className="h-5 w-5" />
+                  </a>
+                </div>
               </div>
-              <p className="text-slate-400 font-medium leading-relaxed">
-                Revolutionizing education through innovative digital solutions and seamless institution management.
-              </p>
-              <div className="flex items-center gap-4">
-                <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
-                  <Linkedin className="h-5 w-5" />
-                </a>
-                <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
-                  <Github className="h-5 w-5" />
-                </a>
-                <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-primary transition-colors text-slate-400 hover:text-white">
-                  <Facebook className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
 
-            <div className="space-y-6">
-              <h4 className="text-lg font-black text-white tracking-tight uppercase">Quick Links</h4>
-              <ul className="space-y-4">
-                {['Features', 'Packages', 'Testimonials', 'About Us', 'Contact'].map(item => (
-                  <li key={item}>
-                    <a href={`#${item.toLowerCase()}`} className="text-slate-400 font-medium hover:text-white transition-colors flex items-center gap-2 group">
-                      <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" />
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {footerLinks.map((column: any, i: number) => (
+                <div key={i} className="space-y-6">
+                  <h4 className="text-lg font-black text-white tracking-tight uppercase">{column.title}</h4>
+                  <ul className="space-y-4">
+                    {column.links.map((link: any, j: number) => (
+                      <li key={j}>
+                        <a href={link.href} className="text-slate-400 font-medium hover:text-white transition-colors flex items-center gap-2 group">
+                          <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" />
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
-
-            <div className="space-y-6">
-              <h4 className="text-lg font-black text-white tracking-tight uppercase">Support</h4>
-              <ul className="space-y-4">
-                {['Help Center', 'API Docs', 'Community', 'Service Status', 'Security'].map(item => (
-                  <li key={item}>
-                    <a href="#" className="text-slate-400 font-medium hover:text-white transition-colors flex items-center gap-2 group">
-                      <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-all -ml-6 group-hover:ml-0" />
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="space-y-6">
-              <h4 className="text-lg font-black text-white tracking-tight uppercase">Contact Us</h4>
-              <ul className="space-y-6">
-                <li className="flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-white/5 text-primary"><MapPin className="h-5 w-5" /></div>
-                  <span className="text-slate-400 font-medium">123 Innovation Way, Tech City, ST 12345</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-white/5 text-primary"><Mail className="h-5 w-5" /></div>
-                  <span className="text-slate-400 font-medium">hello@eduflow.tech</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-white/5 text-primary"><Phone className="h-5 w-5" /></div>
-                  <span className="text-slate-400 font-medium">+1 (555) 000-0000</span>
-                </li>
-              </ul>
-            </div>
-          </div>
 
           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
              <div className="flex items-center gap-4">

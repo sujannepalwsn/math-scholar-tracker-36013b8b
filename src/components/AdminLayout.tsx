@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Activity, DollarSign, Home, KeyRound, LogOut, Settings, Shield, User, Building2, BarChart3, Receipt, Database, Zap } from "lucide-react";
+import { Activity, DollarSign, Home, KeyRound, LogOut, Settings, Shield, User, Building2, BarChart3, Receipt, Database, Zap, LayoutTemplate } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -19,6 +19,7 @@ const navItems: Array<{
   { to: "/admin/analytics", label: "Center Analytics", icon: BarChart3, role: 'admin' as const },
   { to: "/admin/billing", label: "Billing System", icon: Receipt, role: 'admin' as const },
   { to: "/admin/usage", label: "Data Usage", icon: Database, role: 'admin' as const },
+  { to: "/admin/landing-page", label: "Landing Page", icon: LayoutTemplate, role: 'admin' as const },
   { to: "/admin/subscriptions", label: "SaaS Subscriptions", icon: Zap, role: 'admin' as const },
   { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const },
   { to: "/admin/errors", label: "Error Tracking", icon: Activity, role: 'admin' as const },
