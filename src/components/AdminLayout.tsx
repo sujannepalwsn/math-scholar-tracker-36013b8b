@@ -20,9 +20,9 @@ const navItems: Array<{
   { to: "/admin/billing", label: "Billing System", icon: Receipt, role: 'admin' as const },
   { to: "/admin/usage", label: "Data Usage", icon: Database, role: 'admin' as const },
   { to: "/admin/subscriptions", label: "SaaS Subscriptions", icon: Zap, role: 'admin' as const },
-  { to: "/admin/errors", label: "Error Tracking", icon: Activity, role: 'admin' as const, category: 'Administration' },
-  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const, category: 'Reports and Communication' },
-  { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const },
+  { to: "/admin/errors", label: "Error Tracking", icon: Activity, role: 'admin' as const },
+  { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
