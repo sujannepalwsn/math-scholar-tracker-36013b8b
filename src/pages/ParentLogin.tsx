@@ -14,6 +14,11 @@ const ParentLogin = () => {
   const { toast } = useToast();
   const { data: settings } = useLoginSettings('parent');
 
+  const containerStyles = {
+    '--primary': settings?.primary_color || '#4f46e5',
+    '--background': settings?.background_color || '#020617',
+  } as React.CSSProperties;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -40,6 +45,7 @@ const ParentLogin = () => {
   };
 
   return (
+    <div style={containerStyles}>
     <LoginLayout
       settings={settings || null}
       username={username}
@@ -49,6 +55,7 @@ const ParentLogin = () => {
       loading={loading}
       onSubmit={handleSubmit}
     />
+    </div>
   );
 };
 

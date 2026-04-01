@@ -15,6 +15,11 @@ const AdminLogin = () => {
   const { toast } = useToast();
   const { data: settings } = useLoginSettings('admin');
 
+  const containerStyles = {
+    '--primary': settings?.primary_color || '#4f46e5',
+    '--background': settings?.background_color || '#020617',
+  } as React.CSSProperties;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -37,6 +42,7 @@ const AdminLogin = () => {
   };
 
   return (
+    <div style={containerStyles}>
     <LoginLayout
       settings={settings || null}
       username={username}
@@ -56,6 +62,7 @@ const AdminLogin = () => {
         </Button>
       }
     />
+    </div>
   );
 };
 

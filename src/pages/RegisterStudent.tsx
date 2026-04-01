@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdmissionWorkflow from "@/components/center/AdmissionWorkflow"
 import StudentPromotion from "@/components/center/StudentPromotion"
 import AlumniManagement from "@/components/center/AlumniManagement"
+import ParentManagement from "@/components/center/ParentManagement"
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { logger } from "@/utils/logger";
 
@@ -705,6 +706,7 @@ export default function RegisterStudent() {
       <Tabs defaultValue="enrolment" className="space-y-8">
         <TabsList className="flex flex-nowrap overflow-x-auto w-full bg-card/40 backdrop-blur-md border border-border/20 rounded-2xl p-1 h-14 shadow-soft">
           <TabsTrigger value="enrolment" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Enrolment</TabsTrigger>
+          <TabsTrigger value="parents" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Parent Accounts</TabsTrigger>
           <TabsTrigger value="admission" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Admission Pipeline</TabsTrigger>
           <TabsTrigger value="promotion" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Promotion</TabsTrigger>
           <TabsTrigger value="alumni" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Alumni & TC</TabsTrigger>
@@ -1405,6 +1407,10 @@ export default function RegisterStudent() {
 
         <TabsContent value="alumni" className="outline-none">
           <AlumniManagement centerId={user?.center_id || ""} canEdit={hasFullAccess} />
+        </TabsContent>
+
+        <TabsContent value="parents" className="outline-none">
+          <ParentManagement centerId={user?.center_id || ""} />
         </TabsContent>
       </Tabs>
     </div>

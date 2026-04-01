@@ -155,7 +155,7 @@ export default function AboutInstitution() {
         established_date: center.established_date || "",
         academic_info: center.academic_info || "",
         facilities: Array.isArray(center.facilities) ? (center.facilities as unknown as Facility[]) : [],
-        achievements: Array.isArray(center.achievements) ? (center.achievements as unknown as Achievement[]) : [],
+        achievements: Array.isArray(center.achievements) ? (center.achievements as unknown as Achievement[]) : (center.achievements ? [center.achievements as any] : []),
         gallery: Array.isArray(center.gallery) ? (center.gallery as unknown as GalleryItem[]) : [],
         social_links: (center.social_links as unknown as SocialLinks) || {},
         institution_type: center.institution_type || "Co-Educational",
@@ -176,6 +176,11 @@ export default function AboutInstitution() {
       if (!user?.center_id) throw new Error("Center ID not found");
       if (!canEdit) throw new Error("Access Denied: You do not have permission to update institution information.");
 
+      // Ensure data is correctly formatted for JSONB
+      const facilities = Array.isArray(formData.facilities) ? formData.facilities : [];
+      const achievements = Array.isArray(formData.achievements) ? formData.achievements : [];
+      const gallery = Array.isArray(formData.gallery) ? formData.gallery : [];
+
       const { data, error } = await supabase
         .from("centers")
         .update({
@@ -185,9 +190,9 @@ export default function AboutInstitution() {
           principal_message: formData.principal_message,
           established_date: formData.established_date || null,
           academic_info: formData.academic_info,
-          facilities: formData.facilities as unknown as Json,
-          achievements: formData.achievements as unknown as Json,
-          gallery: formData.gallery as unknown as Json,
+          facilities: facilities as unknown as Json,
+          achievements: achievements as unknown as Json,
+          gallery: gallery as unknown as Json,
           social_links: formData.social_links as unknown as Json,
           institution_type: formData.institution_type,
           phone: formData.phone,

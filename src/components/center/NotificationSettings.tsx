@@ -10,15 +10,67 @@ import { MessageSquare, Mail, Bell, Settings } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 export default function NotificationSettings({ centerId }: { centerId: string }) {
+  const queryClient = useQueryClient();
   const [smsKey, setSmsKey] = useState("");
   const [emailKey, setEmailKey] = useState("");
-  const [attendanceAlerts, setAttendanceAlerts] = useState(true);
-  const [feeReminders, setFeeReminders] = useState(true);
-  const [examResults, setExamResults] = useState(false);
+
+  const { data: center } = useQuery({
+    queryKey: ["center-notification-settings", centerId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("centers").select("notification_settings").eq("id", centerId).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!centerId,
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      const { error } = await supabase
+        .from("centers")
+        .update({ notification_settings: settings })
+        .eq("id", centerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["center-notification-settings"] });
+      toast.success("Notification protocols updated");
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
+
+  const settings = (center?.notification_settings as any) || {
+    homework: true,
+    missed_chapters: true,
+    discipline: true,
+    preschool_activities: true,
+    attendance: true,
+    fee_reminders: true,
+    exam_results: true
+  };
+
+  const toggleSetting = (key: string) => {
+    updateSettingsMutation.mutate({
+      ...settings,
+      [key]: !settings[key]
+    });
+  };
 
   const saveSettings = () => {
-    toast.success("Notification protocols updated");
+    updateSettingsMutation.mutate({
+      ...settings,
+      sms_gateway_key: smsKey,
+      email_service_key: emailKey
+    });
   };
+
+  React.useEffect(() => {
+    if (center?.notification_settings) {
+      const s = center.notification_settings as any;
+      setSmsKey(s.sms_gateway_key || "");
+      setEmailKey(s.email_service_key || "");
+    }
+  }, [center]);
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
@@ -70,18 +122,24 @@ export default function NotificationSettings({ centerId }: { centerId: string })
         <CardContent className="space-y-4 text-sm">
           <p className="text-slate-500 font-medium italic">Mobile push notifications are handled via Firebase Cloud Messaging (FCM) by default for the Nexus App environment.</p>
           <div className="space-y-4 pt-4">
-             <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-bold">Attendance Alerts</span>
-                <Switch checked={attendanceAlerts} onCheckedChange={setAttendanceAlerts} />
-             </div>
-             <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-bold">Fee Reminders</span>
-                <Switch checked={feeReminders} onCheckedChange={setFeeReminders} />
-             </div>
-             <div className="flex justify-between items-center py-2 border-b">
-                <span className="font-bold">Exam Results</span>
-                <Switch checked={examResults} onCheckedChange={setExamResults} />
-             </div>
+             {[
+               { key: 'attendance', label: 'Attendance Alerts' },
+               { key: 'homework', label: 'Homework Assignments' },
+               { key: 'missed_chapters', label: 'Missed Chapters' },
+               { key: 'discipline', label: 'Discipline Issues' },
+               { key: 'preschool_activities', label: 'Preschool Activities' },
+               { key: 'fee_reminders', label: 'Fee Reminders' },
+               { key: 'exam_results', label: 'Exam Results' },
+             ].map((item) => (
+               <div key={item.key} className="flex justify-between items-center py-2 border-b">
+                  <span className="font-bold">{item.label}</span>
+                  <Switch
+                    checked={settings[item.key]}
+                    onCheckedChange={() => toggleSetting(item.key)}
+                    disabled={updateSettingsMutation.isPending}
+                  />
+               </div>
+             ))}
           </div>
         </CardContent>
       </Card>

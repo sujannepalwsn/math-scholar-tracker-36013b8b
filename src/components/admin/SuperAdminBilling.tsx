@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 export default function SuperAdminBilling() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ centerId: "", amount: "", dueDate: "", number: `INV-${Date.now()}` });
+  const [form, setForm] = useState({ centerId: "", amount: "", dueDate: "", description: "", number: `INV-${Date.now()}` });
 
   const { data: centers = [] } = useQuery({
     queryKey: ["admin-centers-billing"],
@@ -40,19 +40,23 @@ export default function SuperAdminBilling() {
 
   const createInvoiceMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("center_invoices").insert({
+      const { error: invoiceError } = await supabase.from("center_invoices").insert({
         center_id: form.centerId,
         amount: parseFloat(form.amount),
         due_date: form.dueDate,
         invoice_number: form.number,
         status: 'Pending'
       });
-      if (error) throw error;
+      if (invoiceError) throw invoiceError;
+
+      if (form.description) {
+        await supabase.from("centers").update({ payment_description: form.description }).eq("id", form.centerId);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-center-invoices"] });
       setShowCreate(false);
-      setForm({ centerId: "", amount: "", dueDate: "", number: `INV-${Date.now()}` });
+      setForm({ centerId: "", amount: "", dueDate: "", description: "", number: `INV-${Date.now()}` });
       toast.success("Invoice sent to center");
     },
   });
@@ -91,12 +95,16 @@ export default function SuperAdminBilling() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-slate-400">Due Date</Label>
-                <div className="flex gap-2">
-                  <Input type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} className="h-11 rounded-xl bg-white border-none shadow-soft" />
-                  <Button onClick={() => createInvoiceMutation.mutate()} className="h-11 px-4 rounded-xl">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Input type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} className="h-11 rounded-xl bg-white border-none shadow-soft" />
+              </div>
+              <div className="md:col-span-3 space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-400">Payment Description (Publicly Visible)</Label>
+                <Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Information for the customer about the payment..." className="h-11 rounded-xl bg-white border-none shadow-soft" />
+              </div>
+              <div className="flex items-end">
+                <Button onClick={() => createInvoiceMutation.mutate()} className="h-11 w-full rounded-xl bg-slate-900 text-white font-black uppercase text-[10px]">
+                  <Send className="h-4 w-4 mr-2" /> GENERATE & UPDATE
+                </Button>
               </div>
             </div>
           </CardContent>

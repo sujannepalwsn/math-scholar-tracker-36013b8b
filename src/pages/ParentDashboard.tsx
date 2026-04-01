@@ -546,7 +546,15 @@ export default function ParentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
            <DigitalNoticeBoard centerId={user?.center_id || ""} role="parent" grade={student?.grade || undefined} />
-           <SuggestionForm role="parent" />
+
+           <div className="space-y-2">
+             <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Share Your Feedback</h3>
+             </div>
+             <SuggestionForm role="parent" />
+           </div>
+
            <Card className="border-none shadow-soft bg-card/60 backdrop-blur-md rounded-2xl border border-border/20 overflow-hidden">
             <CardHeader className="bg-primary/5 border-b border-slate-100 p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

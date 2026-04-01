@@ -86,6 +86,7 @@ import SaaSSubscriptions from "./pages/admin/SaaSSubscriptions";
 import ErrorTracking from "./pages/admin/ErrorTracking";
 import LandingPageEditor from "./pages/admin/LandingPageEditor";
 import DemoRequests from "./pages/admin/DemoRequests";
+import SystemPagesEditor from "./pages/admin/SystemPagesEditor";
 import ContactSales from "./pages/ContactSales";
 import CenterSettings from "./pages/CenterSettings";
 import GeneralSettings from "./pages/GeneralSettings";
@@ -100,6 +101,8 @@ import InventoryManagement from "./pages/InventoryManagement";
 import HRManagement from "./pages/HRManagement";
 import TransportManagementPage from "./pages/TransportManagement";
 import AboutInstitution from "./pages/AboutInstitution";
+import SystemPage from "./pages/SystemPage";
+import SaaSBookingPage from "./pages/SaaSBookingPage";
 
 const queryClient = new QueryClient();
 
@@ -196,6 +199,8 @@ const App = () => {
               <Route path="/login-teacher" element={<TeacherLogin />} />
               <Route path="/apply" element={<PublicAdmission />} />
               <Route path="/institution/:id" element={<AboutInstitution />} />
+              <Route path="/pages/:slug" element={<SystemPage />} />
+              <Route path="/book-plan" element={<SaaSBookingPage />} />
               <Route
                 path="/change-password"
                 element={
@@ -310,6 +315,7 @@ const App = () => {
               <Route path="/admin/errors" element={<ProtectedRoute role="admin"><AdminLayout><ErrorTracking /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/landing-page" element={<ProtectedRoute role="admin"><AdminLayout><LandingPageEditor /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/demo-requests" element={<ProtectedRoute role="admin"><AdminLayout><DemoRequests /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/system-pages" element={<ProtectedRoute role="admin"><AdminLayout><SystemPagesEditor /></AdminLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
 

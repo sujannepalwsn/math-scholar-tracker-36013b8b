@@ -164,13 +164,15 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Invoice Management</CardTitle>
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle className="text-xl font-black uppercase tracking-tight">Invoice Management</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               {canEdit && (
                 <Dialog open={showBulkGenerateDialog} onOpenChange={setShowBulkGenerateDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline"><FilePlus className="h-4 w-4 mr-2" />Generate Monthly Invoices</Button>
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold uppercase text-[10px] tracking-widest h-10 border-2">
+                      <FilePlus className="h-4 w-4 mr-2" /> Generate Monthly Invoices
+                    </Button>
                   </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -251,7 +253,9 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
               {canEdit && (
                 <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                   <DialogTrigger asChild>
-                    <Button><Plus className="h-4 w-4 mr-2" />Create Single Invoice</Button>
+                    <Button className="w-full sm:w-auto rounded-xl font-black uppercase text-[10px] tracking-widest h-10 shadow-soft">
+                      <Plus className="h-4 w-4 mr-2" /> Create Single Invoice
+                    </Button>
                   </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>

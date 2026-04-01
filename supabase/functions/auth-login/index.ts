@@ -30,9 +30,8 @@ serve(async (req) => {
     // Fetch user by username
     const { data: userData, error: userError } = await supabaseClient
       .from('users')
-      .select('*')
+      .select('*, teachers(contract_end_date)')
       .eq('username', username)
-      .eq('is_active', true)
       .single();
 
     if (userError || !userData) {
@@ -41,6 +40,45 @@ serve(async (req) => {
         JSON.stringify({ success: false, error: 'Invalid username or password' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
+    }
+
+    // Check if account is active
+    if (!userData.is_active) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Account deactivated. Please contact administrator.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // Check for account expiry (Parent/General)
+    if (userData.expiry_date && new Date(userData.expiry_date) < new Date()) {
+      // Auto-deactivate in DB
+      await supabaseClient
+        .from('users')
+        .update({ is_active: false })
+        .eq('id', userData.id);
+
+      return new Response(
+        JSON.stringify({ success: false, error: 'Account expired. Please contact administrator.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // Check for Teacher contract expiry
+    if (userData.role === 'teacher' && userData.teachers?.[0]?.contract_end_date) {
+      const contractEndDate = new Date(userData.teachers[0].contract_end_date);
+      if (contractEndDate < new Date()) {
+        // Auto-deactivate in DB
+        await supabaseClient
+          .from('users')
+          .update({ is_active: false })
+          .eq('id', userData.id);
+
+        return new Response(
+          JSON.stringify({ success: false, error: 'Contract expired. Account deactivated.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
     }
 
     // Verify password using bcrypt (matching how the application stores hashes)

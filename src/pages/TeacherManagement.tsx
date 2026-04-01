@@ -64,6 +64,7 @@ export default function TeacherManagement() {
   const [contactNumber, setContactNumber] = useState("");
   const [email, setEmail] = useState("");
   const [hireDate, setHireDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [contractEndDate, setContractEndDate] = useState("");
   const [monthlySalary, setMonthlySalary] = useState("");
   const [regularInTime, setRegularInTime] = useState("09:00");
   const [regularOutTime, setRegularOutTime] = useState("17:00");
@@ -88,6 +89,7 @@ export default function TeacherManagement() {
   const [selectedTeacherForLogin, setSelectedTeacherForLogin] = useState<Teacher | null>(null);
   const [teacherUsername, setTeacherUsername] = useState("");
   const [teacherPassword, setTeacherPassword] = useState("");
+  const [isChangingTeacherPassword, setIsChangingTeacherPassword] = useState(false);
 
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [selectedTeacherForPermissions, setSelectedTeacherForPermissions] = useState<Teacher | null>(null);
@@ -166,6 +168,7 @@ export default function TeacherManagement() {
   const resetForm = () => {
     setName(""); setContactNumber(""); setEmail("");
     setHireDate(format(new Date(), "yyyy-MM-dd"));
+    setContractEndDate("");
     setMonthlySalary(""); setRegularInTime("09:00"); setRegularOutTime("17:00");
     setExpectedCheckIn("09:00"); setExpectedCheckOut("17:00");
     setEmployeeId(""); setAddress(""); setDob(""); setGender("Male");
@@ -311,7 +314,7 @@ export default function TeacherManagement() {
       }
       const { error, data: newTeacher } = await supabase.from("teachers").insert({
         center_id: user.center_id, name, contact_number: contactNumber || null, email: email || null,
-        hire_date: hireDate, is_active: true, monthly_salary: parseFloat(monthlySalary) || 0,
+        hire_date: hireDate, contract_end_date: contractEndDate || null, is_active: true, monthly_salary: parseFloat(monthlySalary) || 0,
         regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
         expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00',
         employee_id: employeeId || null, address: address || null, date_of_birth: dob || null, gender,
@@ -431,6 +434,7 @@ export default function TeacherManagement() {
       }
       const { error } = await supabase.from("teachers").update({
         name, contact_number: contactNumber || null, email: email || null, hire_date: hireDate,
+        contract_end_date: contractEndDate || null,
         monthly_salary: parseFloat(monthlySalary) || 0, regular_in_time: regularInTime || '09:00', regular_out_time: regularOutTime || '17:00',
         expected_check_in: expectedCheckIn || '09:00', expected_check_out: expectedCheckOut || '17:00',
         employee_id: employeeId || null, address: address || null, date_of_birth: dob || null, gender,
@@ -444,12 +448,22 @@ export default function TeacherManagement() {
     onError: (error: any) => toast.error(error.message || "Failed to update") });
 
   const toggleTeacherStatusMutation = useMutation({
-    mutationFn: async (teacher: Teacher) => {
+    mutationFn: async (teacher: any) => {
       if (!hasActionPermission(user, 'teacher_management', 'edit')) {
         throw new Error("Access Denied: You do not have permission to toggle faculty status.");
       }
+
+      const isActivating = !teacher.is_active;
+      if (isActivating && teacher.contract_end_date && new Date(teacher.contract_end_date) < new Date()) {
+        throw new Error("Cannot activate account with expired contract. Please renew contract first.");
+      }
+
       const { error } = await supabase.from("teachers").update({ is_active: !teacher.is_active }).eq("id", teacher.id);
       if (error) throw error;
+
+      if (teacher.user_id) {
+        await supabase.from("users").update({ is_active: !teacher.is_active }).eq("id", teacher.user_id);
+      }
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teachers"] }); toast.success("Status updated!"); },
     onError: (error: any) => toast.error(error.message) });
@@ -474,6 +488,10 @@ export default function TeacherManagement() {
       const { data: existingUser, error: existingUserError } = await supabase.from('users').select('id').eq('username', teacherUsername).single();
       if (existingUserError && existingUserError.code !== 'PGRST116') throw existingUserError;
       if (existingUser) throw new Error('Username already exists.');
+
+      if (selectedTeacherForLogin.contract_end_date && new Date(selectedTeacherForLogin.contract_end_date) < new Date()) {
+        throw new Error("Cannot create login for teacher with expired contract.");
+      }
 
       const hashedPassword = await bcrypt.hash(teacherPassword, 12);
       const { data: newUser, error: userError } = await supabase
@@ -531,10 +549,29 @@ export default function TeacherManagement() {
     },
     onError: (error: any) => toast.error(error.message) });
 
+  const changeTeacherPasswordMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedTeacher || !teacherPassword) throw new Error("Missing info");
+      const hashedPassword = await bcrypt.hash(teacherPassword, 12);
+      const { error } = await supabase
+        .from("users")
+        .update({ password_hash: hashedPassword })
+        .eq("id", selectedTeacher.user_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Password changed successfully!");
+      setIsChangingTeacherPassword(false);
+      setTeacherPassword("");
+    },
+    onError: (error: any) => toast.error(error.message)
+  });
+
   const handleEditClick = (teacher: any) => {
     setEditingTeacher(teacher); setName(teacher.name);
     setContactNumber(teacher.phone || teacher.contact_number || ""); setEmail(teacher.email || "");
     setHireDate(teacher.hire_date ? format(new Date(teacher.hire_date), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"));
+    setContractEndDate(teacher.contract_end_date || "");
     setMonthlySalary(teacher.monthly_salary?.toString() || "");
     setRegularInTime(teacher.regular_in_time || "09:00"); setRegularOutTime(teacher.regular_out_time || "17:00");
     setExpectedCheckIn(teacher.expected_check_in || "09:00"); setExpectedCheckOut(teacher.expected_check_out || "17:00");
@@ -614,9 +651,10 @@ export default function TeacherManagement() {
                       <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
                       <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="space-y-2"><Label>Contact Number</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
                       <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Contract End Date</Label><Input type="date" value={contractEndDate} onChange={(e) => setContractEndDate(e.target.value)} /></div>
                     </div>
                     <div className="space-y-2"><Label>Address</Label><Textarea value={address} onChange={(e) => setAddress(e.target.value)} /></div>
                   </TabsContent>
@@ -680,9 +718,10 @@ export default function TeacherManagement() {
                         <div className="space-y-2"><Label>Full Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
                         <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2"><Label>Contact</Label><Input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} /></div>
                         <div className="space-y-2"><Label>Hire Date</Label><Input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Contract End Date</Label><Input type="date" value={contractEndDate} onChange={(e) => setContractEndDate(e.target.value)} /></div>
                       </div>
                       <div className="space-y-2"><Label>Address</Label><Textarea value={address} onChange={(e) => setAddress(e.target.value)} /></div>
                     </TabsContent>
@@ -955,6 +994,12 @@ export default function TeacherManagement() {
                       <p className="font-black text-slate-700">{selectedTeacher.hire_date ? format(new Date(selectedTeacher.hire_date), "MMM d, yyyy") : 'N/A'}</p>
                    </div>
                    <div className="space-y-1">
+                      <p className="label-caps">Contract End</p>
+                      <p className={cn("font-black", selectedTeacher.contract_end_date && new Date(selectedTeacher.contract_end_date) < new Date() ? "text-rose-600" : "text-slate-700")}>
+                        {selectedTeacher.contract_end_date ? format(new Date(selectedTeacher.contract_end_date), "MMM d, yyyy") : 'PERMANENT'}
+                      </p>
+                   </div>
+                   <div className="space-y-1">
                       <p className="label-caps">Employee ID</p>
                       <p className="font-black text-slate-700">{selectedTeacher.employee_id || 'N/A'}</p>
                    </div>
@@ -977,6 +1022,11 @@ export default function TeacherManagement() {
                   <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleEditClick(selectedTeacher)}>
                     <Edit className="h-3.5 w-3.5 mr-2" /> Edit Profile
                   </Button>
+                  {selectedTeacher.user_id && (
+                    <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => setIsChangingTeacherPassword(true)}>
+                      <Key className="h-3.5 w-3.5 mr-2" /> Change Password
+                    </Button>
+                  )}
                   <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleHRClick(selectedTeacher)}>
                     <FileText className="h-3.5 w-3.5 mr-2" /> HR & Payroll
                   </Button>
@@ -1068,6 +1118,34 @@ export default function TeacherManagement() {
             <DialogDescription>Toggle features for {selectedTeacherForPermissions?.name}.</DialogDescription>
           </DialogHeader>
           {selectedTeacherForPermissions && <TeacherFeaturePermissions teacherId={selectedTeacherForPermissions.id} teacherName={selectedTeacherForPermissions.name} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={isChangingTeacherPassword} onOpenChange={setIsChangingTeacherPassword}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password for {selectedTeacher?.name}</DialogTitle>
+            <DialogDescription>Enter a new secure password for this faculty member.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                value={teacherPassword}
+                onChange={(e) => setTeacherPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+            <Button
+              onClick={() => changeTeacherPasswordMutation.mutate()}
+              disabled={!teacherPassword || changeTeacherPasswordMutation.isPending}
+              className="w-full"
+            >
+              {changeTeacherPasswordMutation.isPending ? "Updating..." : "Update Password"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

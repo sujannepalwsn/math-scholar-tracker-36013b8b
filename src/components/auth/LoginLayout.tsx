@@ -53,15 +53,17 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
 
   const currentRole = getCurrentRole();
   const { data: stats } = useSystemStats();
-  const [partners, setPartners] = useState<{ id: string; name: string }[]>([]);
+  const [partners, setPartners] = useState<{ id: string; name: string; logo_url: string; address: string }[]>([]);
 
   useEffect(() => {
     const fetchPartners = async () => {
       const { data } = await supabase
         .from('centers')
-        .select('id, name')
+        .select('id, name, logo_url, address')
+        .eq('is_active', true)
+        .limit(12)
         .order('name');
-      if (data) setPartners(data);
+      if (data) setPartners(data as any);
     };
     fetchPartners();
   }, []);
@@ -86,8 +88,8 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
   const helpInfo = (settings?.help_info as any) || { text: "Documentation", link: "#" };
   const footerLinks = Array.isArray(settings?.footer_links) ? (settings.footer_links as any) : [
     { title: "Product", links: [{ label: "Features", href: "#features" }, { label: "Pricing", href: "#packages" }, { label: "Testimonials", href: "#" }] },
-    { title: "Support", links: [{ label: "Help Center", href: "#" }, { label: "API Docs", href: "#" }, { label: "Security", href: "#" }] },
-    { title: "Company", links: [{ label: "About Us", href: "#about" }, { label: "Contact", href: "#" }, { label: "Privacy", href: "#" }] }
+    { title: "Support", links: [{ label: "Help Center", href: "/pages/support" }, { label: "API Docs", href: "#" }, { label: "Security", href: "#" }] },
+    { title: "Company", links: [{ label: "About Us", href: "#about" }, { label: "Contact", href: "/contact-sales" }, { label: "Privacy", href: "/pages/privacy" }] }
   ];
   const toggles = (settings?.section_toggles as any) || { show_features: true, show_packages: true, show_stats: true, show_footer: true };
 
@@ -104,32 +106,32 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
       </div>
 
       {/* Navigation Bar */}
-      <header className="relative z-50 w-full px-6 py-4 flex items-center justify-between border-b border-white/5 bg-slate-950/20 backdrop-blur-md">
+      <header className="relative z-50 w-full px-4 md:px-6 py-4 flex items-center justify-between border-b border-white/5 bg-slate-950/20 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/20 border border-primary/20">
+          <div className="p-1.5 md:p-2 rounded-xl bg-primary/20 border border-primary/20">
             {settings?.logo_url ? (
-              <img src={settings.logo_url} alt="Logo" className="h-8 w-8 object-contain" />
+              <img src={settings.logo_url} alt="Logo" className="h-6 w-6 md:h-8 md:w-8 object-contain" />
             ) : (
-              <Shield className="h-6 w-6 text-primary" />
+              <Shield className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             )}
           </div>
-          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className="text-primary">FLOW</span></span>
+          <span className="text-lg md:text-2xl font-black text-white tracking-tighter">EDU<span className="text-primary">FLOW</span></span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-8">
           <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Features</a>
           <a href="#packages" onClick={(e) => { e.preventDefault(); document.getElementById('packages')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Pricing</a>
           <a href="#about" onClick={(e) => { e.preventDefault(); document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">About</a>
         </nav>
 
-        <div className="flex items-center gap-4">
-           <Link to="/contact-sales">
-             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
+        <div className="flex items-center gap-2 md:gap-4">
+           <Link to="/contact-sales" className="hidden sm:block">
+             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-4 md:px-6 text-xs md:text-sm">
                Contact Sales
              </Button>
            </Link>
            <Link to="/getting-started">
-             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 shadow-lg shadow-primary/20">
+             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-4 md:px-8 shadow-lg shadow-primary/20 text-xs md:text-sm h-9 md:h-10">
                Get Started
              </Button>
            </Link>
@@ -454,23 +456,38 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
             <div className="container mx-auto px-4">
               <div className="flex flex-col lg:flex-row">
                 <div className="flex-1">
-                  <div className="mb-12">
-                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-4">Our Distinguished Partners</h2>
-                    <p className="text-slate-400 font-medium">Empowering leading educational institutions across the region.</p>
+                  <div className="mb-16 text-center lg:text-left">
+                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-4">Our Distinguished Partners</h2>
+                    <p className="text-slate-400 font-medium text-lg">Empowering leading educational institutions across the region.</p>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {partners.map((partner) => (
                       <Link
                         key={partner.id}
                         to={`/institution/${partner.id}`}
                       >
                         <motion.div
-                          whileHover={{ y: -5, backgroundColor: "rgba(255,255,255,0.05)" }}
-                          className="p-6 rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all group"
+                          whileHover={{ y: -10, backgroundColor: "rgba(255,255,255,0.08)" }}
+                          className="p-8 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl transition-all group relative overflow-hidden"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-white group-hover:text-primary transition-colors">{partner.name}</span>
-                            <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-primary transition-all opacity-0 group-hover:opacity-100" />
+                          <div className="flex items-start gap-5">
+                            <div className="h-16 w-16 rounded-2xl bg-white/10 p-2 flex items-center justify-center border border-white/10 group-hover:border-primary/50 transition-colors">
+                              {partner.logo_url ? (
+                                <img src={partner.logo_url} alt="" className="h-full w-full object-contain" />
+                              ) : (
+                                <Building className="h-8 w-8 text-primary/40" />
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-1">
+                              <h4 className="font-black text-white group-hover:text-primary transition-colors text-lg line-clamp-1">{partner.name}</h4>
+                              <div className="flex items-center gap-1.5 text-slate-400">
+                                <MapPin className="h-3 w-3" />
+                                <span className="text-xs font-bold truncate max-w-[150px]">{partner.address || 'Location Hidden'}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="absolute bottom-4 right-6 flex items-center gap-2 text-primary font-black text-[10px] tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                            View Profile <ChevronRight className="h-3 w-3" />
                           </div>
                         </motion.div>
                       </Link>

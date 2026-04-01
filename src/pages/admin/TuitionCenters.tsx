@@ -93,9 +93,12 @@ const TuitionCenters = () => {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
-      const { error } = await supabase.from('users').update({ is_active: !isActive }).eq('id', userId);
-      if (error) throw error;
+    mutationFn: async ({ centerId, userId, isActive }: { centerId: string; userId: string; isActive: boolean }) => {
+      const { error: userError } = await supabase.from('users').update({ is_active: !isActive }).eq('id', userId);
+      if (userError) throw userError;
+
+      const { error: centerError } = await supabase.from('centers').update({ is_active: !isActive }).eq('id', centerId);
+      if (centerError) throw centerError;
     },
     onSuccess: () => {
       toast({ title: 'Status updated' });
@@ -273,7 +276,7 @@ const TuitionCenters = () => {
                                   "h-8 w-8 rounded-full shadow-soft transition-all",
                                   centerUser.is_active ? "bg-white hover:bg-red-50 text-red-600" : "bg-white hover:bg-green-50 text-green-600"
                                 )}
-                                onClick={() => toggleStatusMutation.mutate({ userId: centerUser.id, isActive: centerUser.is_active })}
+                                onClick={() => toggleStatusMutation.mutate({ centerId: center.id, userId: centerUser.id, isActive: centerUser.is_active })}
                               >
                                 {centerUser.is_active ? <PowerOff className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5" />}
                               </Button>
