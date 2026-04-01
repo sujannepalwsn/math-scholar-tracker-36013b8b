@@ -35,7 +35,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ module, index }) => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: index * 0.05 }}
+          transition={{ duration: 0.5, delay: (index % 6) * 0.1 }}
           whileHover={{ scale: 1.05, translateY: -5 }}
           className="group cursor-pointer p-6 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 transition-all duration-300 shadow-xl"
         >
@@ -55,7 +55,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ module, index }) => {
              <div>
                <DialogTitle className="text-2xl font-black">{module.name}</DialogTitle>
                <Badge variant="outline" className="mt-1 border-emerald-500/50 text-emerald-400">
-                 {module.completeness}
+                 {module.completeness === 'Fully implemented' ? '✅ Fully implemented' : module.completeness}
                </Badge>
              </div>
           </div>
@@ -91,16 +91,17 @@ interface PackageCardProps {
 export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModules }) => {
   const highlights = getDynamicPackageHighlights(type);
   const isPremium = type === 'Premium';
+  const isStandard = type === 'Standard';
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      whileInView={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.9, y: 30 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }}
       whileHover={{ y: -10 }}
       className={cn(
-        "relative p-8 rounded-[2.5rem] overflow-hidden border transition-all duration-500 group shadow-2xl",
+        "relative p-8 rounded-[2.5rem] overflow-hidden border transition-all duration-500 group shadow-2xl flex flex-col",
         isPremium
           ? "bg-gradient-to-br from-primary/20 via-slate-900 to-primary/5 border-primary/30"
           : "bg-white/5 backdrop-blur-xl border-white/10"
@@ -121,7 +122,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
         </p>
       </div>
 
-      <div className="space-y-4 mb-10">
+      <div className="space-y-4 mb-10 flex-1">
         <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Key Highlights</p>
         <ul className="space-y-3">
           {highlights.map((h, i) => (
@@ -151,11 +152,16 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
         <DialogContent className="sm:max-w-[700px] max-h-[85vh] bg-slate-950/98 backdrop-blur-3xl border-white/10 text-white overflow-hidden flex flex-col p-0">
           <div className="p-8 pb-4">
             <DialogHeader>
-              <DialogTitle className="text-3xl font-black flex items-center gap-4">
-                {type} Plan <Badge className="bg-primary">{allModules.filter(m => m.feature_mapping.some(f => PACKAGE_FEATURES[type][f])).length} Modules Included</Badge>
+              <DialogTitle className="text-3xl font-black flex flex-wrap items-center gap-4">
+                {type} Plan
+                <Badge className="bg-primary/20 text-primary border-primary/20 py-1 px-4">
+                  {allModules.filter(m => m.feature_mapping.some(f => PACKAGE_FEATURES[type][f])).length} Modules Included
+                </Badge>
               </DialogTitle>
-              <DialogDescription className="text-slate-400 text-lg">
-                Comprehensive overview of all modules and limitations for the {type} package.
+              <DialogDescription className="text-slate-400 text-lg mt-2">
+                {isPremium && "The ultimate solution for enterprise-level institutional management with zero limitations."}
+                {isStandard && "Perfect for growing schools needing advanced reporting and communication tools."}
+                {type === 'Basic' && "Essential features for administrative automation and digital record-keeping."}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -171,27 +177,41 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
                       "p-4 rounded-2xl border transition-all flex items-center gap-4",
                       isEnabled
                         ? "bg-white/5 border-emerald-500/20"
-                        : "bg-black/20 border-white/5 opacity-50 grayscale"
+                        : "bg-white/[0.02] border-white/5 opacity-50 grayscale-[0.5]"
                     )}
                   >
                     <div className={cn("p-2 rounded-xl", isEnabled ? "bg-emerald-500/20" : "bg-slate-700/20")}>
                       <DynamicIcon name={module.icon} className={cn("h-6 w-6", isEnabled ? "text-emerald-400" : "text-slate-500")} />
                     </div>
                     <div className="flex-1">
-                      <p className={cn("font-bold", isEnabled ? "text-white" : "text-slate-500")}>{module.name}</p>
+                      <p className={cn("font-bold text-sm", isEnabled ? "text-white" : "text-slate-500")}>{module.name}</p>
                       <p className="text-[10px] uppercase font-bold tracking-tighter opacity-70">
                         {isEnabled ? "Enabled" : "Unavailable"}
                       </p>
                     </div>
                     {isEnabled ? (
-                       <Icons.CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                       <Icons.CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
                     ) : (
-                       <Icons.Lock className="h-5 w-5 text-slate-600" />
+                       <Icons.Lock className="h-5 w-5 text-slate-600 shrink-0" />
                     )}
                   </div>
                 );
               })}
             </div>
+
+            {/* Limitations Notice */}
+            {!isPremium && (
+              <div className="mt-8 p-6 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex gap-4">
+                 <Icons.AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
+                 <div className="space-y-1">
+                    <p className="font-bold text-amber-500">Plan Limitations</p>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      Upgrade to <span className="text-white font-bold">{isStandard ? 'Premium' : 'Standard'}</span> to unlock
+                      {isStandard ? ' OCR capabilities, Inventory tracking, and HR modules.' : ' Parent portal, Exams management, and Finance tools.'}
+                    </p>
+                 </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -211,7 +231,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ title, subtitle, featu
   const displaySubtitle = subtitle || "A comprehensive, data-driven ecosystem designed to streamline administrative workflows and enhance the learning experience.";
 
   return (
-    <div className="relative pt-10 pb-20 overflow-hidden">
+    <div className="relative pt-4 pb-12 overflow-hidden">
       <div className="container mx-auto px-0 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -219,12 +239,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ title, subtitle, featu
           transition={{ duration: 0.8 }}
           className="text-center lg:text-left max-w-4xl"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 backdrop-blur-md border border-primary/20 text-primary text-sm font-black tracking-widest uppercase mb-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 backdrop-blur-md border border-primary/20 text-primary text-[10px] font-black tracking-widest uppercase mb-6"
+          >
             <Icons.Sparkles className="h-4 w-4" />
             <span>Next Generation Education ERP</span>
-          </div>
+          </motion.div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[0.95] tracking-tighter mb-8 uppercase">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase">
             {displayTitle.split(' ').map((word, i) => (
               <span key={i} className={cn(i === displayTitle.split(' ').length - 1 ? "text-primary" : "")}>
                 {word}{' '}
@@ -232,27 +257,27 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ title, subtitle, featu
             ))}
           </h1>
 
-          <p className="text-xl md:text-2xl text-slate-300 font-medium leading-relaxed max-w-2xl mb-12">
+          <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed max-w-2xl mb-10">
             {displaySubtitle}
           </p>
 
           {/* Marketing Features if present */}
           {features && features.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
               {features.map((f, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 + (i * 0.1) }}
-                  className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/10"
+                  className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm"
                 >
                   <div className="p-2 rounded-xl bg-primary/20">
                     <DynamicIcon name={f.icon} className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h4 className="font-bold text-white text-sm">{f.title}</h4>
-                    <p className="text-slate-400 text-xs mt-1">{f.description}</p>
+                    <p className="text-slate-400 text-xs mt-1 line-clamp-1">{f.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -262,15 +287,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ title, subtitle, featu
           <div className="flex flex-wrap gap-6 items-center justify-center lg:justify-start">
             <div className="flex -space-x-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-12 h-12 rounded-full border-4 border-slate-900 bg-slate-800 flex items-center justify-center overflow-hidden">
-                  <img src={`https://i.pravatar.cc/150?u=${i}`} alt="user" />
+                <div key={i} className="w-10 h-10 rounded-full border-4 border-slate-950 bg-slate-800 flex items-center justify-center overflow-hidden">
+                  <img src={`https://i.pravatar.cc/150?u=${i + 10}`} alt="user" className="w-full h-full object-cover" />
                 </div>
               ))}
-              <div className="w-12 h-12 rounded-full border-4 border-slate-900 bg-primary flex items-center justify-center text-white text-xs font-bold">
+              <div className="w-10 h-10 rounded-full border-4 border-slate-950 bg-primary flex items-center justify-center text-white text-[10px] font-bold">
                 +2k
               </div>
             </div>
-            <p className="text-slate-400 font-medium">Trusted by <span className="text-white font-bold">2,000+</span> institutions worldwide</p>
+            <p className="text-slate-500 font-bold text-sm tracking-tight uppercase">Trusted by <span className="text-white">2,000+</span> institutions</p>
           </div>
         </motion.div>
       </div>
