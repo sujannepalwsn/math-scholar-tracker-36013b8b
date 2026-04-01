@@ -39,7 +39,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 // --- Components ---
 
-const DotNavigation = ({ activeSection, sections, scrollToSection, primaryColor }: { activeSection: number, sections: string[], scrollToSection: (index: number) => void, primaryColor: string }) => {
+const PREMIUM_PRIMARY = '#6366f1'; // Indigo 500
+
+const DotNavigation = ({ activeSection, sections, scrollToSection }: { activeSection: number, sections: string[], scrollToSection: (index: number) => void }) => {
   return (
     <div className="fixed right-8 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-4">
       {sections.map((_, i) => (
@@ -48,9 +50,8 @@ const DotNavigation = ({ activeSection, sections, scrollToSection, primaryColor 
           onClick={() => scrollToSection(i)}
           className={cn(
             "w-3 h-3 rounded-full transition-all duration-300",
-            activeSection === i ? "scale-125 shadow-[0_0_10px_rgba(79,70,229,0.5)]" : "bg-white/20 hover:bg-white/40"
+            activeSection === i ? "scale-125 shadow-[0_0_10px_rgba(99,102,241,0.5)] bg-indigo-500" : "bg-white/20 hover:bg-white/40"
           )}
-          style={activeSection === i ? { backgroundColor: primaryColor } : {}}
         />
       ))}
     </div>
@@ -106,8 +107,8 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
       {/* Sidebar */}
       <div className="w-16 md:w-48 border-r border-white/5 bg-white/5 p-4 flex flex-col gap-6">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${primaryColor}20` }}>
-            <Zap className="w-5 h-5" style={{ color: primaryColor }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/20">
+            <Zap className="w-5 h-5 text-indigo-400" />
           </div>
           <span className="font-bold text-white hidden md:block">EDUFLOW</span>
         </div>
@@ -121,8 +122,10 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
           ].map((item, i) => (
             <div
               key={i}
-              className={cn("h-10 rounded-xl flex items-center gap-3 px-3", !item.active && "text-slate-400")}
-              style={item.active ? { backgroundColor: `${primaryColor}20`, color: primaryColor } : {}}
+              className={cn(
+                "h-10 rounded-xl flex items-center gap-3 px-3",
+                item.active ? "bg-indigo-500/20 text-indigo-400" : "text-slate-400"
+              )}
             >
               <div className="w-5 h-5 rounded bg-current/20" />
               <div className="text-[10px] font-bold hidden md:block uppercase tracking-wider">{item.label}</div>
@@ -259,12 +262,12 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
         {role === 'parent' && (
           <div className="flex gap-6 h-full">
             <div className="flex-1 space-y-6">
-              <div className="p-6 rounded-[2rem] bg-gradient-to-br border border-white/10 text-white" style={{ backgroundImage: `linear-gradient(to bottom right, ${primaryColor}4d, #3b82f64d)` }}>
+              <div className="p-6 rounded-[2rem] bg-gradient-to-br from-indigo-500/30 to-blue-500/30 border border-white/10 text-white">
                 <div className="text-sm font-bold opacity-80 mb-1">Quarterly Tuition Fee</div>
                 <div className="text-3xl font-black mb-4">$850.00</div>
                 <div className="flex justify-between items-center">
                   <div className="text-xs font-medium px-3 py-1 rounded-full bg-white/20">Due: June 15</div>
-                  <div className="h-8 w-24 bg-white rounded-xl flex items-center justify-center text-xs font-black" style={{ color: primaryColor }}>PAY NOW</div>
+                  <div className="h-8 w-24 bg-white rounded-xl flex items-center justify-center text-xs font-black text-indigo-600">PAY NOW</div>
                 </div>
               </div>
 
@@ -322,12 +325,12 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
 
 // --- Page Sections ---
 
-const HeroSection = ({ scrollToNext, setActiveSection, primaryColor }: { scrollToNext: () => void, setActiveSection: (i: number) => void, primaryColor: string }) => {
+const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => void, setActiveSection: (i: number) => void }) => {
   return (
     <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse" style={{ backgroundColor: `${primaryColor}20` }} />
-        <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] animate-pulse delay-1000" style={{ backgroundColor: `${primaryColor}10` }} />
+        <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse bg-indigo-500/10" />
+        <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] animate-pulse delay-1000 bg-blue-500/10" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
 
@@ -336,8 +339,7 @@ const HeroSection = ({ scrollToNext, setActiveSection, primaryColor }: { scrollT
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black tracking-widest uppercase mb-8"
-          style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black tracking-widest uppercase mb-8 bg-indigo-500/20 text-indigo-400"
         >
           <SparklesIcon className="w-4 h-4" />
           <span>The Future of School Management</span>
@@ -350,7 +352,7 @@ const HeroSection = ({ scrollToNext, setActiveSection, primaryColor }: { scrollT
           className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 max-w-4xl"
         >
           Run Your Entire School <br />
-          <span className="text-transparent bg-clip-text" style={{ backgroundImage: `linear-gradient(to r, ${primaryColor}, #60a5fa)` }}>from One Platform</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-400">from One Platform</span>
         </motion.h1>
 
         <motion.p
@@ -369,7 +371,7 @@ const HeroSection = ({ scrollToNext, setActiveSection, primaryColor }: { scrollT
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex flex-wrap gap-6 justify-center"
         >
-          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: primaryColor }}>
+          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700">
             <Link to="/apply">Get Started <ArrowRight className="ml-2 w-6 h-6" /></Link>
           </Button>
 
@@ -470,7 +472,7 @@ const SolutionOverview = ({ setActiveSection }: { setActiveSection: (i: number) 
     <Section id="solution" index={2} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto flex flex-col lg:flex-row items-center gap-20">
         <div className="flex-1 space-y-8">
-          <Badge className="border-none rounded-full px-4 py-1" style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}>THE SOLUTION</Badge>
+          <Badge className="border-none rounded-full px-4 py-1 bg-indigo-500/10 text-indigo-400">THE SOLUTION</Badge>
           <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9]">
             Meet EDUFLOW. <br />
             <span className="text-slate-500 text-4xl md:text-5xl">Your digital command center.</span>
@@ -502,17 +504,17 @@ const SolutionOverview = ({ setActiveSection }: { setActiveSection: (i: number) 
   );
 };
 
-const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActiveSection, primaryColor }: { title: string, valueProp: string, icon: any, highlights: string[], index: number, setActiveSection: (i: number) => void, primaryColor: string }) => {
+const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActiveSection }: { title: string, valueProp: string, icon: any, highlights: string[], index: number, setActiveSection: (i: number) => void }) => {
   return (
     <Section id={`feature-${index}`} index={index} setActiveSection={setActiveSection} className={cn(index % 2 === 0 ? "bg-slate-900" : "bg-slate-950")}>
        <div className="container mx-auto flex flex-col lg:flex-row items-center gap-16">
           <div className={cn("flex-1 space-y-8", index % 2 === 1 ? "lg:order-2" : "")}>
-             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}>
+             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 bg-indigo-500/10 text-indigo-400">
                 <Icon className="w-8 h-8" />
              </div>
              <div className="space-y-4">
                 <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">{title}</h2>
-                <p className="text-2xl font-bold" style={{ color: primaryColor }}>{valueProp}</p>
+                <p className="text-2xl font-bold text-indigo-400">{valueProp}</p>
              </div>
              <div className="grid gap-4">
                 {highlights.map((h, i) => (
@@ -530,8 +532,8 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
              {/* Simulated Feature Visuals */}
              <div className="relative w-full max-w-lg aspect-square rounded-[3rem] bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 p-8 flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-20">
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-primary blur-[80px]" />
-                   <div className="absolute bottom-0 left-0 w-64 h-64 blur-[80px]" style={{ backgroundColor: primaryColor }} />
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600 blur-[80px]" />
+                   <div className="absolute bottom-0 left-0 w-64 h-64 blur-[80px] bg-indigo-500" />
                 </div>
 
                 {title === "Student Management" && (
@@ -583,8 +585,7 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                             initial={{ height: 0 }}
                             whileInView={{ height: `${h}%` }}
                             transition={{ duration: 1, delay: i * 0.1 }}
-                            className="flex-1 rounded-t-lg"
-                            style={{ backgroundImage: `linear-gradient(to top, ${primaryColor}, #60a5fa)` }}
+                            className="flex-1 rounded-t-lg bg-gradient-to-t from-indigo-500 to-blue-400"
                           />
                         ))}
                      </div>
@@ -622,8 +623,8 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                 {title === "Parent Portal" && (
                   <div className="relative z-10 w-64 aspect-[9/19] bg-slate-950 border-[6px] border-slate-800 rounded-[3rem] p-4 flex flex-col gap-4 shadow-2xl">
                      <div className="w-16 h-1.5 bg-slate-800 rounded-full mx-auto mb-2" />
-                     <div className="h-24 rounded-2xl p-3 border" style={{ backgroundColor: `${primaryColor}33`, borderColor: `${primaryColor}4d` }}>
-                        <div className="h-2 w-12 rounded mb-2" style={{ backgroundColor: `${primaryColor}66` }} />
+                     <div className="h-24 rounded-2xl p-3 border bg-indigo-500/20 border-indigo-500/30">
+                        <div className="h-2 w-12 rounded mb-2 bg-indigo-400/40" />
                         <div className="text-[10px] font-bold text-white">Homework Assigned</div>
                      </div>
                      <div className="flex-1 space-y-3">
@@ -669,29 +670,26 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                             <motion.div
                               animate={{ rotate: 360 }}
                               transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-                              className="w-32 h-32 rounded-full border-2 border-dashed"
-                              style={{ borderColor: `${primaryColor}66` }}
+                              className="w-32 h-32 rounded-full border-2 border-dashed border-indigo-400/40"
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
-                               <Zap className="w-12 h-12 animate-pulse" style={{ color: primaryColor }} />
+                               <Zap className="w-12 h-12 animate-pulse text-indigo-400" />
                             </div>
                          </div>
                       </div>
                       <div className="grid gap-3">
                          <motion.div
                            whileHover={{ x: 10 }}
-                           className="p-4 rounded-2xl border flex gap-4 items-center"
-                           style={{ backgroundColor: `${primaryColor}1a`, borderColor: `${primaryColor}33` }}
+                           className="p-4 rounded-2xl border flex gap-4 items-center bg-indigo-500/10 border-indigo-500/20"
                          >
-                            <div className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: primaryColor }} />
+                            <div className="w-2 h-2 rounded-full animate-ping bg-indigo-400" />
                             <p className="text-sm font-bold text-white">Attendance predicted to rise by 12% next month</p>
                          </motion.div>
                          <motion.div
                            whileHover={{ x: 10 }}
-                           className="p-4 rounded-2xl border flex gap-4 items-center"
-                           style={{ backgroundColor: `${primaryColor}1a`, borderColor: `${primaryColor}33` }}
+                           className="p-4 rounded-2xl border flex gap-4 items-center bg-indigo-500/10 border-indigo-500/20"
                          >
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }} />
+                            <div className="w-2 h-2 rounded-full bg-indigo-400" />
                             <p className="text-sm font-bold text-white">Identify students at risk of falling behind</p>
                          </motion.div>
                       </div>
@@ -704,31 +702,23 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
   );
 };
 
-const RoleExperienceSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i: number) => void, primaryColor: string }) => {
+const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
   const [activeTab, setActiveTab] = useState('admin');
 
   return (
     <Section id="roles" index={10} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto">
         <div className="text-center mb-16 space-y-4">
-          <Badge className="border-none rounded-full px-4 py-1" style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}>EXPERIENCE ROLES</Badge>
+          <Badge className="border-none rounded-full px-4 py-1 bg-indigo-500/10 text-indigo-400">EXPERIENCE ROLES</Badge>
           <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">One System. <br /><span className="text-slate-500">Every Perspective.</span></h2>
         </div>
 
         <Tabs defaultValue="admin" className="w-full" onValueChange={setActiveTab}>
-          <style>
-            {`
-              [data-state=active].tab-trigger-custom {
-                background-color: ${primaryColor} !important;
-                color: white !important;
-              }
-            `}
-          </style>
           <div className="flex justify-center mb-12">
             <TabsList className="bg-white/5 border border-white/10 p-1 h-14 rounded-2xl">
-              <TabsTrigger value="admin" className="tab-trigger-custom rounded-xl px-8 font-black uppercase text-xs">Admin</TabsTrigger>
-              <TabsTrigger value="teacher" className="tab-trigger-custom rounded-xl px-8 font-black uppercase text-xs">Teacher</TabsTrigger>
-              <TabsTrigger value="parent" className="tab-trigger-custom rounded-xl px-8 font-black uppercase text-xs">Parent</TabsTrigger>
+              <TabsTrigger value="admin" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl px-8 font-black uppercase text-xs">Admin</TabsTrigger>
+              <TabsTrigger value="teacher" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl px-8 font-black uppercase text-xs">Teacher</TabsTrigger>
+              <TabsTrigger value="parent" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl px-8 font-black uppercase text-xs">Parent</TabsTrigger>
             </TabsList>
           </div>
 
@@ -750,7 +740,7 @@ const RoleExperienceSection = ({ setActiveSection, primaryColor }: { setActiveSe
                      <ul className="space-y-3">
                         {["Center Management", "Financial Analytics", "Staff Payroll", "Inventory Tracking"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <ShieldCheck className="w-5 h-5" style={{ color: primaryColor }} /> {item}
+                             <ShieldCheck className="w-5 h-5 text-indigo-400" /> {item}
                           </li>
                         ))}
                      </ul>
@@ -771,7 +761,7 @@ const RoleExperienceSection = ({ setActiveSection, primaryColor }: { setActiveSe
                      <ul className="space-y-3">
                         {["One-tap Attendance", "Digital Lesson Plans", "Auto-grading Exams", "Activity Logs"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <GraduationCap className="w-5 h-5" style={{ color: primaryColor }} /> {item}
+                             <GraduationCap className="w-5 h-5 text-indigo-400" /> {item}
                           </li>
                         ))}
                      </ul>
@@ -792,7 +782,7 @@ const RoleExperienceSection = ({ setActiveSection, primaryColor }: { setActiveSe
                      <ul className="space-y-3">
                         {["Live Progress Reports", "Instant Messaging", "Online Fee Payment", "Homework Tracker"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <Users className="w-5 h-5" style={{ color: primaryColor }} /> {item}
+                             <Users className="w-5 h-5 text-indigo-400" /> {item}
                           </li>
                         ))}
                      </ul>
@@ -811,7 +801,7 @@ const RoleExperienceSection = ({ setActiveSection, primaryColor }: { setActiveSe
   );
 };
 
-const WorkflowSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i: number) => void, primaryColor: string }) => {
+const WorkflowSection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
   const steps = [
     { title: "Admission", desc: "Digital enrollment & data capture", icon: Users },
     { title: "Class", desc: "Automated routine & scheduling", icon: Calendar },
@@ -849,8 +839,7 @@ const WorkflowSection = ({ setActiveSection, primaryColor }: { setActiveSection:
                  `}
                </style>
                <div
-                 className="workflow-icon-group w-20 h-20 rounded-[2rem] bg-slate-950 border border-white/10 flex items-center justify-center mb-6 transition-all group-hover:text-white group-hover:scale-110"
-                 style={{ color: primaryColor }}
+                 className="w-20 h-20 rounded-[2rem] bg-slate-950 border border-white/10 flex items-center justify-center mb-6 transition-all group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 text-indigo-400"
                >
                   <step.icon className="w-8 h-8" />
                </div>
@@ -864,7 +853,7 @@ const WorkflowSection = ({ setActiveSection, primaryColor }: { setActiveSection:
   );
 };
 
-const TrustSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i: number) => void, primaryColor: string }) => {
+const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
   return (
     <Section id="trust" index={12} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto">
@@ -876,11 +865,11 @@ const TrustSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i
             </p>
             <div className="grid grid-cols-2 gap-8">
                <div>
-                  <div className="text-5xl font-black tracking-tighter mb-2" style={{ color: primaryColor }}>15,400+</div>
+                  <div className="text-5xl font-black tracking-tighter mb-2 text-indigo-500">15,400+</div>
                   <div className="text-xs font-black text-slate-500 uppercase tracking-widest">Students Managed</div>
                </div>
                <div>
-                  <div className="text-5xl font-black tracking-tighter mb-2" style={{ color: primaryColor }}>320+</div>
+                  <div className="text-5xl font-black tracking-tighter mb-2 text-indigo-500">320+</div>
                   <div className="text-xs font-black text-slate-500 uppercase tracking-widest">Institutions</div>
                </div>
             </div>
@@ -906,7 +895,7 @@ const TrustSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i
                      </div>
                   </div>
                   <div className="absolute top-0 right-0 p-8 opacity-5">
-                     <MessageSquare className="w-32 h-32" style={{ color: primaryColor }} />
+                     <MessageSquare className="w-32 h-32 text-indigo-400" />
                   </div>
                </div>
              ))}
@@ -917,9 +906,9 @@ const TrustSection = ({ setActiveSection, primaryColor }: { setActiveSection: (i
   );
 };
 
-const FinalCTASection = ({ setActiveSection, primaryColor, scrollToSection }: { setActiveSection: (i: number) => void, primaryColor: string, scrollToSection: (i: number) => void }) => {
+const FinalCTASection = ({ setActiveSection, scrollToSection }: { setActiveSection: (i: number) => void, scrollToSection: (i: number) => void }) => {
   return (
-    <Section id="final-cta" index={13} setActiveSection={setActiveSection} className="overflow-hidden" style={{ backgroundColor: primaryColor }}>
+    <Section id="final-cta" index={13} setActiveSection={setActiveSection} className="overflow-hidden bg-indigo-600">
       <div className="absolute inset-0 z-0">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_0%,transparent_70%)]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] border border-white/10 rounded-full animate-ping" />
@@ -934,7 +923,7 @@ const FinalCTASection = ({ setActiveSection, primaryColor, scrollToSection }: { 
         </p>
 
         <div className="flex flex-wrap gap-6 justify-center">
-          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl transition-all hover:scale-105 active:scale-95" style={{ backgroundColor: primaryColor, boxShadow: `0 25px 50px -12px ${primaryColor}33` }}>
+          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700 shadow-indigo-900/40">
             <Link to="/apply">Get Started Now</Link>
           </Button>
           <Button
@@ -973,15 +962,6 @@ const SparklesIcon = ({ className }: { className?: string }) => (
 const GettingStarted = () => {
   const [activeSection, setActiveSection] = useState(0);
   const navigate = useNavigate();
-  const { data: settings } = useLoginSettings('center');
-  const primaryColor = settings?.primary_color || '#4f46e5';
-
-  // Inject CSS variables for primary color to use in tailwind-like classes if needed,
-  // though we mostly use inline styles for precision here.
-  useEffect(() => {
-    document.documentElement.style.setProperty('--primary-custom', primaryColor);
-    return () => document.documentElement.style.removeProperty('--primary-custom');
-  }, [primaryColor]);
 
   const sections = [
     "hero", "problems", "solution",
@@ -1070,36 +1050,35 @@ const GettingStarted = () => {
   ];
 
   return (
-    <div className="bg-slate-950 min-h-screen selection:bg-primary/20 selection:text-primary">
+    <div className="bg-slate-950 min-h-screen selection:bg-indigo-500/20 selection:text-indigo-400">
       <DotNavigation
         activeSection={activeSection}
         sections={sections}
         scrollToSection={scrollToSection}
-        primaryColor={primaryColor}
       />
 
       {/* Nav Overlay */}
       <nav className="fixed top-0 left-0 w-full z-[60] px-6 py-6 flex justify-between items-center pointer-events-none">
         <div className="flex items-center gap-3 pointer-events-auto cursor-pointer" onClick={() => navigate("/")}>
-          <div className={cn("p-2 rounded-xl border transition-colors", activeSection === 13 ? "bg-white/20 border-white/20" : "bg-indigo-600/20 border-indigo-600/20")} style={activeSection !== 13 ? { backgroundColor: `${primaryColor}20`, borderColor: `${primaryColor}20` } : {}}>
-            <ShieldCheck className={cn("h-6 w-6 transition-colors", activeSection === 13 ? "text-white" : "text-indigo-400")} style={activeSection !== 13 ? { color: primaryColor } : {}} />
+          <div className={cn("p-2 rounded-xl border transition-colors", activeSection === 13 ? "bg-white/20 border-white/20" : "bg-indigo-600/20 border-indigo-600/20")}>
+            <ShieldCheck className={cn("h-6 w-6 transition-colors", activeSection === 13 ? "text-white" : "text-indigo-400")} />
           </div>
-          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-indigo-400")} style={activeSection !== 13 ? { color: primaryColor } : {}}>FLOW</span></span>
+          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-indigo-400")}>FLOW</span></span>
         </div>
 
         <div className="pointer-events-auto">
            <Button asChild variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
              <Link to="/login">Login</Link>
            </Button>
-           <Button asChild className="text-white font-bold rounded-full px-8 shadow-lg shadow-indigo-600/20" style={{ backgroundColor: primaryColor }}>
+           <Button asChild className="text-white font-bold rounded-full px-8 shadow-lg shadow-indigo-600/20 bg-indigo-600 hover:bg-indigo-700">
              <Link to="/apply">Get Started</Link>
            </Button>
         </div>
       </nav>
 
-      <HeroSection scrollToNext={() => scrollToSection(1)} setActiveSection={setActiveSection} primaryColor={primaryColor} />
+      <HeroSection scrollToNext={() => scrollToSection(1)} setActiveSection={setActiveSection} />
       <ProblemSection setActiveSection={setActiveSection} />
-      <SolutionOverview setActiveSection={setActiveSection} primaryColor={primaryColor} />
+      <SolutionOverview setActiveSection={setActiveSection} />
 
       {featureSlides.map((feature, i) => (
         <FeatureSlide
@@ -1107,14 +1086,13 @@ const GettingStarted = () => {
           index={3 + i}
           {...feature}
           setActiveSection={setActiveSection}
-          primaryColor={primaryColor}
         />
       ))}
 
-      <RoleExperienceSection setActiveSection={setActiveSection} primaryColor={primaryColor} />
-      <WorkflowSection setActiveSection={setActiveSection} primaryColor={primaryColor} />
-      <TrustSection setActiveSection={setActiveSection} primaryColor={primaryColor} />
-      <FinalCTASection setActiveSection={setActiveSection} primaryColor={primaryColor} scrollToSection={scrollToSection} />
+      <RoleExperienceSection setActiveSection={setActiveSection} />
+      <WorkflowSection setActiveSection={setActiveSection} />
+      <TrustSection setActiveSection={setActiveSection} />
+      <FinalCTASection setActiveSection={setActiveSection} scrollToSection={scrollToSection} />
 
       <Section id="contact" index={14} setActiveSection={setActiveSection} className="bg-slate-900">
          <div className="container mx-auto max-w-4xl">
@@ -1134,7 +1112,7 @@ const GettingStarted = () => {
                   </div>
                </div>
                <div className="h-32 rounded-xl bg-white/5 border border-white/10 mb-6" />
-               <Button asChild className="w-full h-14 rounded-xl font-black uppercase tracking-widest" style={{ backgroundColor: primaryColor }}>
+               <Button asChild className="w-full h-14 rounded-xl font-black uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700">
                   <Link to="/contact-sales">Go to Full Contact Page</Link>
                </Button>
             </div>
@@ -1144,7 +1122,7 @@ const GettingStarted = () => {
       {/* Footer */}
       <footer className="bg-slate-950 py-12 px-6 border-t border-white/5 text-center">
          <div className="flex items-center justify-center gap-3 mb-6">
-            <ShieldCheck className="h-6 w-6" style={{ color: primaryColor }} />
+            <ShieldCheck className="h-6 w-6 text-indigo-400" />
             <span className="text-xl font-black text-white tracking-tighter">EDUFLOW</span>
          </div>
          <p className="text-slate-500 font-medium mb-8">© 2024 EDUFLOW Tech Solutions. All rights reserved.</p>
