@@ -421,6 +421,7 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
           </div>
         </div>
       </footer>
+    )}
     </div>
   );
 };
