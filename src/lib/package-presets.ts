@@ -1,3 +1,5 @@
+import { SYSTEM_MODULES } from './system-modules';
+
 export type PackageType = 'Basic' | 'Standard' | 'Premium';
 
 export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
@@ -107,6 +109,20 @@ export const PACKAGE_FEATURES: Record<PackageType, Record<string, boolean>> = {
     'chapter_performance': true,
     'about_institution': true,
   }
+};
+
+export const getDynamicPackageHighlights = (packageType: PackageType): string[] => {
+  const features = PACKAGE_FEATURES[packageType];
+  const highlights: string[] = [];
+
+  SYSTEM_MODULES.forEach(module => {
+    const isEnabled = module.feature_mapping.some(feature => features[feature]);
+    if (isEnabled && highlights.length < 8) {
+      highlights.push(module.name);
+    }
+  });
+
+  return highlights;
 };
 
 export const PACKAGE_HIGHLIGHTS: Record<PackageType, string[]> = {
