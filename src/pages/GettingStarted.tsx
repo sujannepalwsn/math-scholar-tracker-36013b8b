@@ -1043,9 +1043,6 @@ const GettingStarted = () => {
            <Button asChild variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
              <Link to="/login">Login</Link>
            </Button>
-           <Button asChild className="text-white font-bold rounded-full px-8 shadow-lg shadow-indigo-600/20 bg-indigo-600 hover:bg-indigo-700">
-             <Link to="/contact-sales">Request Demo</Link>
-           </Button>
         </div>
       </nav>
 
