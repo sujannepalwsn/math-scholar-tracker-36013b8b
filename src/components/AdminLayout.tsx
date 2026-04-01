@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Activity, DollarSign, Home, KeyRound, LogOut, Settings, Shield, User, Building2, BarChart3, Receipt, Database, Zap, LayoutTemplate } from "lucide-react";
+import { Activity, DollarSign, Home, KeyRound, LogOut, Settings, Shield, User, Building2, BarChart3, Receipt, Database, Zap, LayoutTemplate, Users, Menu } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
@@ -12,18 +12,19 @@ const navItems: Array<{
   label: string;
   icon: React.ElementType;
   role: 'admin' | 'center' | 'parent' | 'teacher';
-  category?: 'Academics' | 'Administration' | 'Reports and Communications';
+  category?: 'Academics' | 'Administration' | 'Reports and Communication';
 }> = [
   { to: "/admin-dashboard", label: "Dashboard", icon: Home, role: 'admin' as const },
-  { to: "/admin/centers", label: "Tuition Centers", icon: Building2, role: 'admin' as const },
-  { to: "/admin/analytics", label: "Center Analytics", icon: BarChart3, role: 'admin' as const },
-  { to: "/admin/billing", label: "Billing System", icon: Receipt, role: 'admin' as const },
-  { to: "/admin/usage", label: "Data Usage", icon: Database, role: 'admin' as const },
-  { to: "/admin/landing-page", label: "Landing Page", icon: LayoutTemplate, role: 'admin' as const },
-  { to: "/admin/subscriptions", label: "SaaS Subscriptions", icon: Zap, role: 'admin' as const },
-  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const },
-  { to: "/admin/errors", label: "Error Tracking", icon: Activity, role: 'admin' as const },
-  { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const },
+  { to: "/admin/centers", label: "Tuition Centers", icon: Building2, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/analytics", label: "Center Analytics", icon: BarChart3, role: 'admin' as const, category: 'Reports and Communication' },
+  { to: "/admin/billing", label: "Billing System", icon: Receipt, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/usage", label: "Data Usage", icon: Database, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/landing-page", label: "Page Editor", icon: LayoutTemplate, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/demo-requests", label: "Sales Leads", icon: Users, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/subscriptions", label: "SaaS Subscriptions", icon: Zap, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/errors", label: "Error Tracking", icon: Activity, role: 'admin' as const, category: 'Reports and Communication' },
+  { to: "/admin/settings", label: "Settings", icon: Settings, role: 'admin' as const, category: 'Administration' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -72,6 +73,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b z-20 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden -ml-2"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
           <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Shield className="h-4 w-4 text-primary" />
           </div>

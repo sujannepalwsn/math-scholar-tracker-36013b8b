@@ -23,7 +23,8 @@ const COMMON_ICONS = [
 ];
 
 const LandingPageEditor = () => {
-  const { data: settings, refetch, isLoading } = useLoginSettings('center');
+  const [activeTab, setActiveTab] = useState('center');
+  const { data: settings, refetch, isLoading } = useLoginSettings(activeTab as any);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -33,6 +34,7 @@ const LandingPageEditor = () => {
     title: "",
     subtitle: "",
     primary_color: "#4f46e5",
+    button_text: "",
     features: [],
     developer_info: { name: "", website: "", copyright: "" },
     help_info: { text: "", link: "" },
@@ -48,14 +50,30 @@ const LandingPageEditor = () => {
         title: settings.title || "",
         subtitle: settings.subtitle || "",
         primary_color: settings.primary_color || "#4f46e5",
+        button_text: settings.button_text || "",
         features: Array.isArray(settings.features) ? settings.features : [],
         developer_info: (settings.developer_info as any) || { name: "", website: "", copyright: "" },
         help_info: (settings.help_info as any) || { text: "", link: "" },
         footer_links: Array.isArray(settings.footer_links) ? settings.footer_links : [],
         section_toggles: (settings.section_toggles as any) || { show_features: true, show_packages: true, show_stats: true, show_footer: true }
       });
+    } else {
+        // Reset to defaults if no settings found for this page type
+        setFormData({
+            marketing_title: "",
+            marketing_subtitle: "",
+            title: "",
+            subtitle: "",
+            primary_color: "#4f46e5",
+            button_text: "",
+            features: [],
+            developer_info: { name: "", website: "", copyright: "" },
+            help_info: { text: "", link: "" },
+            footer_links: [],
+            section_toggles: { show_features: true, show_packages: true, show_stats: true, show_footer: true }
+          });
     }
-  }, [settings]);
+  }, [settings, activeTab]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -68,6 +86,7 @@ const LandingPageEditor = () => {
           title: formData.title,
           subtitle: formData.subtitle,
           primary_color: formData.primary_color,
+          button_text: formData.button_text,
           features: formData.features,
           developer_info: formData.developer_info,
           help_info: formData.help_info,
@@ -75,13 +94,13 @@ const LandingPageEditor = () => {
           section_toggles: formData.section_toggles,
           updated_at: new Date().toISOString()
         })
-        .eq('page_type', 'center');
+        .eq('page_type', activeTab);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Landing page settings updated successfully."
+        description: `${activeTab === 'center' ? 'Landing page' : 'Contact Sales'} settings updated successfully.`
       });
       refetch();
     } catch (error: any) {
@@ -129,9 +148,24 @@ const LandingPageEditor = () => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight text-foreground">Landing Page Editor</h1>
-          <p className="text-muted-foreground mt-2 font-medium">Customize the public-facing landing page for your institution.</p>
+        <div className="space-y-4">
+          <h1 className="text-4xl font-black tracking-tight text-foreground">Page Editor</h1>
+          <div className="flex bg-muted/50 p-1 rounded-xl w-fit">
+            <Button
+              variant={activeTab === 'center' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('center')}
+              className="rounded-lg px-6 font-bold"
+            >
+              Landing Page
+            </Button>
+            <Button
+              variant={activeTab === 'contact-sales' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('contact-sales')}
+              className="rounded-lg px-6 font-bold"
+            >
+              Contact Sales
+            </Button>
+          </div>
         </div>
         <Button onClick={handleSave} disabled={loading} className="h-12 px-8 rounded-xl font-bold shadow-lg shadow-primary/20">
           {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Save className="h-5 w-5 mr-2" />}
@@ -142,15 +176,19 @@ const LandingPageEditor = () => {
       <Tabs defaultValue="hero" className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-xl h-14 mb-8">
           <TabsTrigger value="hero" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Hero & Login</TabsTrigger>
-          <TabsTrigger value="features" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Marketing Features</TabsTrigger>
-          <TabsTrigger value="footer" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Footer & Links</TabsTrigger>
-          <TabsTrigger value="sections" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Sections & Toggles</TabsTrigger>
+          {activeTab === 'center' && (
+            <>
+              <TabsTrigger value="features" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Marketing Features</TabsTrigger>
+              <TabsTrigger value="footer" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Footer & Links</TabsTrigger>
+              <TabsTrigger value="sections" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Sections & Toggles</TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="hero" className="space-y-6">
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
             <CardHeader className="bg-muted/30 pb-8">
-              <CardTitle className="text-2xl font-black tracking-tight">Hero Section</CardTitle>
+              <CardTitle className="text-2xl font-black tracking-tight">Main Section</CardTitle>
               <CardDescription className="font-medium text-muted-foreground">The main headline and tagline seen on load.</CardDescription>
             </CardHeader>
             <CardContent className="pt-8 space-y-6">
@@ -179,13 +217,13 @@ const LandingPageEditor = () => {
 
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
             <CardHeader className="bg-muted/30 pb-8">
-              <CardTitle className="text-2xl font-black tracking-tight">Login Card</CardTitle>
-              <CardDescription className="font-medium text-muted-foreground">Configure the floating login card appearance.</CardDescription>
+              <CardTitle className="text-2xl font-black tracking-tight">{activeTab === 'center' ? 'Login Card' : 'Form Configuration'}</CardTitle>
+              <CardDescription className="font-medium text-muted-foreground">Configure the appearance and behavior of the main interaction component.</CardDescription>
             </CardHeader>
             <CardContent className="pt-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Login Title</Label>
+                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">{activeTab === 'center' ? 'Login Title' : 'Form Title'}</Label>
                   <Input
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
@@ -208,6 +246,17 @@ const LandingPageEditor = () => {
                     />
                   </div>
                 </div>
+                {activeTab === 'contact-sales' && (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Form Submit Button Text</Label>
+                    <Input
+                      value={formData.button_text}
+                      onChange={(e) => setFormData({...formData, button_text: e.target.value})}
+                      placeholder="Schedule My Demo"
+                      className="h-12 rounded-xl font-medium"
+                    />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

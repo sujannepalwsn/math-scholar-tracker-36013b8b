@@ -34,9 +34,10 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // --- Components ---
+
+const PREMIUM_PRIMARY = '#6366f1'; // Indigo 500
 
 const DotNavigation = ({ activeSection, sections, scrollToSection }: { activeSection: number, sections: string[], scrollToSection: (index: number) => void }) => {
   return (
@@ -47,7 +48,7 @@ const DotNavigation = ({ activeSection, sections, scrollToSection }: { activeSec
           onClick={() => scrollToSection(i)}
           className={cn(
             "w-3 h-3 rounded-full transition-all duration-300",
-            activeSection === i ? "bg-primary scale-125 shadow-[0_0_10px_rgba(79,70,229,0.5)]" : "bg-white/20 hover:bg-white/40"
+            activeSection === i ? "scale-125 shadow-[0_0_10px_rgba(99,102,241,0.5)] bg-indigo-500" : "bg-white/20 hover:bg-white/40"
           )}
         />
       ))}
@@ -104,16 +105,28 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
       {/* Sidebar */}
       <div className="w-16 md:w-48 border-r border-white/5 bg-white/5 p-4 flex flex-col gap-6">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-primary" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/20">
+            <Zap className="w-5 h-5 text-indigo-400" />
           </div>
           <span className="font-bold text-white hidden md:block">EDUFLOW</span>
         </div>
         <div className="flex flex-col gap-2">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className={cn("h-10 rounded-xl flex items-center gap-3 px-3", i === 1 ? "bg-primary/20 text-primary" : "text-slate-400")}>
+          {[
+            { label: 'Overview', active: true },
+            { label: 'Students', active: false },
+            { label: 'Attendance', active: false },
+            { label: 'Finance', active: false },
+            { label: 'Reports', active: false }
+          ].map((item, i) => (
+            <div
+              key={i}
+              className={cn(
+                "h-10 rounded-xl flex items-center gap-3 px-3",
+                item.active ? "bg-indigo-500/20 text-indigo-400" : "text-slate-400"
+              )}
+            >
               <div className="w-5 h-5 rounded bg-current/20" />
-              <div className="h-2 w-20 bg-current/20 rounded hidden md:block" />
+              <div className="text-[10px] font-bold hidden md:block uppercase tracking-wider">{item.label}</div>
             </div>
           ))}
         </div>
@@ -134,17 +147,22 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
 
         {role === 'admin' && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10" />
-                <div className="h-6 w-12 bg-white/10 rounded" />
-                <div className="h-2 w-16 bg-white/5 rounded" />
+            {[
+              { label: 'Students', value: '1,248', color: 'bg-indigo-500/10' },
+              { label: 'Teachers', value: '86', color: 'bg-emerald-500/10' },
+              { label: 'Revenue', value: '$42.5k', color: 'bg-amber-500/10' },
+              { label: 'Attendance', value: '94%', color: 'bg-rose-500/10' }
+            ].map((stat, i) => (
+              <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                <div className={cn("w-8 h-8 rounded-lg", stat.color)} />
+                <div className="text-lg font-black text-white">{stat.value}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{stat.label}</div>
               </div>
             ))}
             <div className="col-span-2 md:col-span-3 h-48 rounded-2xl bg-white/5 border border-white/5 p-4">
               <div className="flex justify-between mb-4">
-                <div className="h-4 w-24 bg-white/10 rounded" />
-                <div className="h-4 w-16 bg-white/5 rounded" />
+                <div className="text-xs font-bold text-slate-400">Monthly Enrollment Trend</div>
+                <div className="text-[10px] text-slate-600">Last 7 Months</div>
               </div>
               <div className="flex items-end justify-between h-32 gap-2">
                 {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
@@ -153,19 +171,23 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
                     initial={{ height: 0 }}
                     animate={{ height: `${h}%` }}
                     transition={{ delay: i * 0.1, duration: 0.8 }}
-                    className="flex-1 bg-primary/40 rounded-t-sm"
+                    className="flex-1 bg-indigo-600/40 rounded-t-sm"
                   />
                 ))}
               </div>
             </div>
             <div className="col-span-2 md:col-span-1 h-48 rounded-2xl bg-white/5 border border-white/5 p-4 flex flex-col gap-3">
-              <div className="h-4 w-20 bg-white/10 rounded mb-2" />
-              {[1, 2, 3].map(i => (
+              <div className="text-xs font-bold text-slate-400 mb-2">Recent Alerts</div>
+              {[
+                { name: 'Fee Overdue', time: '2m ago' },
+                { name: 'New Admission', time: '1h ago' },
+                { name: 'Leave Req', time: '3h ago' }
+              ].map((alert, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white/10" />
-                  <div className="flex-1 space-y-1">
-                    <div className="h-2 w-full bg-white/10 rounded" />
-                    <div className="h-1.5 w-2/3 bg-white/5 rounded" />
+                  <div className="w-8 h-8 rounded-full bg-white/10 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-bold text-white truncate">{alert.name}</div>
+                    <div className="text-[8px] text-slate-500 uppercase">{alert.time}</div>
                   </div>
                 </div>
               ))}
@@ -207,17 +229,26 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
 
             <div className="rounded-2xl border border-white/5 bg-white/5 overflow-hidden">
                <div className="p-4 border-b border-white/5 flex justify-between items-center">
-                 <div className="h-4 w-32 bg-white/10 rounded" />
-                 <div className="h-8 w-24 bg-primary/20 rounded-lg" />
+                 <div className="text-xs font-bold text-slate-400">Class 10A Attendance - May 24</div>
+                 <div className="h-8 px-4 bg-indigo-600/20 text-indigo-400 rounded-lg flex items-center text-[10px] font-black uppercase">Submit All</div>
                </div>
-               <div className="p-4 space-y-4">
-                 {[1, 2, 3, 4].map(i => (
+               <div className="p-4 space-y-3">
+                 {[
+                   { name: 'Alice Cooper', status: 'p' },
+                   { name: 'Bob Marley', status: 'p' },
+                   { name: 'Charlie Puth', status: 'a' },
+                   { name: 'David Bowie', status: 'p' }
+                 ].map((student, i) => (
                    <div key={i} className="flex items-center gap-4 py-2 border-b border-white/5 last:border-0">
-                     <div className="w-8 h-8 rounded-full bg-white/10" />
-                     <div className="flex-1 h-3 bg-white/5 rounded" />
+                     <div className="w-8 h-8 rounded-full bg-white/10 shrink-0" />
+                     <div className="flex-1 text-[11px] font-bold text-white">{student.name}</div>
                      <div className="flex gap-2">
-                       <div className="w-6 h-6 rounded bg-emerald-500/20 border border-emerald-500/30" />
-                       <div className="w-6 h-6 rounded bg-rose-500/20 border border-rose-500/30" />
+                       <div className={cn("w-6 h-6 rounded flex items-center justify-center border", student.status === 'p' ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/10 text-slate-600")}>
+                         <Check className="w-3 h-3" />
+                       </div>
+                       <div className={cn("w-6 h-6 rounded flex items-center justify-center border", student.status === 'a' ? "bg-rose-500/20 border-rose-500/30 text-rose-400" : "bg-white/5 border-white/10 text-slate-600")}>
+                         <X className="w-3 h-3" />
+                       </div>
                      </div>
                    </div>
                  ))}
@@ -229,12 +260,12 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
         {role === 'parent' && (
           <div className="flex gap-6 h-full">
             <div className="flex-1 space-y-6">
-              <div className="p-6 rounded-[2rem] bg-gradient-to-br from-primary/30 to-indigo-600/30 border border-white/10 text-white">
-                <div className="text-sm font-bold opacity-80 mb-1">Upcoming Payment</div>
-                <div className="text-3xl font-black mb-4">$240.00</div>
+              <div className="p-6 rounded-[2rem] bg-gradient-to-br from-indigo-500/30 to-blue-500/30 border border-white/10 text-white">
+                <div className="text-sm font-bold opacity-80 mb-1">Quarterly Tuition Fee</div>
+                <div className="text-3xl font-black mb-4">$850.00</div>
                 <div className="flex justify-between items-center">
-                  <div className="text-xs font-medium px-3 py-1 rounded-full bg-white/20">Due in 3 days</div>
-                  <div className="h-8 w-24 bg-white text-primary rounded-xl flex items-center justify-center text-xs font-black">PAY NOW</div>
+                  <div className="text-xs font-medium px-3 py-1 rounded-full bg-white/20">Due: June 15</div>
+                  <div className="h-8 w-24 bg-white rounded-xl flex items-center justify-center text-xs font-black text-indigo-600">PAY NOW</div>
                 </div>
               </div>
 
@@ -296,8 +327,8 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
   return (
     <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full bg-primary/10 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full bg-indigo-600/10 blur-[120px] animate-pulse delay-1000" />
+        <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse bg-indigo-500/10" />
+        <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] animate-pulse delay-1000 bg-blue-500/10" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
 
@@ -306,10 +337,10 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black tracking-widest uppercase mb-8"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black tracking-widest uppercase mb-8 bg-indigo-500/20 text-indigo-400"
         >
           <SparklesIcon className="w-4 h-4" />
-          <span>New Experience is Here</span>
+          <span>The Future of School Management</span>
         </motion.div>
 
         <motion.h1
@@ -319,7 +350,7 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 max-w-4xl"
         >
           Run Your Entire School <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-400">from One Platform</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-400">from One Platform</span>
         </motion.h1>
 
         <motion.p
@@ -338,24 +369,9 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex flex-wrap gap-6 justify-center"
         >
-          <Button asChild className="h-16 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white text-lg font-black shadow-2xl shadow-primary/20 transition-all hover:scale-105 active:scale-95">
-            <Link to="/login">Get Started <ArrowRight className="ml-2 w-6 h-6" /></Link>
+          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700">
+            <Link to="/contact-sales">Request Personalized Demo <ArrowRight className="ml-2 w-6 h-6" /></Link>
           </Button>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="h-16 px-10 rounded-2xl border-white/10 bg-white/5 text-white text-lg font-black hover:bg-white/10 transition-all">
-                <Play className="mr-2 w-5 h-5 fill-current" /> Watch Demo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl bg-slate-900 border-white/10 p-0 overflow-hidden aspect-video flex items-center justify-center">
-               <div className="text-center p-20">
-                  <Play className="w-20 h-20 text-primary mx-auto mb-6 opacity-20" />
-                  <p className="text-slate-400 font-bold uppercase tracking-widest">Product Demo Placeholder</p>
-                  <p className="text-slate-600 text-sm mt-2">Connecting to EDUFLOW Media Services...</p>
-               </div>
-            </DialogContent>
-          </Dialog>
         </motion.div>
 
         <motion.div
@@ -369,7 +385,7 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           <motion.div
             animate={{ y: [0, 5, 0] }}
             transition={{ repeat: Infinity, duration: 2 }}
-            className="w-1 h-8 rounded-full bg-gradient-to-b from-primary to-transparent"
+            className="w-1 h-8 rounded-full bg-gradient-to-b from-indigo-600 to-transparent"
           />
         </motion.div>
       </div>
@@ -435,7 +451,7 @@ const SolutionOverview = ({ setActiveSection }: { setActiveSection: (i: number) 
     <Section id="solution" index={2} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto flex flex-col lg:flex-row items-center gap-20">
         <div className="flex-1 space-y-8">
-          <Badge className="bg-primary/10 text-primary border-primary/20 rounded-full px-4 py-1">THE SOLUTION</Badge>
+          <Badge className="border-none rounded-full px-4 py-1 bg-indigo-500/10 text-indigo-400">THE SOLUTION</Badge>
           <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9]">
             Meet EDUFLOW. <br />
             <span className="text-slate-500 text-4xl md:text-5xl">Your digital command center.</span>
@@ -472,12 +488,12 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
     <Section id={`feature-${index}`} index={index} setActiveSection={setActiveSection} className={cn(index % 2 === 0 ? "bg-slate-900" : "bg-slate-950")}>
        <div className="container mx-auto flex flex-col lg:flex-row items-center gap-16">
           <div className={cn("flex-1 space-y-8", index % 2 === 1 ? "lg:order-2" : "")}>
-             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6">
+             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 bg-indigo-500/10 text-indigo-400">
                 <Icon className="w-8 h-8" />
              </div>
              <div className="space-y-4">
                 <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">{title}</h2>
-                <p className="text-2xl text-primary font-bold">{valueProp}</p>
+                <p className="text-2xl font-bold text-indigo-400">{valueProp}</p>
              </div>
              <div className="grid gap-4">
                 {highlights.map((h, i) => (
@@ -495,8 +511,8 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
              {/* Simulated Feature Visuals */}
              <div className="relative w-full max-w-lg aspect-square rounded-[3rem] bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 p-8 flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-20">
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-primary blur-[80px]" />
-                   <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600 blur-[80px]" />
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600 blur-[80px]" />
+                   <div className="absolute bottom-0 left-0 w-64 h-64 blur-[80px] bg-indigo-500" />
                 </div>
 
                 {title === "Student Management" && (
@@ -548,7 +564,7 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                             initial={{ height: 0 }}
                             whileInView={{ height: `${h}%` }}
                             transition={{ duration: 1, delay: i * 0.1 }}
-                            className="flex-1 bg-gradient-to-t from-primary to-indigo-400 rounded-t-lg"
+                            className="flex-1 rounded-t-lg bg-gradient-to-t from-indigo-500 to-blue-400"
                           />
                         ))}
                      </div>
@@ -586,9 +602,9 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                 {title === "Parent Portal" && (
                   <div className="relative z-10 w-64 aspect-[9/19] bg-slate-950 border-[6px] border-slate-800 rounded-[3rem] p-4 flex flex-col gap-4 shadow-2xl">
                      <div className="w-16 h-1.5 bg-slate-800 rounded-full mx-auto mb-2" />
-                     <div className="h-24 rounded-2xl bg-primary/20 border border-primary/30 p-3">
-                        <div className="h-2 w-12 bg-primary/40 rounded mb-2" />
-                        <div className="h-4 w-24 bg-white/10 rounded" />
+                     <div className="h-24 rounded-2xl p-3 border bg-indigo-500/20 border-indigo-500/30">
+                        <div className="h-2 w-12 rounded mb-2 bg-indigo-400/40" />
+                        <div className="text-[10px] font-bold text-white">Homework Assigned</div>
                      </div>
                      <div className="flex-1 space-y-3">
                         {[1, 2, 3, 4].map(i => (
@@ -633,24 +649,24 @@ const FeatureSlide = ({ title, valueProp, icon: Icon, highlights, index, setActi
                             <motion.div
                               animate={{ rotate: 360 }}
                               transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-                              className="w-32 h-32 rounded-full border-2 border-dashed border-primary/40"
+                              className="w-32 h-32 rounded-full border-2 border-dashed border-indigo-400/40"
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
-                               <Zap className="w-12 h-12 text-primary animate-pulse" />
+                               <Zap className="w-12 h-12 animate-pulse text-indigo-400" />
                             </div>
                          </div>
                       </div>
                       <div className="grid gap-3">
                          <motion.div
                            whileHover={{ x: 10 }}
-                           className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex gap-4 items-center"
+                           className="p-4 rounded-2xl border flex gap-4 items-center bg-indigo-500/10 border-indigo-500/20"
                          >
-                            <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
-                            <p className="text-sm font-bold text-white">Student attendance predicted to rise by 12%</p>
+                            <div className="w-2 h-2 rounded-full animate-ping bg-indigo-400" />
+                            <p className="text-sm font-bold text-white">Attendance predicted to rise by 12% next month</p>
                          </motion.div>
                          <motion.div
                            whileHover={{ x: 10 }}
-                           className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex gap-4 items-center"
+                           className="p-4 rounded-2xl border flex gap-4 items-center bg-indigo-500/10 border-indigo-500/20"
                          >
                             <div className="w-2 h-2 rounded-full bg-indigo-400" />
                             <p className="text-sm font-bold text-white">Identify students at risk of falling behind</p>
@@ -672,16 +688,16 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
     <Section id="roles" index={10} setActiveSection={setActiveSection} className="bg-slate-950">
       <div className="container mx-auto">
         <div className="text-center mb-16 space-y-4">
-          <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 rounded-full px-4 py-1">EXPERIENCE ROLES</Badge>
+          <Badge className="border-none rounded-full px-4 py-1 bg-indigo-500/10 text-indigo-400">EXPERIENCE ROLES</Badge>
           <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">One System. <br /><span className="text-slate-500">Every Perspective.</span></h2>
         </div>
 
         <Tabs defaultValue="admin" className="w-full" onValueChange={setActiveTab}>
           <div className="flex justify-center mb-12">
             <TabsList className="bg-white/5 border border-white/10 p-1 h-14 rounded-2xl">
-              <TabsTrigger value="admin" className="rounded-xl px-8 font-black uppercase text-xs data-[state=active]:bg-primary data-[state=active]:text-white">Admin</TabsTrigger>
-              <TabsTrigger value="teacher" className="rounded-xl px-8 font-black uppercase text-xs data-[state=active]:bg-primary data-[state=active]:text-white">Teacher</TabsTrigger>
-              <TabsTrigger value="parent" className="rounded-xl px-8 font-black uppercase text-xs data-[state=active]:bg-primary data-[state=active]:text-white">Parent</TabsTrigger>
+              <TabsTrigger value="admin" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl px-8 font-black uppercase text-xs">Admin</TabsTrigger>
+              <TabsTrigger value="teacher" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl px-8 font-black uppercase text-xs">Teacher</TabsTrigger>
+              <TabsTrigger value="parent" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-xl px-8 font-black uppercase text-xs">Parent</TabsTrigger>
             </TabsList>
           </div>
 
@@ -703,7 +719,7 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
                      <ul className="space-y-3">
                         {["Center Management", "Financial Analytics", "Staff Payroll", "Inventory Tracking"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <ShieldCheck className="w-5 h-5 text-primary" /> {item}
+                             <ShieldCheck className="w-5 h-5 text-indigo-400" /> {item}
                           </li>
                         ))}
                      </ul>
@@ -724,7 +740,7 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
                      <ul className="space-y-3">
                         {["One-tap Attendance", "Digital Lesson Plans", "Auto-grading Exams", "Activity Logs"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <GraduationCap className="w-5 h-5 text-primary" /> {item}
+                             <GraduationCap className="w-5 h-5 text-indigo-400" /> {item}
                           </li>
                         ))}
                      </ul>
@@ -745,7 +761,7 @@ const RoleExperienceSection = ({ setActiveSection }: { setActiveSection: (i: num
                      <ul className="space-y-3">
                         {["Live Progress Reports", "Instant Messaging", "Online Fee Payment", "Homework Tracker"].map((item, i) => (
                           <li key={i} className="flex items-center gap-3 text-white font-bold">
-                             <Users className="w-5 h-5 text-primary" /> {item}
+                             <Users className="w-5 h-5 text-indigo-400" /> {item}
                           </li>
                         ))}
                      </ul>
@@ -794,7 +810,16 @@ const WorkflowSection = ({ setActiveSection }: { setActiveSection: (i: number) =
                transition={{ delay: i * 0.2 }}
                className="relative z-10 flex-1 flex flex-col items-center text-center group"
              >
-               <div className="w-20 h-20 rounded-[2rem] bg-slate-950 border border-white/10 flex items-center justify-center text-primary mb-6 transition-all group-hover:bg-primary group-hover:text-white group-hover:scale-110">
+               <style>
+                 {`
+                   .workflow-icon-group:hover {
+                      background-color: ${PREMIUM_PRIMARY} !important;
+                   }
+                 `}
+               </style>
+               <div
+                 className="w-20 h-20 rounded-[2rem] bg-slate-950 border border-white/10 flex items-center justify-center mb-6 transition-all group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 text-indigo-400"
+               >
                   <step.icon className="w-8 h-8" />
                </div>
                <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
@@ -819,34 +844,37 @@ const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => v
             </p>
             <div className="grid grid-cols-2 gap-8">
                <div>
-                  <div className="text-5xl font-black text-primary tracking-tighter mb-2">10,000+</div>
+                  <div className="text-5xl font-black tracking-tighter mb-2 text-indigo-500">15,400+</div>
                   <div className="text-xs font-black text-slate-500 uppercase tracking-widest">Students Managed</div>
                </div>
                <div>
-                  <div className="text-5xl font-black text-primary tracking-tighter mb-2">200+</div>
+                  <div className="text-5xl font-black tracking-tighter mb-2 text-indigo-500">320+</div>
                   <div className="text-xs font-black text-slate-500 uppercase tracking-widest">Institutions</div>
                </div>
             </div>
           </div>
 
           <div className="grid gap-6">
-             {[1, 2].map(i => (
+             {[
+               { name: 'Dr. Sarah Jenkins', school: 'St. Mary\'s International', text: 'EDUFLOW has completely transformed how we handle our daily operations. The interface is intuitive, and the support is exceptional.' },
+               { name: 'Mr. David Thompson', school: 'Global Vision School', text: 'The financial transparency and parent engagement features have significantly improved our school\'s reputation and efficiency.' }
+             ].map((t, i) => (
                <div key={i} className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 relative overflow-hidden group">
                   <div className="flex gap-1 text-amber-400 mb-4">
                      {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-4 h-4 fill-current" />)}
                   </div>
                   <p className="text-lg text-slate-300 italic mb-6 relative z-10">
-                    "EDUFLOW has completely transformed how we handle our daily operations. The interface is intuitive, and the support is exceptional."
+                    "{t.text}"
                   </p>
                   <div className="flex items-center gap-4 relative z-10">
                      <div className="w-12 h-12 rounded-full bg-white/10" />
                      <div>
-                        <div className="font-bold text-white">Principal {i === 1 ? 'Ahmed' : 'Sarah'}</div>
-                        <div className="text-xs text-slate-500 uppercase font-black tracking-widest">Bright Academy</div>
+                        <div className="font-bold text-white">{t.name}</div>
+                        <div className="text-xs text-slate-500 uppercase font-black tracking-widest">{t.school}</div>
                      </div>
                   </div>
                   <div className="absolute top-0 right-0 p-8 opacity-5">
-                     <MessageSquare className="w-32 h-32" />
+                     <MessageSquare className="w-32 h-32 text-indigo-400" />
                   </div>
                </div>
              ))}
@@ -857,9 +885,9 @@ const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => v
   );
 };
 
-const FinalCTASection = ({ setActiveSection }: { setActiveSection: (i: number) => void }) => {
+const FinalCTASection = ({ setActiveSection, scrollToSection }: { setActiveSection: (i: number) => void, scrollToSection: (i: number) => void }) => {
   return (
-    <Section id="final-cta" index={13} setActiveSection={setActiveSection} className="bg-primary overflow-hidden">
+    <Section id="final-cta" index={13} setActiveSection={setActiveSection} className="overflow-hidden bg-indigo-600">
       <div className="absolute inset-0 z-0">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_0%,transparent_70%)]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] border border-white/10 rounded-full animate-ping" />
@@ -874,11 +902,8 @@ const FinalCTASection = ({ setActiveSection }: { setActiveSection: (i: number) =
         </p>
 
         <div className="flex flex-wrap gap-6 justify-center">
-          <Button asChild className="h-16 px-10 rounded-2xl bg-white text-primary text-lg font-black hover:bg-slate-100 transition-all hover:scale-105 active:scale-95 shadow-2xl">
-            <Link to="/login">Get Started Now</Link>
-          </Button>
-          <Button className="h-16 px-10 rounded-2xl border-white/20 bg-white/10 text-white text-lg font-black hover:bg-white/20 transition-all">
-            Book a Demo
+          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700 shadow-indigo-900/40">
+            <Link to="/contact-sales">Request Personalized Demo</Link>
           </Button>
         </div>
 
@@ -998,7 +1023,7 @@ const GettingStarted = () => {
   ];
 
   return (
-    <div className="bg-slate-950 min-h-screen selection:bg-primary/20 selection:text-primary">
+    <div className="bg-slate-950 min-h-screen selection:bg-indigo-500/20 selection:text-indigo-400">
       <DotNavigation
         activeSection={activeSection}
         sections={sections}
@@ -1008,18 +1033,15 @@ const GettingStarted = () => {
       {/* Nav Overlay */}
       <nav className="fixed top-0 left-0 w-full z-[60] px-6 py-6 flex justify-between items-center pointer-events-none">
         <div className="flex items-center gap-3 pointer-events-auto cursor-pointer" onClick={() => navigate("/")}>
-          <div className={cn("p-2 rounded-xl border transition-colors", activeSection === 13 ? "bg-white/20 border-white/20" : "bg-primary/20 border-primary/20")}>
-            <ShieldCheck className={cn("h-6 w-6 transition-colors", activeSection === 13 ? "text-white" : "text-primary")} />
+          <div className={cn("p-2 rounded-xl border transition-colors", activeSection === 13 ? "bg-white/20 border-white/20" : "bg-indigo-600/20 border-indigo-600/20")}>
+            <ShieldCheck className={cn("h-6 w-6 transition-colors", activeSection === 13 ? "text-white" : "text-indigo-400")} />
           </div>
-          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-primary")}>FLOW</span></span>
+          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-indigo-400")}>FLOW</span></span>
         </div>
 
         <div className="pointer-events-auto">
            <Button asChild variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
              <Link to="/login">Login</Link>
-           </Button>
-           <Button asChild className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 shadow-lg shadow-primary/20">
-             <Link to="/login">Get Started</Link>
            </Button>
         </div>
       </nav>
@@ -1040,12 +1062,12 @@ const GettingStarted = () => {
       <RoleExperienceSection setActiveSection={setActiveSection} />
       <WorkflowSection setActiveSection={setActiveSection} />
       <TrustSection setActiveSection={setActiveSection} />
-      <FinalCTASection setActiveSection={setActiveSection} />
+      <FinalCTASection setActiveSection={setActiveSection} scrollToSection={scrollToSection} />
 
       {/* Footer */}
       <footer className="bg-slate-950 py-12 px-6 border-t border-white/5 text-center">
          <div className="flex items-center justify-center gap-3 mb-6">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+            <ShieldCheck className="h-6 w-6 text-indigo-400" />
             <span className="text-xl font-black text-white tracking-tighter">EDUFLOW</span>
          </div>
          <p className="text-slate-500 font-medium mb-8">© 2024 EDUFLOW Tech Solutions. All rights reserved.</p>

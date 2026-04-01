@@ -123,9 +123,11 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         </nav>
 
         <div className="flex items-center gap-4">
-           <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
-             Contact Sales
-           </Button>
+           <Link to="/contact-sales">
+             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
+               Contact Sales
+             </Button>
+           </Link>
            <Link to="/getting-started">
              <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 shadow-lg shadow-primary/20">
                Get Started
