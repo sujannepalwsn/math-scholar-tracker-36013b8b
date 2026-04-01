@@ -34,7 +34,6 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // --- Components ---
 
@@ -371,27 +370,8 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           className="flex flex-wrap gap-6 justify-center"
         >
           <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700">
-            <Link to="/apply">Get Started <ArrowRight className="ml-2 w-6 h-6" /></Link>
+            <Link to="/contact-sales">Request Personalized Demo <ArrowRight className="ml-2 w-6 h-6" /></Link>
           </Button>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="h-16 px-10 rounded-2xl border-white/10 bg-white/5 text-white text-lg font-black hover:bg-white/10 transition-all">
-                <Play className="mr-2 w-5 h-5 fill-current" /> Watch Demo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-5xl aspect-video p-0 overflow-hidden bg-black border-none">
-              <iframe
-                width="100%"
-                height="100%"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-                title="Product Demo"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </DialogContent>
-          </Dialog>
         </motion.div>
 
         <motion.div
@@ -923,13 +903,7 @@ const FinalCTASection = ({ setActiveSection, scrollToSection }: { setActiveSecti
 
         <div className="flex flex-wrap gap-6 justify-center">
           <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700 shadow-indigo-900/40">
-            <Link to="/apply">Get Started Now</Link>
-          </Button>
-          <Button
-            onClick={() => scrollToSection(14)}
-            className="h-16 px-10 rounded-2xl border-white/20 bg-white/10 text-white text-lg font-black hover:bg-white/20 transition-all"
-          >
-            Book a Demo
+            <Link to="/contact-sales">Request Personalized Demo</Link>
           </Button>
         </div>
 
@@ -965,7 +939,7 @@ const GettingStarted = () => {
   const sections = [
     "hero", "problems", "solution",
     "student-mgmt", "attendance", "exams", "teachers", "parents", "finance", "ai",
-    "roles", "workflow", "trust", "final-cta", "contact"
+    "roles", "workflow", "trust", "final-cta"
   ];
 
   const scrollToSection = (index: number) => {
@@ -1070,7 +1044,7 @@ const GettingStarted = () => {
              <Link to="/login">Login</Link>
            </Button>
            <Button asChild className="text-white font-bold rounded-full px-8 shadow-lg shadow-indigo-600/20 bg-indigo-600 hover:bg-indigo-700">
-             <Link to="/apply">Get Started</Link>
+             <Link to="/contact-sales">Request Demo</Link>
            </Button>
         </div>
       </nav>
@@ -1092,31 +1066,6 @@ const GettingStarted = () => {
       <WorkflowSection setActiveSection={setActiveSection} />
       <TrustSection setActiveSection={setActiveSection} />
       <FinalCTASection setActiveSection={setActiveSection} scrollToSection={scrollToSection} />
-
-      <Section id="contact" index={14} setActiveSection={setActiveSection} className="bg-slate-900">
-         <div className="container mx-auto max-w-4xl">
-            <div className="text-center mb-12">
-               <h2 className="text-4xl font-black text-white mb-4">Request a Personalized Demo</h2>
-               <p className="text-slate-400">Our team will show you how EDUFLOW can transform your school.</p>
-            </div>
-            <div className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10">
-               <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div className="space-y-2">
-                     <div className="h-2 w-20 bg-white/10 rounded" />
-                     <div className="h-12 rounded-xl bg-white/5 border border-white/10" />
-                  </div>
-                  <div className="space-y-2">
-                     <div className="h-2 w-20 bg-white/10 rounded" />
-                     <div className="h-12 rounded-xl bg-white/5 border border-white/10" />
-                  </div>
-               </div>
-               <div className="h-32 rounded-xl bg-white/5 border border-white/10 mb-6" />
-               <Button asChild className="w-full h-14 rounded-xl font-black uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700">
-                  <Link to="/contact-sales">Go to Full Contact Page</Link>
-               </Button>
-            </div>
-         </div>
-      </Section>
 
       {/* Footer */}
       <footer className="bg-slate-950 py-12 px-6 border-t border-white/5 text-center">
