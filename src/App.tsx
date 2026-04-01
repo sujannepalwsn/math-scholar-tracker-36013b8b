@@ -190,6 +190,7 @@ const App = () => {
               <Route path="/login-parent" element={<ParentLogin />} />
               <Route path="/login-teacher" element={<TeacherLogin />} />
               <Route path="/apply" element={<PublicAdmission />} />
+              <Route path="/institution/:id" element={<AboutInstitution />} />
               <Route
                 path="/change-password"
                 element={

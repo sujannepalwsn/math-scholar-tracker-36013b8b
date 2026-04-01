@@ -4,9 +4,10 @@ import {
   Info, MapPin, Phone, Mail, Globe, Facebook, Twitter,
   Instagram, Linkedin, GraduationCap, Users, BookOpen,
   School, Plus, Trash2, CheckCircle2, ChevronRight, Hash,
-  Trophy, Image as ImageIcon, Camera, Upload
+  Trophy, Image as ImageIcon, Camera, Upload, ArrowLeft
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,9 +53,14 @@ interface SocialLinks {
 
 export default function AboutInstitution() {
   const { user } = useAuth();
+  const { id: publicId } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+
+  const centerId = publicId || user?.center_id;
+  const isPublicView = !!publicId;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -78,32 +84,44 @@ export default function AboutInstitution() {
     header_bg_url: ""
   });
 
-  const canEdit = hasActionPermission(user, 'about_institution', 'edit');
+  const canEdit = !isPublicView && hasActionPermission(user, 'about_institution', 'edit');
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
-    queryKey: ["center-about", user?.center_id],
+    queryKey: ["center-about", centerId],
     queryFn: async () => {
-      if (!user?.center_id) return null;
-      const { data, error } = await supabase
-        .from("centers")
-        .select("*")
-        .eq("id", user.center_id)
-        .single();
-      if (error) throw error;
-      return data;
+      if (!centerId) return null;
+
+      // If public view, only fetch public-facing columns to prevent accidental data exposure
+      const query = supabase.from("centers");
+
+      if (isPublicView) {
+        const { data, error } = await query
+          .select("id, name, about_description, mission, vision, principal_message, principal_name, established_date, academic_info, facilities, achievements, gallery, social_links, institution_type, phone, email, address, website_url, header_bg_url")
+          .eq("id", centerId)
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await query
+          .select("*")
+          .eq("id", centerId)
+          .single();
+        if (error) throw error;
+        return data;
+      }
     },
-    enabled: !!user?.center_id
+    enabled: !!centerId
   });
 
   const { data: stats, isLoading: isStatsLoading } = useQuery({
-    queryKey: ["center-stats-summary", user?.center_id],
+    queryKey: ["center-stats-summary", centerId],
     queryFn: async () => {
-      if (!user?.center_id) return null;
+      if (!centerId) return null;
 
       const [studentsCount, teachersCount, sectionsData] = await Promise.all([
-        supabase.from("students").select("id", { count: "exact", head: true }).eq("center_id", user.center_id).eq("is_active", true),
-        supabase.from("teachers").select("id", { count: "exact", head: true }).eq("center_id", user.center_id).eq("is_active", true),
-        supabase.from("students").select("grade, section").eq("center_id", user.center_id).eq("is_active", true)
+        supabase.from("students").select("id", { count: "exact", head: true }).eq("center_id", centerId).eq("is_active", true),
+        supabase.from("teachers").select("id", { count: "exact", head: true }).eq("center_id", centerId).eq("is_active", true),
+        supabase.from("students").select("grade, section").eq("center_id", centerId).eq("is_active", true)
       ]);
 
       const uniqueGrades = new Set(sectionsData.data?.map(s => s.grade).filter(Boolean));
@@ -116,7 +134,7 @@ export default function AboutInstitution() {
         totalSections: uniqueSections.size || 0
       };
     },
-    enabled: !!user?.center_id
+    enabled: !!centerId
   });
 
   // Keep track of when we last saved to prevent immediate re-syncing while refetching
@@ -154,6 +172,7 @@ export default function AboutInstitution() {
 
   const updateAboutMutation = useMutation({
     mutationFn: async () => {
+      if (isPublicView) throw new Error("Editing is disabled in public view mode.");
       if (!user?.center_id) throw new Error("Center ID not found");
       if (!canEdit) throw new Error("Access Denied: You do not have permission to update institution information.");
 
@@ -328,10 +347,24 @@ export default function AboutInstitution() {
     );
   }
 
-  const canView = hasPermission(user, 'about_institution');
+  const canView = isPublicView || hasPermission(user, 'about_institution');
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className={cn("space-y-8 animate-in fade-in duration-700 pb-20", isPublicView && "bg-slate-50 min-h-screen px-4 md:px-20")}>
+      {isPublicView && (
+        <div className="pt-8 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="rounded-full hover:bg-slate-200"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back
+          </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-black tracking-tighter">EDU<span className="text-primary">FLOW</span></span>
+          </div>
+        </div>
+      )}
       {/* Hero Parallax Section */}
       <div className="relative h-[400px] md:h-[600px] -mt-8 -mx-4 md:-mx-8 overflow-hidden rounded-b-[4rem] shadow-elevated">
           <motion.div
