@@ -5,6 +5,7 @@ export interface SystemModule {
   key_functionalities: string[];
   completeness: 'Fully implemented' | 'In Progress';
   feature_mapping: string[];
+  icon: string;
 }
 
 export const SYSTEM_MODULES: SystemModule[] = [
@@ -14,7 +15,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Manages user login, registration, and role-based access control across the system.",
     key_functionalities: ["User registration", "Secure login", "Role-based access control (RBAC)", "Password management"],
     completeness: "Fully implemented",
-    feature_mapping: ["dashboard_access"]
+    feature_mapping: ["dashboard_access"],
+    icon: "Shield"
   },
   {
     id: 2,
@@ -22,7 +24,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Provides an overview and quick access to key information and functionalities relevant to each user role.",
     key_functionalities: ["Role-specific data summaries", "Quick links", "Notifications display"],
     completeness: "Fully implemented",
-    feature_mapping: ["dashboard_access"]
+    feature_mapping: ["dashboard_access"],
+    icon: "LayoutDashboard"
   },
   {
     id: 3,
@@ -30,7 +33,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Handles the registration, record-keeping, and general management of student information.",
     key_functionalities: ["Student registration", "Record management", "Student ID cards", "Parent linking"],
     completeness: "Fully implemented",
-    feature_mapping: ["register_student", "student_id_cards", "view_records"]
+    feature_mapping: ["register_student", "student_id_cards", "view_records"],
+    icon: "Users"
   },
   {
     id: 4,
@@ -38,7 +42,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Manages teacher profiles, assignments, and performance tracking.",
     key_functionalities: ["Teacher onboarding", "Profile management", "Performance tracking", "Leave management"],
     completeness: "Fully implemented",
-    feature_mapping: ["teacher_management", "hr_management"]
+    feature_mapping: ["teacher_management", "hr_management"],
+    icon: "Briefcase"
   },
   {
     id: 5,
@@ -46,7 +51,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Organizes academic classes, subjects, and their associated routines.",
     key_functionalities: ["Class management", "Subject assignments", "Routines/Timetables", "Academic year config"],
     completeness: "Fully implemented",
-    feature_mapping: ["class_routine"]
+    feature_mapping: ["class_routine"],
+    icon: "BookOpen"
   },
   {
     id: 6,
@@ -54,7 +60,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Facilitates the recording and tracking of student and teacher attendance.",
     key_functionalities: ["Student roll-call", "Attendance summaries", "Teacher attendance tracking"],
     completeness: "Fully implemented",
-    feature_mapping: ["take_attendance", "teachers_attendance", "attendance_summary"]
+    feature_mapping: ["take_attendance", "teachers_attendance", "attendance_summary"],
+    icon: "ClipboardCheck"
   },
   {
     id: 7,
@@ -62,7 +69,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Manages the entire examination process, from scheduling to result publication.",
     key_functionalities: ["Exam scheduling", "Marks entry", "Result publication", "Marksheets"],
     completeness: "Fully implemented",
-    feature_mapping: ["exams_results", "published_results"]
+    feature_mapping: ["exams_results", "published_results"],
+    icon: "GraduationCap"
   },
   {
     id: 8,
@@ -70,7 +78,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Allows teachers to create and manage lesson plans and track student progress.",
     key_functionalities: ["Plan creation", "Progress tracking", "OCR capabilities"],
     completeness: "Fully implemented",
-    feature_mapping: ["lesson_plans", "lesson_tracking"]
+    feature_mapping: ["lesson_plans", "lesson_tracking"],
+    icon: "Target"
   },
   {
     id: 9,
@@ -78,7 +87,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Enables teachers to assign and manage homework for students.",
     key_functionalities: ["Assigning homework", "Submission tracking"],
     completeness: "Fully implemented",
-    feature_mapping: ["homework_management"]
+    feature_mapping: ["homework_management"],
+    icon: "Pencil"
   },
   {
     id: 10,
@@ -86,7 +96,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Records and manages student discipline issues.",
     key_functionalities: ["Incident logging", "Discipline records"],
     completeness: "Fully implemented",
-    feature_mapping: ["discipline_issues"]
+    feature_mapping: ["discipline_issues"],
+    icon: "AlertTriangle"
   },
   {
     id: 11,
@@ -94,7 +105,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Handles fee collection, invoicing, and financial reporting.",
     key_functionalities: ["Fee structures", "Invoice generation", "Payment tracking", "Late fees"],
     completeness: "Fully implemented",
-    feature_mapping: ["finance"]
+    feature_mapping: ["finance"],
+    icon: "DollarSign"
   },
   {
     id: 12,
@@ -102,7 +114,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Manages human resources aspects, specifically teacher leave applications and staff documents.",
     key_functionalities: ["Leave approval workflow", "Staff documents"],
     completeness: "Fully implemented",
-    feature_mapping: ["hr_management", "leave_management"]
+    feature_mapping: ["hr_management", "leave_management"],
+    icon: "UserCheck"
   },
   {
     id: 13,
@@ -110,7 +123,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Manages school inventory and assets.",
     key_functionalities: ["Inventory tracking", "Asset management"],
     completeness: "Fully implemented",
-    feature_mapping: ["inventory_assets"]
+    feature_mapping: ["inventory_assets"],
+    icon: "Package"
   },
   {
     id: 14,
@@ -118,7 +132,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Manages school transportation logistics.",
     key_functionalities: ["Vehicle management", "Route planning", "Transport assignments"],
     completeness: "Fully implemented",
-    feature_mapping: ["transport_tracking"]
+    feature_mapping: ["transport_tracking"],
+    icon: "Bus"
   },
   {
     id: 15,
@@ -126,7 +141,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Provides internal communication tools for users, including messaging and meeting scheduling.",
     key_functionalities: ["Internal chat", "Video meetings", "Broadcast messages"],
     completeness: "Fully implemented",
-    feature_mapping: ["messaging", "meetings_management"]
+    feature_mapping: ["messaging", "meetings_management"],
+    icon: "MessageSquare"
   },
   {
     id: 16,
@@ -134,7 +150,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Delivers important alerts and updates to users.",
     key_functionalities: ["Real-time alerts", "Notification history"],
     completeness: "Fully implemented",
-    feature_mapping: ["messaging"]
+    feature_mapping: ["messaging"],
+    icon: "Bell"
   },
   {
     id: 17,
@@ -142,7 +159,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Displays school-wide events and personal schedules.",
     key_functionalities: ["Event display", "Schedule integration"],
     completeness: "Fully implemented",
-    feature_mapping: ["calendar_events"]
+    feature_mapping: ["calendar_events"],
+    icon: "Calendar"
   },
   {
     id: 18,
@@ -150,7 +168,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Allows administrators to configure system parameters and customize school profiles.",
     key_functionalities: ["System settings", "Login page customization", "Branding"],
     completeness: "Fully implemented",
-    feature_mapping: ["settings_access", "about_institution"]
+    feature_mapping: ["settings_access", "about_institution"],
+    icon: "Settings"
   },
   {
     id: 20,
@@ -158,7 +177,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Monitors and logs system errors for debugging.",
     key_functionalities: ["Error logging", "Admin dashboard"],
     completeness: "Fully implemented",
-    feature_mapping: ["settings_access"]
+    feature_mapping: ["settings_access"],
+    icon: "Bug"
   },
   {
     id: 21,
@@ -166,7 +186,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Allows external users to register students for admission.",
     key_functionalities: ["Public registration form", "Application tracking"],
     completeness: "Fully implemented",
-    feature_mapping: ["register_student"]
+    feature_mapping: ["register_student"],
+    icon: "UserPlus"
   },
   {
     id: 23,
@@ -174,7 +195,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Manages activities specifically for preschool students.",
     key_functionalities: ["Activity scheduling", "Parent view"],
     completeness: "Fully implemented",
-    feature_mapping: ["preschool_activities"]
+    feature_mapping: ["preschool_activities"],
+    icon: "Palette"
   },
   {
     id: 24,
@@ -182,7 +204,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Provides an overview of student performance at a chapter level.",
     key_functionalities: ["Chapter-wise reports", "Parent feedback"],
     completeness: "Fully implemented",
-    feature_mapping: ["chapter_performance"]
+    feature_mapping: ["chapter_performance"],
+    icon: "BarChart"
   },
   {
     id: 25,
@@ -190,7 +213,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "A general module for viewing various records within the system.",
     key_functionalities: ["Audit records", "Consolidated views"],
     completeness: "Fully implemented",
-    feature_mapping: ["view_records"]
+    feature_mapping: ["view_records"],
+    icon: "Database"
   },
   {
     id: 26,
@@ -198,7 +222,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Provides summarized information across different modules.",
     key_functionalities: ["Consolidated reports", "Key metrics"],
     completeness: "Fully implemented",
-    feature_mapping: ["summary"]
+    feature_mapping: ["summary"],
+    icon: "PieChart"
   },
   {
     id: 27,
@@ -206,7 +231,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Displays information about the educational institution.",
     key_functionalities: ["School profile", "Contact info"],
     completeness: "Fully implemented",
-    feature_mapping: ["about_institution"]
+    feature_mapping: ["about_institution"],
+    icon: "School"
   },
   {
     id: 28,
@@ -214,7 +240,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Generates comprehensive reports for individual students.",
     key_functionalities: ["Academic reports", "Attendance metrics"],
     completeness: "Fully implemented",
-    feature_mapping: ["student_report"]
+    feature_mapping: ["student_report"],
+    icon: "FileText"
   },
   {
     id: 29,
@@ -222,7 +249,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Allows users to customize their application settings.",
     key_functionalities: ["Theme selection", "Notification preferences"],
     completeness: "Fully implemented",
-    feature_mapping: ["settings_access"]
+    feature_mapping: ["settings_access"],
+    icon: "Sliders"
   },
   {
     id: 30,
@@ -230,6 +258,7 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Records system activities and changes for security and compliance.",
     key_functionalities: ["User action tracking", "Data modifications"],
     completeness: "Fully implemented",
-    feature_mapping: ["settings_access"]
+    feature_mapping: ["settings_access"],
+    icon: "History"
   }
 ];

@@ -83,6 +83,7 @@ import BillingSystem from "./pages/admin/BillingSystem";
 import DataUsage from "./pages/admin/DataUsage";
 import SaaSSubscriptions from "./pages/admin/SaaSSubscriptions";
 import ErrorTracking from "./pages/admin/ErrorTracking";
+import LandingPageEditor from "./pages/admin/LandingPageEditor";
 import CenterSettings from "./pages/CenterSettings";
 import GeneralSettings from "./pages/GeneralSettings";
 import ChangePassword from "./pages/ChangePassword";
@@ -301,6 +302,7 @@ const App = () => {
               <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminLayout><AdminFinance /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/errors" element={<ProtectedRoute role="admin"><AdminLayout><ErrorTracking /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/landing-page" element={<ProtectedRoute role="admin"><AdminLayout><LandingPageEditor /></AdminLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
 
