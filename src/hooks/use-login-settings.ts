@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useLoginSettings = (pageType: 'center' | 'admin' | 'parent' | 'teacher') => {
+export const useLoginSettings = (pageType: 'center' | 'admin' | 'parent' | 'teacher' | 'contact-sales') => {
   return useQuery({
     queryKey: ['login_page_settings', pageType],
     queryFn: async () => {

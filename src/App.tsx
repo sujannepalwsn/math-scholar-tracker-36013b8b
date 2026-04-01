@@ -85,6 +85,8 @@ import DataUsage from "./pages/admin/DataUsage";
 import SaaSSubscriptions from "./pages/admin/SaaSSubscriptions";
 import ErrorTracking from "./pages/admin/ErrorTracking";
 import LandingPageEditor from "./pages/admin/LandingPageEditor";
+import DemoRequests from "./pages/admin/DemoRequests";
+import ContactSales from "./pages/ContactSales";
 import CenterSettings from "./pages/CenterSettings";
 import GeneralSettings from "./pages/GeneralSettings";
 import ChangePassword from "./pages/ChangePassword";
@@ -187,6 +189,7 @@ const App = () => {
               {/* Authentication & Public */}
               <Route path="/init-admin" element={<InitAdmin />} />
               <Route path="/getting-started" element={<GettingStarted />} />
+              <Route path="/contact-sales" element={<ContactSales />} />
               <Route path="/login" element={<Login />} />
               <Route path="/login-admin" element={<AdminLogin />} />
               <Route path="/login-parent" element={<ParentLogin />} />
@@ -306,6 +309,7 @@ const App = () => {
               <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/errors" element={<ProtectedRoute role="admin"><AdminLayout><ErrorTracking /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/landing-page" element={<ProtectedRoute role="admin"><AdminLayout><LandingPageEditor /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/demo-requests" element={<ProtectedRoute role="admin"><AdminLayout><DemoRequests /></AdminLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
 
