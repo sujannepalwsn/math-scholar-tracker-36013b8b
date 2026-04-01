@@ -9,8 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useLoginSettings } from "@/hooks/use-login-settings";
-import * as LucideIcons from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DynamicIcon } from "@/components/auth/LandingPageComponents";
+
+const COMMON_ICONS = [
+  "Shield", "LayoutDashboard", "Users", "Briefcase", "BookOpen",
+  "ClipboardCheck", "GraduationCap", "Target", "Pencil", "AlertTriangle",
+  "DollarSign", "UserCheck", "Package", "Bus", "MessageSquare",
+  "Bell", "Calendar", "Settings", "Bug", "UserPlus",
+  "Palette", "BarChart", "Database", "PieChart", "School",
+  "FileText", "Sliders", "History", "Zap", "Star",
+  "Heart", "Globe", "Cloud", "Lock", "Unlock", "CheckCircle2"
+];
 
 const LandingPageEditor = () => {
   const { data: settings, refetch, isLoading } = useLoginSettings('center');
@@ -93,15 +103,19 @@ const LandingPageEditor = () => {
   };
 
   const removeFeature = (index: number) => {
-    const newFeatures = [...formData.features];
-    newFeatures.splice(index, 1);
-    setFormData({ ...formData, features: newFeatures });
+    setFormData({
+      ...formData,
+      features: formData.features.filter((_: any, i: number) => i !== index)
+    });
   };
 
   const updateFeature = (index: number, field: string, value: string) => {
-    const newFeatures = [...formData.features];
-    newFeatures[index] = { ...newFeatures[index], [field]: value };
-    setFormData({ ...formData, features: newFeatures });
+    setFormData({
+      ...formData,
+      features: formData.features.map((f: any, i: number) =>
+        i === index ? { ...f, [field]: value } : f
+      )
+    });
   };
 
   if (isLoading) {
@@ -232,12 +246,12 @@ const LandingPageEditor = () => {
                             <SelectTrigger className="h-14 rounded-xl border-none bg-muted/50 font-bold">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="max-h-80">
-                              {Object.keys(LucideIcons).filter(k => typeof (LucideIcons as any)[k] === 'function').slice(0, 50).map(iconName => (
-                                <SelectItem key={iconName} value={iconName}>
-                                  <div className="flex items-center gap-2">
-                                    {(LucideIcons as any)[iconName] && React.createElement((LucideIcons as any)[iconName], { className: "h-4 w-4" })}
-                                    <span>{iconName}</span>
+                            <SelectContent className="max-h-80 bg-slate-900 border-white/10 text-white">
+                              {COMMON_ICONS.map(iconName => (
+                                <SelectItem key={iconName} value={iconName} className="focus:bg-primary/20 focus:text-white cursor-pointer py-2 px-3 rounded-lg">
+                                  <div className="flex items-center gap-3">
+                                    <DynamicIcon name={iconName} className="h-4 w-4 text-primary" />
+                                    <span className="font-medium">{iconName}</span>
                                   </div>
                                 </SelectItem>
                               ))}
@@ -377,9 +391,10 @@ const LandingPageEditor = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        const newLinks = [...formData.footer_links];
-                        newLinks.splice(colIdx, 1);
-                        setFormData({ ...formData, footer_links: newLinks });
+                        setFormData({
+                          ...formData,
+                          footer_links: formData.footer_links.filter((_: any, i: number) => i !== colIdx)
+                        });
                       }}
                       className="absolute top-2 right-2 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                     >
@@ -389,9 +404,12 @@ const LandingPageEditor = () => {
                       <Input
                         value={column.title}
                         onChange={(e) => {
-                          const newLinks = [...formData.footer_links];
-                          newLinks[colIdx].title = e.target.value;
-                          setFormData({ ...formData, footer_links: newLinks });
+                          setFormData({
+                            ...formData,
+                            footer_links: formData.footer_links.map((col: any, i: number) =>
+                              i === colIdx ? { ...col, title: e.target.value } : col
+                            )
+                          });
                         }}
                         className="font-black uppercase tracking-widest border-none bg-transparent focus-visible:ring-0 p-0 h-auto text-sm"
                       />
@@ -402,9 +420,17 @@ const LandingPageEditor = () => {
                            <Input
                              value={link.label}
                              onChange={(e) => {
-                               const newLinks = [...formData.footer_links];
-                               newLinks[colIdx].links[linkIdx].label = e.target.value;
-                               setFormData({ ...formData, footer_links: newLinks });
+                               setFormData({
+                                 ...formData,
+                                 footer_links: formData.footer_links.map((col: any, i: number) =>
+                                   i === colIdx ? {
+                                     ...col,
+                                     links: col.links.map((l: any, j: number) =>
+                                       j === linkIdx ? { ...l, label: e.target.value } : l
+                                     )
+                                   } : col
+                                 )
+                               });
                              }}
                              placeholder="Label"
                              className="h-9 rounded-lg text-xs"
@@ -413,9 +439,17 @@ const LandingPageEditor = () => {
                               <Input
                                 value={link.href}
                                 onChange={(e) => {
-                                  const newLinks = [...formData.footer_links];
-                                  newLinks[colIdx].links[linkIdx].href = e.target.value;
-                                  setFormData({ ...formData, footer_links: newLinks });
+                                  setFormData({
+                                    ...formData,
+                                    footer_links: formData.footer_links.map((col: any, i: number) =>
+                                      i === colIdx ? {
+                                        ...col,
+                                        links: col.links.map((l: any, j: number) =>
+                                          j === linkIdx ? { ...l, href: e.target.value } : l
+                                        )
+                                      } : col
+                                    )
+                                  });
                                 }}
                                 placeholder="Href"
                                 className="h-9 rounded-lg text-xs flex-1"
@@ -424,9 +458,15 @@ const LandingPageEditor = () => {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {
-                                  const newLinks = [...formData.footer_links];
-                                  newLinks[colIdx].links.splice(linkIdx, 1);
-                                  setFormData({ ...formData, footer_links: newLinks });
+                                  setFormData({
+                                    ...formData,
+                                    footer_links: formData.footer_links.map((col: any, i: number) =>
+                                      i === colIdx ? {
+                                        ...col,
+                                        links: col.links.filter((_: any, j: number) => j !== linkIdx)
+                                      } : col
+                                    )
+                                  });
                                 }}
                                 className="h-9 w-9 text-destructive"
                               >
@@ -438,9 +478,15 @@ const LandingPageEditor = () => {
                       <Button
                         variant="ghost"
                         onClick={() => {
-                          const newLinks = [...formData.footer_links];
-                          newLinks[colIdx].links.push({ label: "New Link", href: "#" });
-                          setFormData({ ...formData, footer_links: newLinks });
+                          setFormData({
+                            ...formData,
+                            footer_links: formData.footer_links.map((col: any, i: number) =>
+                              i === colIdx ? {
+                                ...col,
+                                links: [...col.links, { label: "New Link", href: "#" }]
+                              } : col
+                            )
+                          });
                         }}
                         className="w-full h-9 rounded-lg text-xs font-bold border border-dashed hover:bg-white/10"
                       >
