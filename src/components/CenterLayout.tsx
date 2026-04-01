@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client"
 import { useDynamicNavigation } from "@/hooks/useDynamicNavigation";
 import { DEFAULT_NAV_ITEMS } from "@/lib/navigation-defaults";
 import { logger } from "@/utils/logger";
-import { AlertTriangle } from "lucide-react";
 import { addDays, differenceInDays } from "date-fns";
 
 const staticNavItems = DEFAULT_NAV_ITEMS.filter(it => it.role === UserRole.CENTER);

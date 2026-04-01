@@ -77,6 +77,11 @@ import InitAdmin from "./pages/InitAdmin";
 import NotFound from "./pages/NotFound";
 
 import AdminSettings from "./pages/admin/Settings";
+import TuitionCenters from "./pages/admin/TuitionCenters";
+import CenterAnalyticsPage from "./pages/admin/CenterAnalyticsPage";
+import BillingSystem from "./pages/admin/BillingSystem";
+import DataUsage from "./pages/admin/DataUsage";
+import SaaSSubscriptions from "./pages/admin/SaaSSubscriptions";
 import ErrorTracking from "./pages/admin/ErrorTracking";
 import CenterSettings from "./pages/CenterSettings";
 import GeneralSettings from "./pages/GeneralSettings";
@@ -288,6 +293,11 @@ const App = () => {
 
               {/* Admin */}
               <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/centers" element={<ProtectedRoute role="admin"><AdminLayout><TuitionCenters /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AdminLayout><CenterAnalyticsPage /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/billing" element={<ProtectedRoute role="admin"><AdminLayout><BillingSystem /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/usage" element={<ProtectedRoute role="admin"><AdminLayout><DataUsage /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/subscriptions" element={<ProtectedRoute role="admin"><AdminLayout><SaaSSubscriptions /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminLayout><AdminFinance /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute role="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/errors" element={<ProtectedRoute role="admin"><AdminLayout><ErrorTracking /></AdminLayout></ProtectedRoute>} />
