@@ -74,6 +74,7 @@ import ClassRoutine from "./pages/ClassRoutine";
 import CalendarEvents from "./pages/CalendarEvents";
 
 import InitAdmin from "./pages/InitAdmin";
+import GettingStarted from "./pages/GettingStarted";
 import NotFound from "./pages/NotFound";
 
 import AdminSettings from "./pages/admin/Settings";
@@ -185,6 +186,7 @@ const App = () => {
 
               {/* Authentication & Public */}
               <Route path="/init-admin" element={<InitAdmin />} />
+              <Route path="/getting-started" element={<GettingStarted />} />
               <Route path="/login" element={<Login />} />
               <Route path="/login-admin" element={<AdminLogin />} />
               <Route path="/login-parent" element={<ParentLogin />} />
