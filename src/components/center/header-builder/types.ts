@@ -22,6 +22,7 @@ export interface HeaderElement {
 export interface HeaderConfig {
   width: string;
   height: string;
+  designWidth?: number;
   gridSize: number;
   elements: HeaderElement[];
   backgroundColor?: string;

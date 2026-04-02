@@ -1,22 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
-  User, Hash, Calendar, Loader2, Camera, Image as ImageIcon,
-  Eye, EyeOff, Sparkles
+  Building, MapPin, Phone, Mail, Globe,
+  User, Hash, Calendar, Loader2
 } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { compressImage } from "@/lib/image-utils";
-import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { logger } from "@/utils/logger";
 import { HeaderConfig, HeaderElement } from "../center/header-builder/types";
+import { HeaderElementRenderer } from "../center/header-builder/HeaderElementRenderer";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -54,22 +47,24 @@ export default function DashboardHeader() {
     enabled: !!user?.center_id
   });
 
+  const headerConfig = center?.header_config as unknown as HeaderConfig;
+
   // Calculate scale for responsive design
   useEffect(() => {
     const handleResize = () => {
-      if (containerRef.current) {
+      if (containerRef.current && headerConfig?.designWidth) {
         const containerWidth = containerRef.current.offsetWidth;
-        // Reference design width was approximately 1200px based on max-w-7xl
-        const referenceWidth = 1200;
-        const newScale = Math.min(containerWidth / referenceWidth, 1);
+        const newScale = containerWidth / headerConfig.designWidth;
         setScale(newScale);
       }
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [center?.header_config]);
+    if (headerConfig) {
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [headerConfig]);
 
   if (isCenterLoading) {
     return (
@@ -78,8 +73,6 @@ export default function DashboardHeader() {
       </div>
     );
   }
-
-  const headerConfig = center?.header_config as unknown as HeaderConfig;
 
   // Render Dynamic Header Builder Layout
   if (headerConfig && headerConfig.elements && headerConfig.elements.length > 0) {
@@ -96,7 +89,7 @@ export default function DashboardHeader() {
             backgroundColor: headerConfig.backgroundColor || "white"
         }}
       >
-        {/* Background Image */}
+        {/* Background Image Layer */}
         {headerConfig.backgroundUrl && (
           <div className="absolute inset-0 z-0">
             <img
@@ -114,30 +107,17 @@ export default function DashboardHeader() {
           </div>
         )}
 
-        {/* Dynamic Elements with Scaling */}
+        {/* Dynamic Elements Layer with Scaling */}
         <div
-            className="absolute inset-0 z-10 origin-top-left"
-            style={{ transform: `scale(${scale})` }}
+            className="absolute top-0 left-0 origin-top-left"
+            style={{
+                transform: `scale(${scale})`,
+                width: `${headerConfig.designWidth}px`,
+                height: headerConfig.height
+            }}
         >
           {headerConfig.elements.map((el: HeaderElement) => (
-            <div
-              key={el.id}
-              style={{
-                position: "absolute",
-                left: el.x,
-                top: el.y,
-                width: el.width,
-                height: el.height,
-                ...el.styles,
-                overflow: "hidden"
-              }}
-            >
-              {el.type === "text" ? (
-                <div style={{ ...el.styles }}>{el.content}</div>
-              ) : (
-                <img src={el.content} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-              )}
-            </div>
+            <HeaderElementRenderer key={el.id} element={el} />
           ))}
         </div>
       </Card>
@@ -153,12 +133,10 @@ export default function DashboardHeader() {
       className="border-none shadow-glass overflow-hidden rounded-[2.5rem] md:rounded-[4rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl mb-8 relative group/header border border-white/20 transition-all duration-500"
       style={{ minHeight: center?.header_height || 'auto' }}
     >
-      {/* Premium Scholarly Mathematical Pattern Overlay */}
       <div className="absolute inset-0 z-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none"
            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-rule='evenodd'%3E%3Ccircle cx='50' cy='50' r='1'/%3E%3Cpath d='M10 10h1v1h-1zM90 10h1v1h-1zM10 90h1v1h-1zM90 90h1v1h-1z'/%3E%3Ctext x='45' y='15' font-family='serif' font-size='8' opacity='0.5'%3Eπ%3E%3C/text%3E%3Ctext x='85' y='45' font-family='serif' font-size='8' opacity='0.5'%3EΣ%3E%3C/text%3E%3Ctext x='15' y='85' font-family='serif' font-size='8' opacity='0.5'%3EΔ%3E%3C/text%3E%3Ctext x='75' y='85' font-family='serif' font-size='8' opacity='0.5'%3E∞%3E%3C/text%3E%3C/g%3E%3C/svg%3E")` }}
       />
 
-      {/* Background Image */}
       {center?.header_bg_url && (
         <div
           className="absolute inset-0 z-0 pointer-events-none bg-cover bg-center"
@@ -166,7 +144,6 @@ export default function DashboardHeader() {
         />
       )}
 
-      {/* Dynamic Overlay */}
       <div
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
@@ -218,7 +195,6 @@ export default function DashboardHeader() {
           </div>
         </div>
 
-        {/* Detailed Information Row */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 pt-10 border-t border-black/5 dark:border-white/5">
               {center?.header_principal_visible !== false && (
                 <CompactDetail
@@ -270,15 +246,6 @@ export default function DashboardHeader() {
               )}
         </div>
       </CardContent>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @font-face {
-          font-family: 'Algerian Mesa';
-          src: url('https://db.onlinewebfonts.com/t/06222bf0344318c502b7818e95c1157f.woff2') format('woff2');
-          font-weight: normal;
-          font-style: normal;
-        }
-      `}} />
     </Card>
   );
 }

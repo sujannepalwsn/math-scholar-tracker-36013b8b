@@ -32,6 +32,7 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
         const initialConfig: HeaderConfig = {
           width: "100%",
           height: center.header_height || "400px",
+          designWidth: 1200,
           gridSize: 10,
           backgroundColor: "#ffffff",
           backgroundUrl: center.header_bg_url || "https://images.unsplash.com/photo-1523050853063-915894374ef7?q=80&w=2070&auto=format&fit=crop",

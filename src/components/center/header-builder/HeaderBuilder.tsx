@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { HeaderConfig, HeaderElement, ElementType } from "./types";
 import { DraggableElement } from "./DraggableElement";
 import { GridBackground } from "./GridBackground";
@@ -41,6 +41,13 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
   const [isUploadingBg, setIsUploadingBg] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (canvasRef.current && !config.designWidth) {
+        setConfig(prev => ({ ...prev, designWidth: canvasRef.current?.offsetWidth || 1200 }));
+    }
+  }, [config.designWidth]);
 
   const selectedElement = useMemo(
     () => config.elements.find((el) => el.id === selectedElementId) || null,
@@ -134,6 +141,14 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
     }
   };
 
+  const handleSave = () => {
+    const finalConfig = {
+        ...config,
+        designWidth: canvasRef.current?.offsetWidth || config.designWidth || 1200
+    };
+    onSave(finalConfig);
+  };
+
   return (
     <div className="flex flex-col h-full space-y-6">
       {/* Toolbar */}
@@ -185,7 +200,7 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
           <Button
             size="sm"
             className="rounded-xl h-10 px-6 font-black uppercase text-[10px] tracking-[0.2em] bg-gradient-to-r from-primary to-violet-600 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all"
-            onClick={() => onSave(config)}
+            onClick={handleSave}
             disabled={isSaving}
           >
             {isSaving ? <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" /> SAVING...</div> : <><Save className="h-4 w-4" /> Synchronize Profile</>}
@@ -197,6 +212,7 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
         {/* Editor Canvas */}
         <div className="flex-1 w-full flex flex-col gap-4">
             <div
+                ref={canvasRef}
                 className={cn(
                     "relative overflow-hidden rounded-3xl transition-all shadow-strong border border-border/20 group",
                     !isPreview && "bg-white"
