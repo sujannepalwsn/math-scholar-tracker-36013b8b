@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Type, Image as ImageIcon, Layout, Move, Save, Trash2, Eye, EyeOff, ZoomIn, ZoomOut, Maximize, MousePointer2 } from "lucide-react";
+import { Plus, Type, Image as ImageIcon, Layout, Move, Save, Trash2, Eye, EyeOff, ZoomIn, ZoomOut, Maximize, MousePointer2, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
+import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/image-utils";
 
 interface HeaderBuilderProps {
   initialConfig?: HeaderConfig;
@@ -38,6 +40,7 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
   const [config, setConfig] = useState<HeaderConfig>(initialConfig || DEFAULT_CONFIG);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
+  const [isUploadingBg, setIsUploadingBg] = useState(false);
 
   const selectedElement = useMemo(
     () => config.elements.find((el) => el.id === selectedElementId) || null,
@@ -97,6 +100,39 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
     }));
     setSelectedElementId(duplicated.id);
   }, []);
+
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingBg(true);
+    try {
+      let finalFile: File | Blob = file;
+      if (file.type.startsWith('image/')) {
+        finalFile = await compressImage(file, 1920); // High res for background
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `header-backgrounds/${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('center-assets')
+        .upload(filePath, finalFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('center-assets')
+        .getPublicUrl(filePath);
+
+      setConfig(prev => ({ ...prev, backgroundUrl: publicUrl }));
+      toast.success("Background image updated");
+    } catch (error: any) {
+      toast.error(`Upload failed: ${error.message}`);
+    } finally {
+      setIsUploadingBg(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -245,13 +281,44 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
                    </div>
 
                    <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Background Image URL</Label>
-                        <Input
-                            value={config.backgroundUrl || ""}
-                            onChange={(e) => setConfig({ ...config, backgroundUrl: e.target.value })}
-                            placeholder="https://..."
-                            className="h-10 rounded-xl border-none bg-white/50 text-[10px]"
-                        />
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Background Image</Label>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-10 flex-1 rounded-xl font-bold text-[10px] uppercase gap-2 bg-white/50 border-none"
+                                    onClick={() => document.getElementById('bg-upload-input')?.click()}
+                                    disabled={isUploadingBg}
+                                >
+                                    {isUploadingBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                                    {isUploadingBg ? 'Uploading...' : 'Replace BG'}
+                                </Button>
+                                {config.backgroundUrl && (
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-10 w-10 rounded-xl bg-red-50 text-red-600 border-none"
+                                        onClick={() => setConfig({ ...config, backgroundUrl: "" })}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                            <input
+                                id="bg-upload-input"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleBgUpload}
+                            />
+                            <Input
+                                value={config.backgroundUrl || ""}
+                                onChange={(e) => setConfig({ ...config, backgroundUrl: e.target.value })}
+                                placeholder="Or enter URL..."
+                                className="h-8 rounded-lg border-none bg-white/50 text-[9px]"
+                            />
+                        </div>
                    </div>
 
                    <div className="space-y-2">
