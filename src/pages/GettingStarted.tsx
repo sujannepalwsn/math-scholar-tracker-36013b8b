@@ -58,7 +58,7 @@ const DotNavigation = ({ activeSection, sections, scrollToSection }: { activeSec
   );
 };
 
-const Section = ({ children, id, className, index, setActiveSection }: { children: React.ReactNode, id: string, className?: string, index: number, setActiveSection: (i: number) => void }) => {
+const Section = ({ children, id, className, index, setActiveSection, noMinHeight }: { children: React.ReactNode, id: string, className?: string, index: number, setActiveSection: (i: number) => void, noMinHeight?: boolean }) => {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ const Section = ({ children, id, className, index, setActiveSection }: { childre
   }, [index, setActiveSection]);
 
   return (
-    <section id={id} ref={ref} className={cn("min-h-screen relative flex items-center justify-center overflow-hidden py-20 px-6", className)}>
+    <section id={id} ref={ref} className={cn(!noMinHeight && "min-h-screen", "relative flex items-center justify-center overflow-hidden py-20 px-6", className)}>
       {children}
     </section>
   );
@@ -327,11 +327,32 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
 
 const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => void, setActiveSection: (i: number) => void }) => {
   const { data: slides } = useHeroSlides();
-  const hasSlides = slides && slides.length > 0;
+  // Mock data for verification if real data is missing
+  const mockSlides = [
+    {
+      id: '1',
+      title: 'Experience The Future',
+      subtitle: 'Revolutionizing education with AI-driven insights.',
+      media_url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=2000&auto=format&fit=crop',
+      media_type: 'image' as const,
+      cta_text: 'Get Started',
+      cta_link: '/contact-sales',
+      overlay_opacity: 0.4,
+      text_align: 'center' as const
+    }
+  ];
+  const activeSlides = slides && slides.length > 0 ? slides : mockSlides;
+  const hasSlides = activeSlides.length > 0;
 
   return (
-    <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950 p-0 md:h-[100dvh] md:min-h-[100dvh] h-[500px] min-h-[500px]">
-      <div className="absolute inset-0 z-0">
+    <Section id="hero" index={0} setActiveSection={setActiveSection} noMinHeight className="bg-slate-950 p-0 md:h-[100dvh] md:min-h-[100dvh] h-auto py-10 md:py-0">
+      <div className="relative w-full h-full flex items-center justify-center">
+      <div className={cn(
+        "z-0 transition-all duration-500",
+        hasSlides
+          ? "md:absolute md:inset-0 w-[92%] md:w-full aspect-[4/5] md:aspect-auto rounded-[2rem] md:rounded-none overflow-hidden shadow-2xl md:shadow-none"
+          : "absolute inset-0"
+      )}>
         {hasSlides ? (
           <HeroSlider slides={slides} />
         ) : (
@@ -394,7 +415,8 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 1 }}
           className={cn(
-            "absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer z-40 pointer-events-auto",
+            "flex flex-col items-center gap-2 cursor-pointer z-40 pointer-events-auto",
+            hasSlides ? "mt-8 md:absolute md:bottom-10 md:left-1/2 md:-translate-x-1/2 md:mt-0" : "absolute bottom-10 left-1/2 -translate-x-1/2",
             hasSlides && "hidden md:flex" // Hide on mobile if slider present to avoid overlap with pagination
           )}
           onClick={scrollToNext}
@@ -406,6 +428,7 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
             className="w-1 h-8 rounded-full bg-gradient-to-b from-indigo-600 to-transparent"
           />
         </motion.div>
+      </div>
       </div>
     </Section>
   );
