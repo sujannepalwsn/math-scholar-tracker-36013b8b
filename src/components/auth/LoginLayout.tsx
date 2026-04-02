@@ -42,6 +42,34 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
   const primaryColor = settings?.primary_color || '#4f46e5';
   const bgColor = settings?.background_color || '#020617';
 
+  const hexToRGB = (hex: string) => {
+    if (!hex || !hex.startsWith('#')) return '2, 6, 23';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `${r}, ${g}, ${b}`;
+  };
+
+  const hexToHSL = (hex: string) => {
+    if (!hex || !hex.startsWith('#')) return '226 100% 50%';
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  };
+
   // Determine current role based on path
   const getCurrentRole = () => {
     const path = location.pathname;
@@ -93,8 +121,26 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
   ];
   const toggles = (settings?.section_toggles as any) || { show_features: true, show_packages: true, show_stats: true, show_footer: true };
 
+  // Apply Super Admin theme colors globally to the login experience
+  useEffect(() => {
+    if (primaryColor) {
+      // Convert hex to HSL for CSS variable consistency if possible,
+      // but for login page simple RGB/Hex override is often enough for utility classes
+      document.documentElement.style.setProperty('--primary', hexToHSL(primaryColor));
+    }
+  }, [primaryColor]);
+
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-primary/20 scroll-smooth overflow-x-hidden" style={{ backgroundColor: bgColor }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        :root {
+          --background: ${hexToRGB(bgColor)};
+        }
+        .text-primary { color: ${primaryColor} !important; }
+        .bg-primary { background-color: ${primaryColor} !important; }
+        .border-primary { border-color: ${primaryColor} !important; }
+        .ring-primary { --tw-ring-color: ${primaryColor} !important; }
+      `}} />
       {/* Dynamic Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] bg-primary/10 animate-pulse" />
@@ -125,13 +171,13 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         </nav>
 
         <div className="flex items-center gap-2 md:gap-4">
-           <Link to="/contact-sales" className="hidden sm:block">
-             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-4 md:px-6 text-xs md:text-sm">
-               Contact Sales
+           <Link to="/contact-sales">
+             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-2 md:px-6 text-[10px] md:text-sm">
+               Contact
              </Button>
            </Link>
            <Link to="/getting-started">
-             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-4 md:px-8 shadow-lg shadow-primary/20 text-xs md:text-sm h-9 md:h-10">
+             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-4 md:px-8 shadow-lg shadow-primary/20 text-[10px] md:text-sm h-9 md:h-10">
                Get Started
              </Button>
            </Link>

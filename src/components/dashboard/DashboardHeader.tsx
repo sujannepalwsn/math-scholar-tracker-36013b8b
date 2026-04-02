@@ -61,7 +61,7 @@ export default function DashboardHeader() {
 
   const canEdit = hasActionPermission(user, 'settings_access', 'edit');
 
-  const header_overlay_opacity = center?.header_overlay_opacity ?? 0.9;
+  const header_overlay_opacity = (center?.header_overlay_opacity ?? 90) / 100;
   const details_font_color = (center?.theme as any)?.details_font_color || "#64748b";
 
   return (
@@ -101,9 +101,9 @@ export default function DashboardHeader() {
         <div className="flex flex-col items-center justify-center gap-6">
           <div className="flex flex-col md:flex-row items-center gap-6 group/brand text-center">
              <div className="relative shrink-0">
-                <div className="relative h-28 w-28 md:h-36 md:w-36 rounded-full overflow-hidden flex items-center justify-center p-4 border-4 border-white/50 shadow-soft backdrop-blur-md bg-white/20 transition-transform duration-500">
+                <div className="relative h-28 w-28 md:h-36 md:w-36 rounded-full overflow-hidden flex items-center justify-center border-4 border-white/50 shadow-soft backdrop-blur-md bg-white/20 transition-transform duration-500">
                   {center?.logo_url ? (
-                    <img src={center.logo_url} alt="School Logo" className="h-full w-full object-contain drop-shadow-lg" />
+                    <img src={center.logo_url} alt="School Logo" className="h-full w-full object-cover drop-shadow-lg" />
                   ) : (
                     <Building className="h-14 w-14 text-primary/40" />
                   )}

@@ -155,7 +155,7 @@ export default function AboutInstitution() {
         established_date: center.established_date || "",
         academic_info: center.academic_info || "",
         facilities: Array.isArray(center.facilities) ? (center.facilities as unknown as Facility[]) : [],
-        achievements: Array.isArray(center.achievements) ? (center.achievements as unknown as Achievement[]) : (center.achievements ? [center.achievements as any] : []),
+        achievements: Array.isArray(center.achievements) ? (center.achievements as unknown as Achievement[]) : [],
         gallery: Array.isArray(center.gallery) ? (center.gallery as unknown as GalleryItem[]) : [],
         social_links: (center.social_links as unknown as SocialLinks) || {},
         institution_type: center.institution_type || "Co-Educational",
@@ -255,14 +255,14 @@ export default function AboutInstitution() {
   const addAchievement = () => {
     const newAchievement: Achievement = {
       id: Math.random().toString(36).substr(2, 9),
-      title: "",
+      title: "New Achievement",
       year: new Date().getFullYear().toString(),
       description: ""
     };
-      setFormData(prev => {
-        const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
-        return { ...prev, achievements: [...currentAchievements, newAchievement] };
-      });
+    setFormData(prev => {
+      const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+      return { ...prev, achievements: [...currentAchievements, newAchievement] };
+    });
   };
 
   const updateAchievement = (id: string, field: keyof Achievement, value: string) => {
@@ -622,7 +622,7 @@ export default function AboutInstitution() {
                       </p>
                       <div className="mt-4 pt-4 border-t border-border/50">
                         <p className="font-black text-[10px] uppercase tracking-tighter text-indigo-600">The Principal</p>
-                        <p className="text-[10px] text-muted-foreground">{formData.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{center?.principal_name || formData.principal_name}</p>
                       </div>
                     </div>
                   )}

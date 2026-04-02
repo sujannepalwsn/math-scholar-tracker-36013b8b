@@ -176,10 +176,12 @@
   }
 }
 
-/* Custom Fonts */
+/* Custom Fonts - Decorative Fallback for Algerian */
+@import url('https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&family=Cinzel:wght@400;700;900&display=swap');
+
 @font-face {
   font-family: 'Algerian';
-  src: url('/fonts/Algerian.ttf') format('truetype');
+  src: local('Algerian');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

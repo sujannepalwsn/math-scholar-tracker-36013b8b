@@ -27,7 +27,7 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
   const [settings, setSettings] = useState<any>({
     header_bg_url: "",
     header_overlay_color: "#000000",
-    header_overlay_opacity: 0.5,
+    header_overlay_opacity: 90,
     header_height: "400px",
     header_font_family: "Inter",
     header_font_color: "#ffffff",
@@ -48,7 +48,7 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
       setSettings({
         header_bg_url: center.header_bg_url || "",
         header_overlay_color: center.header_overlay_color || "#000000",
-        header_overlay_opacity: center.header_overlay_opacity ?? 0.5,
+        header_overlay_opacity: center.header_overlay_opacity ?? 90,
         header_height: center.header_height || "400px",
         header_font_family: center.header_font_family || "Inter",
         header_font_color: center.header_font_color || "#ffffff",
@@ -149,13 +149,20 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
 
             <div className="space-y-4">
               <div className="flex justify-between">
-                <Label>Overlay Opacity ({Math.round(settings.header_overlay_opacity * 100)}%)</Label>
+                <Label>Overlay Opacity ({settings.header_overlay_opacity}%)</Label>
               </div>
               <Slider
-                value={[settings.header_overlay_opacity * 100]}
-                onValueChange={(v) => setSettings({...settings, header_overlay_opacity: v[0] / 100})}
+                value={[settings.header_overlay_opacity]}
+                onValueChange={(v) => setSettings({...settings, header_overlay_opacity: v[0]})}
                 max={100}
                 step={1}
+                />
+                <Input
+                  type="number"
+                  value={settings.header_overlay_opacity}
+                  onChange={(e) => setSettings({...settings, header_overlay_opacity: parseInt(e.target.value) || 0})}
+                  min="0" max="100" step="1"
+                  className="h-8 w-20 text-xs"
               />
             </div>
           </CardContent>
@@ -183,7 +190,8 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
                 <SelectContent>
                   <SelectItem value="Inter">Modern Sans (Inter)</SelectItem>
                   <SelectItem value="'Space Grotesk'">Space Grotesk</SelectItem>
-                  <SelectItem value="'Algerian Mesa', serif">Algerian Mesa (Decorative)</SelectItem>
+                  <SelectItem value="Algerian, 'Cinzel', serif">Algerian / Cinzel (Decorative)</SelectItem>
+                  <SelectItem value="'Almendra', serif">Almendra (Medieval)</SelectItem>
                   <SelectItem value="serif">Classic Serif</SelectItem>
                   <SelectItem value="cursive">Script / Cursive</SelectItem>
                 </SelectContent>
@@ -287,6 +295,13 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
             </div>
             <div className="relative z-10 p-12 flex flex-col items-center justify-center text-center h-full min-h-[300px]">
                 <p className="text-white/40 font-black uppercase tracking-[0.4em] text-[10px] mb-4">Header Real-time Preview</p>
+                <div className="relative h-28 w-28 md:h-36 md:w-36 rounded-full overflow-hidden flex items-center justify-center border-4 border-white/50 shadow-soft backdrop-blur-md bg-white/20 mb-6">
+                  {center?.logo_url ? (
+                    <img src={center.logo_url} alt="Logo" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-14 w-14 text-white/40" />
+                  )}
+                </div>
                 {settings.header_title_visible && (
                   <h1
                     style={{
@@ -324,14 +339,6 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
         </Button>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @font-face {
-          font-family: 'Algerian Mesa';
-          src: url('https://db.onlinewebfonts.com/t/06222bf0344318c502b7818e95c1157f.woff2') format('woff2');
-          font-weight: normal;
-          font-style: normal;
-        }
-      `}} />
     </div>
   );
 }

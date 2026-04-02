@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { UserRole } from "@/types/roles";
-import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, ShieldCheck, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
+import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, ShieldCheck, Trash2, Upload, UserPlus, Users, X, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -1024,7 +1024,7 @@ export default function TeacherManagement() {
                   </Button>
                   {selectedTeacher.user_id && (
                     <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => setIsChangingTeacherPassword(true)}>
-                      <Key className="h-3.5 w-3.5 mr-2" /> Change Password
+                      <KeyRound className="h-3.5 w-3.5 mr-2" /> Change Password
                     </Button>
                   )}
                   <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleHRClick(selectedTeacher)}>

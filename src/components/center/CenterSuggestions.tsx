@@ -57,10 +57,10 @@ export default function CenterSuggestions({ centerId }: { centerId: string }) {
     onError: (error: any) => toast.error(error.message),
   });
 
-  if (isLoading) return <div>Loading suggestions...</div>;
+  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <Card className="border-none shadow-strong rounded-3xl bg-card/40 backdrop-blur-md border border-border/20 overflow-hidden">
         <CardHeader className="border-b border-muted/20 bg-primary/5 py-6">
           <CardTitle className="text-xl font-black flex items-center gap-3">

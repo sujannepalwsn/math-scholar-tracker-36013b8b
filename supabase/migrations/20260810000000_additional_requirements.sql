@@ -13,6 +13,33 @@ ALTER TABLE public.centers ADD COLUMN IF NOT EXISTS automation_settings jsonb DE
 ALTER TABLE public.centers ADD COLUMN IF NOT EXISTS header_height text DEFAULT '400px';
 ALTER TABLE public.centers ADD COLUMN IF NOT EXISTS payment_description text;
 
+-- Create platform_settings table
+CREATE TABLE IF NOT EXISTS public.platform_settings (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    key text UNIQUE NOT NULL,
+    value jsonb NOT NULL,
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+-- Enable RLS for platform_settings
+ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view platform settings" ON public.platform_settings
+    FOR SELECT USING (true);
+
+CREATE POLICY "Super Admins manage platform settings" ON public.platform_settings
+    FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+
+-- Initialize SaaS payment details
+INSERT INTO public.platform_settings (key, value)
+VALUES ('saas_payment_details', '{
+    "bank_details": "Bank: Global Bank\nAccount: 1234567890\nName: EduFlow Tech",
+    "esewa_qr_url": null,
+    "khalti_qr_url": null,
+    "payment_instructions": "Please upload a screenshot of your payment after completion."
+}'::jsonb)
+ON CONFLICT (key) DO NOTHING;
+
 -- 4. Subscription plans: Add original price for discounts
 ALTER TABLE public.subscription_plans ADD COLUMN IF NOT EXISTS original_price numeric;
 ALTER TABLE public.subscription_plans ADD COLUMN IF NOT EXISTS discount_amount numeric;

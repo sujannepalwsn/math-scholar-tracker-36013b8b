@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Users, Search, Shield, ShieldOff, Key, Calendar,
+  Users, Search, Shield, ShieldOff, KeyRound, Calendar,
   Loader2, Check, X, Pencil, Save, AlertTriangle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -213,7 +213,7 @@ export default function ParentManagement({ centerId }: { centerId: string }) {
                           }}
                           title="Change Password"
                         >
-                          <Key className="h-4 w-4" />
+                          <KeyRound className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"

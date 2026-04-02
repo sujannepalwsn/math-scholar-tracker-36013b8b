@@ -177,25 +177,22 @@ export default function SubscriptionManagement() {
 
   const addPlanMutation = useMutation({
     mutationFn: async () => {
+      const payload: any = {
+        name: planForm.name,
+        price: parseFloat(planForm.price),
+        limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
+        features: [planForm.packageType]
+      };
+
+      // Conditionally add fields to avoid issues if they don't exist in type definition
+      if (planForm.originalPrice) payload.original_price = parseFloat(planForm.originalPrice);
+      if (planForm.discountAmount) payload.discount_amount = parseFloat(planForm.discountAmount);
+
       if (editingPlan) {
-        const { error } = await supabase.from("subscription_plans").update({
-          name: planForm.name,
-          price: parseFloat(planForm.price),
-          original_price: planForm.originalPrice ? parseFloat(planForm.originalPrice) : null,
-          discount_amount: planForm.discountAmount ? parseFloat(planForm.discountAmount) : null,
-          limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
-          features: [planForm.packageType]
-        }).eq('id', editingPlan.id);
+        const { error } = await supabase.from("subscription_plans").update(payload).eq('id', editingPlan.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("subscription_plans").insert({
-          name: planForm.name,
-          price: parseFloat(planForm.price),
-          original_price: planForm.originalPrice ? parseFloat(planForm.originalPrice) : null,
-          discount_amount: planForm.discountAmount ? parseFloat(planForm.discountAmount) : null,
-          limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
-          features: [planForm.packageType]
-        });
+        const { error } = await supabase.from("subscription_plans").insert(payload);
         if (error) throw error;
       }
     },

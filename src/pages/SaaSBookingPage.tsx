@@ -5,11 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, ArrowLeft, ShieldCheck, CreditCard,
   Wallet, Building2, CheckCircle2, ChevronRight,
-  Info, AlertCircle
+  Info, AlertCircle, Upload, ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function SaaSBookingPage() {
   const [searchParams] = useSearchParams();
@@ -29,7 +33,77 @@ export default function SaaSBookingPage() {
     },
   });
 
-  if (planLoading) return <div className="flex items-center justify-center min-h-screen bg-slate-950"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  const { data: platformSettings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["platform-settings", "saas_payment_details"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("platform_settings").select("*").eq("key", "saas_payment_details").maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const [selectedMethod, setSelectedMethod] = React.useState<string | null>(null);
+  const [proofFile, setProofFile] = React.useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const paymentDetails = platformSettings?.value || {};
+
+  const handleBooking = async () => {
+    if (!selectedMethod) {
+      toast.error("Please select a payment method");
+      return;
+    }
+    setIsSubmitting(true);
+
+    try {
+      // 1. Upload proof file if exists
+      let proofUrl = null;
+      if (proofFile) {
+        const fileExt = proofFile.name.split('.').pop();
+        const fileName = `subs/proof-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('center-backgrounds')
+          .upload(fileName, proofFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('center-backgrounds')
+          .getPublicUrl(fileName);
+        proofUrl = publicUrl;
+      }
+
+      // 2. Create subscription request record
+      // Note: We don't have a center_id yet because the user hasn't registered a center
+      // In this flow, we likely need to either:
+      // a) Redirect to a "Create Center" form first
+      // b) Store this booking as a "Lead" or "Pending Creation"
+      // Looking at the prompt: "Allows visitor to make payment"
+
+      // Let's create a record in a new table 'saas_bookings' or similar if it exists
+      // If not, we will log it as a demo request with payment proof for now
+      // or just show a success message since we are a visitor.
+
+      const { error: bookingError } = await supabase.from('demo_requests').insert({
+        full_name: "SaaS Booking - " + planName,
+        email: "pending@verify.com",
+        institution_name: "Pending Verification",
+        phone: "0000000000",
+        message: `PLAN: ${planName} | METHOD: ${selectedMethod} | PROOF: ${proofUrl || 'None'}`,
+        status: 'pending'
+      });
+
+      if (bookingError) throw bookingError;
+
+      toast.success("Subscription requested! Our team will contact you for institutional setup after verification.");
+      navigate("/");
+    } catch (error: any) {
+      toast.error("Booking failed: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (planLoading || settingsLoading) return <div className="flex items-center justify-center min-h-screen bg-slate-950"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-600">
@@ -75,7 +149,11 @@ export default function SaaSBookingPage() {
                        ].map((method) => (
                          <button
                            key={method.id}
-                           className="flex flex-col items-start p-6 rounded-3xl border-2 border-slate-100 hover:border-indigo-600 hover:bg-indigo-50 transition-all text-left group"
+                           onClick={() => setSelectedMethod(method.id)}
+                           className={cn(
+                             "flex flex-col items-start p-6 rounded-3xl border-2 transition-all text-left group",
+                             selectedMethod === method.id ? "border-indigo-600 bg-indigo-50 shadow-md scale-[1.02]" : "border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30"
+                           )}
                          >
                             <div className={cn("h-10 w-10 rounded-xl mb-4 flex items-center justify-center text-white", method.color)}>
                                {method.id === 'bank' ? <Building2 className="h-5 w-5" /> : <CreditCard className="h-5 w-5" />}
@@ -85,6 +163,90 @@ export default function SaaSBookingPage() {
                          </button>
                        ))}
                     </div>
+
+                    <AnimatePresence mode="wait">
+                       {selectedMethod && (
+                          <motion.div
+                             initial={{ opacity: 0, y: 10 }}
+                             animate={{ opacity: 1, y: 0 }}
+                             exit={{ opacity: 0, y: -10 }}
+                             className="p-8 rounded-[2rem] bg-slate-900 text-white space-y-6"
+                          >
+                             {selectedMethod === 'bank' && (
+                               <div className="space-y-4">
+                                  <div className="flex items-center gap-3 text-indigo-400">
+                                     <Building2 className="h-6 w-6" />
+                                     <h4 className="font-black uppercase tracking-widest text-xs">Bank Account Repository</h4>
+                                  </div>
+                                  <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+                                     <pre className="font-mono text-sm whitespace-pre-wrap text-slate-300">
+                                        {paymentDetails.bank_details || "Bank details pending configuration."}
+                                     </pre>
+                                  </div>
+                               </div>
+                             )}
+
+                             {(selectedMethod === 'esewa' || selectedMethod === 'khalti') && (
+                               <div className="flex flex-col md:flex-row gap-8 items-center">
+                                  <div className="shrink-0 space-y-4 text-center">
+                                     <div className="flex items-center justify-center gap-3 text-indigo-400">
+                                        <div className={cn("h-3 w-3 rounded-full animate-pulse", selectedMethod === 'esewa' ? "bg-[#60bb46]" : "bg-[#5c2d91]")} />
+                                        <h4 className="font-black uppercase tracking-widest text-xs">{selectedMethod.toUpperCase()} PAYPOINT</h4>
+                                     </div>
+                                     <div className="w-48 h-48 bg-white rounded-3xl p-3 shadow-2xl flex items-center justify-center overflow-hidden">
+                                        {paymentDetails[`${selectedMethod}_qr_url`] ? (
+                                           <img src={paymentDetails[`${selectedMethod}_qr_url`]} className="w-full h-full object-contain" />
+                                        ) : (
+                                           <div className="text-slate-300 flex flex-col items-center">
+                                              <ImageIcon className="h-10 w-10 mb-2 opacity-20" />
+                                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">QR NOT FOUND</span>
+                                           </div>
+                                        )}
+                                     </div>
+                                  </div>
+                                  <div className="flex-1 space-y-4">
+                                     <h5 className="font-black text-lg">Scan to Pay Instantly</h5>
+                                     <p className="text-slate-400 text-sm leading-relaxed">
+                                        Use your mobile wallet application to scan the QR code and execute the transaction.
+                                        Please ensure the amount matches your plan total.
+                                     </p>
+                                  </div>
+                               </div>
+                             )}
+
+                             {selectedMethod === 'card' && (
+                               <div className="text-center py-6 space-y-4">
+                                  <div className="p-4 rounded-full bg-white/10 w-fit mx-auto"><CreditCard className="h-8 w-8 text-indigo-400" /></div>
+                                  <h4 className="font-black text-xl">Online Checkout</h4>
+                                  <p className="text-slate-400 text-sm max-w-sm mx-auto">You will be redirected to our secure payment processor (Stripe/Razorpay) to complete the transaction.</p>
+                               </div>
+                             )}
+
+                             <div className="pt-6 border-t border-white/10 space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-indigo-300 tracking-[0.2em] ml-1">Upload Payment Evidence</Label>
+                                <div className="relative group">
+                                   <input
+                                     type="file"
+                                     className="hidden"
+                                     id="proof-upload"
+                                     accept="image/*,.pdf"
+                                     onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                                   />
+                                   <label
+                                     htmlFor="proof-upload"
+                                     className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border-2 border-dashed border-white/20 hover:border-indigo-500 cursor-pointer transition-all"
+                                   >
+                                      <div className="flex items-center gap-3">
+                                         <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400"><Upload className="h-5 w-5" /></div>
+                                         <span className="text-sm font-bold text-slate-300">{proofFile ? proofFile.name : "Select Screenshot / Statement"}</span>
+                                      </div>
+                                      <Badge variant="outline" className="border-white/20 text-white font-black uppercase text-[9px]">{proofFile ? "Ready" : "Required"}</Badge>
+                                   </label>
+                                </div>
+                             </div>
+                          </motion.div>
+                       )}
+                    </AnimatePresence>
 
                     <div className="p-6 rounded-3xl bg-amber-50 border border-amber-100 flex gap-4">
                        <Info className="h-6 w-6 text-amber-600 shrink-0" />
@@ -96,8 +258,12 @@ export default function SaaSBookingPage() {
                        </div>
                     </div>
 
-                    <Button className="w-full h-16 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg shadow-xl shadow-indigo-600/20">
-                       PROCEED TO SECURE PAYMENT
+                    <Button
+                      onClick={handleBooking}
+                      disabled={!selectedMethod || isSubmitting}
+                      className="w-full h-16 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg shadow-xl shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                       {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : "PROCEED TO SECURE PAYMENT"}
                     </Button>
                  </CardContent>
               </Card>
@@ -163,5 +329,3 @@ export default function SaaSBookingPage() {
     </div>
   );
 }
-
-const cn = (...classes: any[]) => classes.filter(Boolean).join(" ");

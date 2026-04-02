@@ -25,7 +25,8 @@ export default function SuggestionForm({ role }: { role: "teacher" | "parent" })
         role_type: role,
         title,
         message,
-      });
+        status: 'pending'
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {

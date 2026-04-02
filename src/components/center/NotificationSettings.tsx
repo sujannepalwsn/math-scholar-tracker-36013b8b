@@ -130,6 +130,9 @@ export default function NotificationSettings({ centerId }: { centerId: string })
                { key: 'preschool_activities', label: 'Preschool Activities' },
                { key: 'fee_reminders', label: 'Fee Reminders' },
                { key: 'exam_results', label: 'Exam Results' },
+               { key: 'class_routine', label: 'Routine Updates' },
+               { key: 'meetings', label: 'Meeting Invites' },
+               { key: 'inventory', label: 'Stock Alerts' },
              ].map((item) => (
                <div key={item.key} className="flex justify-between items-center py-2 border-b">
                   <span className="font-bold">{item.label}</span>

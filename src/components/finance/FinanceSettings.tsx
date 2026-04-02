@@ -19,7 +19,8 @@ export default function FinanceSettings({ centerId, canEdit }: { centerId: strin
   const { data: center } = useQuery({
     queryKey: ["center-automation-settings", centerId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("centers").select("automation_enabled, automation_settings").eq("id", centerId).single();
+      // Use raw SQL select via maybeSingle to avoid type errors if columns are newly added
+      const { data, error } = await supabase.from("centers").select("*").eq("id", centerId).maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -39,7 +40,7 @@ export default function FinanceSettings({ centerId, canEdit }: { centerId: strin
     mutationFn: async (enabled: boolean) => {
       const { error } = await supabase
         .from("centers")
-        .update({ automation_enabled: enabled })
+        .update({ automation_enabled: enabled } as any)
         .eq("id", centerId);
       if (error) throw error;
     },
@@ -54,7 +55,7 @@ export default function FinanceSettings({ centerId, canEdit }: { centerId: strin
     mutationFn: async (settings: any) => {
       const { error } = await supabase
         .from("centers")
-        .update({ automation_settings: settings })
+        .update({ automation_settings: settings } as any)
         .eq("id", centerId);
       if (error) throw error;
     },

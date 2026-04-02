@@ -30,7 +30,7 @@ serve(async (req) => {
     // Fetch user by username
     const { data: userData, error: userError } = await supabaseClient
       .from('users')
-      .select('*, teachers(contract_end_date)')
+      .select('*, teachers(contract_end_date), centers(is_active)')
       .eq('username', username)
       .single();
 
@@ -46,6 +46,14 @@ serve(async (req) => {
     if (!userData.is_active) {
       return new Response(
         JSON.stringify({ success: false, error: 'Account deactivated. Please contact administrator.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // Check if center is active
+    if (userData.centers && userData.centers.is_active === false) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Institution subscription suspended. Please contact administrator.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
