@@ -78,3 +78,43 @@ ALTER TABLE public.centers ADD COLUMN IF NOT EXISTS notification_settings jsonb 
   "fee_reminders": true,
   "exam_results": true
 }'::jsonb;
+
+-- 8. Create saas_bookings table
+CREATE TABLE IF NOT EXISTS public.saas_bookings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    full_name TEXT NOT NULL,
+    institution_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    address TEXT,
+    plan_name TEXT NOT NULL,
+    payment_method TEXT NOT NULL,
+    payment_proof_url TEXT,
+    status TEXT DEFAULT 'pending' NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+-- Enable RLS
+ALTER TABLE public.saas_bookings ENABLE ROW LEVEL SECURITY;
+
+-- Policies for saas_bookings
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'saas_bookings' AND policyname = 'Public can insert saas bookings'
+    ) THEN
+        CREATE POLICY "Public can insert saas bookings" ON public.saas_bookings
+            FOR INSERT WITH CHECK (true);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'saas_bookings' AND policyname = 'Super Admins can manage saas bookings'
+    ) THEN
+        CREATE POLICY "Super Admins can manage saas bookings" ON public.saas_bookings
+            FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    END IF;
+END
+$$;

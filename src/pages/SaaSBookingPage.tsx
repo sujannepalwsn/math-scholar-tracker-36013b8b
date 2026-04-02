@@ -96,12 +96,15 @@ export default function SaaSBookingPage() {
       // If not, we will log it as a demo request with payment proof for now
       // or just show a success message since we are a visitor.
 
-      const { error: bookingError } = await supabase.from('demo_requests').insert({
+      const { error: bookingError } = await supabase.from('saas_bookings').insert({
         full_name: formData.fullName,
         email: formData.email,
         institution_name: formData.institutionName,
         phone: formData.phone,
-        message: `BOOKING: ${planName} | METHOD: ${selectedMethod} | ADDRESS: ${formData.address} | PROOF: ${proofUrl || 'None'}`,
+        address: formData.address,
+        plan_name: planName,
+        payment_method: selectedMethod,
+        payment_proof_url: proofUrl,
         status: 'pending'
       });
 
