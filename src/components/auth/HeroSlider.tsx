@@ -66,9 +66,9 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
       <div className="embla w-full h-full" ref={emblaRef}>
-        <div className="embla__container w-full h-full">
+        <div className="embla__container flex w-full h-full">
           {slides.map((slide, index) => (
-            <div className="embla__slide relative w-full h-full flex-[0_0_100%]" key={slide.id}>
+            <div className="embla__slide relative w-full h-full flex-[0_0_100%] min-w-0" key={slide.id}>
               {/* Media Layer */}
               <div className="absolute inset-0 w-full h-full">
                 {slide.media_type === 'video' && !isMobile ? (
