@@ -14,6 +14,11 @@ const CenterLogin = () => {
   const { toast } = useToast();
   const { data: settings } = useLoginSettings('center');
 
+  const containerStyles = {
+    '--primary': settings?.primary_color || '#4f46e5',
+    '--background': settings?.background_color || '#020617',
+  } as React.CSSProperties;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,6 +41,7 @@ const CenterLogin = () => {
   };
 
   return (
+    <div style={containerStyles}>
     <LoginLayout
       settings={settings || null}
       username={username}
@@ -45,6 +51,7 @@ const CenterLogin = () => {
       loading={loading}
       onSubmit={handleSubmit}
     />
+    </div>
   );
 };
 

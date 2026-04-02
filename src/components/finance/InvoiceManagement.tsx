@@ -164,13 +164,15 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Invoice Management</CardTitle>
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle className="text-xl font-black uppercase tracking-tight">Invoice Management</CardTitle>
+            <div className="flex flex-col gap-3 w-full sm:w-auto mt-4 sm:mt-0">
               {canEdit && (
                 <Dialog open={showBulkGenerateDialog} onOpenChange={setShowBulkGenerateDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline"><FilePlus className="h-4 w-4 mr-2" />Generate Monthly Invoices</Button>
+                    <Button variant="outline" className="w-full rounded-xl font-bold uppercase text-[10px] tracking-widest h-auto min-h-[40px] py-2 border-2">
+                      <FilePlus className="h-4 w-4 mr-2 shrink-0" /> <span className="text-left">Generate Monthly Invoices</span>
+                    </Button>
                   </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -251,7 +253,9 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
               {canEdit && (
                 <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                   <DialogTrigger asChild>
-                    <Button><Plus className="h-4 w-4 mr-2" />Create Single Invoice</Button>
+                    <Button className="w-full rounded-xl font-black uppercase text-[10px] tracking-widest h-auto min-h-[40px] py-2 shadow-soft">
+                      <Plus className="h-4 w-4 mr-2 shrink-0" /> <span className="text-left">Create Single Invoice</span>
+                    </Button>
                   </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>

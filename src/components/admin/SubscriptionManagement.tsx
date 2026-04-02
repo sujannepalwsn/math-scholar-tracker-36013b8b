@@ -26,6 +26,8 @@ export default function SubscriptionManagement() {
   const [planForm, setPlanForm] = useState({
     name: "",
     price: "",
+    originalPrice: "",
+    discountAmount: "",
     students: "100",
     teachers: "10",
     packageType: "Basic" as PackageType
@@ -175,27 +177,28 @@ export default function SubscriptionManagement() {
 
   const addPlanMutation = useMutation({
     mutationFn: async () => {
+      const payload: any = {
+        name: planForm.name,
+        price: parseFloat(planForm.price),
+        limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
+        features: [planForm.packageType]
+      };
+
+      // Conditionally add fields to avoid issues if they don't exist in type definition
+      if (planForm.originalPrice) payload.original_price = parseFloat(planForm.originalPrice);
+      if (planForm.discountAmount) payload.discount_amount = parseFloat(planForm.discountAmount);
+
       if (editingPlan) {
-        const { error } = await supabase.from("subscription_plans").update({
-          name: planForm.name,
-          price: parseFloat(planForm.price),
-          limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
-          features: [planForm.packageType]
-        }).eq('id', editingPlan.id);
+        const { error } = await supabase.from("subscription_plans").update(payload).eq('id', editingPlan.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("subscription_plans").insert({
-          name: planForm.name,
-          price: parseFloat(planForm.price),
-          limits: { max_students: parseInt(planForm.students), max_teachers: parseInt(planForm.teachers) },
-          features: [planForm.packageType]
-        });
+        const { error } = await supabase.from("subscription_plans").insert(payload);
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription-plans"] });
-      setPlanForm({ name: "", price: "", students: "100", teachers: "10", packageType: "Basic" });
+      setPlanForm({ name: "", price: "", originalPrice: "", discountAmount: "", students: "100", teachers: "10", packageType: "Basic" });
       setShowAddPlan(false);
       setEditingPlan(null);
       toast.success(editingPlan ? "Subscription plan updated" : "Subscription plan created");
@@ -248,6 +251,8 @@ export default function SubscriptionManagement() {
     setPlanForm({
       name: plan.name,
       price: plan.price.toString(),
+      originalPrice: plan.original_price?.toString() || "",
+      discountAmount: plan.discount_amount?.toString() || "",
       students: plan.limits?.max_students?.toString() || "100",
       teachers: plan.limits?.max_teachers?.toString() || "10",
       packageType: (plan.features?.[0] as PackageType) || "Basic"
@@ -278,8 +283,16 @@ export default function SubscriptionManagement() {
                   <Input value={planForm.name} onChange={(e) => setPlanForm({...planForm, name: e.target.value})} className="h-12 rounded-2xl" placeholder="e.g. Premium" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Monthly Price</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Real Price</Label>
                   <Input value={planForm.price} onChange={(e) => setPlanForm({...planForm, price: e.target.value})} className="h-12 rounded-2xl" placeholder="99.00" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Original Price (Before)</Label>
+                  <Input value={planForm.originalPrice} onChange={(e) => setPlanForm({...planForm, originalPrice: e.target.value})} className="h-12 rounded-2xl" placeholder="149.00" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Discount</Label>
+                  <Input value={planForm.discountAmount} onChange={(e) => setPlanForm({...planForm, discountAmount: e.target.value})} className="h-12 rounded-2xl" placeholder="50.00" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Student Limit</Label>

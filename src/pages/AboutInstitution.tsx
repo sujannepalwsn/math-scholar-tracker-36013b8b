@@ -176,6 +176,11 @@ export default function AboutInstitution() {
       if (!user?.center_id) throw new Error("Center ID not found");
       if (!canEdit) throw new Error("Access Denied: You do not have permission to update institution information.");
 
+      // Ensure data is correctly formatted for JSONB
+      const facilities = Array.isArray(formData.facilities) ? formData.facilities : [];
+      const achievements = Array.isArray(formData.achievements) ? formData.achievements : [];
+      const gallery = Array.isArray(formData.gallery) ? formData.gallery : [];
+
       const { data, error } = await supabase
         .from("centers")
         .update({
@@ -185,9 +190,9 @@ export default function AboutInstitution() {
           principal_message: formData.principal_message,
           established_date: formData.established_date || null,
           academic_info: formData.academic_info,
-          facilities: formData.facilities as unknown as Json,
-          achievements: formData.achievements as unknown as Json,
-          gallery: formData.gallery as unknown as Json,
+          facilities: facilities as unknown as Json,
+          achievements: achievements as unknown as Json,
+          gallery: gallery as unknown as Json,
           social_links: formData.social_links as unknown as Json,
           institution_type: formData.institution_type,
           phone: formData.phone,
@@ -250,14 +255,14 @@ export default function AboutInstitution() {
   const addAchievement = () => {
     const newAchievement: Achievement = {
       id: Math.random().toString(36).substr(2, 9),
-      title: "",
+      title: "New Achievement",
       year: new Date().getFullYear().toString(),
       description: ""
     };
-      setFormData(prev => {
-        const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
-        return { ...prev, achievements: [...currentAchievements, newAchievement] };
-      });
+    setFormData(prev => {
+      const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+      return { ...prev, achievements: [...currentAchievements, newAchievement] };
+    });
   };
 
   const updateAchievement = (id: string, field: keyof Achievement, value: string) => {
@@ -617,7 +622,7 @@ export default function AboutInstitution() {
                       </p>
                       <div className="mt-4 pt-4 border-t border-border/50">
                         <p className="font-black text-[10px] uppercase tracking-tighter text-indigo-600">The Principal</p>
-                        <p className="text-[10px] text-muted-foreground">{formData.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{center?.principal_name || formData.principal_name}</p>
                       </div>
                     </div>
                   )}

@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import { SystemModule } from "@/lib/system-modules";
 import { PackageType, getDynamicPackageHighlights, PACKAGE_FEATURES } from "@/lib/package-presets";
 import { cn } from "@/lib/utils";
@@ -93,6 +96,17 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
   const isPremium = type === 'Premium';
   const isStandard = type === 'Standard';
 
+  const { data: plans } = useQuery({
+    queryKey: ["subscription-plans-public"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("subscription_plans").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const plan = plans?.find((p: any) => p.features?.[0] === type);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9, y: 30 }}
@@ -115,11 +129,24 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
 
       <div className="mb-8">
         <h3 className="text-3xl font-black text-white mb-2">{type}</h3>
-        <p className="text-slate-400 font-medium">
+        <p className="text-slate-400 font-medium mb-4">
           {type === 'Basic' && 'For Small Institutions'}
           {type === 'Standard' && 'For Growing Schools'}
           {type === 'Premium' && 'Enterprise Excellence'}
         </p>
+        {plan && (
+          <div className="space-y-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black text-white">₹{plan.price}</span>
+              <span className="text-slate-500 line-through text-sm">₹{plan.original_price}</span>
+            </div>
+            {plan.discount_amount && (
+              <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[10px] font-black uppercase">
+                Save ₹{plan.discount_amount}
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-4 mb-10 flex-1">
@@ -136,20 +163,29 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
         </ul>
       </div>
 
-      <Dialog>
-        <DialogTrigger asChild>
+      <div className="flex flex-col gap-3 mt-auto">
+        <Link to={`/book-plan?plan=${type}`} className="w-full">
           <Button
             className={cn(
-              "w-full h-14 rounded-2xl font-black text-lg transition-all",
+              "w-full h-14 rounded-2xl font-black text-lg transition-all shadow-lg",
               isPremium
-                ? "bg-primary hover:bg-primary/90 text-white"
-                : "bg-white/10 hover:bg-white/20 text-white border border-white/10"
+                ? "bg-primary hover:bg-primary/90 text-white shadow-primary/20"
+                : "bg-white text-slate-900 hover:bg-slate-100 shadow-white/10"
             )}
           >
-            Explore Features
+            Book Now
           </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[700px] max-h-[85vh] bg-slate-950/98 backdrop-blur-3xl border-white/10 text-white overflow-hidden flex flex-col p-0">
+        </Link>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full h-10 rounded-xl font-bold text-sm text-slate-400 hover:text-white hover:bg-white/5"
+            >
+              Explore Features
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[700px] max-h-[85vh] bg-slate-950/98 backdrop-blur-3xl border-white/10 text-white overflow-hidden flex flex-col p-0">
           <div className="p-8 pb-4">
             <DialogHeader>
               <DialogTitle className="text-3xl font-black flex flex-wrap items-center gap-4">
@@ -215,6 +251,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({ type, index, allModule
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </motion.div>
   );
 };

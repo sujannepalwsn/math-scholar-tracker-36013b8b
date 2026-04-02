@@ -21,6 +21,7 @@ import PayrollSettings from "@/components/center/PayrollSettings";
 import SubscriptionPlans from "@/components/center/SubscriptionPlans";
 import CenterRequirements from "@/components/center/CenterRequirements";
 import CenterSuggestions from "@/components/center/CenterSuggestions";
+import HeaderSettings from "@/components/center/HeaderSettings";
 import { logger } from "@/utils/logger";
 
 interface CenterTheme {
@@ -298,6 +299,7 @@ export default function CenterSettings() {
           <TabsTrigger value="payroll" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Payroll Config</TabsTrigger>
           <TabsTrigger value="academic" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Academic Cycles</TabsTrigger>
           <TabsTrigger value="communication" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Communication</TabsTrigger>
+          <TabsTrigger value="header" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Header Edit</TabsTrigger>
           <TabsTrigger value="compliance" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Compliance</TabsTrigger>
           <TabsTrigger value="requirements" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Requirements</TabsTrigger>
           <TabsTrigger value="suggestions" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:shadow-soft">Suggestions</TabsTrigger>
@@ -697,6 +699,10 @@ export default function CenterSettings() {
 
         <TabsContent value="suggestions" className="outline-none">
           <CenterSuggestions centerId={user?.center_id || ""} />
+        </TabsContent>
+
+        <TabsContent value="header" className="outline-none">
+          <HeaderSettings centerId={user?.center_id || ""} />
         </TabsContent>
 
         <TabsContent value="subscription" className="outline-none">

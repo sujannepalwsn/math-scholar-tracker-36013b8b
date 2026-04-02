@@ -8,12 +8,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { CreditCard, Plus, Trash2, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function FinanceSettings({ centerId, canEdit }: { centerId: string, canEdit?: boolean }) {
   const queryClient = useQueryClient();
   const [provider, setProvider] = useState("Stripe");
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
+
+  const { data: center } = useQuery({
+    queryKey: ["center-automation-settings", centerId],
+    queryFn: async () => {
+      // Use raw SQL select via maybeSingle to avoid type errors if columns are newly added
+      const { data, error } = await supabase.from("centers").select("*").eq("id", centerId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!centerId,
+  });
 
   const { data: gatewaySettings } = useQuery({
     queryKey: ["payment-gateway-settings", centerId],
@@ -22,6 +34,36 @@ export default function FinanceSettings({ centerId, canEdit }: { centerId: strin
       if (error) throw error;
       return data;
     },
+  });
+
+  const toggleAutomationMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { error } = await supabase
+        .from("centers")
+        .update({ automation_enabled: enabled } as any)
+        .eq("id", centerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["center-automation-settings"] });
+      toast.success("Automation setting updated");
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
+
+  const updateAutomationSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      const { error } = await supabase
+        .from("centers")
+        .update({ automation_settings: settings } as any)
+        .eq("id", centerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["center-automation-settings"] });
+      toast.success("Automation rules saved");
+    },
+    onError: (error: any) => toast.error(error.message),
   });
 
   const saveGatewayMutation = useMutation({
@@ -106,11 +148,27 @@ export default function FinanceSettings({ centerId, canEdit }: { centerId: strin
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label className="text-[9px] font-black uppercase tracking-tight text-blue-800">Grace Period (Days)</Label>
-                <Input type="number" defaultValue="5" className="h-9 rounded-lg" />
+                <Input
+                  type="number"
+                  value={(center?.automation_settings as any)?.grace_period || 5}
+                  onChange={(e) => updateAutomationSettingsMutation.mutate({
+                    ...(center?.automation_settings as any || {}),
+                    grace_period: parseInt(e.target.value)
+                  })}
+                  className="h-9 rounded-lg"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-[9px] font-black uppercase tracking-tight text-blue-800">Fee Amount (Flat)</Label>
-                <Input type="number" defaultValue="500" className="h-9 rounded-lg" />
+                <Input
+                  type="number"
+                  value={(center?.automation_settings as any)?.late_fee || 500}
+                  onChange={(e) => updateAutomationSettingsMutation.mutate({
+                    ...(center?.automation_settings as any || {}),
+                    late_fee: parseInt(e.target.value)
+                  })}
+                  className="h-9 rounded-lg"
+                />
               </div>
             </div>
           </div>
@@ -120,9 +178,20 @@ export default function FinanceSettings({ centerId, canEdit }: { centerId: strin
             <p className="text-xs text-purple-600 mb-4">Generate invoices automatically on the 1st of every month.</p>
             <div className="flex items-center gap-3">
               {canEdit && (
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-lg text-[10px] font-black uppercase">Enable Automation</Button>
+                <Button
+                  size="sm"
+                  onClick={() => toggleAutomationMutation.mutate(!center?.automation_enabled)}
+                  className={cn(
+                    "rounded-lg text-[10px] font-black uppercase",
+                    center?.automation_enabled ? "bg-rose-600 hover:bg-rose-700" : "bg-purple-600 hover:bg-purple-700"
+                  )}
+                >
+                  {center?.automation_enabled ? "Disable Automation" : "Enable Automation"}
+                </Button>
               )}
-              <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Currently Disabled</span>
+              <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">
+                {center?.automation_enabled ? "Currently Active" : "Currently Disabled"}
+              </span>
             </div>
           </div>
         </CardContent>
