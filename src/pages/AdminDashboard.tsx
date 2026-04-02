@@ -1,12 +1,14 @@
 import React from "react";
 import { UserRole } from "@/types/roles";
-import { Users, Building2, Activity, ShieldCheck } from "lucide-react";
+import { Users, Building2, Activity, ShieldCheck, TrendingUp, BarChart3, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar } from "recharts";
+import { AIInsightsWidget } from "@/components/dashboard/AIInsightsWidget";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -23,19 +25,59 @@ const AdminDashboard = () => {
       const { count: centersCount } = await supabase.from('centers').select('*', { count: 'exact', head: true });
       const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
       const { count: errorLogsCount } = await supabase.from('error_logs').select('*', { count: 'exact', head: true });
+      const { data: globalInvoices } = await supabase.from('invoices').select('total_amount, paid_amount');
+
+      const totalRevenue = globalInvoices?.reduce((acc, inv) => acc + (inv.paid_amount || 0), 0) || 0;
 
       return {
         centers: centersCount || 0,
         totalUsers: usersCount || 0,
         errors: errorLogsCount || 0,
+        revenue: totalRevenue
       };
+    }
+  });
+
+  const { data: centerTrends } = useQuery({
+    queryKey: ['admin-center-trends'],
+    queryFn: async () => {
+      const { data: centers } = await supabase.from('centers').select('id, name');
+      const trends = [];
+      for (const center of centers || []) {
+        const { count: students } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('center_id', center.id);
+        const { data: invoices } = await supabase.from('invoices').select('paid_amount').eq('center_id', center.id);
+        const revenue = invoices?.reduce((acc, inv) => acc + (inv.paid_amount || 0), 0) || 0;
+        trends.push({ name: center.name, students: students || 0, revenue });
+      }
+      return trends;
+    }
+  });
+
+  const { data: globalAiInsights = [] } = useQuery({
+    queryKey: ['admin-global-ai-insights'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('predictive_scores')
+        .select('*, students(name)')
+        .eq('risk_level', 'High')
+        .limit(10);
+
+      return (data || []).map(d => ({
+        id: d.id,
+        type: 'risk' as const,
+        level: d.risk_level as any,
+        title: `High Academic Risk: ${d.students?.name}`,
+        description: `Risk score ${d.risk_score}/100 based on attendance and grades.`,
+        studentName: d.students?.name,
+        factors: d.factors as any
+      }));
     }
   });
 
   const kpis = [
     { label: "Total Centers", value: stats?.centers, icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "System Users", value: stats?.totalUsers, icon: Users, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Health Status", value: "Optimal", icon: ShieldCheck, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Global Revenue", value: `₹${(stats?.revenue || 0).toLocaleString()}`, icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50" },
     { label: "System Errors", value: stats?.errors, icon: Activity, color: "text-rose-600", bg: "bg-rose-50" },
   ];
 
@@ -76,6 +118,36 @@ const AdminDashboard = () => {
             </Card>
           </motion.div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="border-none shadow-strong rounded-[2.5rem] bg-white overflow-hidden">
+            <CardHeader className="p-8 border-b border-slate-50">
+              <CardTitle className="text-lg font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" /> Center Performance Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={centerTrends}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                    <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <Legend iconType="circle" />
+                    <Bar dataKey="students" name="Total Students" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="revenue" name="Total Revenue (₹)" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div>
+          <AIInsightsWidget insights={globalAiInsights} title="Global Risk Monitor" />
+        </div>
       </div>
 
       <Card className="border-none shadow-strong rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">

@@ -22,7 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { hasPermission } from "@/utils/permissions";
-import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar } from "recharts";
+import { AIInsightsWidget } from "@/components/dashboard/AIInsightsWidget";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,12 +69,12 @@ export default function Dashboard() {
       setVisibleWidgets(savedVisible ? JSON.parse(savedVisible) : {
         "students": true, "teachers": true, "student-attendance": true, "teacher-attendance": true,
         "lesson-plans": true, "approvals": true, "leave-requests": true, "messages": true,
-        "attendance-overview": true, "performers": true, "teacher-status": true, "financial-health": true,
+        "attendance-overview": true, "ai-insights": true, "performers": true, "teacher-status": true, "financial-health": true,
         "leave-applications": true, "activities-discipline": true, "notice-board": true, "alerts": true, "class-schedule": true
       });
 
       setMainWidgetsOrder(savedMain ? JSON.parse(savedMain) : [
-        "attendance-overview", "performers", "teacher-status", "leave-applications", "activities-discipline"
+        "attendance-overview", "ai-insights", "performers", "teacher-status", "leave-applications", "activities-discipline"
       ]);
 
       setIsInitialized(true);
@@ -267,6 +268,35 @@ export default function Dashboard() {
       return data || [];
     },
     enabled: !!centerId,
+  });
+
+  const { data: centerAiInsights = [] } = useQuery({
+    queryKey: ['center-ai-insights', centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const [riskScores, feePredictions, sentimentInsights] = await Promise.all([
+        supabase.from('predictive_scores').select('*, students(name)').eq('center_id', centerId).neq('risk_level', 'Low').limit(5),
+        supabase.from('fee_default_predictions').select('*, students(name)').eq('center_id', centerId).eq('risk_level', 'High').limit(5),
+        supabase.from('ai_insights').select('*').eq('center_id', centerId).lt('sentiment_score', -0.5).limit(5)
+      ]);
+
+      const insights: any[] = [];
+
+      (riskScores.data || []).forEach(d => insights.push({
+        id: d.id, type: 'risk', level: d.risk_level, title: `Academic Risk: ${d.students?.name}`, description: `Attendance/Grades risk score is ${d.risk_score}/100.`, studentName: d.students?.name, factors: d.factors
+      }));
+
+      (feePredictions.data || []).forEach(d => insights.push({
+        id: d.id, type: 'fee', level: d.risk_level, title: `Fee Default Risk: ${d.students?.name}`, description: `High probability of payment default detected.`, studentName: d.students?.name, factors: d.factors
+      }));
+
+      (sentimentInsights.data || []).forEach(d => insights.push({
+        id: d.id, type: 'sentiment', level: 'High', title: `Negative Sentiment Detected`, description: d.content, factors: { score: d.sentiment_score }
+      }));
+
+      return insights;
+    },
+    enabled: !!centerId
   });
 
   const { data: teacherAttendance = [] } = useQuery({
@@ -761,7 +791,31 @@ export default function Dashboard() {
     };}).sort((a: any, b: any) => a.time.localeCompare(b.time));
   }, [periodSchedules, substitutions, teacherAttendance]);
 
+  const { data: aiInsightNotifications = [] } = useQuery({
+    queryKey: ['ai-insight-notifications', centerId],
+    queryFn: async () => {
+      if (!centerId) return [];
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('center_id', centerId)
+        .eq('is_ai_insight', true)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      return (data || []).map(n => ({
+        id: n.id,
+        title: n.title,
+        description: n.message,
+        type: n.type as any,
+        timestamp: n.created_at,
+        is_ai_insight: true
+      }));
+    },
+    enabled: !!centerId
+  });
+
   const recentAlerts = [
+    ...aiInsightNotifications,
     ...allAttendance
       .filter((a) => a.status === "absent")
       .slice(0, 3)
@@ -1159,6 +1213,25 @@ export default function Dashboard() {
 
               let content: React.ReactNode = null;
               switch (id) {
+                case "ai-insights":
+                  content = (
+                    <div className="relative group/widget" key={id}>
+                      {isCustomizeMode && (
+                        <div className="absolute top-2 right-2 z-10 flex gap-1">
+                          <Button variant="secondary" size="icon" className="h-6 w-6 rounded-full" onClick={() => toggleWidgetVisibility(id)}>
+                            {visibleWidgets[id] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          </Button>
+                          <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        </div>
+                      )}
+                      <div className={cn(!visibleWidgets[id] && "opacity-40 grayscale")}>
+                        <AIInsightsWidget insights={centerAiInsights} />
+                      </div>
+                    </div>
+                  );
+                  break;
                 case "attendance-overview":
                   content = (
                     <Card className="border-none shadow-strong bg-card/60 backdrop-blur-md rounded-[2.5rem] relative group/widget overflow-hidden border border-white/20">
