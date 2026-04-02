@@ -20,7 +20,7 @@ const navItems: Array<{
   { to: "/admin/billing", label: "Billing System", icon: Receipt, role: 'admin' as const, category: 'Administration' },
   { to: "/admin/usage", label: "Data Usage", icon: Database, role: 'admin' as const, category: 'Administration' },
   { to: "/admin/landing-page", label: "Page Editor", icon: LayoutTemplate, role: 'admin' as const, category: 'Administration' },
-  { to: "/admin/demo-requests", label: "Sales Leads", icon: Users, role: 'admin' as const, category: 'Administration' },
+  { to: "/admin/demo-requests", label: "Revenue & Growth", icon: Users, role: 'admin' as const, category: 'Administration' },
   { to: "/admin/system-pages", label: "System Pages", icon: FileText, role: 'admin' as const, category: 'Administration' },
   { to: "/admin/subscriptions", label: "SaaS Subscriptions", icon: Zap, role: 'admin' as const, category: 'Administration' },
   { to: "/admin/finance", label: "Finance", icon: DollarSign, role: 'admin' as const, category: 'Administration' },
