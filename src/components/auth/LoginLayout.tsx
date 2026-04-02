@@ -146,7 +146,7 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         .ring-primary { --tw-ring-color: ${primaryColor} !important; }
       `}} />
       {/* Dynamic Background / Slider */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
+      <div className="fixed inset-0 lg:right-[500px] z-0 overflow-hidden transition-all duration-500">
         {slides && slides.length > 0 ? (
           <HeroSlider slides={slides} />
         ) : (
