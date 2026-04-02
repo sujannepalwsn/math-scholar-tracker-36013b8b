@@ -6,6 +6,7 @@ export interface HeroSlide {
   title: string | null;
   subtitle: string | null;
   media_url: string;
+  mobile_media_url: string | null;
   media_type: 'image' | 'video';
   cta_text: string | null;
   cta_link: string | null;

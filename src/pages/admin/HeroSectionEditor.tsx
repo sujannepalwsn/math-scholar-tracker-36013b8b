@@ -37,7 +37,7 @@ interface SortableSlideProps {
   slide: HeroSlide;
   onUpdate: (id: string, updates: Partial<HeroSlide>) => void;
   onDelete: (id: string) => void;
-  onUpload: (id: string, file: File) => void;
+  onUpload: (id: string, file: File, isMobile?: boolean) => void;
   uploadingId: string | null;
 }
 
@@ -96,43 +96,80 @@ const SortableSlide: React.FC<SortableSlideProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Media Upload Area */}
             <div className="space-y-4">
-               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Media Preview & Upload</Label>
-               <div className="relative aspect-video rounded-2xl bg-muted overflow-hidden border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center group/media">
-                 {slide.media_url ? (
-                   <>
-                     {slide.media_type === 'video' ? (
-                       <video src={slide.media_url} className="w-full h-full object-cover" />
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Desktop Media</Label>
+                   <div className="relative aspect-video rounded-2xl bg-muted overflow-hidden border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center group/media">
+                     {slide.media_url ? (
+                       <>
+                         {slide.media_type === 'video' ? (
+                           <video src={slide.media_url} className="w-full h-full object-cover" />
+                         ) : (
+                           <img src={slide.media_url} className="w-full h-full object-cover" />
+                         )}
+                         <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center">
+                            <Label htmlFor={`upload-${slide.id}`} className="cursor-pointer">
+                              <div className="bg-primary text-white p-2 rounded-xl font-bold">
+                                <Upload className="h-4 w-4" />
+                              </div>
+                            </Label>
+                         </div>
+                       </>
                      ) : (
-                       <img src={slide.media_url} className="w-full h-full object-cover" />
+                       <Label htmlFor={`upload-${slide.id}`} className="cursor-pointer flex flex-col items-center gap-1">
+                         <Upload className="h-4 w-4 text-primary" />
+                         <span className="text-[10px] font-bold text-muted-foreground">Desktop</span>
+                       </Label>
                      )}
-                     <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center">
-                        <Label htmlFor={`upload-${slide.id}`} className="cursor-pointer">
-                          <div className="bg-primary text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2">
-                            <Upload className="h-4 w-4" /> Change Media
-                          </div>
-                        </Label>
-                     </div>
-                   </>
-                 ) : (
-                   <Label htmlFor={`upload-${slide.id}`} className="cursor-pointer flex flex-col items-center gap-2">
-                     <div className="p-4 rounded-full bg-primary/10 text-primary">
-                       <Upload className="h-6 w-6" />
-                     </div>
-                     <span className="text-sm font-bold text-muted-foreground">Upload Image/Video</span>
-                   </Label>
-                 )}
-                 {uploadingId === slide.id && (
-                   <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                     {uploadingId === `desktop-${slide.id}` && (
+                       <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                       </div>
+                     )}
+                     <input
+                       id={`upload-${slide.id}`}
+                       type="file"
+                       className="hidden"
+                       accept="image/*,video/*"
+                       onChange={(e) => e.target.files?.[0] && onUpload(slide.id, e.target.files[0], false)}
+                     />
                    </div>
-                 )}
-                 <input
-                   id={`upload-${slide.id}`}
-                   type="file"
-                   className="hidden"
-                   accept="image/*,video/*"
-                   onChange={(e) => e.target.files?.[0] && onUpload(slide.id, e.target.files[0])}
-                 />
+                 </div>
+
+                 <div className="space-y-2">
+                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Mobile Image (Opt.)</Label>
+                   <div className="relative aspect-video rounded-2xl bg-muted overflow-hidden border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center group/mobile-media">
+                     {slide.mobile_media_url ? (
+                       <>
+                         <img src={slide.mobile_media_url} className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/mobile-media:opacity-100 transition-opacity flex items-center justify-center">
+                            <Label htmlFor={`upload-mobile-${slide.id}`} className="cursor-pointer">
+                              <div className="bg-primary text-white p-2 rounded-xl font-bold">
+                                <Upload className="h-4 w-4" />
+                              </div>
+                            </Label>
+                         </div>
+                       </>
+                     ) : (
+                       <Label htmlFor={`upload-mobile-${slide.id}`} className="cursor-pointer flex flex-col items-center gap-1">
+                         <ImageIcon className="h-4 w-4 text-primary" />
+                         <span className="text-[10px] font-bold text-muted-foreground">Mobile</span>
+                       </Label>
+                     )}
+                     {uploadingId === `mobile-${slide.id}` && (
+                       <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                       </div>
+                     )}
+                     <input
+                       id={`upload-mobile-${slide.id}`}
+                       type="file"
+                       className="hidden"
+                       accept="image/*"
+                       onChange={(e) => e.target.files?.[0] && onUpload(slide.id, e.target.files[0], true)}
+                     />
+                   </div>
+                 </div>
                </div>
                <div className="flex gap-4">
                  <div className="flex-1 space-y-2">
@@ -300,11 +337,11 @@ const HeroSectionEditor = () => {
     }
   };
 
-  const handleUpload = async (id: string, file: File) => {
-    setUploadingId(id);
+  const handleUpload = async (id: string, file: File, isMobile = false) => {
+    setUploadingId(isMobile ? `mobile-${id}` : `desktop-${id}`);
     try {
       const extension = file.name.split('.').pop();
-      const fileName = `${id}-${Date.now()}.${extension}`;
+      const fileName = `${id}-${isMobile ? 'mobile' : 'desktop'}-${Date.now()}.${extension}`;
       const { error: uploadError } = await supabase.storage
         .from('hero-slides')
         .upload(fileName, file);
@@ -315,8 +352,12 @@ const HeroSectionEditor = () => {
         .from('hero-slides')
         .getPublicUrl(fileName);
 
-      handleUpdate(id, { media_url: publicUrl, media_type: file.type.startsWith('video') ? 'video' : 'image' });
-      toast({ title: "Success", description: "Media uploaded." });
+      if (isMobile) {
+        handleUpdate(id, { mobile_media_url: publicUrl });
+      } else {
+        handleUpdate(id, { media_url: publicUrl, media_type: file.type.startsWith('video') ? 'video' : 'image' });
+      }
+      toast({ title: "Success", description: `${isMobile ? 'Mobile' : 'Desktop'} media uploaded.` });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
