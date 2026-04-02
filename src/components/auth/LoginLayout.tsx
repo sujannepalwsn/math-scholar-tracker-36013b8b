@@ -15,6 +15,8 @@ import { SYSTEM_MODULES } from "@/lib/system-modules";
 import { PackageType } from "@/lib/package-presets";
 import { FeatureCard, PackageCard, HeroSection, DynamicIcon } from "./LandingPageComponents";
 import { useSystemStats } from "@/hooks/use-system-stats";
+import { HeroSlider } from "./HeroSlider";
+import { useHeroSlides } from "@/hooks/use-hero-slides";
 
 interface LoginLayoutProps {
   settings: Tables<'login_page_settings'> | null;
@@ -130,6 +132,8 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
     }
   }, [primaryColor]);
 
+  const { data: slides } = useHeroSlides();
+
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-primary/20 scroll-smooth overflow-x-hidden" style={{ backgroundColor: bgColor }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -141,14 +145,20 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         .border-primary { border-color: ${primaryColor} !important; }
         .ring-primary { --tw-ring-color: ${primaryColor} !important; }
       `}} />
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] bg-primary/10 animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] bg-blue-600/10 animate-pulse delay-1000" />
-        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px]" />
+      {/* Dynamic Background / Slider */}
+      <div className="fixed inset-0 lg:right-[500px] z-0 overflow-hidden transition-all duration-500">
+        {slides && slides.length > 0 ? (
+          <HeroSlider slides={slides} />
+        ) : (
+          <div className="absolute inset-0 bg-slate-950">
+            <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] bg-primary/10 animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] bg-blue-600/10 animate-pulse delay-1000" />
+            <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[1px]" />
+          </div>
+        )}
 
         {/* Animated Grid Lines */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
       </div>
 
       {/* Navigation Bar */}
@@ -191,13 +201,18 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         <section className="relative min-h-[90vh] flex items-center pt-20">
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
-              {/* Hero Text */}
+              {/* Hero Text Placeholder (Text is now inside HeroSlider background) */}
               <div className="flex-1 max-w-3xl">
-                 <HeroSection
-                   title={settings?.marketing_title || undefined}
-                   subtitle={settings?.marketing_subtitle || undefined}
-                   features={Array.isArray(settings?.features) ? (settings.features as any) : undefined}
-                 />
+                 {/* Only show old HeroSection if no slides exist, otherwise it's handled by background */}
+                 {!slides || slides.length === 0 ? (
+                   <HeroSection
+                     title={settings?.marketing_title || undefined}
+                     subtitle={settings?.marketing_subtitle || undefined}
+                     features={Array.isArray(settings?.features) ? (settings.features as any) : undefined}
+                   />
+                 ) : (
+                   <div className="h-20 lg:h-40" /> // Spacer for layout consistency
+                 )}
               </div>
 
               {/* Desktop Placeholder for Floating Login Card */}
