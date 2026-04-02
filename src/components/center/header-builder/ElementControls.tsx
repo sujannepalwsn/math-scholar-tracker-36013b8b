@@ -17,13 +17,15 @@ interface ElementControlsProps {
   onUpdate: (updatedElement: HeaderElement) => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  centerId?: string;
 }
 
 export const ElementControls: React.FC<ElementControlsProps> = ({
   element,
   onUpdate,
   onDelete,
-  onDuplicate
+  onDuplicate,
+  centerId
 }) => {
   const [isUploading, setIsUploading] = React.useState(false);
 
@@ -39,16 +41,17 @@ export const ElementControls: React.FC<ElementControlsProps> = ({
       }
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `header-assets/${Math.random()}.${fileExt}`;
+      const folder = centerId ? `${centerId}/` : "";
+      const filePath = `${folder}header-assets/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('center-assets')
+        .from('center-backgrounds')
         .upload(filePath, finalFile);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('center-assets')
+        .from('center-backgrounds')
         .getPublicUrl(filePath);
 
       onUpdate({ ...element, content: publicUrl });

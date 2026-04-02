@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { HeaderConfig, HeaderElement, ElementType } from "./types";
 import { DraggableElement } from "./DraggableElement";
 import { GridBackground } from "./GridBackground";
@@ -15,11 +15,13 @@ import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-utils";
+import { HeaderElementRenderer } from "./HeaderElementRenderer";
 
 interface HeaderBuilderProps {
   initialConfig?: HeaderConfig;
   onSave: (config: HeaderConfig) => void;
   isSaving?: boolean;
+  centerId?: string;
 }
 
 const DEFAULT_CONFIG: HeaderConfig = {
@@ -35,12 +37,36 @@ const DEFAULT_CONFIG: HeaderConfig = {
 export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
   initialConfig,
   onSave,
-  isSaving
+  isSaving,
+  centerId
 }) => {
   const [config, setConfig] = useState<HeaderConfig>(initialConfig || DEFAULT_CONFIG);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
   const [isUploadingBg, setIsUploadingBg] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateDesignWidth = () => {
+        if (canvasRef.current) {
+            const currentWidth = canvasRef.current.offsetWidth;
+            if (currentWidth > 0 && currentWidth !== config.designWidth) {
+                setConfig(prev => ({ ...prev, designWidth: currentWidth }));
+            }
+        }
+    };
+
+    updateDesignWidth();
+    window.addEventListener('resize', updateDesignWidth);
+
+    // Also check after a brief delay for any layout transitions
+    const timer = setTimeout(updateDesignWidth, 500);
+
+    return () => {
+        window.removeEventListener('resize', updateDesignWidth);
+        clearTimeout(timer);
+    };
+  }, [config.designWidth]);
 
   const selectedElement = useMemo(
     () => config.elements.find((el) => el.id === selectedElementId) || null,
@@ -113,16 +139,17 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
       }
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `header-backgrounds/${Math.random()}.${fileExt}`;
+      const folder = centerId ? `${centerId}/` : "";
+      const filePath = `${folder}header-backgrounds/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('center-assets')
+        .from('center-backgrounds')
         .upload(filePath, finalFile);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('center-assets')
+        .from('center-backgrounds')
         .getPublicUrl(filePath);
 
       setConfig(prev => ({ ...prev, backgroundUrl: publicUrl }));
@@ -132,6 +159,15 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
     } finally {
       setIsUploadingBg(false);
     }
+  };
+
+  const handleSave = () => {
+    const currentDesignWidth = canvasRef.current?.offsetWidth || config.designWidth || 1200;
+    const finalConfig = {
+        ...config,
+        designWidth: currentDesignWidth
+    };
+    onSave(finalConfig);
   };
 
   return (
@@ -185,7 +221,7 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
           <Button
             size="sm"
             className="rounded-xl h-10 px-6 font-black uppercase text-[10px] tracking-[0.2em] bg-gradient-to-r from-primary to-violet-600 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all"
-            onClick={() => onSave(config)}
+            onClick={handleSave}
             disabled={isSaving}
           >
             {isSaving ? <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" /> SAVING...</div> : <><Save className="h-4 w-4" /> Synchronize Profile</>}
@@ -197,6 +233,7 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
         {/* Editor Canvas */}
         <div className="flex-1 w-full flex flex-col gap-4">
             <div
+                ref={canvasRef}
                 className={cn(
                     "relative overflow-hidden rounded-3xl transition-all shadow-strong border border-border/20 group",
                     !isPreview && "bg-white"
@@ -232,17 +269,21 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
                 {/* Elements Layer */}
                 <div className="absolute inset-0 z-10">
                     {config.elements.map((el) => (
-                        <DraggableElement
-                            key={el.id}
-                            element={el}
-                            config={config}
-                            isSelected={selectedElementId === el.id}
-                            onSelect={() => setSelectedElementId(el.id)}
-                            onUpdate={updateElement}
-                            onDelete={() => deleteElement(el.id)}
-                            onDuplicate={() => duplicateElement(el)}
-                            isEditor={!isPreview}
-                        />
+                        isPreview ? (
+                            <HeaderElementRenderer key={el.id} element={el} />
+                        ) : (
+                            <DraggableElement
+                                key={el.id}
+                                element={el}
+                                config={config}
+                                isSelected={selectedElementId === el.id}
+                                onSelect={() => setSelectedElementId(el.id)}
+                                onUpdate={updateElement}
+                                onDelete={() => deleteElement(el.id)}
+                                onDuplicate={() => duplicateElement(el)}
+                                isEditor={true}
+                            />
+                        )
                     ))}
                 </div>
 
@@ -363,6 +404,7 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
                   onUpdate={updateElement}
                   onDelete={() => deleteElement(selectedElement.id)}
                   onDuplicate={() => duplicateElement(selectedElement)}
+                  centerId={centerId}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">

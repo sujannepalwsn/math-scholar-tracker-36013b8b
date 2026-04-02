@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import { HeaderElement, HeaderConfig } from "./types";
 import { cn } from "@/lib/utils";
-import { Move, Trash2, Edit2, Copy } from "lucide-react";
+import { Move, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HeaderElementRenderer } from "./HeaderElementRenderer";
 
 interface DraggableElementProps {
   element: HeaderElement;
@@ -43,25 +44,7 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
   }, [isEditing]);
 
   if (!isEditor) {
-    return (
-      <div
-        style={{
-          position: "absolute",
-          left: element.x,
-          top: element.y,
-          width: element.width,
-          height: element.height,
-          ...element.styles,
-          overflow: "hidden"
-        }}
-      >
-        {element.type === "text" ? (
-          <div style={{ ...element.styles }}>{element.content}</div>
-        ) : (
-          <img src={element.content} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-        )}
-      </div>
-    );
+    return <HeaderElementRenderer element={element} />;
   }
 
   const handleDoubleClick = () => {
@@ -107,6 +90,7 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
       )}
       enableResizing={isSelected && !isEditing}
       disableDragging={!isSelected || isEditing}
+      style={{ zIndex: isSelected ? 50 : 10 }}
     >
       <div className="w-full h-full relative group">
         {isSelected && !isEditing && (
