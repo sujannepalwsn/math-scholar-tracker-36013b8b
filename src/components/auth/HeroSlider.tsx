@@ -130,11 +130,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
               {/* Text Content Layer */}
               <div className={cn(
-                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-32 md:pb-32 justify-end transition-all duration-500",
+                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-24 md:pb-32 justify-end transition-all duration-500 pointer-events-none",
                 slide.text_align === 'center' ? 'items-center text-center' :
                 slide.text_align === 'right' ? 'items-end text-right' : 'items-start text-left'
               )}>
-                <div className="max-w-4xl w-full">
+                <div className="max-w-4xl w-full pointer-events-auto">
                    <AnimatePresence mode="wait">
                      {selectedIndex === index && (
                        <motion.div
@@ -145,7 +145,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                          className="space-y-6"
                        >
                          {slide.title && (
-                           <h1 className="text-4xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase mb-4">
+                           <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase mb-4">
                              {slide.title.split(' ').map((word, i, arr) => (
                                <span key={i} className={cn(i === arr.length - 1 ? "text-primary" : "")}>
                                  {word}{' '}
@@ -218,7 +218,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
           </div>
 
           {/* Pagination dots (centered on mobile, left on desktop) */}
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 md:left-24 md:translate-x-0 z-20 flex gap-3">
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 md:left-24 md:translate-x-0 z-40 flex gap-3">
             {slides.map((_, index) => (
               <button
                 key={index}

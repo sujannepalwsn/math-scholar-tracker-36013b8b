@@ -34,6 +34,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { HeroSlider } from "@/components/auth/HeroSlider";
+import { useHeroSlides } from "@/hooks/use-hero-slides";
 
 // --- Components ---
 
@@ -324,61 +326,73 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
 // --- Page Sections ---
 
 const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => void, setActiveSection: (i: number) => void }) => {
+  const { data: slides } = useHeroSlides();
+  const hasSlides = slides && slides.length > 0;
+
   return (
-    <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950">
+    <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950 p-0 h-[100dvh] min-h-[100dvh]">
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse bg-indigo-500/10" />
-        <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] animate-pulse delay-1000 bg-blue-500/10" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:60px_60px]" />
+        {hasSlides ? (
+          <HeroSlider slides={slides} />
+        ) : (
+          <>
+            <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse bg-indigo-500/10" />
+            <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full blur-[120px] animate-pulse delay-1000 bg-blue-500/10" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:60px_60px]" />
+          </>
+        )}
       </div>
 
-      <div className="container mx-auto relative z-10 text-center flex flex-col items-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black tracking-widest uppercase mb-8 bg-indigo-500/20 text-indigo-400"
-        >
-          <SparklesIcon className="w-4 h-4" />
-          <span>The Future of School Management</span>
-        </motion.div>
+      {!hasSlides && (
+        <div className="container mx-auto relative z-10 text-center flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black tracking-widest uppercase mb-8 bg-indigo-500/20 text-indigo-400"
+          >
+            <SparklesIcon className="w-4 h-4" />
+            <span>The Future of School Management</span>
+          </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 max-w-4xl"
-        >
-          Run Your Entire School <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-400">from One Platform</span>
-        </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 max-w-4xl"
+          >
+            Run Your Entire School <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-400">from One Platform</span>
+          </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-xl md:text-2xl text-slate-400 font-medium max-w-2xl mb-12"
-        >
-          From admissions to attendance, exams to finance. <br />
-          Everything simplified, everything in sync.
-        </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-xl md:text-2xl text-slate-400 font-medium max-w-2xl mb-12"
+          >
+            From admissions to attendance, exams to finance. <br />
+            Everything simplified, everything in sync.
+          </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-wrap gap-6 justify-center"
-        >
-          <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700">
-            <Link to="/contact-sales">Request Personalized Demo <ArrowRight className="ml-2 w-6 h-6" /></Link>
-          </Button>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap gap-6 justify-center"
+          >
+            <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700">
+              <Link to="/contact-sales">Request Personalized Demo <ArrowRight className="ml-2 w-6 h-6" /></Link>
+            </Button>
+          </motion.div>
+        </div>
+      )}
 
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer z-40 pointer-events-auto"
           onClick={scrollToNext}
         >
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Explore</span>
