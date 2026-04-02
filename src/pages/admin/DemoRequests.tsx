@@ -41,6 +41,8 @@ import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SaaSBookings from "./SaaSBookings";
 
 const DemoRequests = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -131,8 +133,8 @@ const DemoRequests = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-foreground">Sales Leads</h1>
-          <p className="text-muted-foreground mt-2 font-medium">Manage and track demo requests from potential institutions.</p>
+          <h1 className="text-4xl font-black tracking-tight text-foreground">Revenue & Growth</h1>
+          <p className="text-muted-foreground mt-2 font-medium">Manage demo requests and institutional plan bookings.</p>
         </div>
         <div className="flex items-center gap-4">
            <div className="relative w-full md:w-64">
@@ -181,6 +183,13 @@ const DemoRequests = () => {
          </Card>
       </div>
 
+      <Tabs defaultValue="leads" className="space-y-6">
+         <TabsList className="bg-muted/50 p-1 rounded-2xl h-14 w-fit border border-muted-foreground/10">
+            <TabsTrigger value="leads" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Demo Requests</TabsTrigger>
+            <TabsTrigger value="bookings" className="rounded-xl px-8 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-soft">Plan Bookings</TabsTrigger>
+         </TabsList>
+
+         <TabsContent value="leads" className="space-y-6 outline-none">
       <Card className="border-none shadow-strong rounded-[2rem] overflow-hidden bg-white/50 backdrop-blur-md">
         <Table>
           <TableHeader className="bg-muted/50">
@@ -268,6 +277,12 @@ const DemoRequests = () => {
           </TableBody>
         </Table>
       </Card>
+         </TabsContent>
+
+         <TabsContent value="bookings" className="outline-none">
+            <SaaSBookings />
+         </TabsContent>
+      </Tabs>
 
       {/* Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
