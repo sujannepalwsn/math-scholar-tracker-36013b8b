@@ -591,6 +591,7 @@ export type Database = {
           established_date: string | null
           facilities: Json | null
           gallery: Json | null
+          header_config: Json | null
           header_bg_url: string | null
           header_overlay_color: string | null
           header_overlay_opacity: number | null
@@ -626,6 +627,7 @@ export type Database = {
           established_date?: string | null
           facilities?: Json | null
           gallery?: Json | null
+          header_config?: Json | null
           header_bg_url?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
@@ -661,6 +663,7 @@ export type Database = {
           established_date?: string | null
           facilities?: Json | null
           gallery?: Json | null
+          header_config?: Json | null
           header_bg_url?: string | null
           header_overlay_color?: string | null
           header_overlay_opacity?: number | null
@@ -2296,7 +2299,7 @@ export type Database = {
           notes?: string | null
           participation_rating?: string | null
           rating?: number | null
-          student_id?: string
+          student_id: string
           teacher_id?: string | null
           teacher_notes?: string | null
         }
