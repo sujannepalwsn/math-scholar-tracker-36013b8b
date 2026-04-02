@@ -330,7 +330,7 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
   const hasSlides = slides && slides.length > 0;
 
   return (
-    <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950 p-0 h-[100dvh] min-h-[100dvh]">
+    <Section id="hero" index={0} setActiveSection={setActiveSection} className="bg-slate-950 p-0 md:h-[100dvh] md:min-h-[100dvh] h-[500px] min-h-[500px]">
       <div className="absolute inset-0 z-0">
         {hasSlides ? (
           <HeroSlider slides={slides} />

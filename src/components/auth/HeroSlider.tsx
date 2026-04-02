@@ -71,8 +71,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
   }
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
-      <div className="embla w-full h-full" ref={emblaRef}>
+    <div className="absolute inset-0 w-full h-full overflow-hidden z-0 max-w-full">
+      <div className="embla w-full h-full overflow-hidden" ref={emblaRef}>
         <div className="embla__container grid w-full h-full">
           {slides.map((slide, index) => (
             <div className="embla__slide [grid-area:1/1] relative w-full h-full min-w-0" key={slide.id}>
