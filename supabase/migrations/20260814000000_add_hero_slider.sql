@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.hero_slides (
     title TEXT,
     subtitle TEXT,
     media_url TEXT NOT NULL,
+    mobile_media_url TEXT,
     media_type TEXT CHECK (media_type IN ('image', 'video')) NOT NULL,
     cta_text TEXT,
     cta_link TEXT,

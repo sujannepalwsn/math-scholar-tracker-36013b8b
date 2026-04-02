@@ -13,6 +13,7 @@ interface HeroSlide {
   title: string | null;
   subtitle: string | null;
   media_url: string;
+  mobile_media_url: string | null;
   media_type: 'image' | 'video';
   cta_text: string | null;
   cta_link: string | null;
@@ -72,28 +73,33 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden z-0">
       <div className="embla w-full h-full" ref={emblaRef}>
-        <div className="embla__container flex w-full h-full">
+        <div className="embla__container grid w-full h-full">
           {slides.map((slide, index) => (
-            <div className="embla__slide relative w-full h-full flex-[0_0_100%] min-w-0" key={slide.id}>
+            <div className="embla__slide [grid-area:1/1] relative w-full h-full min-w-0" key={slide.id}>
               {/* Media Layer */}
               <div className="absolute inset-0 w-full h-full">
-                {slide.media_type === 'video' && !isMobile ? (
-                  <video
-                    src={slide.media_url}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                       // Fallback if video fails
-                       (e.target as any).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full relative">
-                    {slide.media_type === 'video' ? (
-                      /* Mobile Video Fallback: Still use video tag but with playsInline and muted for mobile support */
+                <div className="w-full h-full relative">
+                  {slide.media_type === 'video' ? (
+                    isMobile && slide.mobile_media_url ? (
+                      <img
+                        src={slide.mobile_media_url}
+                        alt={slide.title || ''}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : isMobile ? (
+                      /* Fallback for mobile if no mobile_media_url provided */
+                      <div className="w-full h-full bg-slate-900 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#4f46e520,transparent_70%)] animate-pulse" />
+                        <video
+                          src={slide.media_url}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="w-full h-full object-cover opacity-60"
+                        />
+                      </div>
+                    ) : (
                       <video
                         src={slide.media_url}
                         autoPlay
@@ -101,16 +107,19 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                         loop
                         playsInline
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                           (e.target as any).parentElement.style.backgroundColor = '#020617';
+                        }}
                       />
-                    ) : (
-                      <img
-                        src={slide.media_url}
-                        alt={slide.title || ''}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                  </div>
-                )}
+                    )
+                  ) : (
+                    <img
+                      src={isMobile && slide.mobile_media_url ? slide.mobile_media_url : slide.media_url}
+                      alt={slide.title || ''}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
                 {/* Overlay */}
                 <div
                   className="absolute inset-0 bg-slate-950"
@@ -121,7 +130,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
               {/* Text Content Layer */}
               <div className={cn(
-                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-28 md:pb-32 justify-end transition-all duration-500",
+                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-32 md:pb-32 justify-end transition-all duration-500",
                 slide.text_align === 'center' ? 'items-center text-center' :
                 slide.text_align === 'right' ? 'items-end text-right' : 'items-start text-left'
               )}>
@@ -136,7 +145,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                          className="space-y-6"
                        >
                          {slide.title && (
-                           <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-4">
+                           <h1 className="text-4xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase mb-4">
                              {slide.title.split(' ').map((word, i, arr) => (
                                <span key={i} className={cn(i === arr.length - 1 ? "text-primary" : "")}>
                                  {word}{' '}
@@ -145,7 +154,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                            </h1>
                          )}
 
-                         <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6">
+                         <div className={cn(
+                           "flex flex-col md:flex-row justify-between gap-6",
+                           slide.text_align === 'center' ? 'items-center' :
+                           slide.text_align === 'right' ? 'items-end' : 'items-start'
+                         )}>
                             {slide.subtitle && (
                               <p className="text-sm md:text-lg text-slate-300 font-medium leading-relaxed max-w-xl">
                                 {slide.subtitle}
@@ -176,19 +189,19 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
       {/* Navigation Controls */}
       {slides.length > 1 && (
         <>
-          {/* Desktop Navigation Arrows */}
-          <div className="hidden md:flex absolute bottom-10 right-10 z-30 gap-4">
+          {/* Navigation Arrows (Visible on all devices as requested) */}
+          <div className="absolute bottom-10 right-6 md:right-10 z-30 flex gap-3 md:gap-4">
              <Button
                variant="outline"
                size="icon"
                onClick={() => emblaApi?.scrollPrev()}
                disabled={!canScrollPrev}
                className={cn(
-                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12 transition-all",
+                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-10 w-10 md:h-12 md:w-12 transition-all backdrop-blur-sm",
                  !canScrollPrev && "opacity-50 cursor-not-allowed"
                )}
              >
-               <ChevronLeft className="h-6 w-6" />
+               <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
              </Button>
              <Button
                variant="outline"
@@ -196,11 +209,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                onClick={() => emblaApi?.scrollNext()}
                disabled={!canScrollNext}
                className={cn(
-                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12 transition-all",
+                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-10 w-10 md:h-12 md:w-12 transition-all backdrop-blur-sm",
                  !canScrollNext && "opacity-50 cursor-not-allowed"
                )}
              >
-               <ChevronRight className="h-6 w-6" />
+               <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
              </Button>
           </div>
 

@@ -147,8 +147,10 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
       `}} />
       {/* Dynamic Background / Slider */}
       <div className={cn(
-        "fixed inset-0 z-0 overflow-hidden transition-all duration-500",
-        slides && slides.length > 0 ? "lg:right-[500px]" : ""
+        "z-0 overflow-hidden transition-all duration-500",
+        slides && slides.length > 0
+          ? "lg:fixed lg:inset-0 lg:right-[500px] relative w-full h-[100dvh] lg:h-full"
+          : "fixed inset-0"
       )}>
         {slides && slides.length > 0 ? (
           <HeroSlider slides={slides} />
@@ -201,7 +203,10 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
       <main className="relative z-10 flex-1">
 
         {/* Hero Section with Persistent Login Card */}
-        <section className="relative min-h-[90vh] flex items-center pt-20">
+        <section className={cn(
+          "relative min-h-[90vh] flex items-center pt-20",
+          slides && slides.length > 0 ? "hidden lg:flex" : "flex"
+        )}>
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
               {/* Hero Text Placeholder (Text is now inside HeroSlider background) */}
@@ -371,7 +376,7 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         </div>
 
         {/* Mobile Login Card (Integrated in Flow) */}
-        <div className="lg:hidden container mx-auto px-4 mt-8">
+        <div className="lg:hidden container mx-auto px-4 py-12">
            <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden text-white">
               <CardHeader className="space-y-4 pt-8 pb-4 px-6">
                 <CardTitle className="text-3xl font-black tracking-tighter">
