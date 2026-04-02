@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-utils";
+import { HeaderElementRenderer } from "./HeaderElementRenderer";
 
 interface HeaderBuilderProps {
   initialConfig?: HeaderConfig;
@@ -142,9 +143,10 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
   };
 
   const handleSave = () => {
+    const currentDesignWidth = canvasRef.current?.offsetWidth || config.designWidth || 1200;
     const finalConfig = {
         ...config,
-        designWidth: canvasRef.current?.offsetWidth || config.designWidth || 1200
+        designWidth: currentDesignWidth
     };
     onSave(finalConfig);
   };
@@ -248,17 +250,21 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
                 {/* Elements Layer */}
                 <div className="absolute inset-0 z-10">
                     {config.elements.map((el) => (
-                        <DraggableElement
-                            key={el.id}
-                            element={el}
-                            config={config}
-                            isSelected={selectedElementId === el.id}
-                            onSelect={() => setSelectedElementId(el.id)}
-                            onUpdate={updateElement}
-                            onDelete={() => deleteElement(el.id)}
-                            onDuplicate={() => duplicateElement(el)}
-                            isEditor={!isPreview}
-                        />
+                        isPreview ? (
+                            <HeaderElementRenderer key={el.id} element={el} />
+                        ) : (
+                            <DraggableElement
+                                key={el.id}
+                                element={el}
+                                config={config}
+                                isSelected={selectedElementId === el.id}
+                                onSelect={() => setSelectedElementId(el.id)}
+                                onUpdate={updateElement}
+                                onDelete={() => deleteElement(el.id)}
+                                onDuplicate={() => duplicateElement(el)}
+                                isEditor={true}
+                            />
+                        )
                     ))}
                 </div>
 
