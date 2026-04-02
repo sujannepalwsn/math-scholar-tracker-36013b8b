@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Building, Edit2, Save, X, MapPin, Phone, Mail, Globe,
   User, Hash, Calendar, Loader2, Camera, Image as ImageIcon,
@@ -20,6 +20,8 @@ import { HeaderConfig, HeaderElement } from "../center/header-builder/types";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
 
   const { data: center, isLoading: isCenterLoading } = useQuery({
     queryKey: ["center-details", user?.center_id],
@@ -52,6 +54,23 @@ export default function DashboardHeader() {
     enabled: !!user?.center_id
   });
 
+  // Calculate scale for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        // Reference design width was approximately 1200px based on max-w-7xl
+        const referenceWidth = 1200;
+        const newScale = Math.min(containerWidth / referenceWidth, 1);
+        setScale(newScale);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [center?.header_config]);
+
   if (isCenterLoading) {
     return (
       <div className="w-full h-32 flex items-center justify-center bg-card rounded-3xl animate-pulse">
@@ -64,11 +83,15 @@ export default function DashboardHeader() {
 
   // Render Dynamic Header Builder Layout
   if (headerConfig && headerConfig.elements && headerConfig.elements.length > 0) {
+    const baseHeight = parseInt(headerConfig.height) || 400;
+    const responsiveHeight = baseHeight * scale;
+
     return (
       <Card
+        ref={containerRef}
         className="border-none shadow-glass overflow-hidden rounded-[2.5rem] md:rounded-[4rem] mb-8 relative group/header transition-all duration-500"
         style={{
-            height: headerConfig.height,
+            height: `${responsiveHeight}px`,
             width: "100%",
             backgroundColor: headerConfig.backgroundColor || "white"
         }}
@@ -91,8 +114,11 @@ export default function DashboardHeader() {
           </div>
         )}
 
-        {/* Dynamic Elements */}
-        <div className="absolute inset-0 z-10">
+        {/* Dynamic Elements with Scaling */}
+        <div
+            className="absolute inset-0 z-10 origin-top-left"
+            style={{ transform: `scale(${scale})` }}
+        >
           {headerConfig.elements.map((el: HeaderElement) => (
             <div
               key={el.id}
