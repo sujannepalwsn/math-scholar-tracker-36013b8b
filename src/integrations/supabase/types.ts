@@ -2283,7 +2283,7 @@ export type Database = {
           notes?: string | null
           participation_rating?: string | null
           rating?: number | null
-          student_id: string
+          student_id?: string
           teacher_id?: string | null
           teacher_notes?: string | null
         }

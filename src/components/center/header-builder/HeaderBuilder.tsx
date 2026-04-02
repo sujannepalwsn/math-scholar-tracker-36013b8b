@@ -21,6 +21,7 @@ interface HeaderBuilderProps {
   initialConfig?: HeaderConfig;
   onSave: (config: HeaderConfig) => void;
   isSaving?: boolean;
+  centerId?: string;
 }
 
 const DEFAULT_CONFIG: HeaderConfig = {
@@ -36,7 +37,8 @@ const DEFAULT_CONFIG: HeaderConfig = {
 export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
   initialConfig,
   onSave,
-  isSaving
+  isSaving,
+  centerId
 }) => {
   const [config, setConfig] = useState<HeaderConfig>(initialConfig || DEFAULT_CONFIG);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
@@ -45,9 +47,25 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (canvasRef.current && !config.designWidth) {
-        setConfig(prev => ({ ...prev, designWidth: canvasRef.current?.offsetWidth || 1200 }));
-    }
+    const updateDesignWidth = () => {
+        if (canvasRef.current) {
+            const currentWidth = canvasRef.current.offsetWidth;
+            if (currentWidth > 0 && currentWidth !== config.designWidth) {
+                setConfig(prev => ({ ...prev, designWidth: currentWidth }));
+            }
+        }
+    };
+
+    updateDesignWidth();
+    window.addEventListener('resize', updateDesignWidth);
+
+    // Also check after a brief delay for any layout transitions
+    const timer = setTimeout(updateDesignWidth, 500);
+
+    return () => {
+        window.removeEventListener('resize', updateDesignWidth);
+        clearTimeout(timer);
+    };
   }, [config.designWidth]);
 
   const selectedElement = useMemo(
@@ -121,16 +139,17 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
       }
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `header-backgrounds/${Math.random()}.${fileExt}`;
+      const folder = centerId ? `${centerId}/` : "";
+      const filePath = `${folder}header-backgrounds/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('center-assets')
+        .from('center-backgrounds')
         .upload(filePath, finalFile);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('center-assets')
+        .from('center-backgrounds')
         .getPublicUrl(filePath);
 
       setConfig(prev => ({ ...prev, backgroundUrl: publicUrl }));
@@ -385,6 +404,7 @@ export const HeaderBuilder: React.FC<HeaderBuilderProps> = ({
                   onUpdate={updateElement}
                   onDelete={() => deleteElement(selectedElement.id)}
                   onDuplicate={() => duplicateElement(selectedElement)}
+                  centerId={centerId}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">

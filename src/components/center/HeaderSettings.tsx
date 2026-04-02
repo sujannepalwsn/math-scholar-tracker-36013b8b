@@ -140,6 +140,7 @@ export default function HeaderSettings({ centerId }: { centerId: string }) {
                 initialConfig={headerConfig}
                 onSave={handleSave}
                 isSaving={updateMutation.isPending}
+                centerId={centerId}
             />
         )}
 

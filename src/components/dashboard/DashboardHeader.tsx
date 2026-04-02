@@ -62,12 +62,17 @@ export default function DashboardHeader() {
   if (headerConfig && headerConfig.elements && headerConfig.elements.length > 0) {
     const designWidth = headerConfig.designWidth || 1200;
     const baseHeight = parseInt(headerConfig.height) || 400;
-    const responsiveHeight = baseHeight * scale;
+
+    // On mobile, we might want a slightly larger scale than strictly proportional
+    // to keep text readable, but for a true canvas-like experience,
+    // strictly proportional is usually what's expected for 'fixed' layouts.
+    // However, we ensure a minimum height to prevent it from disappearing.
+    const responsiveHeight = Math.max(baseHeight * scale, 120 * scale);
 
     return (
       <div
         ref={containerRef}
-        className="w-full mb-8 relative overflow-hidden rounded-[2.5rem] md:rounded-[4rem] shadow-glass transition-all duration-500"
+        className="w-full mb-8 relative overflow-hidden rounded-[2rem] md:rounded-[4rem] shadow-glass transition-all duration-500 bg-white dark:bg-slate-900 border border-white/10 group/header"
         style={{
             height: `${responsiveHeight}px`,
         }}
@@ -79,7 +84,8 @@ export default function DashboardHeader() {
                 transform: `scale(${scale})`,
                 width: `${designWidth}px`,
                 height: `${baseHeight}px`,
-                backgroundColor: headerConfig.backgroundColor || "white"
+                backgroundColor: headerConfig.backgroundColor || "transparent",
+                willChange: "transform"
             }}
         >
             {/* Background Image Layer */}
