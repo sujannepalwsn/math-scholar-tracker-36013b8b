@@ -63,6 +63,7 @@ import ParentChapterRating from "./pages/ParentChapterRating";
 import ParentLessonTracking from "./pages/ParentLessonTracking";
 import ParentStudentReport from "./pages/ParentStudentReport";
 import ParentMessaging from "./pages/ParentMessaging";
+import DailySnapshot from "./pages/DailySnapshot";
 
 import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherMeetings from "./pages/TeacherMeetings";
@@ -228,6 +229,7 @@ const App = () => {
               <Route path="/parent-results" element={<ProtectedRoute role="parent"><ParentLayout><PublishedResults /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-calendar" element={<ProtectedRoute role="parent"><ParentLayout><CalendarEvents /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-leave" element={<ProtectedRoute role="parent"><ParentLayout><LeaveApplications /></ParentLayout></ProtectedRoute>} />
+              <Route path="/parent-snapshot" element={<ProtectedRoute role="parent"><ParentLayout><DailySnapshot /></ParentLayout></ProtectedRoute>} />
               <Route path="/parent-settings" element={<ProtectedRoute role="parent"><ParentLayout><GeneralSettings /></ParentLayout></ProtectedRoute>} />
 
               {/* Teacher */}

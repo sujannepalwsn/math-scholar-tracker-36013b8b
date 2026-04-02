@@ -11,6 +11,7 @@ import { cn, formatCurrency, safeFormatDate } from "@/lib/utils"
 import { KPICard } from "@/components/dashboard/KPICard"
 import { AlertList } from "@/components/dashboard/AlertList"
 import { ClassSchedule } from "@/components/dashboard/ClassSchedule"
+import { AIInsightsWidget } from "@/components/dashboard/AIInsightsWidget"
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DigitalNoticeBoard from "@/components/center/NoticeBoard";
 import SuggestionForm from "@/components/center/SuggestionForm";
@@ -235,6 +236,32 @@ export default function ParentDashboard() {
     enabled: !!activeStudentId
   });
 
+  const { data: studentAiInsights = [] } = useQuery({
+    queryKey: ['student-ai-insights', activeStudentId],
+    queryFn: async () => {
+      if (!activeStudentId) return [];
+      const { data: score } = await supabase
+        .from('predictive_scores')
+        .select('*')
+        .eq('student_id', activeStudentId)
+        .maybeSingle();
+
+      if (!score) return [];
+
+      return [{
+        id: score.id,
+        type: 'risk' as const,
+        level: score.risk_level as any,
+        title: score.risk_level === 'Low' ? 'Learning Trajectory: Positive' : 'Academic Alert',
+        description: score.risk_level === 'Low'
+          ? 'Your child is on a stable learning path. Keep up the good work!'
+          : `We noticed some variations in performance. Predicted risk level is ${score.risk_level}.`,
+        factors: score.factors as any
+      }];
+    },
+    enabled: !!activeStudentId
+  });
+
   const { data: studentRoutine = [] } = useQuery({
     queryKey: ["student-routine", student?.grade, user?.center_id],
     queryFn: async () => {
@@ -349,7 +376,26 @@ export default function ParentDashboard() {
     }
   };
 
+  const { data: parentAiInsightNotifications = [] } = useQuery({
+    queryKey: ['parent-ai-insight-notifs', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_ai_insight', true)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      return (data || []).map(n => ({
+        id: n.id, title: n.title, description: n.message, type: n.type as any, timestamp: n.created_at, is_ai_insight: true
+      }));
+    },
+    enabled: !!user?.id
+  });
+
   const parentAlerts = [
+    ...parentAiInsightNotifications,
     ...(Array.isArray(homeworkStatus) ? homeworkStatus : []).filter(hs => hs.homework?.due_date && isPast(new Date(hs.homework.due_date)) && !['completed', 'checked'].includes(hs.status)).map(hs => ({
       id: `hw-${hs.id}`,
       title: `Overdue Homework: ${hs.homework?.title}`,
@@ -469,6 +515,14 @@ export default function ParentDashboard() {
         </div>
 
         <div className="flex flex-wrap gap-4 items-center">
+          <Button
+            onClick={() => navigate('/parent-snapshot')}
+            className="rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[10px] tracking-widest h-12 px-6 shadow-indigo-200 shadow-lg border-none"
+          >
+            <Brain className="mr-2 h-4 w-4" />
+            Daily Snapshot
+          </Button>
+
           {linkedStudents.length > 1 && (
             <Select value={selectedStudentId || ''} onValueChange={setSelectedStudentId}>
               <SelectTrigger className="w-56 bg-card/60 backdrop-blur-md border border-border/40 shadow-soft rounded-[1.25rem] font-black uppercase text-[10px] tracking-widest h-12 px-6">
@@ -545,6 +599,7 @@ export default function ParentDashboard() {
       {/* Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
+           <AIInsightsWidget insights={studentAiInsights} title="Academic Forecast" />
            <DigitalNoticeBoard centerId={user?.center_id || ""} role="parent" grade={student?.grade || undefined} />
 
            <div className="space-y-2">

@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, Bell, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, Bell, X, Brain, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -13,6 +13,7 @@ export interface AlertItem {
   description?: string;
   type: "success" | "warning" | "info" | "error";
   timestamp: string;
+  is_ai_insight?: boolean;
 }
 
 interface AlertListProps {
@@ -79,13 +80,24 @@ export const AlertList = ({
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="p-4 rounded-2xl bg-white border border-slate-100 flex gap-4 hover:shadow-md transition-all group"
+                  className={cn(
+                    "p-4 rounded-2xl bg-white border border-slate-100 flex gap-4 hover:shadow-md transition-all group",
+                    alert.is_ai_insight && "border-indigo-100 bg-indigo-50/10"
+                  )}
                 >
-                  <div className={cn("p-3 rounded-xl shrink-0 h-fit group-hover:scale-110 transition-transform", typeStyles[alert.type])}>
-                    <Bell className="h-5 w-5" />
+                  <div className={cn(
+                    "p-3 rounded-xl shrink-0 h-fit group-hover:scale-110 transition-transform",
+                    alert.is_ai_insight ? "bg-indigo-500/10 text-indigo-600" : typeStyles[alert.type]
+                  )}>
+                    {alert.is_ai_insight ? <Brain className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-base font-bold text-foreground/90">{alert.title}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-base font-bold text-foreground/90">{alert.title}</h4>
+                      {alert.is_ai_insight && (
+                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 text-[8px] font-black uppercase">AI Insight</Badge>
+                      )}
+                    </div>
                     {alert.description && (
                       <p className="text-sm text-slate-500 font-medium">{alert.description}</p>
                     )}
@@ -125,14 +137,21 @@ export const AlertList = ({
                 onClick={() => onItemClick?.(alert)}
                 className={cn(
                   "p-4 flex gap-4 hover:bg-muted/5 transition-colors",
-                  onItemClick && "cursor-pointer"
+                  onItemClick && "cursor-pointer",
+                  alert.is_ai_insight && "bg-indigo-50/5"
                 )}
               >
-                <div className={cn("p-2 rounded-full shrink-0 h-fit", typeStyles[alert.type])}>
-                  <Bell className="h-4 w-4" />
+                <div className={cn(
+                  "p-2 rounded-full shrink-0 h-fit",
+                  alert.is_ai_insight ? "bg-indigo-500/10 text-indigo-600" : typeStyles[alert.type]
+                )}>
+                  {alert.is_ai_insight ? <Brain className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-foreground/90 leading-none">{alert.title}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-foreground/90 leading-none">{alert.title}</h4>
+                    {alert.is_ai_insight && <div className="h-1 w-1 rounded-full bg-indigo-500" />}
+                  </div>
                   {alert.description && (
                     <p className="text-xs text-muted-foreground leading-tight">{alert.description}</p>
                   )}
