@@ -1,7 +1,7 @@
 import { logger } from "@/utils/logger";
 import React, { useEffect, useMemo, useState } from "react";
 import { UserRole } from "@/types/roles";
-import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Bus, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Search, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, Bell, Book, BookOpen, Sparkles, Bus, Calendar, CalendarIcon, CheckCircle, CheckCircle2, ClipboardCheck, Clock, DollarSign, Download, Eye, FileText, GraduationCap, Home, Info, Paintbrush, Printer, Search, Star, Target, TrendingUp, User, Users, Wallet, XCircle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -519,7 +519,7 @@ export default function ParentDashboard() {
             onClick={() => navigate('/parent-snapshot')}
             className="rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[10px] tracking-widest h-12 px-6 shadow-indigo-200 shadow-lg border-none"
           >
-            <Brain className="mr-2 h-4 w-4" />
+            <Sparkles className="mr-2 h-4 w-4" />
             Daily Snapshot
           </Button>
 

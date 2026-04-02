@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, AlertTriangle, TrendingDown, TrendingUp, Info } from "lucide-react";
+import { Sparkles, AlertTriangle, TrendingDown, TrendingUp, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ export const AIInsightsWidget: React.FC<AIInsightsWidgetProps> = ({
   const getIcon = (type: AIInsight['type']) => {
     switch (type) {
       case 'risk': return <TrendingDown className="h-4 w-4" />;
-      case 'sentiment': return <Brain className="h-4 w-4" />;
+      case 'sentiment': return <Sparkles className="h-4 w-4" />;
       case 'fee': return <AlertTriangle className="h-4 w-4" />;
       default: return <Info className="h-4 w-4" />;
     }
@@ -45,7 +45,7 @@ export const AIInsightsWidget: React.FC<AIInsightsWidgetProps> = ({
     <Card className="border-none shadow-strong bg-gradient-to-br from-indigo-50/50 to-white backdrop-blur-md rounded-[2.5rem] overflow-hidden border border-indigo-100/50">
       <CardHeader className="bg-indigo-500/5 border-b border-indigo-100/30 p-6">
         <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-2">
-          <Brain className="h-5 w-5 animate-pulse" /> {title}
+          <Sparkles className="h-5 w-5 animate-pulse" /> {title}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">

@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, Bell, X, Brain, type LucideIcon } from "lucide-react";
+import { ArrowRight, Bell, X, Sparkles, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -89,7 +89,7 @@ export const AlertList = ({
                     "p-3 rounded-xl shrink-0 h-fit group-hover:scale-110 transition-transform",
                     alert.is_ai_insight ? "bg-indigo-500/10 text-indigo-600" : typeStyles[alert.type]
                   )}>
-                    {alert.is_ai_insight ? <Brain className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
+                    {alert.is_ai_insight ? <Sparkles className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export const AlertList = ({
                   "p-2 rounded-full shrink-0 h-fit",
                   alert.is_ai_insight ? "bg-indigo-500/10 text-indigo-600" : typeStyles[alert.type]
                 )}>
-                  {alert.is_ai_insight ? <Brain className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+                  {alert.is_ai_insight ? <Sparkles className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">

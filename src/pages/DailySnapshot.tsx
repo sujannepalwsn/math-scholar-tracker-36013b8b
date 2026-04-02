@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Star,
   ChevronRight,
-  Brain
+  Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -84,7 +84,7 @@ export default function DailySnapshot() {
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-white/20 backdrop-blur-md">
-                    <Brain className="h-5 w-5" />
+                    <Sparkles className="h-5 w-5" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">AI Learning Forecast</p>
