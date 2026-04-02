@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLoginSettings } from "@/hooks/use-login-settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DynamicIcon } from "@/components/auth/LandingPageComponents";
+import HeroSectionEditor from "./HeroSectionEditor";
 
 const COMMON_ICONS = [
   "Shield", "LayoutDashboard", "Users", "Briefcase", "BookOpen",
@@ -177,6 +178,9 @@ const LandingPageEditor = () => {
         <TabsList className="bg-muted/50 p-1 rounded-xl h-14 mb-8">
           <TabsTrigger value="hero" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Hero & Login</TabsTrigger>
           {activeTab === 'center' && (
+            <TabsTrigger value="slider" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Hero Slider</TabsTrigger>
+          )}
+          {activeTab === 'center' && (
             <>
               <TabsTrigger value="features" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Marketing Features</TabsTrigger>
               <TabsTrigger value="footer" className="rounded-lg px-8 font-bold data-[state=active]:bg-background">Footer & Links</TabsTrigger>
@@ -184,6 +188,10 @@ const LandingPageEditor = () => {
             </>
           )}
         </TabsList>
+
+        <TabsContent value="slider" className="space-y-6">
+          <HeroSectionEditor />
+        </TabsContent>
 
         <TabsContent value="hero" className="space-y-6">
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
