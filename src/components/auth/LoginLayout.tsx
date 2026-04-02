@@ -146,7 +146,10 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         .ring-primary { --tw-ring-color: ${primaryColor} !important; }
       `}} />
       {/* Dynamic Background / Slider */}
-      <div className="fixed inset-0 lg:right-[550px] z-0 overflow-hidden transition-all duration-500">
+      <div className={cn(
+        "fixed inset-0 z-0 overflow-hidden transition-all duration-500",
+        slides && slides.length > 0 ? "lg:right-[500px]" : ""
+      )}>
         {slides && slides.length > 0 ? (
           <HeroSlider slides={slides} />
         ) : (
@@ -222,7 +225,7 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
         </section>
 
         {/* Persistent Floating Login Card (Desktop Only) */}
-        <div className="hidden lg:block fixed top-[120px] right-[30px] xl:right-[60px] z-[100] w-[460px]">
+        <div className="hidden lg:block fixed top-[120px] right-[20px] xl:right-[40px] z-[100] w-[460px]">
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}

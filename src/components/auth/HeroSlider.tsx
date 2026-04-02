@@ -30,6 +30,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
     Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })
   ]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -44,14 +46,18 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     setSelectedIndex(emblaApi.selectedScrollSnap());
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
   }, [emblaApi]);
 
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
     emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
     return () => {
       emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
     };
   }, [emblaApi, onSelect]);
 
@@ -115,7 +121,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
               {/* Text Content Layer */}
               <div className={cn(
-                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-24 md:pb-32 justify-end",
+                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-28 md:pb-32 justify-end transition-all duration-500",
                 slide.text_align === 'center' ? 'items-center text-center' :
                 slide.text_align === 'right' ? 'items-end text-right' : 'items-start text-left'
               )}>
@@ -130,7 +136,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                          className="space-y-6"
                        >
                          {slide.title && (
-                           <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase mb-4">
+                           <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-4">
                              {slide.title.split(' ').map((word, i, arr) => (
                                <span key={i} className={cn(i === arr.length - 1 ? "text-primary" : "")}>
                                  {word}{' '}
@@ -176,7 +182,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                variant="outline"
                size="icon"
                onClick={() => emblaApi?.scrollPrev()}
-               className="rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12"
+               disabled={!canScrollPrev}
+               className={cn(
+                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12 transition-all",
+                 !canScrollPrev && "opacity-50 cursor-not-allowed"
+               )}
              >
                <ChevronLeft className="h-6 w-6" />
              </Button>
@@ -184,7 +194,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                variant="outline"
                size="icon"
                onClick={() => emblaApi?.scrollNext()}
-               className="rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12"
+               disabled={!canScrollNext}
+               className={cn(
+                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12 transition-all",
+                 !canScrollNext && "opacity-50 cursor-not-allowed"
+               )}
              >
                <ChevronRight className="h-6 w-6" />
              </Button>
