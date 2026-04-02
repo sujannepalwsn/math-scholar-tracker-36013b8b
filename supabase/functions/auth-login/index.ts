@@ -30,7 +30,7 @@ serve(async (req) => {
     // Fetch user by username
     const { data: userData, error: userError } = await supabaseClient
       .from('users')
-      .select('*, teachers(contract_end_date), centers(is_active)')
+      .select('*, teachers(contract_end_date, is_active), centers(is_active)')
       .eq('username', username)
       .single();
 
@@ -72,20 +72,39 @@ serve(async (req) => {
       );
     }
 
-    // Check for Teacher contract expiry
-    if (userData.role === 'teacher' && userData.teachers?.[0]?.contract_end_date) {
-      const contractEndDate = new Date(userData.teachers[0].contract_end_date);
-      if (contractEndDate < new Date()) {
-        // Auto-deactivate in DB
+    // Check for Teacher specific status
+    if (userData.role === 'teacher' && userData.teachers?.[0]) {
+      const teacher = userData.teachers[0];
+
+      // 1. Check for manual deactivation in teachers table
+      if (teacher.is_active === false) {
+        // Ensure the users table is also synced if it wasn't
         await supabaseClient
           .from('users')
           .update({ is_active: false })
           .eq('id', userData.id);
 
         return new Response(
-          JSON.stringify({ success: false, error: 'Contract expired. Account deactivated.' }),
+          JSON.stringify({ success: false, error: 'Teacher account suspended. Please contact administrator.' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
         );
+      }
+
+      // 2. Check for contract expiry
+      if (teacher.contract_end_date) {
+        const contractEndDate = new Date(teacher.contract_end_date);
+        if (contractEndDate < new Date()) {
+          // Auto-deactivate in DB
+          await supabaseClient
+            .from('users')
+            .update({ is_active: false })
+            .eq('id', userData.id);
+
+          return new Response(
+            JSON.stringify({ success: false, error: 'Contract expired. Account deactivated.' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+          );
+        }
       }
     }
 
