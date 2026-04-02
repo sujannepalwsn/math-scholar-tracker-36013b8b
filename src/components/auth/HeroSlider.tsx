@@ -4,7 +4,7 @@ import Fade from 'embla-carousel-fade';
 import Autoplay from 'embla-carousel-autoplay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
@@ -115,11 +115,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
               {/* Text Content Layer */}
               <div className={cn(
-                "relative z-10 w-full h-full flex flex-col justify-center px-6 md:px-24",
+                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-24 md:pb-32 justify-end",
                 slide.text_align === 'center' ? 'items-center text-center' :
                 slide.text_align === 'right' ? 'items-end text-right' : 'items-start text-left'
               )}>
-                <div className="max-w-4xl">
+                <div className="max-w-4xl w-full">
                    <AnimatePresence mode="wait">
                      {selectedIndex === index && (
                        <motion.div
@@ -129,9 +129,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                          transition={{ duration: 0.8, ease: "easeOut" }}
                          className="space-y-6"
                        >
-
                          {slide.title && (
-                           <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter uppercase">
+                           <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase mb-4">
                              {slide.title.split(' ').map((word, i, arr) => (
                                <span key={i} className={cn(i === arr.length - 1 ? "text-primary" : "")}>
                                  {word}{' '}
@@ -140,22 +139,24 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                            </h1>
                          )}
 
-                         {slide.subtitle && (
-                           <p className="text-lg md:text-xl text-slate-300 font-medium leading-relaxed max-w-2xl">
-                             {slide.subtitle}
-                           </p>
-                         )}
+                         <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6">
+                            {slide.subtitle && (
+                              <p className="text-sm md:text-lg text-slate-300 font-medium leading-relaxed max-w-xl">
+                                {slide.subtitle}
+                              </p>
+                            )}
 
-                         {slide.cta_text && slide.cta_link && (
-                           <div className="pt-4">
-                             <Link to={slide.cta_link}>
-                               <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-8 h-14 text-lg shadow-xl shadow-primary/20 group">
-                                 {slide.cta_text}
-                                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                               </Button>
-                             </Link>
-                           </div>
-                         )}
+                            {slide.cta_text && slide.cta_link && (
+                              <div className="shrink-0">
+                                <Link to={slide.cta_link}>
+                                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-8 h-12 md:h-14 text-base md:text-lg shadow-xl shadow-primary/20 group">
+                                    {slide.cta_text}
+                                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                                  </Button>
+                                </Link>
+                              </div>
+                            )}
+                         </div>
                        </motion.div>
                      )}
                    </AnimatePresence>
@@ -166,21 +167,44 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
         </div>
       </div>
 
-      {/* Pagination dots */}
+      {/* Navigation Controls */}
       {slides.length > 1 && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-3">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => emblaApi?.scrollTo(index)}
-              className={cn(
-                "h-1.5 transition-all duration-500 rounded-full",
-                selectedIndex === index ? "w-10 bg-primary" : "w-2 bg-white/20 hover:bg-white/40"
-              )}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
+        <>
+          {/* Desktop Navigation Arrows */}
+          <div className="hidden md:flex absolute bottom-10 right-10 z-30 gap-4">
+             <Button
+               variant="outline"
+               size="icon"
+               onClick={() => emblaApi?.scrollPrev()}
+               className="rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12"
+             >
+               <ChevronLeft className="h-6 w-6" />
+             </Button>
+             <Button
+               variant="outline"
+               size="icon"
+               onClick={() => emblaApi?.scrollNext()}
+               className="rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-12 w-12"
+             >
+               <ChevronRight className="h-6 w-6" />
+             </Button>
+          </div>
+
+          {/* Pagination dots (centered on mobile, left on desktop) */}
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 md:left-24 md:translate-x-0 z-20 flex gap-3">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => emblaApi?.scrollTo(index)}
+                className={cn(
+                  "h-1.5 transition-all duration-500 rounded-full",
+                  selectedIndex === index ? "w-10 bg-primary" : "w-2 bg-white/20 hover:bg-white/40"
+                )}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
