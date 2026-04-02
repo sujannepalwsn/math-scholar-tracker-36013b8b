@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/image-utils";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import { logger } from "@/utils/logger";
+import { HeaderConfig, HeaderElement } from "../center/header-builder/types";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -59,8 +60,65 @@ export default function DashboardHeader() {
     );
   }
 
-  const canEdit = hasActionPermission(user, 'settings_access', 'edit');
+  const headerConfig = center?.header_config as unknown as HeaderConfig;
 
+  // Render Dynamic Header Builder Layout
+  if (headerConfig && headerConfig.elements && headerConfig.elements.length > 0) {
+    return (
+      <Card
+        className="border-none shadow-glass overflow-hidden rounded-[2.5rem] md:rounded-[4rem] mb-8 relative group/header transition-all duration-500"
+        style={{
+            height: headerConfig.height,
+            width: "100%",
+            backgroundColor: headerConfig.backgroundColor || "white"
+        }}
+      >
+        {/* Background Image */}
+        {headerConfig.backgroundUrl && (
+          <div className="absolute inset-0 z-0">
+            <img
+              src={headerConfig.backgroundUrl}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundColor: headerConfig.overlayColor || "black",
+                opacity: (headerConfig.overlayOpacity ?? 0) / 100
+              }}
+            />
+          </div>
+        )}
+
+        {/* Dynamic Elements */}
+        <div className="absolute inset-0 z-10">
+          {headerConfig.elements.map((el: HeaderElement) => (
+            <div
+              key={el.id}
+              style={{
+                position: "absolute",
+                left: el.x,
+                top: el.y,
+                width: el.width,
+                height: el.height,
+                ...el.styles,
+                overflow: "hidden"
+              }}
+            >
+              {el.type === "text" ? (
+                <div style={{ ...el.styles }}>{el.content}</div>
+              ) : (
+                <img src={el.content} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              )}
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
+  // Fallback to Legacy Template
   const header_overlay_opacity = (center?.header_overlay_opacity ?? 90) / 100;
   const details_font_color = (center?.theme as any)?.details_font_color || "#64748b";
 
