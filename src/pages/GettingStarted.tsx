@@ -388,11 +388,15 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
         </div>
       )}
 
+      <div className="container mx-auto relative z-10 text-center flex flex-col items-center">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer z-40 pointer-events-auto"
+          className={cn(
+            "absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer z-40 pointer-events-auto",
+            hasSlides && "hidden md:flex" // Hide on mobile if slider present to avoid overlap with pagination
+          )}
           onClick={scrollToNext}
         >
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Explore</span>

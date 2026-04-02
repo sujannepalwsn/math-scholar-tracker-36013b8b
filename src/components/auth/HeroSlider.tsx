@@ -130,7 +130,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
 
               {/* Text Content Layer */}
               <div className={cn(
-                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-24 md:pb-32 justify-end transition-all duration-500 pointer-events-none",
+                "relative z-10 w-full h-full flex flex-col px-6 md:px-24 pb-20 md:pb-32 justify-end transition-all duration-500 pointer-events-none",
                 slide.text_align === 'center' ? 'items-center text-center' :
                 slide.text_align === 'right' ? 'items-end text-right' : 'items-start text-left'
               )}>
@@ -142,10 +142,10 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                          animate={{ opacity: 1, y: 0 }}
                          exit={{ opacity: 0, y: -30 }}
                          transition={{ duration: 0.8, ease: "easeOut" }}
-                         className="space-y-6"
+                         className="space-y-4 md:space-y-6"
                        >
                          {slide.title && (
-                           <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase mb-4">
+                           <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-7xl font-black text-white leading-[0.95] tracking-tighter uppercase mb-1 md:mb-4">
                              {slide.title.split(' ').map((word, i, arr) => (
                                <span key={i} className={cn(i === arr.length - 1 ? "text-primary" : "")}>
                                  {word}{' '}
@@ -155,22 +155,22 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                          )}
 
                          <div className={cn(
-                           "flex flex-col md:flex-row justify-between gap-6",
+                           "flex flex-col md:flex-row justify-between gap-4 md:gap-6",
                            slide.text_align === 'center' ? 'items-center' :
                            slide.text_align === 'right' ? 'items-end' : 'items-start'
                          )}>
                             {slide.subtitle && (
-                              <p className="text-sm md:text-lg text-slate-300 font-medium leading-relaxed max-w-xl">
+                              <p className="text-[10px] sm:text-sm md:text-lg text-slate-300 font-medium leading-relaxed max-w-xl">
                                 {slide.subtitle}
                               </p>
                             )}
 
                             {slide.cta_text && slide.cta_link && (
-                              <div className="shrink-0">
+                              <div className="shrink-0 mt-2 md:mt-0">
                                 <Link to={slide.cta_link}>
-                                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-8 h-12 md:h-14 text-base md:text-lg shadow-xl shadow-primary/20 group">
+                                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white font-black rounded-full px-4 md:px-8 h-9 md:h-14 text-xs md:text-lg shadow-xl shadow-primary/20 group">
                                     {slide.cta_text}
-                                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight className="ml-1 md:ml-2 h-3 w-3 md:h-5 md:w-5 group-hover:translate-x-1 transition-transform" />
                                   </Button>
                                 </Link>
                               </div>
@@ -190,18 +190,18 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
       {slides.length > 1 && (
         <>
           {/* Navigation Arrows (Visible on all devices as requested) */}
-          <div className="absolute bottom-10 right-6 md:right-10 z-30 flex gap-3 md:gap-4">
+          <div className="absolute bottom-6 md:bottom-10 right-4 md:right-10 z-30 flex gap-2 md:gap-4">
              <Button
                variant="outline"
                size="icon"
                onClick={() => emblaApi?.scrollPrev()}
                disabled={!canScrollPrev}
                className={cn(
-                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-10 w-10 md:h-12 md:w-12 transition-all backdrop-blur-sm",
+                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-8 w-8 md:h-12 md:w-12 transition-all backdrop-blur-sm",
                  !canScrollPrev && "opacity-50 cursor-not-allowed"
                )}
              >
-               <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
+               <ChevronLeft className="h-4 w-4 md:h-6 md:w-6" />
              </Button>
              <Button
                variant="outline"
@@ -209,16 +209,16 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                onClick={() => emblaApi?.scrollNext()}
                disabled={!canScrollNext}
                className={cn(
-                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-10 w-10 md:h-12 md:w-12 transition-all backdrop-blur-sm",
+                 "rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-8 w-8 md:h-12 md:w-12 transition-all backdrop-blur-sm",
                  !canScrollNext && "opacity-50 cursor-not-allowed"
                )}
              >
-               <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
+               <ChevronRight className="h-4 w-4 md:h-6 md:w-6" />
              </Button>
           </div>
 
           {/* Pagination dots (centered on mobile, left on desktop) */}
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 md:left-24 md:translate-x-0 z-40 flex gap-3">
+          <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 md:left-24 md:translate-x-0 z-40 flex gap-2 md:gap-3">
             {slides.map((_, index) => (
               <button
                 key={index}
