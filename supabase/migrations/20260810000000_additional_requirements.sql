@@ -24,11 +24,17 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
 -- Enable RLS for platform_settings
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public can view platform settings" ON public.platform_settings
-    FOR SELECT USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'platform_settings' AND policyname = 'Public can view platform settings') THEN
+        CREATE POLICY "Public can view platform settings" ON public.platform_settings FOR SELECT USING (true);
+    END IF;
 
-CREATE POLICY "Super Admins manage platform settings" ON public.platform_settings
-    FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'platform_settings' AND policyname = 'Super Admins manage platform settings') THEN
+        CREATE POLICY "Super Admins manage platform settings" ON public.platform_settings FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    END IF;
+END
+$$;
 
 -- Initialize SaaS payment details
 INSERT INTO public.platform_settings (key, value)
@@ -56,11 +62,17 @@ CREATE TABLE IF NOT EXISTS public.system_pages (
 -- Enable RLS for system_pages
 ALTER TABLE public.system_pages ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public can view system pages" ON public.system_pages
-    FOR SELECT USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'system_pages' AND policyname = 'Public can view system pages') THEN
+        CREATE POLICY "Public can view system pages" ON public.system_pages FOR SELECT USING (true);
+    END IF;
 
-CREATE POLICY "Super Admins manage system pages" ON public.system_pages
-    FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'system_pages' AND policyname = 'Super Admins manage system pages') THEN
+        CREATE POLICY "Super Admins manage system pages" ON public.system_pages FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    END IF;
+END
+$$;
 
 -- 6. Add indexes to suggestions for performance
 CREATE INDEX IF NOT EXISTS idx_suggestions_center_id ON public.suggestions(center_id);
