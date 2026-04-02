@@ -8,6 +8,7 @@ import {
   Info, AlertCircle, Upload, ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -42,12 +43,24 @@ export default function SaaSBookingPage() {
     },
   });
 
+  const [formData, setFormData] = React.useState({
+    fullName: "",
+    institutionName: "",
+    email: "",
+    phone: "",
+    address: ""
+  });
+
   const [selectedMethod, setSelectedMethod] = React.useState<string | null>(null);
   const [proofFile, setProofFile] = React.useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const paymentDetails = platformSettings?.value || {};
 
   const handleBooking = async () => {
+    if (!formData.fullName || !formData.institutionName || !formData.email || !formData.phone) {
+       toast.error("Please complete the registration form first");
+       return;
+    }
     if (!selectedMethod) {
       toast.error("Please select a payment method");
       return;
@@ -83,12 +96,15 @@ export default function SaaSBookingPage() {
       // If not, we will log it as a demo request with payment proof for now
       // or just show a success message since we are a visitor.
 
-      const { error: bookingError } = await supabase.from('demo_requests').insert({
-        full_name: "SaaS Booking - " + planName,
-        email: "pending@verify.com",
-        institution_name: "Pending Verification",
-        phone: "0000000000",
-        message: `PLAN: ${planName} | METHOD: ${selectedMethod} | PROOF: ${proofUrl || 'None'}`,
+      const { error: bookingError } = await supabase.from('saas_bookings').insert({
+        full_name: formData.fullName,
+        email: formData.email,
+        institution_name: formData.institutionName,
+        phone: formData.phone,
+        address: formData.address,
+        plan_name: planName,
+        payment_method: selectedMethod,
+        payment_proof_url: proofUrl,
         status: 'pending'
       });
 
@@ -131,6 +147,65 @@ export default function SaaSBookingPage() {
                  <h1 className="text-4xl font-black tracking-tight">Complete Your Subscription</h1>
                  <p className="text-slate-500 font-medium">Secure your institution's digital infrastructure with the {plan?.name} plan.</p>
               </div>
+
+              <Card className="rounded-[2.5rem] border-none shadow-strong overflow-hidden">
+                 <CardHeader className="bg-slate-50 border-b p-8">
+                    <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+                       <ShieldCheck className="h-6 w-6 text-indigo-600" />
+                       Institution Registry
+                    </CardTitle>
+                 </CardHeader>
+                 <CardContent className="p-8 space-y-6">
+                    <div className="grid sm:grid-cols-2 gap-6">
+                       <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Full Name of Applicant</Label>
+                          <Input
+                            value={formData.fullName}
+                            onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                            placeholder="e.g. John Doe"
+                            className="h-12 rounded-2xl bg-slate-50 border-none shadow-inner"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Institution Name</Label>
+                          <Input
+                            value={formData.institutionName}
+                            onChange={(e) => setFormData({...formData, institutionName: e.target.value})}
+                            placeholder="e.g. Evergreen Academy"
+                            className="h-12 rounded-2xl bg-slate-50 border-none shadow-inner"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Official Email</Label>
+                          <Input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            placeholder="admin@institution.com"
+                            className="h-12 rounded-2xl bg-slate-50 border-none shadow-inner"
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contact Number</Label>
+                          <Input
+                            value={formData.phone}
+                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                            placeholder="98XXXXXXXX"
+                            className="h-12 rounded-2xl bg-slate-50 border-none shadow-inner"
+                          />
+                       </div>
+                    </div>
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Physical Address</Label>
+                       <Input
+                         value={formData.address}
+                         onChange={(e) => setFormData({...formData, address: e.target.value})}
+                         placeholder="Street, City, State"
+                         className="h-12 rounded-2xl bg-slate-50 border-none shadow-inner"
+                       />
+                    </div>
+                 </CardContent>
+              </Card>
 
               <Card className="rounded-[2.5rem] border-none shadow-strong overflow-hidden">
                  <CardHeader className="bg-slate-50 border-b p-8">

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { UserRole } from "@/types/roles";
-import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, ShieldCheck, Trash2, Upload, UserPlus, Users, X, KeyRound } from "lucide-react";
+import { Clock, DollarSign, Edit, FileText, GraduationCap, Loader2, Plus, Settings, ShieldCheck, Trash2, Upload, UserPlus, Users, X, KeyRound, Shield, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -910,14 +910,24 @@ export default function TeacherManagement() {
                             <TableCell className="px-6 py-4">
                               <Badge
                                 variant={teacher.is_active ? "pulse" : "destructive"}
-                                className="cursor-pointer"
-                                onClick={(e) => { e.stopPropagation(); toggleTeacherStatusMutation.mutate(teacher); }}
                               >
                                 {teacher.is_active ? 'Active' : 'Suspended'}
                               </Badge>
                             </TableCell>
                             <TableCell className="px-6 py-4 text-right pr-6">
                               <div className="flex justify-end gap-2 items-center">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn(
+                                    "h-9 w-9 rounded-xl bg-white shadow-soft transition-all",
+                                    teacher.is_active ? "text-rose-500 hover:bg-rose-50" : "text-emerald-500 hover:bg-emerald-50"
+                                  )}
+                                  onClick={(e) => { e.stopPropagation(); toggleTeacherStatusMutation.mutate(teacher); }}
+                                  title={teacher.is_active ? "Deactivate Account" : "Activate Account"}
+                                >
+                                  {teacher.is_active ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                                </Button>
                                 {!teacher.user_id ? (
                                   <Button
                                     variant="default"
@@ -1027,6 +1037,20 @@ export default function TeacherManagement() {
                       <KeyRound className="h-3.5 w-3.5 mr-2" /> Change Password
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "rounded-xl font-black uppercase text-[10px] tracking-widest h-11",
+                      selectedTeacher.is_active ? "text-rose-600 hover:bg-rose-50 border-rose-200" : "text-emerald-600 hover:bg-emerald-50 border-emerald-200"
+                    )}
+                    onClick={() => toggleTeacherStatusMutation.mutate(selectedTeacher)}
+                  >
+                    {selectedTeacher.is_active ? (
+                      <><ShieldOff className="h-3.5 w-3.5 mr-2" /> Deactivate Account</>
+                    ) : (
+                      <><Shield className="h-3.5 w-3.5 mr-2" /> Activate Account</>
+                    )}
+                  </Button>
                   <Button variant="outline" className="rounded-xl font-black uppercase text-[10px] tracking-widest h-11" onClick={() => handleHRClick(selectedTeacher)}>
                     <FileText className="h-3.5 w-3.5 mr-2" /> HR & Payroll
                   </Button>

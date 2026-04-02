@@ -24,11 +24,17 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
 -- Enable RLS for platform_settings
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public can view platform settings" ON public.platform_settings
-    FOR SELECT USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'platform_settings' AND policyname = 'Public can view platform settings') THEN
+        CREATE POLICY "Public can view platform settings" ON public.platform_settings FOR SELECT USING (true);
+    END IF;
 
-CREATE POLICY "Super Admins manage platform settings" ON public.platform_settings
-    FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'platform_settings' AND policyname = 'Super Admins manage platform settings') THEN
+        CREATE POLICY "Super Admins manage platform settings" ON public.platform_settings FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    END IF;
+END
+$$;
 
 -- Initialize SaaS payment details
 INSERT INTO public.platform_settings (key, value)
@@ -56,11 +62,17 @@ CREATE TABLE IF NOT EXISTS public.system_pages (
 -- Enable RLS for system_pages
 ALTER TABLE public.system_pages ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public can view system pages" ON public.system_pages
-    FOR SELECT USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'system_pages' AND policyname = 'Public can view system pages') THEN
+        CREATE POLICY "Public can view system pages" ON public.system_pages FOR SELECT USING (true);
+    END IF;
 
-CREATE POLICY "Super Admins manage system pages" ON public.system_pages
-    FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'system_pages' AND policyname = 'Super Admins manage system pages') THEN
+        CREATE POLICY "Super Admins manage system pages" ON public.system_pages FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    END IF;
+END
+$$;
 
 -- 6. Add indexes to suggestions for performance
 CREATE INDEX IF NOT EXISTS idx_suggestions_center_id ON public.suggestions(center_id);
@@ -78,3 +90,43 @@ ALTER TABLE public.centers ADD COLUMN IF NOT EXISTS notification_settings jsonb 
   "fee_reminders": true,
   "exam_results": true
 }'::jsonb;
+
+-- 8. Create saas_bookings table
+CREATE TABLE IF NOT EXISTS public.saas_bookings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    full_name TEXT NOT NULL,
+    institution_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    address TEXT,
+    plan_name TEXT NOT NULL,
+    payment_method TEXT NOT NULL,
+    payment_proof_url TEXT,
+    status TEXT DEFAULT 'pending' NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+-- Enable RLS
+ALTER TABLE public.saas_bookings ENABLE ROW LEVEL SECURITY;
+
+-- Policies for saas_bookings
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'saas_bookings' AND policyname = 'Public can insert saas bookings'
+    ) THEN
+        CREATE POLICY "Public can insert saas bookings" ON public.saas_bookings
+            FOR INSERT WITH CHECK (true);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'saas_bookings' AND policyname = 'Super Admins can manage saas bookings'
+    ) THEN
+        CREATE POLICY "Super Admins can manage saas bookings" ON public.saas_bookings
+            FOR ALL USING (auth.uid() IN (SELECT id FROM public.users WHERE role = 'super_admin'));
+    END IF;
+END
+$$;
