@@ -143,7 +143,7 @@ const FeaturesPage = () => {
                <div className="flex justify-between items-end">
                   <div>
                      <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Revenue</div>
-                     <div className="text-4xl font-black text-white">$142,500</div>
+                     <div className="text-4xl font-black text-white">NPR 142,500</div>
                   </div>
                   <div className="text-emerald-400 font-bold text-sm flex items-center gap-1">
                      <Zap className="h-4 w-4 fill-current" /> +12.5%
