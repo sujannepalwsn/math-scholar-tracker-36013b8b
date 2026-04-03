@@ -5,7 +5,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X, Settings, GripVer
 import { motion, AnimatePresence } from "framer-motion";
 import { logger } from "@/utils/logger";
 
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -67,12 +67,28 @@ export default function Sidebar({
     'Reports and Communication'
   ]);
   const [mounted, setMounted] = useState(false);
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(timer);
   }, []);
+
+  const isDemoSession = user?.username === 'demo@eduflow.com' || user?.username === 'demo';
+
+  const switchRole = (role: UserRole) => {
+    if (!user) return;
+    const updatedUser = { ...user, role };
+    setUser(updatedUser);
+    localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+
+    // Redirect to the appropriate dashboard
+    if (role === UserRole.ADMIN) navigate('/admin-dashboard');
+    else if (role === UserRole.CENTER) navigate('/center-dashboard');
+    else if (role === UserRole.TEACHER) navigate('/teacher-dashboard');
+    else if (role === UserRole.PARENT) navigate('/parent-dashboard');
+  };
 
   const handleCollapseToggle = () => {
     const newState = !isCollapsed;
@@ -556,11 +572,34 @@ export default function Sidebar({
           isCollapsed ? "w-20" : "w-64"
         )}
       >
-        <div className="flex items-center justify-between h-20 px-4">
-          {!isCollapsed && <div className="flex-1 min-w-0">{headerContent}</div>}
-          <Button variant="ghost" size="icon" onClick={handleCollapseToggle} className="h-8 w-8 shrink-0">
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
+        <div className="flex flex-col h-auto pt-4 pb-2 px-4 border-b border-white/5 space-y-4">
+          <div className="flex items-center justify-between">
+            {!isCollapsed && <div className="flex-1 min-w-0">{headerContent}</div>}
+            <Button variant="ghost" size="icon" onClick={handleCollapseToggle} className="h-8 w-8 shrink-0">
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {isDemoSession && !isCollapsed && (
+             <div className="p-1.5 rounded-2xl bg-white/5 border border-white/10 flex gap-1">
+                {[
+                  { r: UserRole.CENTER, l: 'Adm' },
+                  { r: UserRole.TEACHER, l: 'Tea' },
+                  { r: UserRole.PARENT, l: 'Par' }
+                ].map(item => (
+                  <button
+                    key={item.r}
+                    onClick={() => switchRole(item.r)}
+                    className={cn(
+                      "flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                      user.role === item.r ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                    )}
+                  >
+                    {item.l}
+                  </button>
+                ))}
+             </div>
+          )}
         </div>
         <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-1 custom-scrollbar">
           {renderNavLinks(filteredNavItems, false)}
