@@ -155,7 +155,7 @@ export default function AboutInstitution() {
         established_date: center.established_date || "",
         academic_info: center.academic_info || "",
         facilities: Array.isArray(center.facilities) ? (center.facilities as unknown as Facility[]) : [],
-        achievements: Array.isArray(center.achievements) ? (center.achievements as unknown as Achievement[]) : [],
+        achievements: Array.isArray(center.achievements) ? (center.achievements as unknown as Achievement[]) : [] as Achievement[],
         gallery: Array.isArray(center.gallery) ? (center.gallery as unknown as GalleryItem[]) : [],
         social_links: (center.social_links as unknown as SocialLinks) || {},
         institution_type: center.institution_type || "Co-Educational",
