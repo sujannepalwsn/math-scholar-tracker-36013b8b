@@ -193,7 +193,7 @@ export default function AboutInstitution() {
           facilities: facilities as any,
           achievements: achievements as any,
           gallery: gallery as any,
-          social_links: formData.social_links as unknown as Json,
+          social_links: formData.social_links as any,
           institution_type: formData.institution_type,
           phone: formData.phone,
           email: formData.email,

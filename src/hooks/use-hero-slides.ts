@@ -6,14 +6,14 @@ export interface HeroSlide {
   title: string | null;
   subtitle: string | null;
   media_url: string;
-  mobile_media_url: string | null;
-  media_type: 'image' | 'video';
+  mobile_media_url?: string | null;
+  media_type: string;
   cta_text: string | null;
   cta_link: string | null;
   order_index: number;
   is_active: boolean;
   overlay_opacity: number;
-  text_align: 'left' | 'center' | 'right';
+  text_align: string;
 }
 
 export const useHeroSlides = (includeInactive = false) => {

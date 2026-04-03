@@ -22,7 +22,7 @@ export default function AcademicYearManagement({ centerId }: { centerId: string 
       const { data, error } = await supabase.from("academic_years").select("*").eq("center_id", centerId).order("start_date", { ascending: false });
       if (error) {
         // Fallback for school_id if center_id doesn't exist yet
-        const { data: schoolData, error: schoolError } = await supabase.from("academic_years").select("*").eq("school_id", centerId).order("start_date", { ascending: false });
+        const { data: schoolData, error: schoolError } = await (supabase.from("academic_years").select("*") as any).eq("school_id", centerId).order("start_date", { ascending: false });
         if (schoolError) throw error;
         return schoolData;
       }

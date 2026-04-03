@@ -153,7 +153,7 @@ export default function MarksheetView() {
     let calculatedGPA = "0.0";
 
     if (gradingSystem) {
-      const range = gradingSystem.ranges.find((r: any) => percentage >= r.min && percentage <= r.max);
+      const range = ((gradingSystem as any).ranges as any[])?.find((r: any) => percentage >= r.min && percentage <= r.max);
       if (range) {
         calculatedGrade = range.grade;
         calculatedGPA = range.gpa.toFixed(2);

@@ -133,7 +133,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       role: it.role as any,
       featureName: it.feature_name,
       feature_name: it.feature_name,
-      category: cat?.name,
+      category: cat?.name as any,
       unreadCount: (it.route === "/teacher-messages" || it.route === "/messages") ? unreadMessageCount : undefined,
       is_active: it.is_active
     };

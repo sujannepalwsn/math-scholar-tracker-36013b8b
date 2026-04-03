@@ -826,7 +826,7 @@ export default function LessonPlans() {
                     <div className="text-center space-y-2">
                       <div className="border-t-2 border-slate-900 pt-2">
                         <p className="font-black uppercase text-[10px]">Subject Teacher's Signature</p>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1">{viewingLessonPlan.teachers?.name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1">{(viewingLessonPlan as any).teachers?.name}</p>
                       </div>
                     </div>
                     <div className="text-center space-y-2">

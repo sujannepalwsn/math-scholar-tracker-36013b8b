@@ -88,7 +88,7 @@ const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
       });
 
       if (error) {
-        logger.error("Error recording payment via RPC:", error, { invoiceId: paymentForm.invoice_id });
+        console.error("Error recording payment via RPC:", error, { invoiceId: paymentForm.invoice_id });
         throw error;
       }
     },
