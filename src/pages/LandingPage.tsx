@@ -154,6 +154,11 @@ const LandingPage = () => {
                 </div>
              </DialogContent>
            </Dialog>
+           <Link to="/login">
+             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
+               Login
+             </Button>
+           </Link>
            <Link to="/onboarding">
              <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 shadow-lg shadow-primary/20">
                Get Started

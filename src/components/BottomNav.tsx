@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { FileText, GraduationCap, Home, ShieldCheck, X } from "lucide-react";
+import { FileText, GraduationCap, Home, ShieldCheck, X, LayoutList } from "lucide-react";
 
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -40,8 +40,9 @@ export default function BottomNav({ navItems }: BottomNavProps) {
   const academicsItems = filteredItems.filter(item => item.category === 'Academics');
   const administrationItems = filteredItems.filter(item => item.category === 'Administration');
   const reportsItems = filteredItems.filter(item => item.category === 'Reports and Communication');
+  const moreItems = filteredItems.filter(item => !item.category && item.label !== "Dashboard");
 
-  const handleMenuToggle = (menu: 'Academics' | 'Administration' | 'Reports and Communication') => {
+  const handleMenuToggle = (menu: 'Academics' | 'Administration' | 'Reports and Communication' | 'More') => {
     if (activeMenu === menu) {
       closeMenu();
     } else {
@@ -116,8 +117,9 @@ export default function BottomNav({ navItems }: BottomNavProps) {
       {renderSubMenu('Academics', academicsItems)}
       {renderSubMenu('Administration', administrationItems)}
       {renderSubMenu('Reports and Communication', reportsItems)}
+      {renderSubMenu('More', moreItems)}
 
-      <div className="fixed bottom-0 inset-x-0 h-16 bg-card border-t flex items-center justify-between px-2 z-40 md:hidden">
+      <div className="fixed bottom-0 inset-x-0 h-16 bg-card border-t flex items-center justify-between px-2 z-40 md:hidden overflow-x-auto custom-scrollbar no-scrollbar">
         {dashboardItem && (
           <button
             onClick={(e) => handleNavigation(dashboardItem.to, e)}
@@ -173,6 +175,19 @@ export default function BottomNav({ navItems }: BottomNavProps) {
             {reportsItems.some(i => i.unreadCount && i.unreadCount > 0) && (
               <span className="absolute top-0 right-4 h-2 w-2 bg-destructive rounded-full" />
             )}
+          </button>
+        )}
+
+        {moreItems.length > 0 && (
+          <button
+            onClick={() => handleMenuToggle('More')}
+            className={cn(
+              "flex flex-col items-center gap-1 min-w-[64px] transition-all relative active:scale-95",
+              activeMenu === 'More' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <LayoutList className="h-5 w-5" />
+            <span className="text-[10px] font-medium">More</span>
           </button>
         )}
       </div>

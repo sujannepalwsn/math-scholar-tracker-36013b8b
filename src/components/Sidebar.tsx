@@ -23,7 +23,7 @@ interface NavItem {
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration' | 'Reports and Communication';
+  category?: 'Academics' | 'Administration' | 'Reports and Communication' | 'More';
 }
 
 interface SidebarProps {
@@ -64,7 +64,8 @@ export default function Sidebar({
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     'Academics',
     'Administration',
-    'Reports and Communication'
+    'Reports and Communication',
+    'More'
   ]);
   const [mounted, setMounted] = useState(false);
   const { user, setUser } = useAuth();
@@ -193,8 +194,11 @@ export default function Sidebar({
 
     // Ensure "Dashboard" is always first, then sort by category
     const sortedItems = [...items].sort((a, b) => {
-      if (a.to.endsWith('/dashboard') || a.to === '/dashboard') return -1;
-      if (b.to.endsWith('/dashboard') || b.to === '/dashboard') return 1;
+      const isDashboardA = a.to.includes('dashboard') || a.to === '/';
+      const isDashboardB = b.to.includes('dashboard') || b.to === '/';
+
+      if (isDashboardA && !isDashboardB) return -1;
+      if (!isDashboardA && isDashboardB) return 1;
 
       const catA = a.category || "Uncategorized";
       const catB = b.category || "Uncategorized";
@@ -203,11 +207,10 @@ export default function Sidebar({
     });
 
     const renderedItems: React.ReactNode[] = [];
-    let currentCategory: string | undefined = undefined;
-    let currentCategoryItems: React.ReactNode[] = [];
 
     // Separate items into categorized and uncategorized
-    const uncategorizedItems = sortedItems.filter(it => !it.category);
+    const uncategorizedItems = sortedItems.filter(it => !it.category && !(it.to.includes('dashboard') || it.to === '/'));
+    const dashboardItems = sortedItems.filter(it => it.to.includes('dashboard') || it.to === '/');
     const categorizedItems = sortedItems.filter(it => it.category);
 
     const flushCategory = (category: string, children: React.ReactNode[]) => {
@@ -225,7 +228,6 @@ export default function Sidebar({
             if (catObj) {
               handleDrop(e, 'category', catObj.id);
             } else if (isEditMode) {
-              // Handle drop on static categories that might not be in DB yet
               e.preventDefault();
             }
           }}
@@ -281,93 +283,71 @@ export default function Sidebar({
         </div>
       );
 
-      if (isMobile) {
-        return (
-          <div key={`mob-cat-group-${category}`} className="space-y-0.5 mt-4 first:mt-0">
-            {categoryHeader}
-            {isExpanded && children}
-          </div>
-        );
-      } else {
-        return (
-          <div key={`cat-group-${category}`} className="space-y-0.5 mt-5 first:mt-0">
-            {!isCollapsed ? (
-              categoryHeader
-            ) : (
-              <div className="mx-3 border-t border-border my-3 first:hidden" />
-            )}
-            {(isExpanded || isCollapsed) && children}
-          </div>
-        );
-      }
+      return (
+        <div key={isMobile ? `mob-cat-group-${category}` : `cat-group-${category}`} className={cn("space-y-0.5 first:mt-0", isMobile ? "mt-4" : "mt-5")}>
+          {!isCollapsed || isMobile ? (
+            categoryHeader
+          ) : (
+            <div className="mx-3 border-t border-border my-3 first:hidden" />
+          )}
+          {(isExpanded || isCollapsed || isMobile) && children}
+        </div>
+      );
     };
 
-    // Handle Categorized Items First
-    categorizedItems.forEach((item, index) => {
-      if (item.category !== currentCategory) {
-        if (currentCategory) {
-          renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
-          currentCategoryItems = [];
-        }
-        currentCategory = item.category;
-      }
-
+    const renderLink = (item: NavItem) => {
       const Icon = item.icon;
       const isActive = location.pathname === item.to;
-
       const dItem = dynamicItems.find(it => it.route === item.to && it.role === (item.role || user?.role));
       const isItemActive = (item as any).is_active !== false;
 
-      const link = isMobile ? (
-        <motion.div
-          key={item.to}
-          whileTap={{ scale: 0.98 }}
-          className="flex items-center group/item"
-          draggable={isEditMode && !!dItem}
-          onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
-          onDragOver={handleDragOver}
-          onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
-        >
-          {isEditMode && dItem && (
-            <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
-              <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
-              <Switch
-                className="scale-50 h-3 w-6"
-                checked={isItemActive}
-                onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
-              />
-            </div>
-          )}
-          <Link
-            to={item.to}
-            onClick={handleMobileClose}
-            className={cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all flex-1 relative overflow-hidden",
-              isActive
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                : "text-muted-foreground hover:bg-primary/5 hover:text-primary",
-              !isItemActive && "opacity-50 grayscale"
-            )}
+      if (isMobile) {
+        return (
+          <motion.div
+            key={item.to}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center group/item"
+            draggable={isEditMode && !!dItem}
+            onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
+            onDragOver={handleDragOver}
+            onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
           >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span className="flex items-center justify-between flex-1 truncate">
-              {item.label}
-              {item.unreadCount && item.unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
-                  {item.unreadCount}
-                </Badge>
-              )}
-            </span>
-            {isActive && (
-              <motion.div
-                layoutId="active-pill-mobile"
-                className="absolute inset-0 bg-primary -z-10"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-              />
+            {isEditMode && dItem && (
+              <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
+                <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
+                <Switch
+                  className="scale-50 h-3 w-6"
+                  checked={isItemActive}
+                  onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
+                />
+              </div>
             )}
-          </Link>
-        </motion.div>
-      ) : (
+            <Link
+              to={item.to}
+              onClick={handleMobileClose}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all flex-1 relative overflow-hidden",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary",
+                !isItemActive && "opacity-50 grayscale"
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="flex items-center justify-between flex-1 truncate">
+                {item.label}
+                {item.unreadCount && item.unreadCount > 0 && (
+                  <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
+                    {item.unreadCount}
+                  </Badge>
+                )}
+              </span>
+            </Link>
+          </motion.div>
+        );
+      }
+
+      return (
         <Tooltip key={item.to} delayDuration={0}>
           <TooltipTrigger asChild>
             <motion.div
@@ -438,126 +418,27 @@ export default function Sidebar({
           )}
         </Tooltip>
       );
+    };
 
-      if (currentCategory) {
-        currentCategoryItems.push(link);
-      } else {
-        // Uncategorized items are added to the general list immediately
-        renderedItems.push(link);
-      }
+    // 1. Dashboard items first (no category)
+    dashboardItems.forEach(item => renderedItems.push(renderLink(item)));
 
-      if (index === categorizedItems.length - 1) {
-        if (currentCategory) {
-          renderedItems.push(flushCategory(currentCategory, [...currentCategoryItems]));
-        }
-      }
+    // 2. Map categorized items
+    const categoriesMap = new Map<string, React.ReactNode[]>();
+    categorizedItems.forEach(item => {
+      const cat = item.category!;
+      if (!categoriesMap.has(cat)) categoriesMap.set(cat, []);
+      categoriesMap.get(cat)!.push(renderLink(item));
     });
 
-    // Handle Uncategorized Items Last
-    uncategorizedItems.forEach((item) => {
-      const Icon = item.icon;
-      const isActive = location.pathname === item.to;
-      const dItem = dynamicItems.find(it => it.route === item.to && it.role === (item.role || user?.role));
-      const isItemActive = (item as any).is_active !== false;
-
-      const link = isMobile ? (
-        <div
-          key={item.to}
-          className="flex items-center group/item"
-          draggable={isEditMode && !!dItem}
-          onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
-          onDragOver={handleDragOver}
-          onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
-        >
-          {isEditMode && dItem && (
-            <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
-              <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
-              <Switch
-                className="scale-50 h-3 w-6"
-                checked={isItemActive}
-                onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
-              />
-            </div>
-          )}
-          <Link
-            to={item.to}
-            onClick={handleMobileClose}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors flex-1",
-              isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              !isItemActive && "opacity-50 grayscale"
-            )}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span className="flex items-center justify-between flex-1 truncate">
-              {item.label}
-              {item.unreadCount && item.unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
-                  {item.unreadCount}
-                </Badge>
-              )}
-            </span>
-          </Link>
-        </div>
-      ) : (
-        <Tooltip key={item.to} delayDuration={0}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center group/item"
-              draggable={isEditMode && !!dItem}
-              onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
-            >
-              {isEditMode && dItem && !isCollapsed && (
-                <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>
-                  <GripVertical className="h-3 w-3 text-muted-foreground/30 cursor-grab" />
-                  <Switch
-                    className="scale-50 h-3 w-6"
-                    checked={isItemActive}
-                    onCheckedChange={(checked) => toggleItemActive.mutate({ id: dItem.id, is_active: checked })}
-                  />
-                </div>
-              )}
-              <Link
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex-1",
-                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  isCollapsed ? "justify-center px-0" : "",
-                  !isItemActive && "opacity-50 grayscale"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {!isCollapsed && (
-                  <span className="flex items-center justify-between w-full truncate">
-                    {item.label}
-                    {item.unreadCount && item.unreadCount > 0 && (
-                      <Badge variant="destructive" className="ml-auto text-[10px] px-1.5 py-0">
-                        {item.unreadCount}
-                      </Badge>
-                    )}
-                  </span>
-                )}
-              </Link>
-            </div>
-          </TooltipTrigger>
-          {isCollapsed && (
-            <TooltipContent side="right">
-              <span className="flex items-center gap-2">
-                {item.label}
-                {item.unreadCount && item.unreadCount > 0 && (
-                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                    {item.unreadCount}
-                  </Badge>
-                )}
-              </span>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      );
-      renderedItems.push(link);
+    categoriesMap.forEach((links, catName) => {
+      renderedItems.push(flushCategory(catName, links));
     });
+
+    // 3. More items last
+    if (uncategorizedItems.length > 0) {
+      renderedItems.push(flushCategory('More', uncategorizedItems.map(item => renderLink(item))));
+    }
 
     return renderedItems;
   };
