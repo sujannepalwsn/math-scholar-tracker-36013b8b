@@ -34,6 +34,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,8 @@ const LandingPage = () => {
   const { login } = useAuth();
   const { data: stats } = useSystemStats();
   const [partners, setPartners] = useState<{ id: string; name: string; logo_url: string; address: string }[]>([]);
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPartners = async () => {
@@ -454,26 +457,55 @@ const LandingPage = () => {
                   <div className="flex items-center justify-between mb-8">
                      <div>
                         <h4 className="text-slate-900 font-black text-xl">Select a Date & Time</h4>
-                        <p className="text-slate-500 font-medium text-sm">15 Min Strategy Call</p>
+                        <p className="text-slate-500 font-medium text-sm">15 Min Strategy Call • May 2024</p>
                      </div>
                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                           <div key={i} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                              {i+10}
-                           </div>
-                        ))}
+                        {[1, 2, 3, 4, 5, 6, 7].map(i => {
+                           const date = i + 10;
+                           return (
+                              <button
+                                 key={i}
+                                 onClick={() => setSelectedDate(date)}
+                                 className={cn(
+                                    "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all",
+                                    selectedDate === date ? "bg-primary text-white" : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                                 )}
+                              >
+                                 {date}
+                              </button>
+                           );
+                        })}
                      </div>
                   </div>
 
                   <div className="flex-1 grid grid-cols-2 gap-4 overflow-y-auto pr-2 custom-scrollbar">
                      {["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM"].map(time => (
-                        <Button key={time} variant="outline" className="h-16 rounded-2xl border-slate-200 text-slate-600 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
+                        <Button
+                           key={time}
+                           variant="outline"
+                           onClick={() => setSelectedTime(time)}
+                           className={cn(
+                              "h-16 rounded-2xl border-slate-200 font-bold transition-all",
+                              selectedTime === time ? "bg-primary/10 border-primary text-primary" : "text-slate-600 hover:border-primary hover:text-primary hover:bg-primary/5"
+                           )}
+                        >
                            {time}
                         </Button>
                      ))}
                   </div>
 
-                  <Button className="mt-8 h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-xl shadow-primary/20">
+                  <Button
+                     onClick={() => {
+                        if (!selectedDate || !selectedTime) {
+                           toast.error("Please select both a date and a time.");
+                           return;
+                        }
+                        toast.success(`Strategy call booked for May ${selectedDate} at ${selectedTime}!`);
+                        setSelectedDate(null);
+                        setSelectedTime(null);
+                     }}
+                     className="mt-8 h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-xl shadow-primary/20"
+                  >
                      Confirm Booking
                   </Button>
                </div>

@@ -350,7 +350,7 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
       <div className={cn(
         "z-0 transition-all duration-500",
         hasSlides
-          ? "md:absolute md:inset-0 w-[92%] md:w-full aspect-[4/5] md:aspect-auto rounded-[2rem] md:rounded-none overflow-hidden shadow-2xl md:shadow-none"
+          ? "md:absolute md:inset-0 w-[85%] md:w-full aspect-[4/5] md:aspect-auto rounded-[2rem] md:rounded-none overflow-hidden shadow-2xl md:shadow-none"
           : "absolute inset-0"
       )}>
         {hasSlides ? (

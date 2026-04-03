@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
-import * as bcrypt from "https://esm.sh/bcryptjs";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') ?? '*',
@@ -13,9 +13,28 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+      return new Response(
+        JSON.stringify({ success: false, error: 'Internal server configuration error' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid request body' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
 
     const {
       schoolName,
@@ -25,7 +44,7 @@ serve(async (req) => {
       adminPassword,
       modules,
       plan
-    } = await req.json();
+    } = body;
 
     if (!schoolName || !adminEmail || !adminPassword) {
       return new Response(
@@ -62,8 +81,8 @@ serve(async (req) => {
 
     if (centerError) throw centerError;
 
-    // Hash password using bcryptjs
-    const passwordHash = await bcrypt.hash(adminPassword, 12);
+    // Hash password using native Deno bcrypt
+    const passwordHash = await bcrypt.hash(adminPassword);
 
     // Create user in public.users
     const { data: userCreated, error: userCreatedError } = await supabase
@@ -85,17 +104,24 @@ serve(async (req) => {
 
     // Provision default permissions
     if (modules && modules.length > 0) {
-        // Logic to enable selected modules in center_feature_permissions
-        // For simplicity in this demo function, we'll just insert a record
+        // Map the selected modules to the actual database columns
         await supabase.from('center_feature_permissions').upsert({
             center_id: center.id,
-            // Map the selected modules to the boolean columns
-            academic_management: modules.includes('academic'),
-            attendance_management: modules.includes('attendance'),
-            finance_management: modules.includes('finance'),
-            communication_management: modules.includes('comm'),
-            inventory_management: modules.includes('inventory'),
-            hr_management: modules.includes('hr')
+            lesson_plans: modules.includes('academic'),
+            lesson_tracking: modules.includes('academic'),
+            test_management: modules.includes('academic'),
+            exams_results: modules.includes('academic'),
+            take_attendance: modules.includes('attendance'),
+            attendance_summary: modules.includes('attendance'),
+            finance: modules.includes('finance'),
+            messaging: modules.includes('comm'),
+            meetings_management: modules.includes('comm'),
+            calendar_events: modules.includes('comm'),
+            inventory_assets: modules.includes('inventory'),
+            hr_management: modules.includes('hr'),
+            leave_management: modules.includes('hr'),
+            dashboard_access: true,
+            about_institution: true
         });
     }
 

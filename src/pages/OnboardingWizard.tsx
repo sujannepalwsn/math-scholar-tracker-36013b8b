@@ -87,7 +87,7 @@ const OnboardingWizard = () => {
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data && data.success) {
         toast.success("Account created successfully! Logging you in...");
 
         // Auto-login after successful registration
@@ -100,7 +100,8 @@ const OnboardingWizard = () => {
           navigate("/login");
         }
       } else {
-        toast.error(data.error || "Registration failed. Please try again.");
+        const errorMsg = data?.error || "Registration failed. Please check your connection or try a different email.";
+        toast.error(errorMsg);
       }
     } catch (err: any) {
       console.error("Onboarding error:", err);
