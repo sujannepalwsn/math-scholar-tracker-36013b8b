@@ -151,14 +151,35 @@ const OnboardingWizard = () => {
                    </div>
                 ))}
              </div>
-             <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+             <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden relative">
                 <motion.div
                    className="h-full bg-primary"
                    initial={{ width: "25%" }}
                    animate={{ width: `${(currentStep / 4) * 100}%` }}
                    transition={{ duration: 0.5 }}
                 />
+                {/* Gamification Badges */}
+                <div className="absolute top-0 left-0 w-full h-full flex justify-between px-2 pointer-events-none">
+                   {[1, 2, 3, 4].map(i => (
+                      <div key={i} className={cn(
+                        "w-1 h-full transition-colors",
+                        currentStep > i ? "bg-white/20" : "bg-transparent"
+                      )} />
+                   ))}
+                </div>
              </div>
+             {currentStep > 1 && (
+                <motion.div
+                   initial={{ opacity: 0, y: 10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="mt-4 flex items-center gap-2 text-emerald-400 font-bold text-[10px] uppercase tracking-widest"
+                >
+                   <Zap className="h-3 w-3" /> Reward Unlocked: {
+                     currentStep === 2 ? "Identity Verified" :
+                     currentStep === 3 ? "System Ready" : "Finalizing School"
+                   }
+                </motion.div>
+             )}
           </div>
 
           <Card className="border-none shadow-2xl bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] overflow-hidden text-white">

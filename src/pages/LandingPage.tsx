@@ -450,11 +450,32 @@ const LandingPage = () => {
                      <span className="text-xl font-bold">Custom pricing for enterprise needs</span>
                   </div>
                </div>
-               <div className="rounded-[3rem] bg-white p-2 shadow-2xl h-[600px] overflow-hidden">
-                  {/* Placeholder for Calendly Embed */}
-                  <div className="w-full h-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold">
-                     [Calendly Embed Placeholder]
+               <div className="rounded-[3rem] bg-white p-6 shadow-2xl h-[600px] overflow-hidden flex flex-col">
+                  <div className="flex items-center justify-between mb-8">
+                     <div>
+                        <h4 className="text-slate-900 font-black text-xl">Select a Date & Time</h4>
+                        <p className="text-slate-500 font-medium text-sm">15 Min Strategy Call</p>
+                     </div>
+                     <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                           <div key={i} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                              {i+10}
+                           </div>
+                        ))}
+                     </div>
                   </div>
+
+                  <div className="flex-1 grid grid-cols-2 gap-4 overflow-y-auto pr-2 custom-scrollbar">
+                     {["09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM"].map(time => (
+                        <Button key={time} variant="outline" className="h-16 rounded-2xl border-slate-200 text-slate-600 font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
+                           {time}
+                        </Button>
+                     ))}
+                  </div>
+
+                  <Button className="mt-8 h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-xl shadow-primary/20">
+                     Confirm Booking
+                  </Button>
                </div>
             </div>
          </div>
@@ -495,9 +516,9 @@ const LandingPage = () => {
             <div className="space-y-6">
                <h4 className="font-black uppercase tracking-widest text-sm text-white">Product</h4>
                <ul className="space-y-4 text-slate-400 font-bold text-sm">
-                  <li className="hover:text-primary transition-colors cursor-pointer">Features</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Solutions</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Pricing</li>
+                  <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
+                  <li><a href="#solutions" className="hover:text-primary transition-colors">Solutions</a></li>
+                  <li><a href="#pricing" className="hover:text-primary transition-colors">Pricing</a></li>
                   <li className="hover:text-primary transition-colors cursor-pointer">Security</li>
                </ul>
             </div>
