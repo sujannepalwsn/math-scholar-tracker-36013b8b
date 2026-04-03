@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&family=Cinzel:wght@400;700;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -125,6 +126,28 @@
     @apply bg-card/60 backdrop-blur-xl border border-border/40 shadow-soft;
   }
 
+  .premium-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-400 to-indigo-500;
+  }
+
+  .shadow-strong {
+    box-shadow: 0 32px 64px -16px rgba(0,0,0,0.5);
+  }
+
+  .shadow-glass {
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+  }
+
   .glass-card-dark {
     @apply bg-slate-900/60 backdrop-blur-xl border border-border/10 shadow-strong;
   }
@@ -177,7 +200,6 @@
 }
 
 /* Custom Fonts - Decorative Fallback for Algerian */
-@import url('https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&family=Cinzel:wght@400;700;900&display=swap');
 
 @font-face {
   font-family: 'Algerian';
