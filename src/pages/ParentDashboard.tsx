@@ -118,7 +118,7 @@ export default function ParentDashboard() {
       if (error) throw error;
       return (data as any[] || []).map(d => ({
         id: d.id,
-        type: d.risk_level === 'High' ? 'risk' : 'sentiment',
+        type: (d.risk_level === 'High' ? 'risk' : 'sentiment') as 'risk' | 'sentiment' | 'fee',
         level: (d.risk_level as any) || 'Low',
         title: d.risk_level === 'Low' ? 'Learning Trajectory: Positive' : 'Academic Attention Required',
         description: d.risk_level === 'Low'
