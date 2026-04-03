@@ -31,35 +31,45 @@ serve(async (req) => {
       );
     }
 
-    // Check if admin exists
-    const { data: existingAdmin } = await supabase
-      .from('users')
-      .select('id')
-      .eq('username', 'sujan1nepal@gmail.com')
-      .eq('role', 'admin')
-      .single();
+    // Read credentials from request body — never hardcoded
+    const { username, password } = await req.json();
 
-    if (existingAdmin) {
+    if (!username || !password) {
       return new Response(
-        JSON.stringify({ success: true, message: 'Admin already exists' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Username and password are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Hash the password "precioussn" using bcryptjs
-    const passwordHash = await bcrypt.hash('precioussn', 12);
+    // Validate input
+    if (typeof username !== 'string' || username.length < 3 || username.length > 255) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Username must be between 3 and 255 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Password must be between 8 and 128 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Hash the password using bcryptjs
+    const passwordHash = await bcrypt.hash(password, 12);
 
     // Create admin user
     const { data: admin, error } = await supabase
       .from('users')
       .insert({
-        username: 'sujan1nepal@gmail.com',
+        username,
         password_hash: passwordHash,
         role: 'admin',
         center_id: null,
         is_active: true
       })
-      .select()
+      .select('id, username')
       .single();
 
     if (error) throw error;
@@ -71,9 +81,9 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error(JSON.stringify({ event: 'error', message: 'Init admin error:', details: error }));
+    console.error(JSON.stringify({ event: 'error', message: 'Init admin error' }));
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: 'An error occurred during initialization' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
