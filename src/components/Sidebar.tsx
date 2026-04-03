@@ -200,9 +200,9 @@ export default function Sidebar({
     if (items.length === 0) return null;
 
     // Ensure "Dashboard" is always first, then sort by category
-    const sortedItems = [...items].sort((a, b) => {
-      const isDashboardA = a.to.includes('dashboard') || a.to === '/';
-      const isDashboardB = b.to.includes('dashboard') || b.to === '/';
+    const sortedItems = [...items].filter(it => it.to).sort((a, b) => {
+      const isDashboardA = a.to?.includes('dashboard') || a.to === '/';
+      const isDashboardB = b.to?.includes('dashboard') || b.to === '/';
 
       if (isDashboardA && !isDashboardB) return -1;
       if (!isDashboardA && isDashboardB) return 1;
@@ -216,8 +216,8 @@ export default function Sidebar({
     const renderedItems: React.ReactNode[] = [];
 
     // Separate items into categorized and uncategorized
-    const uncategorizedItems = sortedItems.filter(it => !it.category && !(it.to.includes('dashboard') || it.to === '/'));
-    const dashboardItems = sortedItems.filter(it => it.to.includes('dashboard') || it.to === '/');
+    const uncategorizedItems = sortedItems.filter(it => !it.category && !(it.to?.includes('dashboard') || it.to === '/'));
+    const dashboardItems = sortedItems.filter(it => it.to?.includes('dashboard') || it.to === '/');
     const categorizedItems = sortedItems.filter(it => it.category);
 
     const flushCategory = (category: string, children: React.ReactNode[]) => {

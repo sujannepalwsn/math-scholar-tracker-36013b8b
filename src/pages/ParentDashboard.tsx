@@ -5,7 +5,7 @@ import {
   Brain, Activity, ListChecks, Sparkles, Trophy, Star, BookMarked,
   TrendingUp, TrendingDown, Clock, Wallet, CalendarIcon, Book,
   GraduationCap, Search, Calendar, Eye, MessageSquare, ChevronRight,
-  Info, AlertTriangle, ClipboardCheck, BarChart3, Bus
+  Info, AlertTriangle, ClipboardCheck, BarChart3, Bus, Loader2
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -47,10 +47,17 @@ export default function ParentDashboard() {
     to: today
   });
 
-  const linkedStudents = Array.isArray(user?.linked_students) ? user.linked_students : [];
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
-    user?.student_id || (linkedStudents.length > 0 ? linkedStudents[0].id : null)
-  );
+  const linkedStudents = useMemo(() => {
+    const raw = user?.linked_students;
+    if (!Array.isArray(raw)) return [];
+    return raw.map(s => typeof s === 'string' ? { id: s, name: 'Student' } : s);
+  }, [user?.linked_students]);
+
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(() => {
+    if (user?.student_id) return user.student_id;
+    if (linkedStudents.length > 0) return linkedStudents[0].id;
+    return null;
+  });
 
   const [selectedChapterDetail, setSelectedChapterDetail] = useState<any>(null);
   const [selectedDisciplineIssue, setSelectedDisciplineIssue] = useState<any>(null);
@@ -65,11 +72,11 @@ export default function ParentDashboard() {
   const activeStudentId = selectedStudentId || user?.student_id;
 
   // Real data fetching
-  const { data: student } = useQuery({
+  const { data: student, isLoading: isStudentLoading } = useQuery({
     queryKey: ['student', activeStudentId],
     queryFn: async () => {
       if (!activeStudentId) return null;
-      const { data, error } = await supabase.from('students').select('*').eq('id', activeStudentId).single();
+      const { data, error } = await supabase.from('students').select('*').eq('id', activeStudentId).maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -85,13 +92,13 @@ export default function ParentDashboard() {
         p_subject: selectedSubject
       });
       if (error) throw error;
-      return (data as any[]).map(d => ({
-        date: format(new Date(d.evaluation_date), "MMM d"),
-        score: d.score,
-        maxScore: d.max_score,
-        percentage: d.percentage,
-        trendStatus: d.trend_status,
-        riskLevel: d.risk_level
+      return (data as any[] || []).map(d => ({
+        date: d.evaluation_date ? format(new Date(d.evaluation_date), "MMM d") : 'N/A',
+        score: d.score || 0,
+        maxScore: d.max_score || 100,
+        percentage: d.percentage || 0,
+        trendStatus: d.trend_status || 'Stable',
+        riskLevel: d.risk_level || 'Low'
       }));
     },
     enabled: !!activeStudentId
@@ -109,10 +116,10 @@ export default function ParentDashboard() {
         .limit(5);
 
       if (error) throw error;
-      return (data as any[]).map(d => ({
+      return (data as any[] || []).map(d => ({
         id: d.id,
         type: d.risk_level === 'High' ? 'risk' : 'sentiment',
-        level: d.risk_level as any,
+        level: (d.risk_level as any) || 'Low',
         title: d.risk_level === 'Low' ? 'Learning Trajectory: Positive' : 'Academic Attention Required',
         description: d.risk_level === 'Low'
           ? 'Consistency identified in current evaluation cycles. Positive momentum detected.'
@@ -185,13 +192,13 @@ export default function ParentDashboard() {
         .eq('student_id', activeStudentId)
         .order('date_achieved', { ascending: false });
       if (error) throw error;
-      return (data as any[]).map(d => ({
+      return (data as any[] || []).map(d => ({
         id: d.id,
-        type: d.milestone_type as any,
-        title: d.description.split(':')[0],
-        description: d.description.includes(':') ? d.description.split(':')[1].trim() : d.description,
-        date: format(new Date(d.date_achieved), "MMM d"),
-        metadata: d.metadata
+        type: d.milestone_type as any || 'effort',
+        title: (d.description || '').split(':')[0] || 'Achievement',
+        description: (d.description || '').includes(':') ? d.description.split(':')[1].trim() : (d.description || 'Achievement unlocked'),
+        date: d.date_achieved ? format(new Date(d.date_achieved), "MMM d") : 'Recent',
+        metadata: d.metadata || {}
       }));
     },
     enabled: !!activeStudentId
@@ -207,12 +214,12 @@ export default function ParentDashboard() {
         .eq('is_active', true)
         .order('priority', { ascending: false });
       if (error) throw error;
-      return (data as any[]).map(d => ({
+      return (data as any[] || []).map(d => ({
         id: d.id,
-        title: d.recommendation_text.split(':')[0],
-        description: d.recommendation_text.includes(':') ? d.recommendation_text.split(':')[1].trim() : d.recommendation_text,
-        urgency: d.priority >= 10 ? 'High' : d.priority >= 5 ? 'Medium' : 'Low',
-        actionType: d.action_type
+        title: (d.recommendation_text || '').split(':')[0] || 'Guidance',
+        description: (d.recommendation_text || '').includes(':') ? d.recommendation_text.split(':')[1].trim() : (d.recommendation_text || 'No description'),
+        urgency: (d.priority || 0) >= 10 ? 'High' : (d.priority || 0) >= 5 ? 'Medium' : 'Low',
+        actionType: d.action_type || 'General'
       }));
     },
     enabled: !!activeStudentId
@@ -334,6 +341,14 @@ export default function ParentDashboard() {
   if (!user || user.role !== UserRole.PARENT) {
     navigate('/login-parent');
     return null;
+  }
+
+  if (isStudentLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

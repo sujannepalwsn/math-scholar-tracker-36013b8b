@@ -36,7 +36,7 @@ export default function BottomNav({ navItems }: BottomNavProps) {
     return true;
   });
 
-  const dashboardItem = filteredItems.find(item => item.label === "Dashboard" || item.to.includes('dashboard'));
+  const dashboardItem = filteredItems.find(item => item.label === "Dashboard" || item.to?.includes('dashboard'));
 
   const categorizedItemsMap = useMemo(() => {
     const map = new Map<string, NavItem[]>();

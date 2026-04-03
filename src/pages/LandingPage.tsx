@@ -138,29 +138,14 @@ const LandingPage = () => {
           <Link to="/about" className="text-sm font-bold text-slate-300 hover:text-white transition-colors">About</Link>
         </nav>
 
-        <div className="flex items-center gap-4">
-           <Dialog>
-             <DialogTrigger asChild>
-               <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
-                 Watch Demo
-               </Button>
-             </DialogTrigger>
-             <DialogContent className="sm:max-w-[800px] bg-slate-900 border-white/10 p-0 overflow-hidden aspect-video">
-                <div className="w-full h-full bg-slate-800 flex items-center justify-center relative">
-                   <Play className="h-20 w-20 text-white/20" />
-                   <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                      <p className="text-white font-bold">Demo Video Placeholder</p>
-                   </div>
-                </div>
-             </DialogContent>
-           </Dialog>
+        <div className="flex items-center gap-2 md:gap-4">
            <Link to="/login">
-             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-6">
+             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-3 md:px-6 text-sm md:text-base">
                Login
              </Button>
            </Link>
            <Link to="/onboarding">
-             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-8 shadow-lg shadow-primary/20">
+             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-4 md:px-8 shadow-lg shadow-primary/20 text-sm md:text-base">
                Get Started
              </Button>
            </Link>
@@ -233,21 +218,6 @@ const LandingPage = () => {
                <Zap className="mr-2 h-6 w-6 text-yellow-400" /> Instant Sandbox
             </Button>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size="lg" variant="ghost" className="h-16 px-10 rounded-2xl text-lg font-black text-slate-400 hover:text-white">
-                  <Play className="mr-2 h-6 w-6 fill-current" /> Watch Demo
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[800px] bg-slate-900 border-white/10 p-0 overflow-hidden aspect-video">
-                 <div className="w-full h-full bg-slate-800 flex items-center justify-center relative">
-                    <Play className="h-20 w-20 text-white/20" />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                       <p className="text-white font-bold">Demo Video Placeholder</p>
-                    </div>
-                 </div>
-              </DialogContent>
-            </Dialog>
           </motion.div>
 
           <motion.p
@@ -292,7 +262,7 @@ const LandingPage = () => {
                 <div className="col-span-12 md:col-span-9 p-6 space-y-8">
                   <div className="grid grid-cols-3 gap-6">
                     {[
-                      { label: "Revenue", value: "$42.5K", color: "text-emerald-400" },
+                      { label: "Revenue", value: "NPR 42.5K", color: "text-emerald-400" },
                       { label: "Students", value: "1,280", color: "text-blue-400" },
                       { label: "Attendance", value: "94.2%", color: "text-purple-400" }
                     ].map(kpi => (
@@ -404,7 +374,7 @@ const LandingPage = () => {
                      <div className="grid grid-cols-2 gap-6 pt-10 border-t border-white/5">
                         <div className="p-6 rounded-2xl bg-white/5 border border-white/5 text-center">
                            <p className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-2">Monthly Savings</p>
-                           <p className="text-3xl font-black text-emerald-400 tracking-tighter">$<span id="calc-savings">3,600</span></p>
+                           <p className="text-3xl font-black text-emerald-400 tracking-tighter">NPR <span id="calc-savings">3,600</span></p>
                         </div>
                         <div className="p-6 rounded-2xl bg-white/5 border border-white/5 text-center">
                            <p className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-2">Hours Saved/mo</p>
@@ -569,20 +539,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-32 bg-slate-900/20 border-y border-white/5">
-        <div className="container mx-auto px-4">
-           <div className="text-center mb-24">
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase">Flexible plans for every scale.</h2>
-              <p className="text-xl text-slate-400 font-medium">Choose the perfect package for your school's unique requirements.</p>
-           </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              <PackageCard type="Basic" index={0} allModules={SYSTEM_MODULES} />
-              <PackageCard type="Standard" index={1} allModules={SYSTEM_MODULES} />
-              <PackageCard type="Premium" index={2} allModules={SYSTEM_MODULES} />
-           </div>
-        </div>
-      </section>
 
       {/* Trust & Testimonial */}
       <section id="about" className="py-32 overflow-hidden">
