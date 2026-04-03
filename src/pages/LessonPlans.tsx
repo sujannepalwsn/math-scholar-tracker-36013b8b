@@ -225,10 +225,10 @@ export default function LessonPlans() {
       };
 
       if (editingLessonPlan) {
-        const { error } = await supabase.from("lesson_plans").update(payload).eq("id", editingLessonPlan.id);
+        const { error } = await supabase.from("lesson_plans").update(payload as any).eq("id", editingLessonPlan.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("lesson_plans").insert(payload);
+        const { error } = await supabase.from("lesson_plans").insert(payload as any);
         if (error) throw error;
       }
 
