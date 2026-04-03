@@ -225,10 +225,10 @@ export default function LessonPlans() {
       };
 
       if (editingLessonPlan) {
-        const { error } = await supabase.from("lesson_plans").update(payload).eq("id", editingLessonPlan.id);
+        const { error } = await supabase.from("lesson_plans").update(payload as any).eq("id", editingLessonPlan.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("lesson_plans").insert(payload);
+        const { error } = await supabase.from("lesson_plans").insert(payload as any);
         if (error) throw error;
       }
 
@@ -326,7 +326,7 @@ export default function LessonPlans() {
     // Validate and set date
     if (data.date) {
       try {
-        const dateObj = new Date(data.date);
+        const dateObj = new Date(data.date as string);
         if (!isNaN(dateObj.getTime())) {
           setLessonDate(format(dateObj, "yyyy-MM-dd"));
         }
@@ -826,7 +826,7 @@ export default function LessonPlans() {
                     <div className="text-center space-y-2">
                       <div className="border-t-2 border-slate-900 pt-2">
                         <p className="font-black uppercase text-[10px]">Subject Teacher's Signature</p>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1">{viewingLessonPlan.teachers?.name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1">{(viewingLessonPlan as any).teachers?.name}</p>
                       </div>
                     </div>
                     <div className="text-center space-y-2">

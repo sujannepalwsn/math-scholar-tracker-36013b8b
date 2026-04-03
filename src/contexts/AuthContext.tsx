@@ -113,9 +113,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                   if (teacherPerms) {
                     updatedUser.teacherPermissions = teacherPerms;
-                    updatedUser.teacher_scope_mode = teacherPerms.teacher_scope_mode || 'restricted';
+                    updatedUser.teacher_scope_mode = (teacherPerms.teacher_scope_mode || 'restricted') as 'full' | 'restricted';
                   } else {
-                    updatedUser.teacher_scope_mode = 'restricted';
+                    updatedUser.teacher_scope_mode = 'restricted' as const;
                   }
                   hasChanges = true;
                 }
@@ -242,7 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (teacherPerms) {
             updatedUser.teacherPermissions = teacherPerms;
-            updatedUser.teacher_scope_mode = teacherPerms.teacher_scope_mode || 'restricted';
+            updatedUser.teacher_scope_mode = (teacherPerms.teacher_scope_mode || 'restricted') as 'full' | 'restricted';
           }
         }
       }

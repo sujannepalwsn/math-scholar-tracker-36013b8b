@@ -79,7 +79,7 @@ const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
       if (!invoice) throw new Error('Invoice not found');
 
       // Atomic RPC call to handle both payment record and invoice update
-      const { error } = await supabase.rpc('record_invoice_payment', {
+      const { error } = await (supabase.rpc as any)('record_invoice_payment', {
         p_invoice_id: paymentForm.invoice_id,
         p_amount: parseFloat(paymentForm.amount),
         p_payment_date: new Date().toISOString().split('T')[0],
@@ -88,7 +88,7 @@ const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
       });
 
       if (error) {
-        logger.error("Error recording payment via RPC:", error, { invoiceId: paymentForm.invoice_id });
+        console.error("Error recording payment via RPC:", error, { invoiceId: paymentForm.invoice_id });
         throw error;
       }
     },

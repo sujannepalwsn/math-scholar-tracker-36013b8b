@@ -220,13 +220,13 @@ export default function ExamManagement() {
       // Notify Parents/Students
       const { data: students, error: studError2 } = await supabase
         .from("students")
-        .select("user_id")
+        .select("id")
         .eq("center_id", centerId!)
         .in("grade", exam.applicable_grades || [exam.grade])
         .eq("is_active", true);
 
       if (!studError2 && students) {
-        const studentUserIds = students.map(s => s.user_id).filter(Boolean);
+        const studentUserIds = students.map(s => s.id).filter(Boolean);
         if (studentUserIds.length > 0) {
           const notifications = studentUserIds.map(uid => ({
             user_id: uid,
