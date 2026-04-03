@@ -97,6 +97,32 @@ export default function ParentDashboard() {
     enabled: !!activeStudentId
   });
 
+  const { data: aiInsights = [] } = useQuery({
+    queryKey: ['parent-ai-insights', activeStudentId],
+    queryFn: async () => {
+      if (!activeStudentId) return [];
+      const { data, error } = await supabase
+        .from('predictive_model_results')
+        .select('*')
+        .eq('student_id', activeStudentId)
+        .order('prediction_date', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return (data as any[]).map(d => ({
+        id: d.id,
+        type: d.risk_level === 'High' ? 'risk' : 'sentiment',
+        level: d.risk_level as any,
+        title: d.risk_level === 'Low' ? 'Learning Trajectory: Positive' : 'Academic Attention Required',
+        description: d.risk_level === 'Low'
+          ? 'Consistency identified in current evaluation cycles. Positive momentum detected.'
+          : 'Variation in performance trends identified. Review recommended.',
+        factors: d.suggested_interventions?.[0] ? { 'Action': d.suggested_interventions[0] } : undefined
+      }));
+    },
+    enabled: !!activeStudentId
+  });
+
   const { data: effortIndex = 0 } = useQuery({
     queryKey: ['effort-index', activeStudentId, dateRange],
     queryFn: async () => {
@@ -391,10 +417,7 @@ export default function ParentDashboard() {
         </div>
         <div className="lg:col-span-2">
            <AIInsightsWidget
-             insights={[
-               { id: '1', type: 'risk', level: 'High', title: 'Performance Dip in Algebra', description: 'Recent scores show a 15% decline from baseline.', factors: { 'Attendance': '95%', 'Quiz Avg': '65%' } },
-               { id: '2', type: 'sentiment', level: 'Low', title: 'Positive Motivation Streak', description: 'Scholar demonstrates high engagement during late evening study sessions.' }
-             ]}
+             insights={aiInsights}
              title="Predictive Performance Alerts"
            />
         </div>

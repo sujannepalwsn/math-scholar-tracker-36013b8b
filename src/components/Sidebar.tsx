@@ -67,6 +67,13 @@ export default function Sidebar({
     'Reports and Communication',
     'More'
   ]);
+
+  // Ensure categories are expanded when they change or for specific roles
+  useEffect(() => {
+    if (user?.role === UserRole.PARENT) {
+      setExpandedCategories(['Academics', 'Administration', 'Reports and Communication', 'More']);
+    }
+  }, [user?.role]);
   const [mounted, setMounted] = useState(false);
   const { user, setUser } = useAuth();
   const navigate = useNavigate();

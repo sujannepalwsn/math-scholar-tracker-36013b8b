@@ -64,4 +64,11 @@ BEGIN
     VALUES (v_center_id, 'vid_alg_01', 'Mastering Quadratic Equations', 'video', v_skill_id, 'Intermediate', 'https://example.com/quadratic')
     ON CONFLICT DO NOTHING;
 
+    -- 8. Seed Predictive Results (AI Insights)
+    INSERT INTO public.predictive_model_results (center_id, student_id, risk_level, confidence_score, suggested_interventions, prediction_date)
+    VALUES
+    (v_center_id, v_student_id, 'Low', 0.95, '["Maintain consistency"]', now()),
+    (v_center_id, v_student_id, 'Medium', 0.82, '["Review recent algebra quiz"]', now() - interval '7 days')
+    ON CONFLICT DO NOTHING;
+
 END $$;
