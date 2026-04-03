@@ -316,9 +316,9 @@ export default function Sidebar({
             whileTap={{ scale: 0.98 }}
             className="flex items-center group/item"
             draggable={isEditMode && !!dItem}
-            onDragStart={(e) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
+            onDragStart={(e: any) => dItem && handleDragStart(e, 'item', dItem.id, dItem.role)}
             onDragOver={handleDragOver}
-            onDrop={(e) => dItem && handleDrop(e, 'item', dItem.id)}
+            onDrop={(e: any) => dItem && handleDrop(e, 'item', dItem.id)}
           >
             {isEditMode && dItem && (
               <div className="flex flex-col gap-1 mr-2" onClick={e => e.stopPropagation()}>

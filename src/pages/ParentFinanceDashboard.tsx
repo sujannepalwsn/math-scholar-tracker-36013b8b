@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Invoice, Payment } from "@/integrations/supabase/finance-types"
 import { format, isPast } from "date-fns"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 
 const ParentFinanceDashboard = () => {
