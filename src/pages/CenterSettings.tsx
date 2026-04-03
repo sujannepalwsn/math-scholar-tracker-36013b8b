@@ -95,7 +95,7 @@ export default function CenterSettings() {
       setLongitude(center.longitude?.toString() || "");
       setRadiusMeters(center.radius_meters?.toString() || "100");
 
-      const savedTheme = center.theme;
+      const savedTheme = center.theme as any;
       if (savedTheme && typeof savedTheme === 'object') {
         setTheme({
           primary: savedTheme.primary || "#6366f1",
