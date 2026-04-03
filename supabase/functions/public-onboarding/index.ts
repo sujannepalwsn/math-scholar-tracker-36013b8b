@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import * as bcrypt from "https://esm.sh/bcryptjs";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') ?? '*',
@@ -81,8 +81,9 @@ serve(async (req) => {
 
     if (centerError) throw centerError;
 
-    // Hash password using native Deno bcrypt
-    const passwordHash = await bcrypt.hash(adminPassword);
+    // Hash password using bcryptjs (consistent with auth-login)
+    // Using 10 rounds for balance between security and performance in Edge environment
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
 
     // Create user in public.users
     const { data: userCreated, error: userCreatedError } = await supabase
