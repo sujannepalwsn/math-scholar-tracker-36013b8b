@@ -88,7 +88,7 @@ const LandingPage = () => {
       icon: <DollarSign className="h-6 w-6" />
     },
     {
-      id: "comm",
+      id: "communication",
       title: "Communication Suite",
       description: "Connect teachers, parents, and students seamlessly.",
       modules: [15, 16, 17],
@@ -327,7 +327,11 @@ const LandingPage = () => {
                    })}
                 </div>
 
-                <Button variant="ghost" className="mt-8 w-full group/btn hover:bg-primary/10 text-primary font-black uppercase text-[10px] tracking-widest">
+                <Button
+                   variant="ghost"
+                   className="mt-8 w-full group/btn hover:bg-primary/10 text-primary font-black uppercase text-[10px] tracking-widest"
+                   onClick={() => navigate(`/suite/${suite.id}`)}
+                >
                    Explore Suite <ChevronRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
               </div>

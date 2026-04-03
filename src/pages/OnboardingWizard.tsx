@@ -73,6 +73,11 @@ const OnboardingWizard = () => {
 
     setIsSubmitting(true);
     try {
+      console.log("Invoking public-onboarding with data:", {
+        schoolName: formData.schoolName,
+        adminEmail: formData.adminEmail
+      });
+
       const { data, error } = await supabase.functions.invoke('public-onboarding', {
         body: {
           schoolName: formData.schoolName,
@@ -105,7 +110,18 @@ const OnboardingWizard = () => {
       }
     } catch (err: any) {
       console.error("Onboarding error:", err);
-      toast.error(err.message || "An unexpected error occurred during onboarding.");
+      // Detailed error breakdown for Edge Function issues
+      let message = "An unexpected error occurred.";
+      if (err.name === 'FunctionsHttpError') {
+        message = `Server Error: ${err.message}`;
+      } else if (err.name === 'FunctionsRelayError') {
+        message = "Relay Error: The service is currently unreachable.";
+      } else if (err.name === 'FunctionsFetchError') {
+        message = "Fetch Error: Please check your internet connection.";
+      } else {
+        message = err.message || "An unexpected error occurred during onboarding.";
+      }
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

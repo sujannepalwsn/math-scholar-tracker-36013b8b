@@ -106,6 +106,7 @@ import SystemPage from "./pages/SystemPage";
 import SaaSBookingPage from "./pages/SaaSBookingPage";
 import LandingPage from "./pages/LandingPage";
 import OnboardingWizard from "./pages/OnboardingWizard";
+import SuiteExplorer from "./pages/SuiteExplorer";
 
 const queryClient = new QueryClient();
 
@@ -206,6 +207,7 @@ const App = () => {
               <Route path="/pages/:slug" element={<SystemPage />} />
               <Route path="/book-plan" element={<SaaSBookingPage />} />
               <Route path="/onboarding" element={<OnboardingWizard />} />
+              <Route path="/suite/:suiteId" element={<SuiteExplorer />} />
               <Route
                 path="/change-password"
                 element={
