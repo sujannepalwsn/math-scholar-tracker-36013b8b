@@ -155,7 +155,7 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
 
       {/* Navigation Bar */}
       <header className="relative z-50 w-full px-4 md:px-6 py-4 flex items-center justify-between border-b border-white/5 bg-slate-950/20 backdrop-blur-md">
-        <div className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3">
           <div className="p-1.5 md:p-2 rounded-xl bg-primary/20 border border-primary/20">
             {settings?.logo_url ? (
               <img src={settings.logo_url} alt="Logo" className="h-6 w-6 md:h-8 md:w-8 object-contain" />
@@ -163,14 +163,8 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
               <Shield className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             )}
           </div>
-          <span className="text-lg md:text-2xl font-black text-white tracking-tighter">EDU<span className="text-primary">FLOW</span></span>
-        </div>
-
-        <nav className="hidden lg:flex items-center gap-8">
-          <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Features</a>
-          <a href="#packages" onClick={(e) => { e.preventDefault(); document.getElementById('packages')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">Pricing</a>
-          <a href="#about" onClick={(e) => { e.preventDefault(); document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-bold text-slate-300 hover:text-white transition-colors">About</a>
-        </nav>
+          <span className="text-lg md:text-2xl font-black text-white tracking-tighter uppercase">EDU<span className="text-primary">FLOW</span></span>
+        </Link>
 
         <div className="flex items-center gap-2 md:gap-4">
            <Link to="/contact-sales">
@@ -187,33 +181,12 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="relative z-10 flex-1">
-
-        {/* Hero Section with Persistent Login Card */}
-        <section className="relative min-h-[90vh] flex items-center pt-20">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
-              {/* Hero Text */}
-              <div className="flex-1 max-w-3xl">
-                <HeroSection
-                  title={settings?.marketing_title || undefined}
-                  subtitle={settings?.marketing_subtitle || undefined}
-                  features={Array.isArray(settings?.features) ? (settings.features as any) : undefined}
-                />
-              </div>
-
-              {/* Desktop Placeholder for Floating Login Card */}
-              <div className="hidden lg:block w-[460px] shrink-0" />
-            </div>
-          </div>
-        </section>
-
-        {/* Persistent Floating Login Card (Desktop Only) */}
-        <div className="hidden lg:block fixed top-[120px] right-[20px] xl:right-[40px] z-[100] w-[460px]">
+      <main className="relative z-10 flex-1 flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-[460px]">
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
             <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.7)] bg-slate-900/40 backdrop-blur-[40px] border border-white/10 rounded-[2.5rem] overflow-hidden text-white">
               <CardHeader className="space-y-6 pt-10 pb-6 px-8">
@@ -354,199 +327,6 @@ const LoginLayout: React.FC<LoginLayoutProps> = ({
           </motion.div>
         </div>
 
-        {/* Mobile Login Card (Integrated in Flow) */}
-        <div className="lg:hidden container mx-auto px-4 py-12">
-           <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden text-white">
-              <CardHeader className="space-y-4 pt-8 pb-4 px-6">
-                <CardTitle className="text-3xl font-black tracking-tighter">
-                  {settings?.title || 'Sign In'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-8 px-6">
-                <form onSubmit={onSubmit} className="space-y-6">
-                  {/* Reuse same fields, but simplified for mobile if needed */}
-                  <div className="space-y-4">
-                    <Select value={currentRole} onValueChange={handleRoleChange}>
-                      <SelectTrigger className="h-12 rounded-xl border-white/10 bg-white/5">
-                        <SelectValue placeholder="Role" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-white/10 text-white">
-                        <SelectItem value="center">Tuition Center</SelectItem>
-                        <SelectItem value="teacher">Teacher Portal</SelectItem>
-                        <SelectItem value="parent">Parent Portal</SelectItem>
-                        <SelectItem value="admin">System Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Input
-                      placeholder={settings?.username_placeholder || 'Username'}
-                      className="h-12 rounded-xl border-white/10 bg-white/5"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      required
-                      disabled={loading}
-                    />
-
-                    <Input
-                      type="password"
-                      placeholder={settings?.password_placeholder || '••••••••'}
-                      className="h-12 rounded-xl border-white/10 bg-white/5"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                    />
-
-                    <Button
-                      type="submit"
-                      className="w-full h-12 text-md font-bold rounded-xl bg-primary"
-                      disabled={loading}
-                    >
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Enter Dashboard'}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-           </Card>
-        </div>
-
-        {/* Packages Grid */}
-        {toggles.show_packages && (
-          <section id="packages" className="py-32 relative overflow-hidden">
-            {/* Background Decor */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[180px] pointer-events-none" />
-
-            <div className="container mx-auto px-4 relative z-10">
-              <div className="flex flex-col lg:flex-row">
-                <div className="flex-1">
-                  <div className="text-center lg:text-left mb-20 space-y-4">
-                    <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">FLEXIBLE PLANS</h2>
-                    <p className="text-slate-400 text-lg max-w-2xl lg:mx-0 mx-auto font-medium leading-relaxed">
-                      Choose the perfect package for your school's unique requirements.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-8 max-w-5xl">
-                    {packages.map((type, idx) => (
-                      <PackageCard key={type} type={type} index={idx} allModules={SYSTEM_MODULES} />
-                    ))}
-                  </div>
-                </div>
-                {/* Desktop Space for Floating Login */}
-                <div className="hidden lg:block w-[460px] shrink-0" />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Features Grid */}
-        {toggles.show_features && (
-          <section id="features" className="py-32 bg-slate-950/30">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col lg:flex-row">
-                <div className="flex-1">
-                  <div className="text-center lg:text-left mb-20 space-y-4">
-                    <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase">Powerful Modules</h2>
-                    <p className="text-slate-400 text-lg max-w-2xl lg:mx-0 mx-auto font-medium leading-relaxed">
-                      Our platform is built on a modular architecture, allowing you to scale features as your institution grows.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-                    {sortedModules.map((module, idx) => (
-                      <FeatureCard key={module.id} module={module} index={idx} />
-                    ))}
-                  </div>
-                </div>
-                {/* Desktop Space for Floating Login */}
-                <div className="hidden lg:block w-[460px] shrink-0" />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* About / Stats Section */}
-        {toggles.show_stats && (
-          <section id="about" className="py-32 border-t border-white/5">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col lg:flex-row">
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-8">
-                  {[
-                    { label: "Active Students", value: stats?.students ? `${(stats.students / 1000).toFixed(1)}K+` : "..." },
-                    { label: "Total Teachers", value: stats?.teachers ? `${stats.teachers}+` : "..." },
-                    { label: "Partner Centers", value: stats?.centers ? `${stats.centers}+` : "..." },
-                    { label: "Data Uptime", value: "99.9%" },
-                    { label: "Years of Service", value: "12+" },
-                    { label: "Support", value: "24/7" }
-                  ].map((stat, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
-                      className="text-center lg:text-left space-y-2"
-                    >
-                      <p className="text-4xl md:text-5xl font-black text-white tracking-tighter">{stat.value}</p>
-                      <p className="text-sm font-bold text-primary uppercase tracking-widest">{stat.label}</p>
-                    </motion.div>
-                  ))}
-                </div>
-                <div className="hidden lg:block w-[460px] shrink-0" />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Partners Section */}
-        {partners.length > 0 && (
-          <section id="partners" className="py-24 border-t border-white/5 bg-slate-900/20">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col lg:flex-row">
-                <div className="flex-1">
-                  <div className="mb-16 text-center lg:text-left">
-                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase mb-4">Our Distinguished Partners</h2>
-                    <p className="text-slate-400 font-medium text-lg">Empowering leading educational institutions across the region.</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {partners.map((partner) => (
-                      <Link
-                        key={partner.id}
-                        to={`/institution/${partner.id}`}
-                      >
-                        <motion.div
-                          whileHover={{ y: -10, backgroundColor: "rgba(255,255,255,0.08)" }}
-                          className="p-8 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl transition-all group relative overflow-hidden"
-                        >
-                          <div className="flex items-start gap-5">
-                            <div className="h-16 w-16 rounded-2xl bg-white/10 p-2 flex items-center justify-center border border-white/10 group-hover:border-primary/50 transition-colors">
-                              {partner.logo_url ? (
-                                <img src={partner.logo_url} alt="" className="h-full w-full object-contain" />
-                              ) : (
-                                <Building className="h-8 w-8 text-primary/40" />
-                              )}
-                            </div>
-                            <div className="flex-1 space-y-1">
-                              <h4 className="font-black text-white group-hover:text-primary transition-colors text-lg line-clamp-1">{partner.name}</h4>
-                              <div className="flex items-center gap-1.5 text-slate-400">
-                                <MapPin className="h-3 w-3" />
-                                <span className="text-xs font-bold truncate max-w-[150px]">{partner.address || 'Location Hidden'}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="absolute bottom-4 right-6 flex items-center gap-2 text-primary font-black text-[10px] tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                            View Profile <ChevronRight className="h-3 w-3" />
-                          </div>
-                        </motion.div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-                <div className="hidden lg:block w-[460px] shrink-0" />
-              </div>
-            </div>
-          </section>
-        )}
       </main>
 
       {/* Modern Footer */}

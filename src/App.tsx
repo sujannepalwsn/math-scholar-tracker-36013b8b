@@ -104,6 +104,8 @@ import TransportManagementPage from "./pages/TransportManagement";
 import AboutInstitution from "./pages/AboutInstitution";
 import SystemPage from "./pages/SystemPage";
 import SaaSBookingPage from "./pages/SaaSBookingPage";
+import LandingPage from "./pages/LandingPage";
+import OnboardingWizard from "./pages/OnboardingWizard";
 
 const queryClient = new QueryClient();
 
@@ -191,6 +193,7 @@ const App = () => {
             <Routes>
 
               {/* Authentication & Public */}
+              <Route path="/" element={<LandingPage />} />
               <Route path="/init-admin" element={<InitAdmin />} />
               <Route path="/getting-started" element={<GettingStarted />} />
               <Route path="/contact-sales" element={<ContactSales />} />
@@ -202,6 +205,7 @@ const App = () => {
               <Route path="/institution/:id" element={<AboutInstitution />} />
               <Route path="/pages/:slug" element={<SystemPage />} />
               <Route path="/book-plan" element={<SaaSBookingPage />} />
+              <Route path="/onboarding" element={<OnboardingWizard />} />
               <Route
                 path="/change-password"
                 element={
@@ -258,7 +262,7 @@ const App = () => {
               <Route path="/teacher/settings" element={<ProtectedRoute role="teacher"><TeacherLayout><GeneralSettings /></TeacherLayout></ProtectedRoute>} />
 
               {/* Center */}
-              <Route path="/" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
+              <Route path="/center-dashboard" element={<ProtectedRoute role="center"><CenterLayout><Dashboard /></CenterLayout></ProtectedRoute>} />
               <Route path="/register" element={<ProtectedRoute role="center"><CenterLayout><RegisterStudent /></CenterLayout></ProtectedRoute>} />
               <Route path="/attendance" element={<ProtectedRoute role="center"><CenterLayout><TakeAttendance /></CenterLayout></ProtectedRoute>} />
               <Route path="/attendance-summary" element={<ProtectedRoute role="center"><CenterLayout><AttendanceSummary /></CenterLayout></ProtectedRoute>} />

@@ -110,7 +110,7 @@ const DashboardMockup = ({ role }: { role: 'admin' | 'teacher' | 'parent' }) => 
           <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/20">
             <Zap className="w-5 h-5 text-indigo-400" />
           </div>
-          <span className="font-bold text-white hidden md:block">EDUFLOW</span>
+          <span className="font-bold text-white hidden md:block tracking-tighter">Edu<span className="text-indigo-400">Flow</span></span>
         </div>
         <div className="flex flex-col gap-2">
           {[
@@ -350,7 +350,7 @@ const HeroSection = ({ scrollToNext, setActiveSection }: { scrollToNext: () => v
       <div className={cn(
         "z-0 transition-all duration-500",
         hasSlides
-          ? "md:absolute md:inset-0 w-[92%] md:w-full aspect-[4/5] md:aspect-auto rounded-[2rem] md:rounded-none overflow-hidden shadow-2xl md:shadow-none"
+          ? "md:absolute md:inset-0 w-[85%] md:w-full aspect-[4/5] md:aspect-auto rounded-[2rem] md:rounded-none overflow-hidden shadow-2xl md:shadow-none"
           : "absolute inset-0"
       )}>
         {hasSlides ? (
@@ -494,7 +494,7 @@ const SolutionOverview = ({ setActiveSection }: { setActiveSection: (i: number) 
         <div className="flex-1 space-y-8">
           <Badge className="border-none rounded-full px-4 py-1 bg-indigo-500/10 text-indigo-400">THE SOLUTION</Badge>
           <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9]">
-            Meet EDUFLOW. <br />
+            Meet EduFlow. <br />
             <span className="text-slate-500 text-4xl md:text-5xl">Your digital command center.</span>
           </h2>
           <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-xl">
@@ -881,7 +881,7 @@ const TrustSection = ({ setActiveSection }: { setActiveSection: (i: number) => v
           <div className="space-y-8">
             <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter">Trusted by Forward-Thinking Schools.</h2>
             <p className="text-xl text-slate-400 font-medium leading-relaxed">
-              Join the growing network of educational institutions revolutionizing their management with EDUFLOW.
+              Join the growing network of educational institutions revolutionizing their management with EduFlow.
             </p>
             <div className="grid grid-cols-2 gap-8">
                <div>
@@ -944,7 +944,10 @@ const FinalCTASection = ({ setActiveSection, scrollToSection }: { setActiveSecti
 
         <div className="flex flex-wrap gap-6 justify-center">
           <Button asChild className="h-16 px-10 rounded-2xl text-white text-lg font-black shadow-2xl transition-all hover:scale-105 active:scale-95 bg-indigo-600 hover:bg-indigo-700 shadow-indigo-900/40">
-            <Link to="/contact-sales">Request Personalized Demo</Link>
+            <Link to="/onboarding">Start Your 14-Day Free Trial</Link>
+          </Button>
+          <Button asChild variant="outline" className="h-16 px-10 rounded-2xl text-white text-lg font-black border-white/20 bg-white/5 hover:bg-white/10 shadow-2xl transition-all hover:scale-105 active:scale-95">
+             <Link to="/contact-sales">Request Personalized Demo</Link>
           </Button>
         </div>
 
@@ -1077,7 +1080,7 @@ const GettingStarted = () => {
           <div className={cn("p-2 rounded-xl border transition-colors", activeSection === 13 ? "bg-white/20 border-white/20" : "bg-indigo-600/20 border-indigo-600/20")}>
             <ShieldCheck className={cn("h-6 w-6 transition-colors", activeSection === 13 ? "text-white" : "text-indigo-400")} />
           </div>
-          <span className="text-2xl font-black text-white tracking-tighter">EDU<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-indigo-400")}>FLOW</span></span>
+          <span className="text-2xl font-black text-white tracking-tighter uppercase">Edu<span className={cn("transition-colors", activeSection === 13 ? "text-white/80" : "text-indigo-400")}>Flow</span></span>
         </div>
 
         <div className="pointer-events-auto">
@@ -1109,9 +1112,9 @@ const GettingStarted = () => {
       <footer className="bg-slate-950 py-12 px-6 border-t border-white/5 text-center">
          <div className="flex items-center justify-center gap-3 mb-6">
             <ShieldCheck className="h-6 w-6 text-indigo-400" />
-            <span className="text-xl font-black text-white tracking-tighter">EDUFLOW</span>
+            <span className="text-xl font-black text-white tracking-tighter uppercase">Edu<span className="text-indigo-400">Flow</span></span>
          </div>
-         <p className="text-slate-500 font-medium mb-8">© 2024 EDUFLOW Tech Solutions. All rights reserved.</p>
+         <p className="text-slate-500 font-medium mb-8">© {new Date().getFullYear()} EduFlow Tech Solutions. All rights reserved.</p>
          <div className="flex justify-center gap-6">
             <a href="#" className="text-slate-400 hover:text-white transition-colors">Privacy</a>
             <a href="#" className="text-slate-400 hover:text-white transition-colors">Terms</a>

@@ -29,7 +29,7 @@ const CenterLogin = () => {
       toast({
         title: 'Login successful',
         description: 'Welcome back!' });
-      navigate('/'); 
+      navigate('/center-dashboard');
     } else {
       toast({
         title: 'Login failed',

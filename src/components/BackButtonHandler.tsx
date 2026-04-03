@@ -16,7 +16,7 @@ const BackButtonHandler = () => {
   useEffect(() => {
     // Sentinel management for mobile WebViews
     const SENTINEL_STATE = { sentinel: true };
-    const DASHBOARD_PATHS = ['/', '/parent-dashboard', '/teacher-dashboard', '/admin-dashboard'];
+    const DASHBOARD_PATHS = ['/', '/center-dashboard', '/parent-dashboard', '/teacher-dashboard', '/admin-dashboard'];
     const LOGIN_PATHS = ['/login', '/login-parent', '/login-admin'];
 
     const ensureSentinel = () => {
