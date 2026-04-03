@@ -30,7 +30,7 @@ serve(async (req) => {
     // Fetch user by username
     const { data: userData, error: userError } = await supabaseClient
       .from('users')
-      .select('*, teachers(contract_end_date, is_active), centers(is_active)')
+      .select('*, teachers!users_teacher_id_fkey(contract_end_date, is_active), centers(is_active)')
       .eq('username', username)
       .single();
 
