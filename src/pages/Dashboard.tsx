@@ -956,7 +956,7 @@ export default function Dashboard() {
         // or if we find it via period_schedules
         const ps = periodSchedules.find(p => p.id === s.period_schedule_id);
         // Important: check both if substitution has direct period_id OR linked period_schedule has it
-        const periodId = s.class_period_id || ps?.class_period_id || s.period_schedules?.class_period_id;
+        const periodId = (s as any).class_period_id || ps?.class_period_id || (s as any).period_schedules?.class_period_id;
         return periodId === selectedVacantClass.class_period_id;
       })
       .map(s => s.substitute_teacher_id);
