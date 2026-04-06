@@ -4,8 +4,10 @@ import * as bcrypt from "https://esm.sh/bcryptjs";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') ?? '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+const getSyntheticAuthEmail = (userId: string) => `${userId}@app.local`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -13,6 +15,27 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY');
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      console.error(JSON.stringify({
+        event: 'error',
+        message: 'Missing Supabase environment variables',
+        details: {
+          hasUrl: !!supabaseUrl,
+          hasServiceRole: !!serviceRoleKey,
+          hasAnonKey: !!anonKey,
+        },
+      }));
+
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
     const { username, password } = await req.json();
 
     if (!username || !password) {
@@ -22,27 +45,28 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-    // Fetch user by username
-    const { data: userData, error: userError } = await supabaseClient
+    const anonClient = createClient(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('*, teachers(contract_end_date, is_active), centers(is_active)')
       .eq('username', username)
       .single();
 
     if (userError || !userData) {
-      console.error(JSON.stringify({ event: 'error', message: 'User not found:', details: userError }));
+      console.error(JSON.stringify({ event: 'error', message: 'User not found', details: userError }));
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid username or password' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
-    // Check if account is active
     if (!userData.is_active) {
       return new Response(
         JSON.stringify({ success: false, error: 'Account deactivated. Please contact administrator.' }),
@@ -50,7 +74,6 @@ serve(async (req) => {
       );
     }
 
-    // Check if center is active
     if (userData.centers && userData.centers.is_active === false) {
       return new Response(
         JSON.stringify({ success: false, error: 'Institution subscription suspended. Please contact administrator.' }),
@@ -58,10 +81,8 @@ serve(async (req) => {
       );
     }
 
-    // Check for account expiry (Parent/General)
     if (userData.expiry_date && new Date(userData.expiry_date) < new Date()) {
-      // Auto-deactivate in DB
-      await supabaseClient
+      await adminClient
         .from('users')
         .update({ is_active: false })
         .eq('id', userData.id);
@@ -72,14 +93,11 @@ serve(async (req) => {
       );
     }
 
-    // Check for Teacher specific status
     if (userData.role === 'teacher' && userData.teachers?.[0]) {
       const teacher = userData.teachers[0];
 
-      // 1. Check for manual deactivation in teachers table
       if (teacher.is_active === false) {
-        // Ensure the users table is also synced if it wasn't
-        await supabaseClient
+        await adminClient
           .from('users')
           .update({ is_active: false })
           .eq('id', userData.id);
@@ -90,26 +108,19 @@ serve(async (req) => {
         );
       }
 
-      // 2. Check for contract expiry
-      if (teacher.contract_end_date) {
-        const contractEndDate = new Date(teacher.contract_end_date);
-        if (contractEndDate < new Date()) {
-          // Auto-deactivate in DB
-          await supabaseClient
-            .from('users')
-            .update({ is_active: false })
-            .eq('id', userData.id);
+      if (teacher.contract_end_date && new Date(teacher.contract_end_date) < new Date()) {
+        await adminClient
+          .from('users')
+          .update({ is_active: false })
+          .eq('id', userData.id);
 
-          return new Response(
-            JSON.stringify({ success: false, error: 'Contract expired. Account deactivated.' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-          );
-        }
+        return new Response(
+          JSON.stringify({ success: false, error: 'Contract expired. Account deactivated.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
       }
     }
 
-    // Verify password using bcrypt (matching how the application stores hashes)
-    // Synchronous comparison ensures reliability in Edge environment
     const passwordMatch = bcrypt.compareSync(password, userData.password_hash);
     if (!passwordMatch) {
       return new Response(
@@ -118,37 +129,87 @@ serve(async (req) => {
       );
     }
 
-    // AUTHENTICATE IN SUPABASE AUTH TO RESTORE RLS (auth.uid())
-    // Note: This assumes the email/password for Supabase Auth matches the username/password
-    // OR we manage Supabase Auth sessions separately.
-    // In this app, users have both a public.users record and a corresponding auth.users record.
-    const { data: authData, error: authError } = await supabaseClient.auth.admin.getUserById(userData.id);
+    let authEmail = getSyntheticAuthEmail(userData.id);
+    const { data: authLookup, error: authLookupError } = await adminClient.auth.admin.getUserById(userData.id);
 
-    let session = null;
-    if (authData?.user) {
-      // Since we don't have the user's password for Supabase Auth (it might be different from userData.password_hash)
-      // We can generate a login link or just create a signed JWT if we're doing custom auth.
-      // However, the standard way in this template is using supabase.auth.signInWithPassword.
+    if (authLookupError && authLookupError.status !== 404) {
+      console.error(JSON.stringify({ event: 'error', message: 'Auth user lookup failed', details: authLookupError }));
+    }
 
-      // If we are using the Edge Function to bridge, we need to sign them in.
-      // We can try to use the user's email if it exists.
-      const userEmail = authData.user.email;
-      if (userEmail) {
-        // Authenticate as the user to get a session
-        const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
-          email: userEmail,
-          password: password,
+    if (!authLookup?.user) {
+      console.log(JSON.stringify({ event: 'info', message: `Creating matching auth user for ${userData.username}`, details: { id: userData.id } }));
+
+      const { data: createdAuthUser, error: createAuthError } = await adminClient.auth.admin.createUser({
+        id: userData.id,
+        email: authEmail,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          username: userData.username,
+          role: userData.role,
+          center_id: userData.center_id,
+        },
+      } as any);
+
+      if (createAuthError || !createdAuthUser.user) {
+        console.error(JSON.stringify({ event: 'error', message: 'Failed to create matching auth user', details: createAuthError }));
+        return new Response(
+          JSON.stringify({ success: false, error: 'Unable to establish authenticated session' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+
+      authEmail = createdAuthUser.user.email ?? authEmail;
+    } else {
+      authEmail = authLookup.user.email ?? authEmail;
+
+      if (!authLookup.user.email) {
+        const { error: syncEmailError } = await adminClient.auth.admin.updateUserById(userData.id, {
+          email: authEmail,
+          email_confirm: true,
         });
 
-        if (signInData?.session) {
-          session = signInData.session;
-        } else {
-          console.error(JSON.stringify({ event: 'error', message: 'Failed to create Supabase session:', details: signInError }));
+        if (syncEmailError) {
+          console.error(JSON.stringify({ event: 'error', message: 'Failed to sync auth email', details: syncEmailError }));
+          return new Response(
+            JSON.stringify({ success: false, error: 'Unable to establish authenticated session' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          );
         }
       }
     }
 
-    // Build user object with related data
+    let { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
+      email: authEmail,
+      password,
+    });
+
+    if (signInError || !signInData?.session) {
+      console.log(JSON.stringify({ event: 'info', message: `Syncing auth password for ${userData.username}`, details: { id: userData.id } }));
+
+      const { error: syncPasswordError } = await adminClient.auth.admin.updateUserById(userData.id, {
+        email: authEmail,
+        password,
+        email_confirm: true,
+      });
+
+      if (syncPasswordError) {
+        console.error(JSON.stringify({ event: 'error', message: 'Failed to sync auth password', details: syncPasswordError }));
+      } else {
+        const retry = await anonClient.auth.signInWithPassword({ email: authEmail, password });
+        signInData = retry.data;
+        signInError = retry.error;
+      }
+    }
+
+    if (signInError || !signInData?.session) {
+      console.error(JSON.stringify({ event: 'error', message: 'Failed to create Supabase session', details: signInError }));
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unable to establish authenticated session' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
     const user: Record<string, any> = {
       id: userData.id,
       username: userData.username,
@@ -158,39 +219,36 @@ serve(async (req) => {
       teacher_id: userData.teacher_id,
     };
 
-    // Fetch center name if center_id exists
     if (userData.center_id) {
-      const { data: centerData } = await supabaseClient
+      const { data: centerData } = await adminClient
         .from('centers')
         .select('name')
         .eq('id', userData.center_id)
         .single();
-      
+
       if (centerData) {
         user.center_name = centerData.name;
       }
     }
 
-    // Fetch student name if student_id exists (for single student)
     if (userData.student_id) {
-      const { data: studentData } = await supabaseClient
+      const { data: studentData } = await adminClient
         .from('students')
         .select('name')
         .eq('id', userData.student_id)
         .single();
-      
+
       if (studentData) {
         user.student_name = studentData.name;
       }
     }
 
-    // Fetch all linked students for parent
     if (userData.role === 'parent') {
-      const { data: linkedStudents } = await supabaseClient
+      const { data: linkedStudents } = await adminClient
         .from('parent_students')
         .select('student_id, students(id, name, grade)')
         .eq('parent_user_id', userData.id);
-      
+
       if (linkedStudents && linkedStudents.length > 0) {
         user.linked_students = linkedStudents.map((ls: any) => ({
           id: ls.students?.id,
@@ -200,32 +258,29 @@ serve(async (req) => {
       }
     }
 
-    // Fetch teacher name if teacher_id exists
     if (userData.teacher_id) {
-      const { data: teacherData } = await supabaseClient
+      const { data: teacherData } = await adminClient
         .from('teachers')
         .select('name')
         .eq('id', userData.teacher_id)
         .single();
-      
+
       if (teacherData) {
         user.teacher_name = teacherData.name;
       }
     }
 
-    // Update last login
-    await supabaseClient
+    await adminClient
       .from('users')
       .update({ last_login: new Date().toISOString() })
       .eq('id', userData.id);
 
     return new Response(
-      JSON.stringify({ success: true, user, session }),
+      JSON.stringify({ success: true, user, session: signInData.session }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
-
   } catch (error: unknown) {
-    console.error(JSON.stringify({ event: 'error', message: 'Login error:', details: error }));
+    console.error(JSON.stringify({ event: 'error', message: 'Login error', details: error }));
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
