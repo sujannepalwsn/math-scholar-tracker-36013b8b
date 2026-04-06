@@ -479,7 +479,7 @@ const VisitorLogs = () => {
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics?.feature_usage}>
+                  <BarChart data={(analytics as any)?.feature_usage}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" fontSize={8} fontStyle="bold" hide />
                     <YAxis fontSize={10} />
