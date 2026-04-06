@@ -525,30 +525,30 @@ const VisitorLogs = () => {
                    <div className="space-y-4">
                       <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300">Top Drop-off Pages</h4>
                       <ul className="space-y-2">
-                         {analytics?.top_drop_offs?.map((p: any) => (
-                           <li key={p.name} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                              <span className="font-bold text-sm truncate max-w-[200px]">{p.name}</span>
-                              <Badge className="bg-indigo-500 text-white">{p.value} Exits</Badge>
-                           </li>
-                         ))}
-                      </ul>
-                   </div>
-                   <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300">Intelligence Highlights</h4>
-                      <div className="space-y-3">
-                         {analytics?.top_drop_offs?.[0] && (
-                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                              <p className="text-sm font-bold"><span className="text-indigo-300">Drop-off Alert:</span> Users are frequently dropping off at <span className="text-white underline">{analytics.top_drop_offs[0].name}</span>.</p>
-                           </div>
-                         )}
-                         {analytics?.feature_usage?.[0] && (
-                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                              <p className="text-sm font-bold"><span className="text-indigo-300">Feature Trend:</span> <span className="text-white underline">{analytics.feature_usage[0].name}</span> is currently your most engaged feature.</p>
-                           </div>
-                         )}
-                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                            <p className="text-sm font-bold"><span className="text-indigo-300">Peak Load:</span> System traffic peaks at <span className="text-white underline">{analytics?.peak_usage?.hour}:00</span>. Consider scheduling maintenance outside this window.</p>
-                         </div>
+                          {(analytics as any)?.top_drop_offs?.map((p: any) => (
+                            <li key={p.name} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                               <span className="font-bold text-sm truncate max-w-[200px]">{p.name}</span>
+                               <Badge className="bg-indigo-500 text-white">{p.value} Exits</Badge>
+                            </li>
+                          ))}
+                       </ul>
+                    </div>
+                    <div className="space-y-4">
+                       <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300">Intelligence Highlights</h4>
+                       <div className="space-y-3">
+                          {(analytics as any)?.top_drop_offs?.[0] && (
+                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                               <p className="text-sm font-bold"><span className="text-indigo-300">Drop-off Alert:</span> Users are frequently dropping off at <span className="text-white underline">{(analytics as any).top_drop_offs[0].name}</span>.</p>
+                            </div>
+                          )}
+                          {(analytics as any)?.feature_usage?.[0] && (
+                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                               <p className="text-sm font-bold"><span className="text-indigo-300">Feature Trend:</span> <span className="text-white underline">{(analytics as any).feature_usage[0].name}</span> is currently your most engaged feature.</p>
+                            </div>
+                          )}
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                             <p className="text-sm font-bold"><span className="text-indigo-300">Peak Load:</span> System traffic peaks at <span className="text-white underline">{(analytics as any)?.peak_usage?.hour}:00</span>. Consider scheduling maintenance outside this window.</p>
+                          </div>
                       </div>
                    </div>
                 </div>

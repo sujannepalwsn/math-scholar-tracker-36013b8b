@@ -432,7 +432,7 @@ export default function ParentDashboard() {
         </div>
         <div className="lg:col-span-2">
            <AIInsightsWidget
-             insights={aiInsights}
+             insights={aiInsights as any}
              title="Predictive Performance Alerts"
            />
         </div>
