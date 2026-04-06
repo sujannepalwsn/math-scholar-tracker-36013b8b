@@ -218,7 +218,7 @@ export default function ParentDashboard() {
         id: d.id,
         title: (d.recommendation_text || '').split(':')[0] || 'Guidance',
         description: (d.recommendation_text || '').includes(':') ? d.recommendation_text.split(':')[1].trim() : (d.recommendation_text || 'No description'),
-        urgency: (d.priority || 0) >= 10 ? 'High' : (d.priority || 0) >= 5 ? 'Medium' : 'Low',
+        urgency: ((d.priority || 0) >= 10 ? 'High' : (d.priority || 0) >= 5 ? 'Medium' : 'Low') as 'High' | 'Medium' | 'Low',
         actionType: d.action_type || 'General'
       }));
     },

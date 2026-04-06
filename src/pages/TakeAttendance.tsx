@@ -447,7 +447,7 @@ export default function TakeAttendance() {
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle className="font-black uppercase text-xs tracking-widest">Attendance Disabled</AlertTitle>
           <AlertDescription className="text-sm font-bold">
-          Not a school day. Reason: {calendarEvent?.title || "Institutional Closure"}
+          Not a school day. Reason: {(calendarEvents as any)?.[0]?.title || "Institutional Closure"}
           </AlertDescription>
         </Alert>
       )}

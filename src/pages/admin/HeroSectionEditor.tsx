@@ -330,7 +330,7 @@ const HeroSectionEditor = () => {
     try {
       const { data, error } = await supabase.from('hero_slides').insert(newSlide).select().single();
       if (error) throw error;
-      setLocalSlides([...localSlides, data]);
+      setLocalSlides([...localSlides, data as any]);
       toast({ title: "Success", description: "New slide added." });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

@@ -433,13 +433,13 @@ const VisitorLogs = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={analytics?.type_dist}
+                      data={(analytics as any)?.type_dist}
                       innerRadius={60}
                       outerRadius={100}
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {analytics?.type_dist?.map((entry: any, index: number) => (
+                      {(analytics as any)?.type_dist?.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
