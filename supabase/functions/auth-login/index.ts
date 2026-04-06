@@ -55,7 +55,7 @@ serve(async (req) => {
 
     const { data: userData, error: userError } = await adminClient
       .from('users')
-      .select('*, teachers(contract_end_date, is_active), centers(is_active)')
+      .select('*, centers(is_active)')
       .eq('username', username)
       .single();
 
@@ -65,6 +65,27 @@ serve(async (req) => {
         JSON.stringify({ success: false, error: 'Invalid username or password' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
+    }
+
+    let resolvedTeacherId = userData.teacher_id ?? null;
+    let teacherStatus: { id: string; contract_end_date: string | null; is_active: boolean | null } | null = null;
+
+    if (userData.role === 'teacher') {
+      const { data: teacherData, error: teacherError } = await adminClient
+        .from('teachers')
+        .select('id, contract_end_date, is_active')
+        .eq('user_id', userData.id)
+        .maybeSingle();
+
+      if (teacherError) {
+        console.error(JSON.stringify({ event: 'error', message: 'Teacher lookup failed during login', details: teacherError }));
+      } else if (teacherData) {
+        teacherStatus = teacherData;
+        resolvedTeacherId = userData.teacher_id ?? teacherData.id;
+        if (userData.teacher_id !== resolvedTeacherId) {
+          userData.teacher_id = resolvedTeacherId;
+        }
+      }
     }
 
     if (!userData.is_active) {
@@ -93,10 +114,8 @@ serve(async (req) => {
       );
     }
 
-    if (userData.role === 'teacher' && userData.teachers?.[0]) {
-      const teacher = userData.teachers[0];
-
-      if (teacher.is_active === false) {
+    if (userData.role === 'teacher' && teacherStatus) {
+      if (teacherStatus.is_active === false) {
         await adminClient
           .from('users')
           .update({ is_active: false })
@@ -108,7 +127,7 @@ serve(async (req) => {
         );
       }
 
-      if (teacher.contract_end_date && new Date(teacher.contract_end_date) < new Date()) {
+      if (teacherStatus.contract_end_date && new Date(teacherStatus.contract_end_date) < new Date()) {
         await adminClient
           .from('users')
           .update({ is_active: false })
@@ -216,7 +235,7 @@ serve(async (req) => {
       role: userData.role,
       center_id: userData.center_id,
       student_id: userData.student_id,
-      teacher_id: userData.teacher_id,
+      teacher_id: resolvedTeacherId,
     };
 
     if (userData.center_id) {
