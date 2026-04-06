@@ -338,7 +338,7 @@ export default function LessonPlans() {
     // Validate and set date
     if (data.date) {
       try {
-        const dateObj = new Date(data.date);
+        const dateObj = new Date(data.date as string);
         if (!isNaN(dateObj.getTime())) {
           setLessonDate(format(dateObj, "yyyy-MM-dd"));
         }
