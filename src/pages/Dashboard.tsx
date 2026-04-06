@@ -467,12 +467,29 @@ export default function Dashboard() {
     queryKey: ["pending-attendance-by-grade", centerId, today],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await (supabase.rpc as any)("get_pending_attendance_by_grade", {
-        p_center_id: centerId,
-        p_date: today
-      });
-      if (error) throw error;
-      return data || [];
+      // Get grades with students that don't have attendance for today
+      const { data: allStudents } = await supabase
+        .from("students")
+        .select("id, grade")
+        .eq("center_id", centerId)
+        .eq("is_active", true);
+      
+      const { data: todayAttendance } = await supabase
+        .from("attendance")
+        .select("student_id")
+        .eq("center_id", centerId)
+        .eq("date", today);
+      
+      const attendedIds = new Set((todayAttendance || []).map(a => a.student_id));
+      const gradeMap: Record<string, { grade: string; total: number; pending: number }> = {};
+      
+      for (const s of (allStudents || [])) {
+        if (!gradeMap[s.grade]) gradeMap[s.grade] = { grade: s.grade, total: 0, pending: 0 };
+        gradeMap[s.grade].total++;
+        if (!attendedIds.has(s.id)) gradeMap[s.grade].pending++;
+      }
+      
+      return Object.values(gradeMap).filter(g => g.pending > 0);
     },
     enabled: !!centerId,
   });
@@ -481,12 +498,21 @@ export default function Dashboard() {
     queryKey: ["pending-teacher-attendance", centerId, today],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await (supabase.rpc as any)("get_pending_teacher_attendance", {
-        p_center_id: centerId,
-        p_date: today
-      });
-      if (error) throw error;
-      return data || [];
+      // Get teachers without attendance for today
+      const { data: allTeachers } = await supabase
+        .from("teachers")
+        .select("id, name")
+        .eq("center_id", centerId)
+        .eq("is_active", true);
+      
+      const { data: todayAtt } = await supabase
+        .from("teacher_attendance")
+        .select("teacher_id")
+        .eq("center_id", centerId)
+        .eq("date", today);
+      
+      const attendedIds = new Set((todayAtt || []).map(a => a.teacher_id));
+      return (allTeachers || []).filter(t => !attendedIds.has(t.id));
     },
     enabled: !!centerId,
   });
