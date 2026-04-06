@@ -467,7 +467,7 @@ export default function Dashboard() {
     queryKey: ["pending-attendance-by-grade", centerId, today],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.rpc("get_pending_attendance_by_grade", {
+      const { data, error } = await (supabase.rpc as any)("get_pending_attendance_by_grade", {
         p_center_id: centerId,
         p_date: today
       });
