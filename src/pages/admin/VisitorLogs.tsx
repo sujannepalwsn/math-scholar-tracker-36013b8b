@@ -354,19 +354,19 @@ const VisitorLogs = () => {
                                   <div className="grid md:grid-cols-3 gap-6 mb-8">
                                      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
                                         <div className="text-[10px] font-black uppercase text-slate-400 mb-1">IP Address</div>
-                                        <div className="font-bold text-slate-700">{session.visitors.ip_address || 'Unknown'}</div>
-                                     </div>
-                                     <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                        <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Location</div>
-                                        <div className="font-bold text-slate-700">
-                                           {session.visitors.location ?
-                                              `${session.visitors.location.city}, ${session.visitors.location.country}` :
-                                              'Unknown'}
-                                        </div>
-                                     </div>
-                                     <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                        <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Fingerprint</div>
-                                        <div className="font-bold text-slate-700 truncate">{session.visitors.fingerprint_id || 'N/A'}</div>
+                                         <div className="font-bold text-slate-700">{(session.visitors as any).ip_address || 'Unknown'}</div>
+                                      </div>
+                                      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                         <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Location</div>
+                                         <div className="font-bold text-slate-700">
+                                            {session.visitors.location ?
+                                               `${(session.visitors.location as any).city}, ${(session.visitors.location as any).country}` :
+                                               'Unknown'}
+                                         </div>
+                                      </div>
+                                      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                         <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Fingerprint</div>
+                                         <div className="font-bold text-slate-700 truncate">{(session.visitors as any).fingerprint_id || 'N/A'}</div>
                                      </div>
                                   </div>
 
