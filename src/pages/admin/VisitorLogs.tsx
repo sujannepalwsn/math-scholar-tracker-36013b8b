@@ -416,10 +416,10 @@ const VisitorLogs = () => {
 
         <TabsContent value="analytics" className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <KPICard title="Total Visitors" value={analytics?.total_visitors.toString() || "0"} icon={Users} color="indigo" />
-            <KPICard title="Active Users (DAU)" value={analytics?.dau.toString() || "0"} icon={Activity} color="emerald" />
-            <KPICard title="Retention (MAU)" value={analytics?.mau.toString() || "0"} icon={TrendingUp} color="amber" />
-            <KPICard title="Most Active Role" value={analytics?.active_role?.role || "-"} icon={Users} color="rose" />
+            <KPICard title="Total Visitors" value={(analytics as any)?.total_visitors?.toString() || "0"} icon={Users} color="indigo" />
+            <KPICard title="Active Users (DAU)" value={(analytics as any)?.dau?.toString() || "0"} icon={Activity} color="emerald" />
+            <KPICard title="Retention (MAU)" value={(analytics as any)?.mau?.toString() || "0"} icon={TrendingUp} color="amber" />
+            <KPICard title="Most Active Role" value={(analytics as any)?.active_role?.role || "-"} icon={Users} color="rose" />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
