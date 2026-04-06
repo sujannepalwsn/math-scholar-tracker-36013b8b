@@ -7960,7 +7960,6 @@ export type Database = {
           id: string | null
           is_active: boolean | null
           last_login: string | null
-          preferences: Json | null
           role: string | null
           student_id: string | null
           teacher_id: string | null
@@ -7974,7 +7973,6 @@ export type Database = {
           id?: string | null
           is_active?: boolean | null
           last_login?: string | null
-          preferences?: Json | null
           role?: string | null
           student_id?: string | null
           teacher_id?: string | null
@@ -7988,7 +7986,6 @@ export type Database = {
           id?: string | null
           is_active?: boolean | null
           last_login?: string | null
-          preferences?: Json | null
           role?: string | null
           student_id?: string | null
           teacher_id?: string | null
