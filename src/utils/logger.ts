@@ -66,50 +66,9 @@ class Logger {
     error?: any,
     context?: LogContext
   ) {
-    // Only persist errors in development mode to avoid RLS issues with anon key
-    // In production, errors are logged to console only
-    if (!import.meta.env.DEV) return;
-    
-    try {
-      const storedUser = localStorage.getItem('auth_user');
-      const user = storedUser ? JSON.parse(storedUser) : null;
-
-      // Skip DB persistence if no authenticated user (would fail RLS)
-      if (!user?.id) return;
-
-      const errorPayload = {
-        error_type: context?.errorType || 'runtime',
-        message: message,
-        stack: error instanceof Error ? error.stack : (typeof error === 'object' ? JSON.stringify(error) : String(error)),
-        status_code: context?.statusCode,
-        endpoint: context?.endpoint,
-        module: context?.module || this.currentContext.module || 'Global',
-        component: context?.component || this.currentContext.component || 'Unknown',
-        action: context?.action,
-        severity: context?.severity || 'medium',
-        user_context: {
-          id: user?.id,
-          name: user?.username,
-          role: user?.role,
-          centerId: user?.center_id,
-        },
-        request_context: context?.request || {},
-        schema_context: context?.schemaContext,
-        payload: context?.payload || {},
-        device_info: this.getDeviceInfo(),
-        timestamp: new Date().toISOString(),
-      };
-
-      const { error: insertError } = await supabase
-        .from('error_logs')
-        .insert(errorPayload);
-
-      if (insertError) {
-        console.error("Failed to persist error log to Supabase:", insertError);
-      }
-    } catch (e) {
-      // Silently fail - don't create error loops
-    }
+    // Client-side inserts into error_logs are blocked by RLS.
+    // Keep console logging active and avoid recursive network/RLS failures in the browser.
+    return;
   }
 
   private formatMessage(level: LogLevel, message: string): string {
