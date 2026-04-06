@@ -548,7 +548,7 @@ export default function ParentStudentReport() {
       toast.success("AI summary generated successfully");
     },
     onError: (error: any) => {
-      console.error("Error generating summary:", error);
+      logger.error("Error generating summary:", error);
       toast.error("Failed to generate AI summary");
     } });
 

@@ -118,7 +118,7 @@ export const applyPackagePreset = async (centerId: string, packageType: PackageT
     // Bulk upsert teacher permissions
     const { error: bulkError } = await supabase
       .from('teacher_feature_permissions')
-      .upsert(teacherUpdates as any, { onConflict: 'teacher_id' });
+      .upsert(teacherUpdates, { onConflict: 'teacher_id' });
 
     if (bulkError) {
        console.error(`Failed to bulk update teacher permissions:`, bulkError);

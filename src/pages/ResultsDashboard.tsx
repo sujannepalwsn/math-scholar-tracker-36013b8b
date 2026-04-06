@@ -248,7 +248,7 @@ export default function ResultsDashboard() {
                       ))}
                     </Pie>
                     <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold'}} />
-                    <Legend iconType="circle" wrapperStyle={{fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em'}} />
+                    <Legend iconType="circle" wrapperStyle={{fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase', tracking: '0.1em'}} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>

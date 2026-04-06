@@ -255,7 +255,7 @@ export default function SaaSBookingPage() {
                                   </div>
                                   <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
                                      <pre className="font-mono text-sm whitespace-pre-wrap text-slate-300">
-                                        {(paymentDetails as any)?.bank_details || "Bank details pending configuration."}
+                                        {paymentDetails.bank_details || "Bank details pending configuration."}
                                      </pre>
                                   </div>
                                </div>

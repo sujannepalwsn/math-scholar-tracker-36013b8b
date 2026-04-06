@@ -30,7 +30,7 @@ serve(async (req) => {
     // Fetch user by username
     const { data: userData, error: userError } = await supabaseClient
       .from('users')
-      .select('*, teachers!users_teacher_id_fkey(contract_end_date, is_active), centers(is_active)')
+      .select('*, teachers(contract_end_date, is_active), centers(is_active)')
       .eq('username', username)
       .single();
 
@@ -60,6 +60,7 @@ serve(async (req) => {
 
     // Check for account expiry (Parent/General)
     if (userData.expiry_date && new Date(userData.expiry_date) < new Date()) {
+      // Auto-deactivate in DB
       await supabaseClient
         .from('users')
         .update({ is_active: false })
@@ -75,7 +76,9 @@ serve(async (req) => {
     if (userData.role === 'teacher' && userData.teachers?.[0]) {
       const teacher = userData.teachers[0];
 
+      // 1. Check for manual deactivation in teachers table
       if (teacher.is_active === false) {
+        // Ensure the users table is also synced if it wasn't
         await supabaseClient
           .from('users')
           .update({ is_active: false })
@@ -87,9 +90,11 @@ serve(async (req) => {
         );
       }
 
+      // 2. Check for contract expiry
       if (teacher.contract_end_date) {
         const contractEndDate = new Date(teacher.contract_end_date);
         if (contractEndDate < new Date()) {
+          // Auto-deactivate in DB
           await supabaseClient
             .from('users')
             .update({ is_active: false })
@@ -103,8 +108,9 @@ serve(async (req) => {
       }
     }
 
-    // Verify password using bcrypt
-    const passwordMatch = await bcrypt.compare(password, userData.password_hash);
+    // Verify password using bcrypt (matching how the application stores hashes)
+    // Synchronous comparison ensures reliability in Edge environment
+    const passwordMatch = bcrypt.compareSync(password, userData.password_hash);
     if (!passwordMatch) {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid username or password' }),
@@ -112,86 +118,32 @@ serve(async (req) => {
       );
     }
 
-    // ============================================================
-    // AUTHENTICATE IN SUPABASE AUTH — auto-create/sync auth.users
-    // ============================================================
-    const generatedEmail = `${username.replace(/[^a-zA-Z0-9]/g, '_')}@app.local`;
+    // AUTHENTICATE IN SUPABASE AUTH TO RESTORE RLS (auth.uid())
+    // Note: This assumes the email/password for Supabase Auth matches the username/password
+    // OR we manage Supabase Auth sessions separately.
+    // In this app, users have both a public.users record and a corresponding auth.users record.
+    const { data: authData, error: authError } = await supabaseClient.auth.admin.getUserById(userData.id);
+
     let session = null;
+    if (authData?.user) {
+      // Since we don't have the user's password for Supabase Auth (it might be different from userData.password_hash)
+      // We can generate a login link or just create a signed JWT if we're doing custom auth.
+      // However, the standard way in this template is using supabase.auth.signInWithPassword.
 
-    const { data: authData, error: authGetError } = await supabaseClient.auth.admin.getUserById(userData.id);
-
-    if (authGetError || !authData?.user) {
-      // Auth user doesn't exist — create one with matching UUID
-      console.log(JSON.stringify({ event: 'info', message: `Creating auth user for ${username} with id ${userData.id}` }));
-      const { error: createError } = await supabaseClient.auth.admin.createUser({
-        uid: userData.id,
-        email: generatedEmail,
-        password: password,
-        email_confirm: true,
-      });
-
-      if (createError) {
-        console.error(JSON.stringify({ event: 'error', message: 'Failed to create auth user', details: createError }));
-        // If creation fails due to email conflict, try with a unique suffix
-        if (createError.message?.includes('already been registered')) {
-          const uniqueEmail = `${username.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}@app.local`;
-          const { error: retryError } = await supabaseClient.auth.admin.createUser({
-            uid: userData.id,
-            email: uniqueEmail,
-            password: password,
-            email_confirm: true,
-          });
-          if (retryError) {
-            console.error(JSON.stringify({ event: 'error', message: 'Retry create auth user failed', details: retryError }));
-          }
-        }
-      }
-
-      // Now sign in
-      const { data: newAuthUser } = await supabaseClient.auth.admin.getUserById(userData.id);
-      if (newAuthUser?.user?.email) {
+      // If we are using the Edge Function to bridge, we need to sign them in.
+      // We can try to use the user's email if it exists.
+      const userEmail = authData.user.email;
+      if (userEmail) {
+        // Authenticate as the user to get a session
         const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
-          email: newAuthUser.user.email,
+          email: userEmail,
           password: password,
         });
+
         if (signInData?.session) {
           session = signInData.session;
         } else {
-          console.error(JSON.stringify({ event: 'error', message: 'Sign-in after create failed', details: signInError }));
-        }
-      }
-    } else {
-      // Auth user exists — ensure password is synced, then sign in
-      const userEmail = authData.user.email!;
-
-      // Try signing in first
-      const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
-        email: userEmail,
-        password: password,
-      });
-
-      if (signInData?.session) {
-        session = signInData.session;
-      } else if (signInError) {
-        // Password mismatch in auth.users — update it to match
-        console.log(JSON.stringify({ event: 'info', message: 'Syncing auth password for user', userId: userData.id }));
-        const { error: updateError } = await supabaseClient.auth.admin.updateUserById(userData.id, {
-          password: password,
-        });
-
-        if (!updateError) {
-          // Retry sign-in
-          const { data: retryData, error: retryError } = await supabaseClient.auth.signInWithPassword({
-            email: userEmail,
-            password: password,
-          });
-          if (retryData?.session) {
-            session = retryData.session;
-          } else {
-            console.error(JSON.stringify({ event: 'error', message: 'Sign-in after password sync failed', details: retryError }));
-          }
-        } else {
-          console.error(JSON.stringify({ event: 'error', message: 'Failed to update auth password', details: updateError }));
+          console.error(JSON.stringify({ event: 'error', message: 'Failed to create Supabase session:', details: signInError }));
         }
       }
     }
@@ -219,7 +171,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch student name if student_id exists
+    // Fetch student name if student_id exists (for single student)
     if (userData.student_id) {
       const { data: studentData } = await supabaseClient
         .from('students')

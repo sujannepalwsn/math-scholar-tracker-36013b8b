@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { UserRole } from "@/types/roles";
-import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2, PlusCircle, MinusCircle, Printer, Send, CheckCircle2, XCircle, User, Loader2, Scan } from "lucide-react";
+import { CalendarIcon, Download, Edit, Eye, FileText, Plus, Trash2, PlusCircle, MinusCircle, Printer, Send, CheckCircle2, XCircle, User, Loader2, Scan, ExternalLink } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -22,7 +22,10 @@ import { cn } from "@/lib/utils"
 import { compressImage } from "@/lib/image-utils";
 import { hasPermission, hasActionPermission } from "@/utils/permissions";
 import LessonPlanOCR from "@/components/center/LessonPlanOCR";
+import LessonGeneratorModal from "@/components/center/LessonGeneratorModal";
+import { parseLessonPlanText } from "@/utils/lessonPlanParser";
 import { logger } from "@/utils/logger";
+import { tracking } from "@/utils/tracking";
 
 type LessonPlan = Tables<'lesson_plans'>;
 
@@ -31,6 +34,7 @@ export default function LessonPlans() {
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isOCROpen, setIsOCROpen] = useState(false);
+  const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingLessonPlan, setEditingLessonPlan] = useState<LessonPlan | null>(null);
   const [viewingLessonPlan, setViewingLessonPlan] = useState<LessonPlan | null>(null);
@@ -51,6 +55,8 @@ export default function LessonPlans() {
   const [warmUpReview, setWarmUpReview] = useState("");
   const [learningActivities, setLearningActivities] = useState<string[]>(["", "", "", ""]);
   const [evaluationActivities, setEvaluationActivities] = useState<string[]>(["", "", "", ""]);
+  const [isPasteDialogOpen, setIsPasteDialogOpen] = useState(false);
+  const [pasteContent, setPasteContent] = useState("");
   const [classWork, setClassWork] = useState("");
   const [homeAssignment, setHomeAssignment] = useState("");
   const [notes, setNotes] = useState("");
@@ -168,6 +174,7 @@ export default function LessonPlans() {
     setNotes("");
     setFile(null);
     setEditingLessonPlan(null);
+    setIsGeneratorOpen(false);
   };
 
   const uploadFile = async (fileToUpload: File, bucket: string) => {
@@ -225,10 +232,10 @@ export default function LessonPlans() {
       };
 
       if (editingLessonPlan) {
-        const { error } = await supabase.from("lesson_plans").update(payload as any).eq("id", editingLessonPlan.id);
+        const { error } = await supabase.from("lesson_plans").update(payload).eq("id", editingLessonPlan.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("lesson_plans").insert(payload as any);
+        const { error } = await supabase.from("lesson_plans").insert(payload);
         if (error) throw error;
       }
 
@@ -244,6 +251,11 @@ export default function LessonPlans() {
       }
     },
     onSuccess: (_, submit) => {
+      tracking.trackEvent('feature_action', submit ? 'submit_lesson_plan' : 'save_lesson_plan_draft', {
+        subject,
+        grade: selectedGrade,
+        topic
+      });
       queryClient.invalidateQueries({ queryKey: ["lesson-plans-all"] });
       toast.success(submit ? "Lesson Plan submitted for approval!" : "Lesson Plan saved as draft");
       setIsDialogOpen(false);
@@ -275,10 +287,10 @@ export default function LessonPlans() {
     setObjectives(lp.objectives || "");
     setWarmUpReview(lp.warm_up_review || "");
     const activities = Array.isArray(lp.learning_activities) ? lp.learning_activities as string[] : [];
-    setLearningActivities([...activities, "", "", "", ""].slice(0, 4));
+    setLearningActivities(activities.length > 0 ? activities : ["", "", "", ""]);
 
     const evals = Array.isArray(lp.evaluation_activities) ? lp.evaluation_activities as string[] : [];
-    setEvaluationActivities([...evals, "", "", "", ""].slice(0, 4));
+    setEvaluationActivities(evals.length > 0 ? evals : ["", "", "", ""]);
     setClassWork(lp.class_work || "");
     setHomeAssignment(lp.home_assignment || "");
     setNotes(lp.notes || "");
@@ -326,7 +338,7 @@ export default function LessonPlans() {
     // Validate and set date
     if (data.date) {
       try {
-        const dateObj = new Date(data.date as string);
+        const dateObj = new Date(data.date);
         if (!isNaN(dateObj.getTime())) {
           setLessonDate(format(dateObj, "yyyy-MM-dd"));
         }
@@ -340,12 +352,12 @@ export default function LessonPlans() {
 
     if (Array.isArray(data.learning_activities)) {
       const activities = data.learning_activities.map(a => a?.toString() || "").filter(Boolean);
-      setLearningActivities([...activities, "", "", "", ""].slice(0, 4));
+      setLearningActivities(activities);
     }
 
     if (Array.isArray(data.evaluation_activities)) {
       const evals = data.evaluation_activities.map(e => e?.toString() || "").filter(Boolean);
-      setEvaluationActivities([...evals, "", "", "", ""].slice(0, 4));
+      setEvaluationActivities(evals);
     }
 
     if (data.class_work) setClassWork(data.class_work.toString());
@@ -353,6 +365,103 @@ export default function LessonPlans() {
     if (data.notes) setNotes(data.notes.toString());
 
     toast.info("Form populated from AI extraction. Please review and save.");
+  };
+
+  const handlePasteSubmit = () => {
+    if (!pasteContent.trim()) {
+      toast.error("Please paste some content");
+      return;
+    }
+
+    const data = parseLessonPlanText(pasteContent);
+
+    if (data.topic) setTopic(data.topic);
+    if (data.subject) setSubject(data.subject);
+
+    // Fuzzy match for grade
+    if (data.grade) {
+      const extractedGrade = data.grade.toUpperCase().replace(/GRADE\s*/i, '').trim();
+      const matchedGrade = uniqueGrades.find(g => {
+        const gradeStr = g?.toString().toUpperCase().replace(/GRADE\s*/i, '').trim() || "";
+        return gradeStr === extractedGrade || gradeStr.includes(extractedGrade) || extractedGrade.includes(gradeStr);
+      });
+      if (matchedGrade) {
+        setSelectedGrade(matchedGrade);
+      } else {
+        setSelectedGrade(data.grade);
+      }
+    }
+
+    if (data.objectives) setObjectives(data.objectives);
+    if (data.warmUp) setWarmUpReview(data.warmUp);
+
+    if (data.learningActivities && data.learningActivities.length > 0) {
+      setLearningActivities(data.learningActivities);
+    }
+
+    if (data.evaluation && data.evaluation.length > 0) {
+      setEvaluationActivities(data.evaluation);
+    }
+
+    if (data.classWork) setClassWork(data.classWork);
+    if (data.homeAssignment) setHomeAssignment(data.homeAssignment);
+    if (data.remarks) setNotes(data.remarks);
+
+    setIsPasteDialogOpen(false);
+    setPasteContent("");
+    toast.success("Form populated from pasted text!");
+  };
+
+  const handlePasteAndPopulate = async () => {
+    try {
+      // Try to read from clipboard
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) {
+        // Fallback if clipboard is empty
+        setIsPasteDialogOpen(true);
+        return;
+      }
+
+      const data = parseLessonPlanText(text);
+
+      if (data.topic) setTopic(data.topic);
+      if (data.subject) setSubject(data.subject);
+
+      // Fuzzy match for grade
+      if (data.grade) {
+        const extractedGrade = data.grade.toUpperCase().replace(/GRADE\s*/i, '').trim();
+        const matchedGrade = uniqueGrades.find(g => {
+          const gradeStr = g?.toString().toUpperCase().replace(/GRADE\s*/i, '').trim() || "";
+          return gradeStr === extractedGrade || gradeStr.includes(extractedGrade) || extractedGrade.includes(gradeStr);
+        });
+        if (matchedGrade) {
+          setSelectedGrade(matchedGrade);
+        } else {
+          setSelectedGrade(data.grade);
+        }
+      }
+
+      if (data.objectives) setObjectives(data.objectives);
+      if (data.warmUp) setWarmUpReview(data.warmUp);
+
+      if (data.learningActivities && data.learningActivities.length > 0) {
+        setLearningActivities(data.learningActivities);
+      }
+
+      if (data.evaluation && data.evaluation.length > 0) {
+        setEvaluationActivities(data.evaluation);
+      }
+
+      if (data.classWork) setClassWork(data.classWork);
+      if (data.homeAssignment) setHomeAssignment(data.homeAssignment);
+      if (data.remarks) setNotes(data.remarks);
+
+      toast.success("Form populated directly from clipboard!");
+    } catch (err) {
+      logger.warn("Clipboard access denied or failed", err);
+      // Fallback to dialog if permission denied
+      setIsPasteDialogOpen(true);
+    }
   };
 
   return (
@@ -396,9 +505,18 @@ export default function LessonPlans() {
             </SelectContent>
           </Select>
           {hasActionPermission(user, 'lesson_plans', 'edit') && (
-            <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-xl h-10 px-4 font-bold shadow-soft transition-all gap-2">
-              <Plus className="h-4 w-4" /> CREATE PLAN
-            </Button>
+            <>
+              <Button
+                onClick={() => setIsGeneratorOpen(true)}
+                size="sm"
+                className="rounded-xl h-10 px-4 font-bold shadow-soft transition-all gap-2 bg-indigo-600 hover:bg-indigo-700"
+              >
+                <ExternalLink className="h-4 w-4" /> GENERATOR
+              </Button>
+              <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-xl h-10 px-4 font-bold shadow-soft transition-all gap-2">
+                <Plus className="h-4 w-4" /> CREATE PLAN
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -508,14 +626,24 @@ export default function LessonPlans() {
                 <DialogTitle className="text-xl sm:text-2xl font-black">{editingLessonPlan ? "Refine Lesson Architecture" : "Construct New Lesson Plan"}</DialogTitle>
                 <DialogDescription className="text-xs sm:text-sm font-medium">Define the pedagogical structure for institutional review.</DialogDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsOCROpen(true)}
-                className="rounded-xl border-primary text-primary font-black uppercase text-[9px] sm:text-[10px] tracking-widest gap-2 shadow-soft hover:bg-primary hover:text-white transition-all"
-              >
-                <Scan className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> SCAN HANDWRITTEN
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePasteAndPopulate}
+                  className="rounded-xl border-violet-600 text-violet-600 font-black uppercase text-[9px] sm:text-[10px] tracking-widest gap-2 shadow-soft hover:bg-violet-600 hover:text-white transition-all"
+                >
+                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> PASTE & POPULATE
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsOCROpen(true)}
+                  className="rounded-xl border-primary text-primary font-black uppercase text-[9px] sm:text-[10px] tracking-widest gap-2 shadow-soft hover:bg-primary hover:text-white transition-all"
+                >
+                  <Scan className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> SCAN HANDWRITTEN
+                </Button>
+              </div>
             </div>
           </DialogHeader>
           <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
@@ -584,14 +712,30 @@ export default function LessonPlans() {
                 <div className="space-y-2 sm:space-y-3">
                    <div className="flex items-center justify-between">
                      <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary">3. Teaching Learning Activities</Label>
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
+                        onClick={() => setLearningActivities([...learningActivities, ""])}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
                    </div>
                    <div className="space-y-1 sm:space-y-2">
                       {learningActivities.map((act, i) => (
-                        <div key={i} className="flex gap-2 items-center">
+                        <div key={i} className="flex gap-2 items-center group/item">
                            <span className="text-[10px] sm:text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
                            <Input value={act} onChange={(e) => {
                              const n = [...learningActivities]; n[i] = e.target.value; setLearningActivities(n);
-                           }} className="h-8 sm:h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-[11px] sm:text-xs font-medium" />
+                           }} className="h-8 sm:h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-[11px] sm:text-xs font-medium flex-1" />
+                           <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                              onClick={() => setLearningActivities(learningActivities.filter((_, idx) => idx !== i))}
+                            >
+                              <MinusCircle className="h-4 w-4" />
+                            </Button>
                         </div>
                       ))}
                    </div>
@@ -599,14 +743,30 @@ export default function LessonPlans() {
                 <div className="space-y-2 sm:space-y-3">
                    <div className="flex items-center justify-between">
                      <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-violet-600">4. Class Review / Evaluation</Label>
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full bg-violet-600/10 text-violet-600 hover:bg-violet-600 hover:text-white transition-all"
+                        onClick={() => setEvaluationActivities([...evaluationActivities, ""])}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
                    </div>
                    <div className="space-y-1 sm:space-y-2">
                       {evaluationActivities.map((act, i) => (
-                        <div key={i} className="flex gap-2 items-center">
+                        <div key={i} className="flex gap-2 items-center group/item">
                            <span className="text-[10px] sm:text-xs font-black text-slate-400 w-4">{String.fromCharCode(97 + i)}.</span>
                            <Input value={act} onChange={(e) => {
                              const n = [...evaluationActivities]; n[i] = e.target.value; setEvaluationActivities(n);
-                           }} className="h-8 sm:h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-[11px] sm:text-xs font-medium" />
+                           }} className="h-8 sm:h-9 border-0 border-b border-dotted border-slate-300 rounded-none focus-visible:ring-0 bg-transparent text-[11px] sm:text-xs font-medium flex-1" />
+                           <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                              onClick={() => setEvaluationActivities(evaluationActivities.filter((_, idx) => idx !== i))}
+                            >
+                              <MinusCircle className="h-4 w-4" />
+                            </Button>
                         </div>
                       ))}
                    </div>
@@ -635,6 +795,36 @@ export default function LessonPlans() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Paste Text Dialog */}
+      <Dialog open={isPasteDialogOpen} onOpenChange={setIsPasteDialogOpen}>
+        <DialogContent className="sm:max-w-2xl rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Paste Lesson Plan Content</DialogTitle>
+            <DialogDescription>
+              Copy the full lesson plan text and paste it below. The system will automatically map the fields.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={pasteContent}
+              onChange={(e) => setPasteContent(e.target.value)}
+              placeholder="TOPIC: ...&#10;SUBJECT: ...&#10;..."
+              className="min-h-[300px] rounded-2xl bg-slate-50 border-slate-200"
+            />
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setIsPasteDialogOpen(false)} className="rounded-xl font-bold">CANCEL</Button>
+              <Button onClick={handlePasteSubmit} className="rounded-xl font-black bg-gradient-to-r from-violet-600 to-indigo-600">PARSE & POPULATE</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* External Generator Modal */}
+      <LessonGeneratorModal
+        isOpen={isGeneratorOpen}
+        onClose={() => setIsGeneratorOpen(false)}
+      />
 
       {/* View/Approval Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
@@ -826,7 +1016,7 @@ export default function LessonPlans() {
                     <div className="text-center space-y-2">
                       <div className="border-t-2 border-slate-900 pt-2">
                         <p className="font-black uppercase text-[10px]">Subject Teacher's Signature</p>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1">{(viewingLessonPlan as any).teachers?.name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1">{viewingLessonPlan.teachers?.name}</p>
                       </div>
                     </div>
                     <div className="text-center space-y-2">

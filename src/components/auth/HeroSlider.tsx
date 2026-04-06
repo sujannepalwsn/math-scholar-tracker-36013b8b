@@ -4,7 +4,7 @@ import Fade from 'embla-carousel-fade';
 import Autoplay from 'embla-carousel-autoplay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
@@ -13,12 +13,12 @@ interface HeroSlide {
   title: string | null;
   subtitle: string | null;
   media_url: string;
-  mobile_media_url?: string | null;
-  media_type: string;
+  mobile_media_url: string | null;
+  media_type: 'image' | 'video';
   cta_text: string | null;
   cta_link: string | null;
   overlay_opacity: number;
-  text_align: string;
+  text_align: 'left' | 'center' | 'right';
 }
 
 interface HeroSliderProps {
@@ -34,6 +34,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRefs = React.useRef<(HTMLVideoElement | null)[]>([]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -61,6 +63,21 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
       emblaApi.off('reInit', onSelect);
     };
   }, [emblaApi, onSelect]);
+
+  // Handle video playback and muting based on active slide
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (!video) return;
+
+      if (index === selectedIndex) {
+        video.muted = isMuted;
+        // Attempt to play, catching potential autoplay block errors
+        video.play().catch(err => console.log("Video play interrupted or blocked:", err));
+      } else {
+        video.pause();
+      }
+    });
+  }, [selectedIndex, isMuted, slides]);
 
   if (!slides || slides.length === 0) {
     return (
@@ -93,7 +110,6 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                         <video
                           src={slide.media_url}
                           autoPlay
-                          muted
                           loop
                           playsInline
                           className="w-full h-full object-cover opacity-60"
@@ -101,11 +117,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
                       </div>
                     ) : (
                       <video
+                        ref={el => videoRefs.current[index] = el}
                         src={slide.media_url}
-                        autoPlay
-                        muted
                         loop
                         playsInline
+                        muted={isMuted}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                            (e.target as any).parentElement.style.backgroundColor = '#020617';
@@ -218,7 +234,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
           </div>
 
           {/* Pagination dots (centered on mobile, left on desktop) */}
-          <div className="absolute bottom-4 md:bottom-10 left-1/2 -translate-x-1/2 md:left-24 md:translate-x-0 z-40 flex gap-1.5 md:gap-3">
+          <div className="absolute bottom-4 md:bottom-10 left-1/2 -translate-x-1/2 md:left-32 md:translate-x-0 z-40 flex gap-1.5 md:gap-3">
             {slides.map((_, index) => (
               <button
                 key={index}
@@ -233,6 +249,19 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({ slides }) => {
           </div>
         </>
       )}
+
+      {/* Volume Control Button (Bottom Left) */}
+      <div className="absolute bottom-6 md:bottom-10 left-4 md:left-10 z-50">
+         <Button
+           variant="outline"
+           size="icon"
+           onClick={() => setIsMuted(!isMuted)}
+           className="rounded-full bg-white/5 border-white/10 hover:bg-white/20 text-white h-8 w-8 md:h-12 md:w-12 transition-all backdrop-blur-sm"
+           title={isMuted ? "Unmute" : "Mute"}
+         >
+           {isMuted ? <VolumeX className="h-4 w-4 md:h-6 md:w-6" /> : <Volume2 className="h-4 w-4 md:h-6 md:w-6" />}
+         </Button>
+      </div>
     </div>
   );
 };

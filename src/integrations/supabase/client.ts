@@ -1,41 +1,17 @@
-import { createClient } from "@supabase/supabase-js"
 import type { Database } from './types';
 import { logger } from "@/utils/logger";
+import { rawSupabase } from "./raw-client";
+import { SupabaseSandboxMock } from "@/lib/supabase-sandbox-mock";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-// Use placeholder values to prevent the client from crashing on initialization
-// if environment variables are missing. This allows the JS bundle to load
-// and the error to be logged gracefully.
-const url = SUPABASE_URL || "https://placeholder-project.supabase.co";
-const key = SUPABASE_PUBLISHABLE_KEY || "placeholder-key";
-
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error("Critical Configuration Error: Missing Supabase environment variables (VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY). Please check your .env file.");
-}
-
-/**
- * EXPORT RAW CLIENT FOR LOGGER TO PREVENT CIRCULAR DEPENDENCY & INFINITE RECURSION
- * The logger uses this directly to insert logs without going through the Proxy.
- */
-export const rawSupabase = createClient<Database>(url, key, {
-  auth: {
-    storage: typeof window !== 'undefined' ? localStorage : undefined,
-    persistSession: true,
-    autoRefreshToken: true
-  },
-  global: {
-    headers: {
-      'X-Client-Info': '@supabase/supabase-js'
-    }
-  }
-});
+// Re-export rawSupabase for backward compatibility, though most things should use the proxy
+export { rawSupabase };
 
 /**
  * Simple property check to identify PostgREST builders without triggering complex Proxy loops.
  */
 const IS_PROXY = Symbol('IS_PROXY');
+
+const sandboxClient = new SupabaseSandboxMock('');
 
 /**
  * Recursive Proxy helper to wrap all methods of a query builder to ensure
@@ -109,6 +85,11 @@ function wrapQueryBuilder(builder: any, tableName: string, queryLog: any[] = [])
  */
 export const supabase = new Proxy(rawSupabase, {
   get(target, prop, receiver) {
+    // REDIRECT TO SANDBOX IF is_sandbox FLAG IS PRESENT IN LOCALSTORAGE
+    if (typeof window !== 'undefined' && localStorage.getItem('is_sandbox') === 'true') {
+      return Reflect.get(sandboxClient, prop);
+    }
+
     const value = Reflect.get(target, prop, receiver);
 
     if (prop === 'from' && typeof value === 'function') {

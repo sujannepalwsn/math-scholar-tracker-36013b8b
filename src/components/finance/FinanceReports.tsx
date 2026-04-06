@@ -177,7 +177,7 @@ const FinanceReports = () => {
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                         <span className="text-xs font-bold text-slate-600 group-hover:text-primary transition-colors">{item.name}</span>
                       </div>
-                      <span className="text-xs font-black">{formatCurrency(item.value as number)}</span>
+                      <span className="text-xs font-black">{formatCurrency(item.value)}</span>
                     </div>
                   ))}
                 </div>

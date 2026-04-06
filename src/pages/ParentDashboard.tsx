@@ -118,7 +118,7 @@ export default function ParentDashboard() {
       if (error) throw error;
       return (data as any[] || []).map(d => ({
         id: d.id,
-        type: (d.risk_level === 'High' ? 'risk' : 'sentiment') as 'risk' | 'sentiment' | 'fee',
+        type: d.risk_level === 'High' ? 'risk' : 'sentiment',
         level: (d.risk_level as any) || 'Low',
         title: d.risk_level === 'Low' ? 'Learning Trajectory: Positive' : 'Academic Attention Required',
         description: d.risk_level === 'Low'
@@ -218,7 +218,7 @@ export default function ParentDashboard() {
         id: d.id,
         title: (d.recommendation_text || '').split(':')[0] || 'Guidance',
         description: (d.recommendation_text || '').includes(':') ? d.recommendation_text.split(':')[1].trim() : (d.recommendation_text || 'No description'),
-        urgency: ((d.priority || 0) >= 10 ? 'High' : (d.priority || 0) >= 5 ? 'Medium' : 'Low') as 'High' | 'Medium' | 'Low',
+        urgency: (d.priority || 0) >= 10 ? 'High' : (d.priority || 0) >= 5 ? 'Medium' : 'Low',
         actionType: d.action_type || 'General'
       }));
     },
@@ -399,10 +399,10 @@ export default function ParentDashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <KPICard title="Attendance Rate" value={`${attendanceRate}%`} description="Presence Index" icon={Clock} color="green" />
-        <KPICard title="Avg Performance" value={`${performanceTrends[performanceTrends.length-1]?.percentage || 0}%`} description="Evaluation Synthesis" icon={TrendingUp} color="purple" />
-        <KPICard title="Effort Score" value={`${Math.round(effortIndex)}/100`} description="Behavioral Engagement" icon={Activity} color="orange" />
-        <KPICard title="Fees Payable" value={formatCurrency(outstandingDues)} description="Outstanding Liability" icon={Wallet} color="rose" />
+        <KPICard title="Attendance Rate" value={`${attendanceRate}%`} description="Presence Index" icon={Clock} color="green" onClick={() => navigate("/parent/attendance?feature=Attendance%20Analytics")} />
+        <KPICard title="Avg Performance" value={`${performanceTrends[performanceTrends.length-1]?.percentage || 0}%`} description="Evaluation Synthesis" icon={TrendingUp} color="purple" onClick={() => navigate("/parent/performance?feature=Performance%20Analytics")} />
+        <KPICard title="Effort Score" value={`${Math.round(effortIndex)}/100`} description="Behavioral Engagement" icon={Activity} color="orange" onClick={() => navigate("/parent/performance?feature=Effort%20Analysis")} />
+        <KPICard title="Fees Payable" value={formatCurrency(outstandingDues)} description="Outstanding Liability" icon={Wallet} color="rose" onClick={() => navigate("/parent/fees?feature=Fee%20Management")} />
       </div>
 
       {/* Intelligence Row 1: Trends and Matrix */}

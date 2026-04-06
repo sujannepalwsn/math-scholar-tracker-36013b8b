@@ -289,9 +289,9 @@ export default function Tests() {
 
       // Notify Parent/Student
       const student = students.find(s => s.id === selectedStudentId);
-      if ((student as any)?.user_id) {
+      if (student?.user_id) {
         const { error: notifError } = await supabase.from('notifications').insert({
-          user_id: (student as any).user_id,
+          user_id: student.user_id,
           center_id: user?.center_id,
           title: `Test Marks Recorded: ${selectedTestData?.name}`,
           message: `Score: ${resultData.marks_obtained}/${selectedTestData?.total_marks} in ${selectedTestData?.subject}`,

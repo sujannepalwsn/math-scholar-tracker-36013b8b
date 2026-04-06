@@ -40,10 +40,12 @@ serve(async (req) => {
       schoolName,
       location,
       adminName,
+      adminPhone,
       adminEmail,
       adminPassword,
       modules,
-      plan
+      plan,
+      referralSource
     } = body;
 
     if (!schoolName || !adminEmail || !adminPassword) {
@@ -74,7 +76,8 @@ serve(async (req) => {
         name: schoolName,
         address: location || null,
         is_active: true,
-        header_config: { layout: 'classic', elements: [] }
+        header_config: { layout: 'classic', elements: [] },
+        phone: adminPhone || null
       })
       .select()
       .single();
@@ -83,7 +86,8 @@ serve(async (req) => {
 
     // Hash password using bcryptjs (consistent with auth-login)
     // Using 10 rounds for balance between security and performance in Edge environment
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    // Synchronous hashing ensures reliability in Edge environment
+    const passwordHash = bcrypt.hashSync(adminPassword, 10);
 
     // Create user in public.users
     const { data: userCreated, error: userCreatedError } = await supabase

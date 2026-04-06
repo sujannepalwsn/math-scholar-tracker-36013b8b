@@ -3,9 +3,6 @@ project_id = "qrtvxzdlfurpipvtwian"
 [functions.auth-login]
 verify_jwt = false
 
-[functions.sync-auth-users]
-verify_jwt = false
-
 [functions.init-admin]
 verify_jwt = false
 

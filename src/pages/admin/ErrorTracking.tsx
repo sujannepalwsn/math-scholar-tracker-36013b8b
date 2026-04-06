@@ -341,10 +341,10 @@ export default function ErrorTracking() {
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center gap-1 text-xs font-semibold">
                           <UserIcon className="w-3 h-3" />
-                          {(error.user_context as any)?.name || "Anonymous"}
+                          {error.user_context?.name || "Anonymous"}
                         </div>
                         <Badge variant="outline" className="w-fit text-[9px] h-4 py-0 uppercase">
-                          {(error.user_context as any)?.role || "Guest"}
+                          {error.user_context?.role || "Guest"}
                         </Badge>
                       </div>
                     </TableCell>

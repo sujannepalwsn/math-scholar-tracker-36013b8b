@@ -38,6 +38,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FileDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { tracking } from "@/utils/tracking";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -123,12 +124,12 @@ const LandingPage = () => {
         <meta property="og:type" content="website" />
       </Helmet>
       {/* Navigation */}
-      <header className="fixed top-0 w-full z-[100] px-4 md:px-6 py-4 flex items-center justify-between border-b border-white/5 bg-slate-950/80 backdrop-blur-md transition-all">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/20 border border-primary/20">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+      <header className="fixed top-0 w-full z-[100] px-2 md:px-6 py-4 flex items-center justify-between border-b border-white/5 bg-slate-950/80 backdrop-blur-md transition-all">
+        <Link to="/" className="flex items-center gap-1.5 md:gap-3">
+          <div className="p-1.5 md:p-2 rounded-xl bg-primary/20 border border-primary/20">
+            <ShieldCheck className="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </div>
-          <span className="text-2xl font-black text-white tracking-tighter uppercase">Edu<span className="text-primary">Flow</span></span>
+          <span className="text-lg md:text-2xl font-black text-white tracking-tighter uppercase shrink-0">Edu<span className="text-primary">Flow</span></span>
         </Link>
 
         <nav className="hidden lg:flex items-center gap-8">
@@ -138,14 +139,19 @@ const LandingPage = () => {
           <Link to="/about" className="text-sm font-bold text-slate-300 hover:text-white transition-colors">About</Link>
         </nav>
 
-        <div className="flex items-center gap-2 md:gap-4">
-           <Link to="/login">
-             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-3 md:px-6 text-sm md:text-base">
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+           <Link to="/login" className="hidden sm:block">
+             <Button variant="ghost" className="text-white font-bold hover:bg-white/5 rounded-full px-4 md:px-6">
+               Login
+             </Button>
+           </Link>
+           <Link to="/login" className="sm:hidden">
+             <Button variant="ghost" size="sm" className="text-white font-bold hover:bg-white/5 rounded-full px-3 text-xs">
                Login
              </Button>
            </Link>
            <Link to="/onboarding">
-             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-4 md:px-8 shadow-lg shadow-primary/20 text-sm md:text-base">
+             <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full px-4 md:px-8 shadow-lg shadow-primary/20 text-xs md:text-sm">
                Get Started
              </Button>
            </Link>
@@ -201,16 +207,25 @@ const LandingPage = () => {
                variant="outline"
                className="h-16 px-10 rounded-2xl text-lg font-black border-white/10 bg-white/5 hover:bg-white/10 text-white"
                onClick={async () => {
-                  toast.loading("Entering Sandbox Mode...");
+                  const loadingToast = toast.loading("Entering Sandbox Mode...");
+                  localStorage.setItem('is_sandbox', 'true');
+                  localStorage.setItem('is_trial', 'false');
 
                   // Use a public demo account
                   // In a real production app, these would be managed credentials
                   const result = await login("demo@eduflow.com", "demo1234");
 
                   if (result.success) {
-                    toast.success("Welcome to the Sandbox! (Demo Mode Active)");
+                    await tracking.startSession();
+                    tracking.trackEvent('feature_action', 'enter_sandbox');
+                    toast.dismiss(loadingToast);
                     navigate("/center-dashboard");
+                    setTimeout(() => {
+                      toast.success("Welcome to the Sandbox! (Demo Mode Active)");
+                    }, 200);
                   } else {
+                    localStorage.removeItem('is_sandbox');
+                    toast.dismiss(loadingToast);
                     toast.error("Demo mode is temporarily unavailable. Please try again later.");
                   }
                }}
@@ -723,30 +738,30 @@ const LandingPage = () => {
             <div className="space-y-6">
                <h4 className="font-black uppercase tracking-widest text-sm text-white">Product</h4>
                <ul className="space-y-4 text-slate-400 font-bold text-sm">
-                  <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
+                  <li><Link to="/features" className="hover:text-primary transition-colors">Features</Link></li>
                   <li><a href="#solutions" className="hover:text-primary transition-colors">Solutions</a></li>
-                  <li><a href="#pricing" className="hover:text-primary transition-colors">Pricing</a></li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Security</li>
+                  <li><Link to="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
+                  <li><Link to="/pages/security" className="hover:text-primary transition-colors">Security</Link></li>
                </ul>
             </div>
 
             <div className="space-y-6">
                <h4 className="font-black uppercase tracking-widest text-sm text-white">Resources</h4>
                <ul className="space-y-4 text-slate-400 font-bold text-sm">
-                  <li className="hover:text-primary transition-colors cursor-pointer">Documentation</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Help Center</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">API Reference</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Community</li>
+                  <li><Link to="/pages/documentation" className="hover:text-primary transition-colors">Documentation</Link></li>
+                  <li><Link to="/pages/support" className="hover:text-primary transition-colors">Help Center</Link></li>
+                  <li><Link to="/pages/api-docs" className="hover:text-primary transition-colors">API Reference</Link></li>
+                  <li><Link to="/pages/community" className="hover:text-primary transition-colors">Community</Link></li>
                </ul>
             </div>
 
             <div className="space-y-6">
                <h4 className="font-black uppercase tracking-widest text-sm text-white">Company</h4>
                <ul className="space-y-4 text-slate-400 font-bold text-sm">
-                  <li className="hover:text-primary transition-colors cursor-pointer">About Us</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Contact</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Privacy</li>
-                  <li className="hover:text-primary transition-colors cursor-pointer">Terms</li>
+                  <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+                  <li><Link to="/contact-sales" className="hover:text-primary transition-colors">Contact</Link></li>
+                  <li><Link to="/pages/privacy" className="hover:text-primary transition-colors">Privacy</Link></li>
+                  <li><Link to="/pages/terms" className="hover:text-primary transition-colors">Terms</Link></li>
                </ul>
             </div>
           </div>
