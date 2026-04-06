@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/utils"
+import { logger } from "@/utils/logger"
 
 const PAYMENT_METHODS = ['cash', 'cheque', 'bank_transfer', 'upi', 'card', 'other'];
 
@@ -79,7 +80,7 @@ const PaymentTracking = ({ canEdit }: { canEdit?: boolean }) => {
       if (!invoice) throw new Error('Invoice not found');
 
       // Atomic RPC call to handle both payment record and invoice update
-      const { error } = await supabase.rpc('record_invoice_payment', {
+      const { error } = await (supabase.rpc as any)('record_invoice_payment', {
         p_invoice_id: paymentForm.invoice_id,
         p_amount: parseFloat(paymentForm.amount),
         p_payment_date: new Date().toISOString().split('T')[0],

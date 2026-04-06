@@ -147,7 +147,7 @@ const OnboardingWizard = () => {
         toast.error(errorMsg);
       }
     } catch (err: any) {
-      tracking.logError('onboarding_exception', err);
+      tracking.trackEvent('error', 'onboarding_exception', { error: err?.message });
       console.error("Onboarding error:", err);
       // Detailed error breakdown for Edge Function issues
       let message = "An unexpected error occurred.";

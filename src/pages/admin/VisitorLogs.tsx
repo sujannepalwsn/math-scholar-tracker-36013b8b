@@ -165,11 +165,11 @@ const VisitorLogs = () => {
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
 
-  const funnelData = analytics?.funnel ? [
-    { name: 'Landing', value: analytics.funnel.landing || 0 },
-    { name: 'Trial', value: analytics.funnel.trial || 0 },
-    { name: 'Signup', value: analytics.funnel.signup || 0 },
-    { name: 'Active', value: analytics.funnel.active || 0 },
+  const funnelData = (analytics as any)?.funnel ? [
+    { name: 'Landing', value: (analytics as any).funnel.landing || 0 },
+    { name: 'Trial', value: (analytics as any).funnel.trial || 0 },
+    { name: 'Signup', value: (analytics as any).funnel.signup || 0 },
+    { name: 'Active', value: (analytics as any).funnel.active || 0 },
   ] : [
     { name: 'Landing', value: 0 },
     { name: 'Trial', value: 0 },
@@ -354,19 +354,19 @@ const VisitorLogs = () => {
                                   <div className="grid md:grid-cols-3 gap-6 mb-8">
                                      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
                                         <div className="text-[10px] font-black uppercase text-slate-400 mb-1">IP Address</div>
-                                        <div className="font-bold text-slate-700">{session.visitors.ip_address || 'Unknown'}</div>
-                                     </div>
-                                     <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                        <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Location</div>
-                                        <div className="font-bold text-slate-700">
-                                           {session.visitors.location ?
-                                              `${session.visitors.location.city}, ${session.visitors.location.country}` :
-                                              'Unknown'}
-                                        </div>
-                                     </div>
-                                     <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                                        <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Fingerprint</div>
-                                        <div className="font-bold text-slate-700 truncate">{session.visitors.fingerprint_id || 'N/A'}</div>
+                                         <div className="font-bold text-slate-700">{(session.visitors as any).ip_address || 'Unknown'}</div>
+                                      </div>
+                                      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                         <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Location</div>
+                                         <div className="font-bold text-slate-700">
+                                            {session.visitors.location ?
+                                               `${(session.visitors.location as any).city}, ${(session.visitors.location as any).country}` :
+                                               'Unknown'}
+                                         </div>
+                                      </div>
+                                      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                         <div className="text-[10px] font-black uppercase text-slate-400 mb-1">Fingerprint</div>
+                                         <div className="font-bold text-slate-700 truncate">{(session.visitors as any).fingerprint_id || 'N/A'}</div>
                                      </div>
                                   </div>
 
@@ -416,10 +416,10 @@ const VisitorLogs = () => {
 
         <TabsContent value="analytics" className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <KPICard title="Total Visitors" value={analytics?.total_visitors.toString() || "0"} icon={Users} color="indigo" />
-            <KPICard title="Active Users (DAU)" value={analytics?.dau.toString() || "0"} icon={Activity} color="emerald" />
-            <KPICard title="Retention (MAU)" value={analytics?.mau.toString() || "0"} icon={TrendingUp} color="amber" />
-            <KPICard title="Most Active Role" value={analytics?.active_role?.role || "-"} icon={Users} color="rose" />
+            <KPICard title="Total Visitors" value={(analytics as any)?.total_visitors?.toString() || "0"} icon={Users} color="indigo" />
+            <KPICard title="Active Users (DAU)" value={(analytics as any)?.dau?.toString() || "0"} icon={Activity} color="emerald" />
+            <KPICard title="Retention (MAU)" value={(analytics as any)?.mau?.toString() || "0"} icon={TrendingUp} color="amber" />
+            <KPICard title="Most Active Role" value={(analytics as any)?.active_role?.role || "-"} icon={Users} color="rose" />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
@@ -433,13 +433,13 @@ const VisitorLogs = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={analytics?.type_dist}
+                      data={(analytics as any)?.type_dist}
                       innerRadius={60}
                       outerRadius={100}
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {analytics?.type_dist?.map((entry: any, index: number) => (
+                      {(analytics as any)?.type_dist?.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -479,7 +479,7 @@ const VisitorLogs = () => {
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics?.feature_usage}>
+                  <BarChart data={(analytics as any)?.feature_usage}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" fontSize={8} fontStyle="bold" hide />
                     <YAxis fontSize={10} />
@@ -498,7 +498,7 @@ const VisitorLogs = () => {
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics?.duration_dist} layout="vertical">
+                  <BarChart data={(analytics as any)?.duration_dist} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" fontSize={10} />
                     <YAxis dataKey="name" type="category" fontSize={10} width={60} />
@@ -525,30 +525,30 @@ const VisitorLogs = () => {
                    <div className="space-y-4">
                       <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300">Top Drop-off Pages</h4>
                       <ul className="space-y-2">
-                         {analytics?.top_drop_offs?.map((p: any) => (
-                           <li key={p.name} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                              <span className="font-bold text-sm truncate max-w-[200px]">{p.name}</span>
-                              <Badge className="bg-indigo-500 text-white">{p.value} Exits</Badge>
-                           </li>
-                         ))}
-                      </ul>
-                   </div>
-                   <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300">Intelligence Highlights</h4>
-                      <div className="space-y-3">
-                         {analytics?.top_drop_offs?.[0] && (
-                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                              <p className="text-sm font-bold"><span className="text-indigo-300">Drop-off Alert:</span> Users are frequently dropping off at <span className="text-white underline">{analytics.top_drop_offs[0].name}</span>.</p>
-                           </div>
-                         )}
-                         {analytics?.feature_usage?.[0] && (
-                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                              <p className="text-sm font-bold"><span className="text-indigo-300">Feature Trend:</span> <span className="text-white underline">{analytics.feature_usage[0].name}</span> is currently your most engaged feature.</p>
-                           </div>
-                         )}
-                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                            <p className="text-sm font-bold"><span className="text-indigo-300">Peak Load:</span> System traffic peaks at <span className="text-white underline">{analytics?.peak_usage?.hour}:00</span>. Consider scheduling maintenance outside this window.</p>
-                         </div>
+                          {(analytics as any)?.top_drop_offs?.map((p: any) => (
+                            <li key={p.name} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                               <span className="font-bold text-sm truncate max-w-[200px]">{p.name}</span>
+                               <Badge className="bg-indigo-500 text-white">{p.value} Exits</Badge>
+                            </li>
+                          ))}
+                       </ul>
+                    </div>
+                    <div className="space-y-4">
+                       <h4 className="text-xs font-black uppercase tracking-widest text-indigo-300">Intelligence Highlights</h4>
+                       <div className="space-y-3">
+                          {(analytics as any)?.top_drop_offs?.[0] && (
+                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                               <p className="text-sm font-bold"><span className="text-indigo-300">Drop-off Alert:</span> Users are frequently dropping off at <span className="text-white underline">{(analytics as any).top_drop_offs[0].name}</span>.</p>
+                            </div>
+                          )}
+                          {(analytics as any)?.feature_usage?.[0] && (
+                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                               <p className="text-sm font-bold"><span className="text-indigo-300">Feature Trend:</span> <span className="text-white underline">{(analytics as any).feature_usage[0].name}</span> is currently your most engaged feature.</p>
+                            </div>
+                          )}
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                             <p className="text-sm font-bold"><span className="text-indigo-300">Peak Load:</span> System traffic peaks at <span className="text-white underline">{(analytics as any)?.peak_usage?.hour}:00</span>. Consider scheduling maintenance outside this window.</p>
+                          </div>
                       </div>
                    </div>
                 </div>

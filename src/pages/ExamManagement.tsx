@@ -226,7 +226,7 @@ export default function ExamManagement() {
         .eq("is_active", true);
 
       if (!studError2 && students) {
-        const studentUserIds = students.map(s => s.user_id).filter(Boolean);
+        const studentUserIds = students.map(s => (s as any).user_id).filter(Boolean);
         if (studentUserIds.length > 0) {
           const notifications = studentUserIds.map(uid => ({
             user_id: uid,

@@ -127,7 +127,7 @@ const InvoiceManagement = ({ canEdit }: { canEdit?: boolean }) => {
       if (remainingAmount <= 0) return;
 
       // Atomic RPC call to handle both payment record and invoice update
-      const { error } = await supabase.rpc('record_invoice_payment', {
+      const { error } = await (supabase.rpc as any)('record_invoice_payment', {
         p_invoice_id: invoiceId,
         p_amount: remainingAmount,
         p_payment_date: new Date().toISOString().split('T')[0],

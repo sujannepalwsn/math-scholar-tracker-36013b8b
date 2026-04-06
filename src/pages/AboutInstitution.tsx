@@ -96,7 +96,7 @@ export default function AboutInstitution() {
 
       if (isPublicView) {
         const { data, error } = await query
-          .select("id, name, about_description, mission, vision, principal_message, principal_name, established_date, academic_info, facilities, achievements, gallery, social_links, institution_type, phone, email, address, website_url, header_bg_url")
+          .select("id, name, about_description, mission, vision, principal_message, principal_name, established_date, academic_info, facilities, achievements, gallery, social_links, institution_type, phone, email, address, website_url, header_bg_url, short_code")
           .eq("id", centerId)
           .single();
         if (error) throw error;
@@ -190,9 +190,9 @@ export default function AboutInstitution() {
           principal_message: formData.principal_message,
           established_date: formData.established_date || null,
           academic_info: formData.academic_info,
-          facilities: facilities as unknown as Json,
-          achievements: achievements as unknown as Json,
-          gallery: gallery as unknown as Json,
+          facilities: facilities as any,
+          achievements: achievements as any,
+          gallery: gallery as any,
           social_links: formData.social_links as unknown as Json,
           institution_type: formData.institution_type,
           phone: formData.phone,

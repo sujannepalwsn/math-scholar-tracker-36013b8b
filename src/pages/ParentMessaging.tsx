@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Check, Info, MessageSquare, Send, Shield, Brain, Sparkles, X } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"

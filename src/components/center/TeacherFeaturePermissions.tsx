@@ -171,7 +171,7 @@ export default function TeacherFeaturePermissions({ teacherId, teacherName }: { 
     }
 
     const updatedPermissions = {
-      ...permissions,
+      ...(permissions as Record<string, any>),
       [featureName]: updatedModule
     };
 

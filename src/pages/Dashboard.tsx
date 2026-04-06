@@ -467,7 +467,7 @@ export default function Dashboard() {
     queryKey: ["pending-attendance-by-grade", centerId, today],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.rpc("get_pending_attendance_by_grade", {
+      const { data, error } = await (supabase.rpc as any)("get_pending_attendance_by_grade", {
         p_center_id: centerId,
         p_date: today
       });
@@ -481,7 +481,7 @@ export default function Dashboard() {
     queryKey: ["pending-teacher-attendance", centerId, today],
     queryFn: async () => {
       if (!centerId) return [];
-      const { data, error } = await supabase.rpc("get_pending_teacher_attendance", {
+      const { data, error } = await (supabase.rpc as any)("get_pending_teacher_attendance", {
         p_center_id: centerId,
         p_date: today
       });
@@ -956,7 +956,7 @@ export default function Dashboard() {
         // or if we find it via period_schedules
         const ps = periodSchedules.find(p => p.id === s.period_schedule_id);
         // Important: check both if substitution has direct period_id OR linked period_schedule has it
-        const periodId = s.class_period_id || ps?.class_period_id || s.period_schedules?.class_period_id;
+        const periodId = (s as any).class_period_id || ps?.class_period_id || (s as any).period_schedules?.class_period_id;
         return periodId === selectedVacantClass.class_period_id;
       })
       .map(s => s.substitute_teacher_id);
@@ -2019,8 +2019,8 @@ export default function Dashboard() {
                           const classId = a.id.replace('vacant-', '');
                           const cls = todayClasses.find(c => c.id === classId);
                           if (cls) setSelectedVacantClass(cls);
-                        } else if (a.onClick) {
-                          a.onClick();
+                      } else if ((a as any).onClick) {
+                          (a as any).onClick();
                         }
                       }}
                     />

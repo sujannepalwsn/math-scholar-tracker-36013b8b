@@ -97,13 +97,14 @@ export default function CenterSettings() {
 
       const savedTheme = center.theme;
       if (savedTheme && typeof savedTheme === 'object') {
+        const t = savedTheme as any;
         setTheme({
-          primary: savedTheme.primary || "#6366f1",
-          background: savedTheme.background || "#ffffff",
-          sidebar: savedTheme.sidebar || "#1e293b",
-          foreground: savedTheme.foreground || "#1e293b",
-          cardBackground: savedTheme.cardBackground || "#ffffff",
-          mutedForeground: savedTheme.mutedForeground || "#64748b" });
+          primary: t.primary || "#6366f1",
+          background: t.background || "#ffffff",
+          sidebar: t.sidebar || "#1e293b",
+          foreground: t.foreground || "#1e293b",
+          cardBackground: t.cardBackground || "#ffffff",
+          mutedForeground: t.mutedForeground || "#64748b" });
       }
     }
   }, [center]);
@@ -216,7 +217,7 @@ export default function CenterSettings() {
           latitude: latitude ? parseFloat(latitude) : null,
           longitude: longitude ? parseFloat(longitude) : null,
           radius_meters: radiusMeters ? parseInt(radiusMeters) : 100,
-          theme: theme as unknown as Json } )
+          theme: theme as any } )
         .eq("id", user.center_id);
       if (error) throw error;
       // Apply theme after saving

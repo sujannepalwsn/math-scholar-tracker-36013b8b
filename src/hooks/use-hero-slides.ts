@@ -31,7 +31,7 @@ export const useHeroSlides = (includeInactive = false) => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as HeroSlide[];
+      return data as unknown as HeroSlide[];
     },
   });
 };
