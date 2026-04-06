@@ -52,97 +52,129 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
+    let isMounted = true;
+
+    const hydrateUserFromSession = async () => {
       setLoading(true);
-      const storedUser = localStorage.getItem('auth_user');
-      if (storedUser) {
-        try {
-          const parsedUser: User = JSON.parse(storedUser);
+
+      try {
+        const [{ data: { session } }, storedUser] = await Promise.all([
+          supabase.auth.getSession(),
+          Promise.resolve(localStorage.getItem('auth_user')),
+        ]);
+
+        if (!session) {
+          localStorage.removeItem('auth_user');
+          if (isMounted) {
+            setUser(null);
+          }
+          return;
+        }
+
+        if (!storedUser) {
+          return;
+        }
+
+        const parsedUser: User = JSON.parse(storedUser);
+        if (isMounted) {
           setUser(parsedUser);
+        }
 
-          // Fetch fresh permissions and metadata from DB to avoid stale localStorage data
-          if (parsedUser.center_id) {
-            // We use a helper function to avoid async in useEffect directly
-            const fetchFreshData = async (userToUpdate: User) => {
-              try {
-                const updatedUser = { ...userToUpdate };
-                let hasChanges = false;
+        if (parsedUser.center_id) {
+          const updatedUser = { ...parsedUser };
+          let hasChanges = false;
 
-                // Fetch fresh center metadata
-                const { data: centerData } = await supabase
-                  .from('centers')
-                  .select('name')
-                  .eq('id', userToUpdate.center_id!)
-                  .maybeSingle();
+          const { data: centerData } = await supabase
+            .from('centers')
+            .select('name')
+            .eq('id', parsedUser.center_id)
+            .maybeSingle();
 
-                if (centerData && centerData.name !== userToUpdate.center_name) {
-                  updatedUser.center_name = centerData.name;
-                  hasChanges = true;
-                }
+          if (centerData && centerData.name !== parsedUser.center_name) {
+            updatedUser.center_name = centerData.name;
+            hasChanges = true;
+          }
 
-                // Fetch user specific metadata like active_academic_year
-                const { data: userData } = await supabase
-                  .from('users')
-                  .select('active_academic_year')
-                  .eq('id', userToUpdate.id)
-                  .maybeSingle();
+          const { data: userData } = await supabase
+            .from('users')
+            .select('active_academic_year')
+            .eq('id', parsedUser.id)
+            .maybeSingle();
 
-                if (userData && userData.active_academic_year !== userToUpdate.active_academic_year) {
-                  updatedUser.active_academic_year = userData.active_academic_year;
-                  hasChanges = true;
-                }
+          if (userData && userData.active_academic_year !== parsedUser.active_academic_year) {
+            updatedUser.active_academic_year = userData.active_academic_year;
+            hasChanges = true;
+          }
 
-                // Always fetch center permissions
-                const { data: centerPerms } = await supabase
-                  .from('center_feature_permissions')
-                  .select('*')
-                  .eq('center_id', userToUpdate.center_id!)
-                  .maybeSingle();
+          const { data: centerPerms } = await supabase
+            .from('center_feature_permissions')
+            .select('*')
+            .eq('center_id', parsedUser.center_id)
+            .maybeSingle();
 
-                if (centerPerms) {
-                  updatedUser.centerPermissions = centerPerms;
-                  hasChanges = true;
-                }
+          if (centerPerms) {
+            updatedUser.centerPermissions = centerPerms;
+            hasChanges = true;
+          }
 
-                // Fetch teacher permissions if user is a teacher
-                if (userToUpdate.role === UserRole.TEACHER && userToUpdate.teacher_id) {
-                  const { data: teacherPerms } = await supabase
-                    .from('teacher_feature_permissions')
-                    .select('*')
-                    .eq('teacher_id', userToUpdate.teacher_id)
-                    .maybeSingle();
+          if (parsedUser.role === UserRole.TEACHER && parsedUser.teacher_id) {
+            const { data: teacherPerms } = await supabase
+              .from('teacher_feature_permissions')
+              .select('*')
+              .eq('teacher_id', parsedUser.teacher_id)
+              .maybeSingle();
 
-                  if (teacherPerms) {
-                    updatedUser.teacherPermissions = teacherPerms;
-                    updatedUser.teacher_scope_mode = (teacherPerms.teacher_scope_mode || 'restricted') as 'full' | 'restricted';
-                  } else {
-                    updatedUser.teacher_scope_mode = 'restricted';
-                  }
-                  hasChanges = true;
-                }
+            if (teacherPerms) {
+              updatedUser.teacherPermissions = teacherPerms;
+              updatedUser.teacher_scope_mode = (teacherPerms.teacher_scope_mode || 'restricted') as 'full' | 'restricted';
+            } else {
+              updatedUser.teacher_scope_mode = 'restricted';
+            }
+            hasChanges = true;
+          }
 
-                if (hasChanges) {
-                  updatedUser.untrusted_metadata = {
-                    permissions_fetched_at: new Date().toISOString(),
-                    is_ui_restricted: updatedUser.teacher_scope_mode === 'restricted'
-                  };
-                  setUser(updatedUser);
-                  localStorage.setItem('auth_user', JSON.stringify(updatedUser));
-                }
-              } catch (err) {
-                logger.error("Error fetching fresh permissions:", err);
-              }
+          if (hasChanges) {
+            updatedUser.untrusted_metadata = {
+              permissions_fetched_at: new Date().toISOString(),
+              is_ui_restricted: updatedUser.teacher_scope_mode === 'restricted'
             };
 
-            fetchFreshData(parsedUser);
+            if (isMounted) {
+              setUser(updatedUser);
+            }
+            localStorage.setItem('auth_user', JSON.stringify(updatedUser));
           }
-        } catch (e) {
-          logger.error("Failed to parse auth_user", e);
+        }
+      } catch (e) {
+        logger.error("Failed to hydrate auth state", e);
+        localStorage.removeItem('auth_user');
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
-      setLoading(false);
     };
-    loadUser();
+
+    hydrateUserFromSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        localStorage.removeItem('auth_user');
+        if (isMounted) {
+          setUser(null);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (
@@ -192,21 +224,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const session = data.session;
       logger.debug('AuthContext: User data received from Edge Function:', loggedInUser.username);
 
-      if (session) {
-        logger.debug('AuthContext: Setting Supabase session...');
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-        });
-
-        if (sessionError) {
-          logger.error('AuthContext: Error setting Supabase session:', sessionError);
-        } else {
-          logger.debug('AuthContext: Supabase session successfully established.');
-        }
-      } else {
-        logger.warn('AuthContext: No session returned from login. RLS may block data access.');
+      if (!session) {
+        logger.error('AuthContext: Login response missing Supabase session.');
+        await supabase.auth.signOut();
+        setUser(null);
+        localStorage.removeItem('auth_user');
+        return { success: false, error: 'Unable to establish authenticated session' };
       }
+
+      logger.debug('AuthContext: Setting Supabase session...');
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+
+      if (sessionError) {
+        logger.error('AuthContext: Error setting Supabase session:', sessionError);
+        await supabase.auth.signOut();
+        setUser(null);
+        localStorage.removeItem('auth_user');
+        return { success: false, error: 'Unable to establish authenticated session' };
+      }
+
+      logger.debug('AuthContext: Supabase session successfully established.');
 
       // The role check is now handled by ProtectedRoute after successful authentication
       // This allows any valid user to log in via the main login page and then be redirected
