@@ -348,15 +348,15 @@ export default function StaffHRModule({ teacherId, teacherName, canEdit }: { tea
               <CardContent className="p-6 space-y-4">
                 <div className="flex justify-between border-b pb-2">
                   <span className="text-[10px] font-black uppercase text-slate-400">Contact Person</span>
-                  <span className="font-bold text-slate-700">{teacherProfile?.emergency_contact?.name || 'N/A'}</span>
+                  <span className="font-bold text-slate-700">{(teacherProfile?.emergency_contact as any)?.name || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
                   <span className="text-[10px] font-black uppercase text-slate-400">Relation</span>
-                  <span className="font-bold text-slate-700">{teacherProfile?.emergency_contact?.relation || 'N/A'}</span>
+                  <span className="font-bold text-slate-700">{(teacherProfile?.emergency_contact as any)?.relation || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
                   <span className="text-[10px] font-black uppercase text-slate-400">Phone</span>
-                  <span className="font-bold text-blue-600">{teacherProfile?.emergency_contact?.phone || 'N/A'}</span>
+                  <span className="font-bold text-blue-600">{(teacherProfile?.emergency_contact as any)?.phone || 'N/A'}</span>
                 </div>
               </CardContent>
             </Card>

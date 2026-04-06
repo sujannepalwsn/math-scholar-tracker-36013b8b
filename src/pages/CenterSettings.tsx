@@ -217,7 +217,7 @@ export default function CenterSettings() {
           latitude: latitude ? parseFloat(latitude) : null,
           longitude: longitude ? parseFloat(longitude) : null,
           radius_meters: radiusMeters ? parseInt(radiusMeters) : 100,
-          theme: theme as unknown as Json } )
+          theme: theme as any } )
         .eq("id", user.center_id);
       if (error) throw error;
       // Apply theme after saving

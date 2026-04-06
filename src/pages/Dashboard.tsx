@@ -2019,8 +2019,8 @@ export default function Dashboard() {
                           const classId = a.id.replace('vacant-', '');
                           const cls = todayClasses.find(c => c.id === classId);
                           if (cls) setSelectedVacantClass(cls);
-                        } else if (a.onClick) {
-                          a.onClick();
+                      } else if ((a as any).onClick) {
+                          (a as any).onClick();
                         }
                       }}
                     />

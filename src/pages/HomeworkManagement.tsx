@@ -201,7 +201,7 @@ export default function HomeworkManagement() {
         if (assignError) throw assignError;
 
         // Notify Parents/Students
-        const studentUserIds = studentsInGrade.map(s => s.user_id).filter(Boolean);
+        const studentUserIds = studentsInGrade.map(s => (s as any).user_id).filter(Boolean);
         if (studentUserIds.length > 0) {
           const notifications = studentUserIds.map(uid => ({
             user_id: uid,
