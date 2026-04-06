@@ -23,7 +23,7 @@ interface NavItem {
   role?: 'admin' | 'center' | 'parent' | 'teacher';
   featureName?: string;
   unreadCount?: number;
-  category?: 'Academics' | 'Administration' | 'Reports and Communication' | 'More';
+  category?: string;
 }
 
 interface SidebarProps {
