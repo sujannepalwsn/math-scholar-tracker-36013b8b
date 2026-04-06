@@ -66,9 +66,16 @@ class Logger {
     error?: any,
     context?: LogContext
   ) {
+    // Only persist errors in development mode to avoid RLS issues with anon key
+    // In production, errors are logged to console only
+    if (!import.meta.env.DEV) return;
+    
     try {
       const storedUser = localStorage.getItem('auth_user');
       const user = storedUser ? JSON.parse(storedUser) : null;
+
+      // Skip DB persistence if no authenticated user (would fail RLS)
+      if (!user?.id) return;
 
       const errorPayload = {
         error_type: context?.errorType || 'runtime',
@@ -88,12 +95,11 @@ class Logger {
         },
         request_context: context?.request || {},
         schema_context: context?.schemaContext,
-        payload: context?.payload || {}, // New payload column for AI studio
+        payload: context?.payload || {},
         device_info: this.getDeviceInfo(),
         timestamp: new Date().toISOString(),
       };
 
-      // Asynchronous insert to Supabase - The trigger will send this to the AI studio
       const { error: insertError } = await supabase
         .from('error_logs')
         .insert(errorPayload);
@@ -102,7 +108,7 @@ class Logger {
         console.error("Failed to persist error log to Supabase:", insertError);
       }
     } catch (e) {
-      console.error("Error in logger persistence logic:", e);
+      // Silently fail - don't create error loops
     }
   }
 
