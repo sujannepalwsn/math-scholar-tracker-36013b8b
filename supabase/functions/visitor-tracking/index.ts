@@ -27,7 +27,7 @@ serve(async (req) => {
       browser: req.headers.get("user-agent") || "unknown",
     };
 
-    console.log(\`Visitor tracking action: \${action}\`, { ip, geo });
+    console.log(`Visitor tracking action: ${action}`, { ip, geo });
 
     if (action === "create-session") {
       const { visitor_type, user_id, fingerprint_id, entry_page } = payload;
