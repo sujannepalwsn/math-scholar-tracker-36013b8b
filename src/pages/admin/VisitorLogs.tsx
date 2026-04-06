@@ -165,11 +165,11 @@ const VisitorLogs = () => {
 
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
 
-  const funnelData = analytics?.funnel ? [
-    { name: 'Landing', value: analytics.funnel.landing || 0 },
-    { name: 'Trial', value: analytics.funnel.trial || 0 },
-    { name: 'Signup', value: analytics.funnel.signup || 0 },
-    { name: 'Active', value: analytics.funnel.active || 0 },
+  const funnelData = (analytics as any)?.funnel ? [
+    { name: 'Landing', value: (analytics as any).funnel.landing || 0 },
+    { name: 'Trial', value: (analytics as any).funnel.trial || 0 },
+    { name: 'Signup', value: (analytics as any).funnel.signup || 0 },
+    { name: 'Active', value: (analytics as any).funnel.active || 0 },
   ] : [
     { name: 'Landing', value: 0 },
     { name: 'Trial', value: 0 },
